@@ -50,39 +50,62 @@ class TestChannelState(unittest.TestCase):
 
 
 class TestChannelFile(unittest.TestCase):
+    @classmethod
+    def setUpClass(cls):
+        cls.receiver = "0x1234567890"
+        cls.sender = "0x234567890"
+        cls.channel_file = ChannelFile(cls.sender, cls.receiver)
+        cls.ctime = time.time()
+
     def setUp(self):
-        self.receiver = "0x1234567890"
-        self.sender = "0x234567890"
         self.deposit = 1
         self.open_block_number = 20
         self.balance =  12
         self.closed = True
         self.last_signature = None
         self.settle_timeout = -1
-        self.ctime = time.time()
         self.confirmed = True
         self.nonce = 0
-        self.channel={ "receiver": self.receiver,
+        self.channel = {"receiver": self.receiver,
+                        "sender": self.sender,
+                        "deposit": self.deposit,
+                        "open_block_number": self.open_block_number,
+                        "balance": self.balance,
+                        "closed": self.closed,
+                        "last_signature": self.last_signature,
+                        "settle_timeout": self.settle_timeout,
+                        "create_time": self.ctime,
+                        "confirmed": self.confirmed,
+                        "nonce": self.nonce
+                        }
+
+    def test_create_channel(self):
+        self.channel_file.create_channel(**self.channel)
+        channel_info  = self.channel_file.read_channel()
+        self.assertEqual(channel_info, [{"0":self.channel}])
+
+    def test_update_channel(self):
+        channel={ "receiver": self.receiver,
                        "sender": self.sender,
                        "deposit": self.deposit,
                        "open_block_number": self.open_block_number,
-                       "balance": self.balance,
+                       "balance": 18,
                        "closed": self.closed,
                        "last_signature": self.last_signature,
                        "settle_timeout": self.settle_timeout,
                        "create_time": self.ctime,
                        "confirmed": self.confirmed,
-                       "nonce":self.nonce
+                       "nonce": 123456789
                        }
-        self.channel_file = ChannelFile(self.sender, self.receiver)
-
-    def test_create_channel(self):
-        self.channel_file.create_channel(**self.channel)
-        channel_info  = self.channel_file.read_channel()
-        self.assertEqual(channel_info, self.channel)
+        self.channel_file.update_channel("1",**channel)
+        channel_info = self.channel_file.read_channel()
+        self.assertEqual(channel_info[0]["0"], self.channel)
+        channel_info = self.channel_file.read_channel()
+        self.assertEqual(channel_info[1]["1"], channel)
         
-    def tearDown(self):
-        self.channel_file.delete_channel()
+    @classmethod
+    def tearDownClass(cls):
+        cls.channel_file.delete_channel()
 
 
 if __name__ == "__main__":

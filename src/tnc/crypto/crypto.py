@@ -32,5 +32,17 @@ def byte2dic(file_hander):
     :param file_hander:
     :return:
     """
-    return pickle.load(file_hander)
+    return pickle_load(file_hander)
 
+def pickle_load(file):
+    """
+
+    :param file:
+    :return:
+    """
+    pickles = []
+    while True:
+        try:
+            pickles.append(pickle.load(file))
+        except EOFError:
+            return pickles

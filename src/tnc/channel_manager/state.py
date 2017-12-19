@@ -124,15 +124,12 @@ class ChannelFile(object):
         if os.path.exists(self.channel_file_name):
             raise ChannelExist
         else:
-            with open(self.channel_file_name,"wb") as f:
-                crypto_channel(f, **kwargs)
-                return None
+            self.update_channel("0",**kwargs)
 
-    def update_channel(self, **kwargs):
-        with open(self.channel_file_name,"wb+") as f:
-            f.seek(0,0)
-            f.truncate()
-            crypto_channel(f, **kwargs)
+    def update_channel(self, index, **kwargs):
+        channeldetail = {index:kwargs}
+        with open(self.channel_file_name,"ab+") as f:
+            crypto_channel(f, **channeldetail)
         return None
 
     def read_channel(self):
