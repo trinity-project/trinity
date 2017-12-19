@@ -4,8 +4,10 @@ This neo api python implementation
 '''
 
 
-import requests
 import json
+
+import requests
+
 from . import api_error
 
 
