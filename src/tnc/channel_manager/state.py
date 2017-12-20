@@ -23,7 +23,7 @@ class ChannelDatabase(Base):
 
 engine = create_engine('sqlite:////tmp/test.db')
 DBSession = sessionmaker(bind=engine)
-
+Base.metadata.create_all(engine)
 
 class OpenDataBase(object):
     def __init__(self, db):
@@ -66,7 +66,7 @@ class ChannelState(object):
         return self.match.channel_name if self.match else None
 
     def add_channle_to_database(self, receiver, channel_name, state, deposit,open_block_number):
-        channel_state = ChannelDatabase(receiver=receiver, sender=self.sender, channel_name=channel_name, state=state,
+        channel_state = ChannelDatabase(receiver=receiver, sender=self.sender, channel_name=channel_name, state=state.value,
                                         deposit=deposit,open_block_number=open_block_number)
         with OpenDataBase(DBSession) as channle:
             try:
@@ -77,7 +77,7 @@ class ChannelState(object):
         return None
 
     def update_channel_to_database(self,receiver, channel_name, state, deposit,open_block_number):
-        channel_state = ChannelDatabase(receiver=receiver, sender=self.sender, channel_name=channel_name, state=state,
+        channel_state = ChannelDatabase(receiver=receiver, sender=self.sender, channel_name=channel_name, state=state.value,
                                      deposit=deposit,open_block_number=open_block_number)
         with OpenDataBase(DBSession) as channle:
             try:
@@ -124,12 +124,11 @@ class ChannelFile(object):
         if os.path.exists(self.channel_file_name):
             raise ChannelExist
         else:
-            self.update_channel("0",**kwargs)
+            self.update_channel(**kwargs)
 
-    def update_channel(self, index, **kwargs):
-        channeldetail = {index:kwargs}
+    def update_channel(self, **kwargs):
         with open(self.channel_file_name,"ab+") as f:
-            crypto_channel(f, **channeldetail)
+            crypto_channel(f, **kwargs)
         return None
 
     def read_channel(self):
@@ -138,6 +137,11 @@ class ChannelFile(object):
 
     def delete_channel(self):
         return os.remove(self.channel_file_name)
+
+    def check_channelfile(self):
+        return os.path.exists(self.channel_file_name)
+
+
 
 
 

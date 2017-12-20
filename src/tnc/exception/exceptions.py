@@ -14,14 +14,49 @@ class ChannelDBAddFail(TrException):
     pass
 
 
+class ChannelFileNoExist(TrException):
+    pass
+
+
+class ChannelExistInDb(TrException):
+    pass
+
+
+class ChannelNotExistInDb(TrException):
+    pass
+
+
+class ChannelClosed(TrException):
+    pass
+
+
+class ChannelSettling(TrException):
+    pass
+
+
+class ChannleNotInCloseState(TrException):
+    pass
+
+
 class ChannelDBUpdateFail(TrException):
     pass
+
+
+class ChannelNotInOpenState(TrException):
+    pass
+
+
+class NoBalanceEnough(TrException):
+    pass
+
 
 class ChannelExist(TrException):
     pass
 
+
 class NoOpenChannel(TrException):
     pass
+
 
 class InsufficientConfirmations(TrException):
     pass
