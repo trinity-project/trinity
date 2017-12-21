@@ -8,7 +8,17 @@ import json
 
 import requests
 
-from . import api_error
+from .api_error import APIParamError, APIResultError
+
+from tnc.utils.common import CommonItem
+
+
+class CommonResult(CommonItem):
+
+    def __init__(self, json_dict):
+        self.result = CommonItem.from_dict(json_dict)
+        if hasattr(self.result,"result") and isinstance(self.result.result, dict):
+            self.result.result = CommonItem.from_dict(self.result.result)
 
 
 class NeoApi(object):
@@ -16,20 +26,25 @@ class NeoApi(object):
     neo api
     """
 
-    def __init__(self, url,rcpversion, id=1):
+    def __init__(self, url, rcpversion="2.0", id=1):
         self.url = url
         self.version = rcpversion
         self.id = id
 
+    def phase_request_result(self,common_result):
+        if hasattr(common_result, "error"):
+            raise APIResultError(common_result.error["code"], common_result.error["message"])
+        else:
+            return common_result
+
     def post_request(self, payload):
-        json_payload = json.dumps(payload)
-        result = requests.post(self.url, json=json_payload)
+        result = requests.post(self.url, json=payload)
         if result.status_code != requests.codes.ok:
             raise result.raise_for_status()
         else:
-            return result
+            return self.phase_request_result(CommonResult(result.json()).result)
 
-    def generate_payloade(self, method, params):
+    def generate_payload(self, method, params):
         payload = {
             "jsonrpc": self.version,
             "method": method,
@@ -77,7 +92,7 @@ class NeoApi(object):
         """
         params = [address]
         if isinstance(address, str) and len(address) == 34:
-            return self.post_request(self.generate_payloade("getaccountstate",params))
+            return self.post_request(self.generate_payload("getaccountstate",params))
         else:
             raise api_error.APIParamError(address)
 
@@ -127,7 +142,7 @@ class NeoApi(object):
         }
         """
         params = [asset_id]
-        return self.post_request(self.generate_payloade("getassetstate", params))
+        return self.post_request(self.generate_payload("getassetstate", params))
 
     def getbalance(self, asset_id):
         """
@@ -161,7 +176,7 @@ class NeoApi(object):
         Once the deal is confirmed, the two will become equal.
         """
         params = [asset_id]
-        return self.post_request(self.generate_payloade("getbalance", params))
+        return self.post_request(self.generate_payload("getbalance", params))
 
     def getbestblockhash(self):
         """
@@ -183,7 +198,7 @@ class NeoApi(object):
         result: The hash of the tallest block in the main chain.
         """
         params = []
-        return self.post_request("getbestblockhash", params)
+        return self.post_request(self.generate_payload("getbestblockhash", params))
 
     def getblock(self, index, verbose=0):
         """
@@ -224,10 +239,10 @@ class NeoApi(object):
         }
         """
         if verbose not in [0,1]:
-            raise api_error.APIParamError(verbose)
+            raise APIParamError(verbose)
         else:
             params = [index, 1] if verbose else [index]
-            return self.post_request("getblock", params)
+            return self.post_request(self.generate_payload("getblock", params))
 
     def getblockcount(self):
         """
@@ -248,7 +263,7 @@ class NeoApi(object):
          }
         """
         params = []
-        return self.post_request(self.generate_payloade("getblockcount", params))
+        return self.post_request(self.generate_payload("getblockcount", params))
 
     def getblockhash(self, index):
         """
@@ -266,7 +281,7 @@ class NeoApi(object):
         }
         """
         params = [index]
-        return self.post_request(self.generate_payloade("getblockhash", params))
+        return self.post_request(self.generate_payload("getblockhash", params))
 
     def getconnectioncount(self):
         """
@@ -287,7 +302,7 @@ class NeoApi(object):
         }
         """
         params = []
-        return self.post_request(self.generate_payloade("getconnectioncount",params))
+        return self.post_request(self.generate_payload("getconnectioncount",params))
 
     def getrawmempool(self):
         """
@@ -310,7 +325,7 @@ class NeoApi(object):
 
         """
         params = []
-        return self.post_request(self.generate_payloade("getrawmempool", params))
+        return self.post_request(self.generate_payload("getrawmempool", params))
 
     def getrawtransaction(self, txid, verbose=0):
         """
@@ -345,10 +360,10 @@ class NeoApi(object):
 
         """
         if verbose not in [0,1]:
-            raise api_error.APIParamError(verbose)
+            raise APIParamError(verbose)
         else:
             params = [txid, 1] if verbose else [txid]
-            return self.post_request("getrawtransaction", params)
+            return self.post_request(self.generate_payload("getrawtransaction", params))
 
     def gettxout(self, txid, n=0):
         """
@@ -378,7 +393,7 @@ class NeoApi(object):
 
         """
         params = [txid, n]
-        return self.post_request(self.generate_payloade("gettxout", params))
+        return self.post_request(self.generate_payload("gettxout", params))
 
     def sendrawtransaction(self, hex):
         """
@@ -407,7 +422,7 @@ class NeoApi(object):
         }
         """
         params = [hex]
-        return self.post_request(self.generate_payloade("sendrawtransaction", params))
+        return self.post_request(self.generate_payload("sendrawtransaction", params))
 
     def sendtoaddress(self, asset_id, address, value, fee=0):
         """
@@ -468,5 +483,5 @@ class NeoApi(object):
         }
         """
         params = [asset_id, address, value, fee]
-        return self.post_request(self.generate_payloade("sendtoaddress", params))
+        return self.post_request(self.generate_payload("sendtoaddress", params))
 
