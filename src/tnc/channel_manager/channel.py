@@ -31,8 +31,6 @@ class Channel(ChannelFile, ChannelState):
     """
 
     """
-
-
     def __init__(self, sender, receiver, deposit, open_block_number):
         ChannelState.__init__(self, sender)
         ChannelFile.__init__(self, sender, receiver)
@@ -70,6 +68,7 @@ class Channel(ChannelFile, ChannelState):
                 raise ChannelFileNoExist
         else:
             raise ChannelExistInDb
+        return self.channel_name
 
     @check_channel_exist
     def delete(self):
@@ -103,7 +102,20 @@ class Channel(ChannelFile, ChannelState):
                 channel.balance -= count
                 channel.mtime = time.time()
                 self.update_channel(**channel.to_dict)
-        return None
+        return True
+
+    def get_asset_proof(self):
+        channels = self.read_channel()
+        channel_info = Channel.from_dict(channels[-1])
+        if channel_info:
+            return {"sender": self.sender,
+        "receiver": self.receiver,
+        "deposit" : self.deposit,
+        "open_block_number" : self.open_block_number,
+        "transcount": self.deposit -  channel_info.balance,
+        "nonce": channel_info.nonce
+                    }
+
 
     @check_channel_exist
     def check_closed(self):

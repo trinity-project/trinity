@@ -8,6 +8,58 @@ from tnc.exception import ChannelDBAddFail, ChannelDBUpdateFail, ChannelExist
 
 Base = declarative_base()
 
+class ChannelAddrDataBase(Base):
+    """
+    channel address table
+
+    """
+    __tablename__ = 'channel address database'
+
+    address = Column(String(256), primary_key=True)
+    signature = Column(String())
+    public_key = Column(String())
+
+
+class ChannelAddress(object):
+    """
+    channel address managment
+    """
+
+    def __init__(self):
+        pass
+
+    def add_address(self, address, signature="NULL", public_key="NULL"):
+        with OpenDataBase(DBSession) as ad:
+            try:
+                ad.add(ChannelAddrDataBase(address=address, signature=signature, public_key= public_key))
+                ad.commit()
+            except:
+                raise ChannelDBAddFail
+        return None
+
+    def delete_address(self, address):
+        with OpenDataBase(DBSession) as ad:
+            try:
+                ad.query(ChannelAddrDataBase).filter(ChannelAddrDataBase.address == address).delete()
+                ad.commit()
+            except:
+                raise
+        return None
+
+    def query_address(self, address):
+        with OpenDataBase(DBSession) as ad:
+            return ad.query(ChannelAddrDataBase).filter(ChannelAddrDataBase.address == address).one()
+
+    def update_address(self, address, signature, public_key):
+        with OpenDataBase(DBSession) as ad:
+            try:
+                ad.merge(ChannelAddrDataBase(address=address, signature=signature, public_key= public_key))
+                ad.commit()
+            except:
+                raise ChannelDBUpdateFail
+        return None
+
+
 class ChannelDatabase(Base):
     """
     channel table
@@ -24,6 +76,9 @@ class ChannelDatabase(Base):
 engine = create_engine('sqlite:////tmp/test.db')
 DBSession = sessionmaker(bind=engine)
 Base.metadata.create_all(engine)
+
+
+
 
 class OpenDataBase(object):
     def __init__(self, db):
@@ -140,6 +195,16 @@ class ChannelFile(object):
 
     def check_channelfile(self):
         return os.path.exists(self.channel_file_name)
+
+
+if __name__ == "__main__":
+    def regist_address(address):
+        if ChannelAddress().add_address(address):
+            return 0
+        else:
+            return 101
+    regist_address("address")
+
 
 
 

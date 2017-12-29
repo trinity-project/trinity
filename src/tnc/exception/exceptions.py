@@ -1,4 +1,17 @@
+
 class TrException(Exception):
+    def __init__(self, *value):
+        self.value = value
+
+    def __str__(self):
+        return repr(self) + repr(self.value)
+
+
+class UnKnownType(TrException):
+    pass
+
+
+class NoChannelFound(TrException):
     pass
 
 
