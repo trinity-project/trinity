@@ -6,7 +6,7 @@ as they are seen in the received blocks.
 """
 import threading
 import json
-from time import sleep
+from time import sleep,time
 import requests
 from logzero import logger
 from twisted.internet import reactor, task
@@ -64,8 +64,16 @@ def custom_background_code():
         session.add(localBlockCountInstace)
         session.commit()
 
-    logger.info("Block %s/ %s / %s", local_block_count,str(Blockchain.Default().Height), str(Blockchain.Default().HeaderHeight))
+    logger.info("Block %s/ %s ", local_block_count,str(Blockchain.Default().HeaderHeight))
+    t1=int(time())
+
+
     while True:
+        t2=int(time())
+        tx=t2-t1
+        if tx==3:
+            t1=t2
+            logger.info("Block %s/ %s ", local_block_count, str(Blockchain.Default().HeaderHeight))
         chain_block_count=get_block_count()
         if local_block_count<chain_block_count-1:
             txs=get_block_txs(local_block_count)
@@ -82,7 +90,7 @@ def custom_background_code():
                         for vin in tx_info["vin"]:
                             class_instacce=session.query(Vout).filter(Vout.tx_id==vin["txid"],Vout.vout_number==vin["vout"]).one()
                             if class_instacce:
-                                print ("delete vout tx_id:{0} ".format(class_instacce.tx_id))
+                                # print ("delete vout tx_id:{0} ".format(class_instacce.tx_id))
                                 session.delete(class_instacce)
                                 session.commit()
 
@@ -94,7 +102,7 @@ def custom_background_code():
 
         else:
             sleep(15)
-            logger.info("Block %s/ %s / %s", local_block_count,str(Blockchain.Default().Height), str(Blockchain.Default().HeaderHeight))
+            logger.info("Block %s/ %s ", local_block_count, str(Blockchain.Default().HeaderHeight))
 
 
 
