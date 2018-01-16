@@ -10,7 +10,7 @@ import requests
 
 from .api_error import APIParamError, APIResultError
 
-from tnc.utils.common import CommonItem
+from utils.common import CommonItem
 
 
 class CommonResult(CommonItem):

@@ -1,7 +1,7 @@
 import time
-from tnc.channel_manager.state import ChannelFile, ChannelState
+from channel_manager.state import ChannelFile, ChannelState
 from enum import IntEnum
-from tnc.exception import (
+from exception import (
     ChannelFileNoExist,
     ChannelExistInDb,
     ChannleNotInCloseState,

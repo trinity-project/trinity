@@ -1,10 +1,10 @@
 import logging
 
-from tnc.channel_manager.channel import Channel, State
-from tnc.channel_manager import blockchain
-from tnc.channel_manager.state import ChannelDatabase, ChannelFile, ChannelState, ChannelAddress, OpenDataBase, DBSession
-from tnc.exception import UnKnownType, NoChannelFound, ChannelNotInOpenState,ChannelFileNoExist,ChannelExistInDb
-from tnc.utils.common import CommonItem
+from  channel_manager.channel import Channel, State
+from  channel_manager import blockchain
+from  channel_manager.state import ChannelDatabase, ChannelFile, ChannelState, ChannelAddress, OpenDataBase, DBSession
+from  exception import UnKnownType, NoChannelFound, ChannelNotInOpenState,ChannelFileNoExist,ChannelExistInDb
+from  utils.common import CommonItem
 
 
 log = logging.getLogger(__name__)

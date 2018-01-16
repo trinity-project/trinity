@@ -1,9 +1,9 @@
 from flask import Flask
 from flask_jsonrpc import JSONRPC
-from tnc.proxy.state import State
-from tnc.channel_manager.state import ChannelAddress
-from tnc.exception import ChannelDBAddFail
-from tnc.channel_manager import manager
+from proxy.state import State
+from channel_manager.state import ChannelAddress
+from exception import ChannelDBAddFail
+from channel_manager import manager
 
 
 app = Flask(__name__)
