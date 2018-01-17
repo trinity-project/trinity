@@ -1,7 +1,7 @@
 import unittest
 import time
-from tnc.channel_manager.state import ChannelState,ChannelFile
-from tnc.channel_manager.channel import State
+from channel_manager.state import ChannelState,ChannelFile
+from channel_manager.channel import State
 
 
 class TestChannelState(unittest.TestCase):

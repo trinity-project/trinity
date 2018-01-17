@@ -3,8 +3,8 @@ from sqlalchemy.orm import sessionmaker
 from sqlalchemy.ext.declarative import declarative_base
 import os
 import hashlib
-from tnc.crypto import crypto_channel, uncryto_channel
-from tnc.exception import ChannelDBAddFail, ChannelDBUpdateFail, ChannelExist
+from crypto import crypto_channel, uncryto_channel
+from exception import ChannelDBAddFail, ChannelDBUpdateFail, ChannelExist
 
 Base = declarative_base()
 
