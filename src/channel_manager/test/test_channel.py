@@ -1,5 +1,5 @@
-from tnc.channel_manager.channel import Channel
-from tnc.channel_manager.test import test_state
+from channel_manager.channel import Channel
+from channel_manager.test import test_state
 import unittest
 import time
 
