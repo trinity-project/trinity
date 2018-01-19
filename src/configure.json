@@ -1,5 +1,7 @@
 {
   "DBFile":"",
   "BlockNet":"",
-  "TrinityNet":""
+  "TrinityNet":"",
+  "TNC":"0x000000000000000000000000000",
+  "ContractAddr":"0x1111111111111111111111"
 }

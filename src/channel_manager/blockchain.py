@@ -14,3 +14,6 @@ def setting_transection(sender, receiver, channel_name):
 def send_raw_transection(hax):
     return NeoServer.sendrawtransaction(hax)
 
+
+def NewTransection(asset_type,from_addr, to_addr, count):
+    return "Signature"

@@ -5,6 +5,9 @@ from  channel_manager import blockchain
 from  channel_manager.state import ChannelDatabase, ChannelFile, ChannelState, ChannelAddress, OpenDataBase, DBSession
 from  exception import UnKnownType, NoChannelFound, ChannelNotInOpenState,ChannelFileNoExist,ChannelExistInDb
 from  utils.common import CommonItem
+from configure import Configure
+
+Contract_addr = Configure["ContractAddr"]
 
 
 log = logging.getLogger(__name__)
@@ -16,7 +19,7 @@ class ChannelManagent(Channel):
     """
 
     def __init__(self, sender, receiver, deposit, open_block_number):
-        super(ChannelManagent, self).__init__(sender, receiver, deposit, open_block_number)
+        super(ChannelManagent, self).__init__(sender, receiver)
         self.channel_item = CommonItem.from_dict(self.to_dict)
 
     def registe_channel(self):
@@ -52,6 +55,43 @@ class ChannelManagent(Channel):
             return True
         else:
             return False
+
+def regist_channel(sender_addr, receiver_addr, asset_type,deposit, open_blockchain):
+    """
+
+    :param sender_addr:
+    :param receiver_addr:
+    :param asset_type:
+    :param deposit:
+    :param open_blockchain:
+    :return:
+    """
+    channel = Channel(sender_addr,receiver_addr)
+    if channel.find_channel():
+        if channel.sender == sender_addr and channel.receiver == receiver_addr:
+            if channel.state_in_database != State.OPEN:
+                return {"channel_name":channel.channel_name,
+                        "trad_info": None}
+            else:
+                raw_tans = blockchain.NewTransection(asset_type, sender_addr, Contract_addr, int(deposit))
+                channel.update_channel_state(state=State.OPENING)
+                return {"channel_name": channel.channel_name,
+                        "trad_info": raw_tans}
+        elif channel.sender == receiver_addr and channel.receiver == sender_addr:
+            raw_tans = blockchain.NewTransection(asset_type, receiver_addr, Contract_addr, int(deposit))
+            channel.update_channel_state(state=State.OPENING)
+            return {"channel_name": channel.channel_name,
+                    "trad_info": raw_tans}
+
+        
+
+
+
+
+
+
+
+
 
 
 def get_channel_from_channel_name(channel_name):

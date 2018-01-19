@@ -25,9 +25,8 @@ def regist_address(address, port = "20556"):
 
 
 @jsonrpc.method("registchannle")
-def regist_channle(sender_addr, receiver_addr, deposit, open_blockchain):
-    return manager.ChannelManagent(sender=sender_addr, receiver=receiver_addr, deposit=deposit,
-                               open_block_number=open_blockchain).registe_channel()
+def regist_channle(sender_addr, receiver_addr, asset_type,deposit, open_blockchain):
+    return manager.regist_channel(sender_addr, receiver_addr, asset_type,deposit, open_blockchain)
 
 
 @jsonrpc.method("addtochannel")
@@ -44,10 +43,6 @@ def get_channel_state(self, sender_addr, receiver_addr):
 def sender_to_receiver(sender_addr, receiver_addr, count):
     return manager.sender_to_receiver(sender_addr, receiver_addr, count)
 
-
-@jsonrpc.method("getassetproof")
-def get_asset_proof(channel_name):
-    return manager.get_asset_proof(channel_name)
 
 
 @jsonrpc.method("closechannel")
