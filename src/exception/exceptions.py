@@ -101,3 +101,7 @@ class InsecureStateFile(StateFileException):
 
 class NetworkIdMismatch(StateFileException):
     pass
+
+
+class TransCanNotBelessThanZ(StateFileException):
+    pass

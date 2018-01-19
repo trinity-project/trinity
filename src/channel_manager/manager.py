@@ -30,7 +30,6 @@ class ChannelManagent(Channel):
         if type not in ["sender", "receiver"]:
             raise UnKnownType("%s not sender or receiver" %type)
         else:
-            ChannelAddress().update_address(address=address, signature=signature, public_key=public_key)
             if type == "sender":
                 result = blockchain.add_to_channel(address=address, type=type, channel_name = channel_name, deposit=self.channel_item.deposit,
                                         open_block_number=self.channel_item.open_bolck_number)
@@ -38,7 +37,6 @@ class ChannelManagent(Channel):
                     return self.channel_name
                 else:
                     return None
-
 
     def close_channel(self):
         self.update_channel_to_database(receiver=self.receiver, deposit=self.deposit,
@@ -56,7 +54,6 @@ class ChannelManagent(Channel):
             return False
 
 
-
 def get_channel_from_channel_name(channel_name):
     """
 
@@ -70,7 +67,6 @@ def get_channel_from_channel_name(channel_name):
                                    open_block_number=match.open_block_number)
         except:
             return None
-
 
 
 def add_to_channel(address, type, channel_name, signature, public_key):
@@ -90,13 +86,15 @@ def add_to_channel(address, type, channel_name, signature, public_key):
         raise NoChannelFound
 
 
-def get_channel_state(sender_addr, receiver_addr):
+
+def get_channel_state(address):
     """
 
     :param sender_addr:
     :param receiver_addr:
     :return:
     """
+
     return ChannelState(sender_addr).state_in_database
 
 
@@ -112,6 +110,7 @@ def sender_to_receiver(sender_addr, receiver_addr, count):
     channel = get_channel_from_channel_name(channel_name)
     return channel.sender_to_receiver(count)
 
+
 def get_asset_proof(channel_name):
     """
 
@@ -120,6 +119,7 @@ def get_asset_proof(channel_name):
     """
     channel = get_channel_from_channel_name(channel_name)
     return channel.get_asset_proof()
+
 
 def close_channel(channel_name):
     """

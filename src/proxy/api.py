@@ -1,20 +1,23 @@
-from flask import Flask
+from flask import Flask, request
 from flask_jsonrpc import JSONRPC
 from proxy.state import State
 from channel_manager.state import ChannelAddress
 from exception import ChannelDBAddFail
 from channel_manager import manager
+from flask_cors import CORS
 
 
 app = Flask(__name__)
+CORS(app)
 jsonrpc = JSONRPC(app, "/")
 
 
 @jsonrpc.method("registeaddress")
-def regist_address(address):
+def regist_address(address, port = "20556"):
+    ip_info = request.headers.getlist("X-Forwarded-For")[0] if request.headers.getlist("X-Forwarded-For") else request.remote_addr
     channel_address = ChannelAddress()
     try:
-        channel_address.add_address(address)
+        channel_address.add_address(address, ip=ip_info, port= port)
     except ChannelDBAddFail:
         channel_address.delete_address(address)
         return State.raise_fail(101, "Can Not Add The Address")
