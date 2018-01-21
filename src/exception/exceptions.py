@@ -105,3 +105,6 @@ class NetworkIdMismatch(StateFileException):
 
 class TransCanNotBelessThanZ(StateFileException):
     pass
+
+class QureyRoleNotCorrect(TrException):
+    pass

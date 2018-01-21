@@ -4,7 +4,7 @@ from sqlalchemy.ext.declarative import declarative_base
 import os
 import hashlib
 from crypto import crypto_channel, uncryto_channel
-from exception import ChannelDBAddFail, ChannelDBUpdateFail, ChannelExist
+from exception import ChannelDBAddFail, ChannelDBUpdateFail, ChannelExist, QureyRoleNotCorrect
 
 Base = declarative_base()
 
@@ -33,34 +33,30 @@ class ChannelAddress(object):
         pass
 
     def add_address(self, address, ip="NULL", port="NULL", public_key="NULL"):
-        with OpenDataBase(DBSession) as ad:
-            try:
-                ad.add(ChannelAddrDataBase(address=address, ip=ip, port=port, public_key= public_key))
-                ad.commit()
-            except:
-                raise ChannelDBAddFail
+        try:
+            Session.add(ChannelAddrDataBase(address=address, ip=ip, port=port, public_key= public_key))
+            Session.commit()
+        except:
+            raise ChannelDBAddFail
         return None
 
     def delete_address(self, address):
-        with OpenDataBase(DBSession) as ad:
-            try:
-                ad.query(ChannelAddrDataBase).filter(ChannelAddrDataBase.address == address).delete()
-                ad.commit()
-            except:
-                raise
+        try:
+            Session.query(ChannelAddrDataBase).filter(ChannelAddrDataBase.address == address).delete()
+            Session.commit()
+        except:
+            raise
         return None
 
     def query_address(self, address):
-        with OpenDataBase(DBSession) as ad:
-            return ad.query(ChannelAddrDataBase).filter(ChannelAddrDataBase.address == address).one()
+        return Session.query(ChannelAddrDataBase).filter(ChannelAddrDataBase.address == address).one()
 
     def update_address(self, address, ip, port, public_key="NULL"):
-        with OpenDataBase(DBSession) as ad:
-            try:
-                ad.merge(ChannelAddrDataBase(address=address, ip=ip, port=port, public_key= public_key))
-                ad.commit()
-            except:
-                raise ChannelDBUpdateFail
+        try:
+            Session.merge(ChannelAddrDataBase(address=address, ip=ip, port=port, public_key= public_key))
+            Session.commit()
+        except:
+            raise ChannelDBUpdateFail
         return None
 
 
@@ -101,6 +97,10 @@ class ChannelState(object):
             return True if self.match else False
         except:
             return False
+
+    @property
+    def stateinDB(self):
+        return self.match.state
 
     @property
     def senderinDB(self):
@@ -194,18 +194,28 @@ class ChannelFile(object):
         return os.path.exists(self.channel_file_name)
 
 
+def query_channel_from_address(address, role="both"):
+    if role not in ("both", "sender", "receiver"):
+        raise QureyRoleNotCorrect
+    if role == "sender":
+        return Session.query(ChannelDatabase).filter(ChannelDatabase.sender == address).all()
+    elif role ==  "receiver":
+        return  Session.query(ChannelDatabase).filter(ChannelDatabase.receiver == address).all()
+    else:
+        result = Session.query(ChannelDatabase).filter(ChannelDatabase.sender == address).all()
+        result.extend(Session.query(ChannelDatabase).filter(ChannelDatabase.receiver == address).all())
+        return result
+
 if __name__ == "__main__":
-    def regist_address(address):
-        if ChannelAddress().add_address(address):
-            return 0
-        else:
-            return 101
-    regist_address("address")
-
-
-
-
-
+    from channel_manager.channel import State
+    channel =  ChannelState("testchannlename")
+    #channel.add_channle_to_database(sender="test_sender", sender_deposit=10, receiver="test_receiver", receiver_deposit=20, channel_name="testchannlenametest",
+     #                               open_block_number=1000, settle_timeout=100, state=State.OPENING)
+    #channel.add_channle_to_database(sender="test_sender", sender_deposit=10, receiver="test_receiver",
+      #                              receiver_deposit=20, channel_name="testchannelname",
+     #                               open_block_number=1000, settle_timeout=100, state=State.OPENING)
+    result = query_channel_from_address("test_sender")
+    print(result)
 
 
 

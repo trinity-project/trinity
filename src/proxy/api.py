@@ -29,25 +29,24 @@ def regist_channle(sender_addr, receiver_addr, asset_type,deposit, open_blockcha
     return manager.regist_channel(sender_addr, receiver_addr, asset_type,deposit, open_blockchain)
 
 
-@jsonrpc.method("addtochannel")
-def add_to_channel(addr, type, channel_name, signature, public_key):
-    return manager.add_to_channel
-
-
 @jsonrpc.method("getchannelstate")
-def get_channel_state(self, sender_addr, receiver_addr):
-    return manager.get_channel_state(sender_addr, receiver_addr)
+def get_channel_state(self, local_address):
+    return manager.get_channel_state(local_address)
+
+
+@jsonrpc.method("sendrawtransaction")
+def send_raw_transaction(sender_address,channel_name, hex):
+    return manager.send_raw_transaction(sender_address, channel_name, hex)
 
 
 @jsonrpc.method("sendertoreceiver")
-def sender_to_receiver(sender_addr, receiver_addr, count):
-    return manager.sender_to_receiver(sender_addr, receiver_addr, count)
-
+def sender_to_receiver(sender_addr, receiver_addr, channel_name, asset_type, count):
+    return manager.sender_to_receiver(sender_addr, receiver_addr, channel_name, asset_type, count)
 
 
 @jsonrpc.method("closechannel")
-def close_channel(channel_name):
-    if manager.close_channel(channel_name):
+def close_channel(sender_addr, receiver_addr,channel_name):
+    if manager.close_channel(sender_addr, receiver_addr,channel_name):
         return State.success()
     else:
         return State.raise_fail(102,"Close Channel Fail")

@@ -1,5 +1,5 @@
 import time
-from channel_manager.state import ChannelFile, ChannelState
+from channel_manager.state import ChannelFile, ChannelState, query_channel_from_address
 from enum import IntEnum
 from exception import (
     ChannelFileNoExist,
@@ -160,7 +160,7 @@ class Channel(ChannelFile, ChannelState):
              "balance": 0,
              }
         ]
-        if count <=0 :
+        if count <= 0:
             raise TransCanNotBelessThanZ
         if not self.state_in_database == State.OPEN:
             raise ChannelNotInOpenState
@@ -232,6 +232,11 @@ class Channel(ChannelFile, ChannelState):
     def has_channel(self):
         return self.find_channel()
 
+
+
+def get_channelnames_via_address(address):
+    channel_names =  query_channel_from_address(address)
+    return [i.channel_name for i in channel_names]
 
 
 

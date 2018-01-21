@@ -94,7 +94,7 @@ class NeoApi(object):
         if isinstance(address, str) and len(address) == 34:
             return self.post_request(self.generate_payload("getaccountstate",params))
         else:
-            raise api_error.APIParamError(address)
+            raise APIParamError(address)
 
     def getassetstate(self, asset_id):
         """
