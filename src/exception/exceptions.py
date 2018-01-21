@@ -101,3 +101,10 @@ class InsecureStateFile(StateFileException):
 
 class NetworkIdMismatch(StateFileException):
     pass
+
+
+class TransCanNotBelessThanZ(StateFileException):
+    pass
+
+class QureyRoleNotCorrect(TrException):
+    pass
