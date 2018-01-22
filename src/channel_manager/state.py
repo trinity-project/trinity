@@ -102,7 +102,6 @@ class ChannelState(object):
     def find_channel(self):
         try:
             self.match = Session.query(ChannelDatabase).filter(ChannelDatabase.channel_name == self.channelname).one()
-            print(self.match)
             return True if self.match else False
         except:
             return False
@@ -158,8 +157,9 @@ class ChannelState(object):
         return None
 
     def update_channel_state(self, state):
-        self.find_channel()
-        self.match.state = state.value
+        ch = Session.query(ChannelDatabase).filter(ChannelDatabase.channel_name == self.channelname).one()
+        print(ch)
+        ch.state = state.value
         Session.commit()
         #return self.update_channel_to_database(state=state.value)
 
