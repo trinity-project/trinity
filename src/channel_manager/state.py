@@ -199,12 +199,11 @@ def query_channel_from_address(address, role="both"):
         raise QureyRoleNotCorrect
     if role == "sender":
         return Session.query(ChannelDatabase).filter(ChannelDatabase.sender == address).all()
-    elif role ==  "receiver":
+    elif role == "receiver":
         return  Session.query(ChannelDatabase).filter(ChannelDatabase.receiver == address).all()
     else:
         result = Session.query(ChannelDatabase).filter(ChannelDatabase.sender == address).all()
         result.extend(Session.query(ChannelDatabase).filter(ChannelDatabase.receiver == address).all())
-        print(result[0].sender)
         return result
 
 
