@@ -102,6 +102,7 @@ class ChannelState(object):
     def find_channel(self):
         try:
             self.match = Session.query(ChannelDatabase).filter(ChannelDatabase.channel_name == self.channelname).one()
+            print(self.match)
             return True if self.match else False
         except:
             return False
