@@ -34,7 +34,11 @@ class ChannelAddress(object):
 
     def add_address(self, address, ip="NULL", port="NULL", public_key="NULL"):
         try:
-            Session.add(ChannelAddrDataBase(address=address, ip=ip, port=port, public_key= public_key))
+            if self.query_address(address):
+                print("query_address get %s" %address)
+                Session.merge(ChannelAddrDataBase(address=address, ip=ip, port=port, public_key= public_key))
+            else:
+                Session.add(ChannelAddrDataBase(address=address, ip=ip, port=port, public_key= public_key))
             Session.commit()
         except:
             raise ChannelDBAddFail
@@ -49,7 +53,11 @@ class ChannelAddress(object):
         return None
 
     def query_address(self, address):
-        return Session.query(ChannelAddrDataBase).filter(ChannelAddrDataBase.address == address).one()
+        try:
+            result = Session.query(ChannelAddrDataBase).filter(ChannelAddrDataBase.address == address).one()
+        except:
+            return None
+        return result
 
     def update_address(self, address, ip, port, public_key="NULL"):
         try:
@@ -149,7 +157,12 @@ class ChannelState(object):
         return None
 
     def update_channel_state(self, state):
-        return self.update_channel_to_database(state=state)
+        print(self.channelname)
+        ch = Session.query(ChannelDatabase).filter(ChannelDatabase.channel_name == self.channelname).one()
+        print(ch)
+        ch.state = state.value
+        Session.commit()
+        #return self.update_channel_to_database(state=state.value)
 
     def delete_channle_in_database(self):
         try:
@@ -199,24 +212,23 @@ def query_channel_from_address(address, role="both"):
         raise QureyRoleNotCorrect
     if role == "sender":
         return Session.query(ChannelDatabase).filter(ChannelDatabase.sender == address).all()
-    elif role ==  "receiver":
+    elif role == "receiver":
         return  Session.query(ChannelDatabase).filter(ChannelDatabase.receiver == address).all()
     else:
         result = Session.query(ChannelDatabase).filter(ChannelDatabase.sender == address).all()
         result.extend(Session.query(ChannelDatabase).filter(ChannelDatabase.receiver == address).all())
-        print(result[0].sender)
         return result
 
 
 if __name__ == "__main__":
     from channel_manager.channel import State
-    channel =  ChannelState("testchannlename")
+    channel =  ChannelAddress()
     #channel.add_channle_to_database(sender="test_sender", sender_deposit=10, receiver="test_receiver", receiver_deposit=20, channel_name="testchannlenametest",
      #                               open_block_number=1000, settle_timeout=100, state=State.OPENING)
     #channel.add_channle_to_database(sender="test_sender", sender_deposit=10, receiver="test_receiver",
       #                              receiver_deposit=20, channel_name="testchannelname",
      #                               open_block_number=1000, settle_timeout=100, state=State.OPENING)
-    result = query_channel_from_address("test_sender")
+    result = channel.add_address("test_sender1dt11","10.10.101.01")
     print(result)
 
 

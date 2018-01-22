@@ -236,7 +236,7 @@ class Channel(ChannelFile, ChannelState):
 
 
 def get_channelnames_via_address(address):
-    return  query_channel_from_address(address)
+    return query_channel_from_address(address)
 
 
 
