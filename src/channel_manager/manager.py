@@ -28,7 +28,7 @@ def regist_channel(sender_addr, receiver_addr, asset_type,deposit, open_blockcha
         if channel.sender == sender_addr and channel.receiver == receiver_addr:
             if channel.state_in_database != State.OPEN:
                 return {"channel_name":channel.channel_name,
-                        "trad_info": "Channel exist but in state %s" %channel.state_in_database}
+                        "trad_info": "Channel exist but in state %s" %str(State(channel.state_in_database))}
             else:
                 raw_tans = blockchain.NewTransection(asset_type, sender_addr, Contract_addr, int(deposit))
                 channel.update_channel_to_database(sender_deposit=channel.sender_deposit + int(deposit))
