@@ -204,7 +204,9 @@ def query_channel_from_address(address, role="both"):
     else:
         result = Session.query(ChannelDatabase).filter(ChannelDatabase.sender == address).all()
         result.extend(Session.query(ChannelDatabase).filter(ChannelDatabase.receiver == address).all())
+        print(result[0].sender)
         return result
+
 
 if __name__ == "__main__":
     from channel_manager.channel import State

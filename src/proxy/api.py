@@ -30,7 +30,7 @@ def regist_channle(sender_addr, receiver_addr, asset_type,deposit, open_blockcha
 
 
 @jsonrpc.method("getchannelstate")
-def get_channel_state(self, local_address):
+def get_channel_state(local_address):
     return manager.get_channel_state(local_address)
 
 
