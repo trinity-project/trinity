@@ -16,4 +16,5 @@ def send_raw_transection(hax):
 
 
 def NewTransection(asset_type,from_addr, to_addr, count):
-    return "Signature"
+    print("Signature")
+    return ""

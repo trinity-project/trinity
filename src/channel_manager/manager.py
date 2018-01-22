@@ -42,7 +42,7 @@ def regist_channel(sender_addr, receiver_addr, asset_type,deposit, open_blockcha
             return {"channel_name": channel.channel_name,
                     "trad_info": raw_tans}
     else:
-        channel_name = channel.create(sender_deposit=int(deposit),reciever_deposit=0,open_block_number=open_blockchain,settle_timeout=10)
+        channel_name = channel.create(sender_deposit=int(deposit),reciever_deposit=0,open_block_number=int(open_blockchain),settle_timeout=10)
         raw_tans = blockchain.NewTransection(asset_type, sender_addr, Contract_addr, int(deposit))
         return {"channel_name":channel_name,
                 "trad_info":raw_tans}
@@ -58,6 +58,9 @@ def send_raw_transaction(sender_address, channel_name, hex):
     """
 
     blockchain.send_raw_transection(hex)
+    sender,receiver = split_channel_name(channel_name)
+    ch = Channel(sender, receiver)
+    ch.update_channel_state(State.OPEN)
     return None
 
 
