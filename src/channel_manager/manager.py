@@ -105,9 +105,9 @@ def sender_to_receiver(sender_addr, receiver_addr, channel_name, asset_type, cou
     sender,receiver = split_channel_name(channel_name)
     ch = Channel(sender,receiver)
     if sender_addr == ch.sender and receiver_addr == ch.receiver:
-        return ch.sender_to_receiver(count)
+        return ch.sender_to_receiver(int(count))
     elif receiver_addr == ch.sender and sender_addr == ch.receiver:
-        return ch.receiver_to_sender(count)
+        return ch.receiver_to_sender(int(count))
     else:
         return "Error:Address and Channelname not match"
 
