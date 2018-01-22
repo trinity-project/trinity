@@ -1,2 +1,4 @@
-def split_bind_channel_name(bind_channel_name):
-    return bind_channel_name[::2], bind_channel_name[1::2]
+def split_channel_name(channel_name):
+    sender_addr = channel_name[::2]
+    receiver_addr = channel_name[1::2]
+    return sender_addr, receiver_addr

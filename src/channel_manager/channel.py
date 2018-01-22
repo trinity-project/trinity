@@ -41,7 +41,7 @@ class Channel(ChannelFile, ChannelState):
     @property
     def channel_name(self):
         channel_name = "".join(map(lambda x, y: x+y, self.sender, self.receiver))
-        peer_channel_name=  "".join(map(lambda x, y: x+y, self.receiver, self.sender))
+        peer_channel_name= "".join(map(lambda x, y: x+y, self.receiver, self.sender))
         if ChannelState(peer_channel_name).find_channel():
             return peer_channel_name
         else:
@@ -139,7 +139,7 @@ class Channel(ChannelFile, ChannelState):
         if not channels:
             channels = self.read_channel()
         trans_detail = channels[-1]["tx_detail"]
-        trans = filter(lambda x:x["address"] == address, trans_detail)
+        trans = [i for i in trans_detail if i["address"]==address]
         if trans:
             return int(trans[0]["balance"])
         else:
@@ -235,8 +235,7 @@ class Channel(ChannelFile, ChannelState):
 
 
 def get_channelnames_via_address(address):
-    channel_names =  query_channel_from_address(address)
-    return [i.channel_name for i in channel_names]
+    return  query_channel_from_address(address)
 
 
 
