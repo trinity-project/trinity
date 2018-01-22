@@ -53,7 +53,10 @@ class ChannelAddress(object):
         return None
 
     def query_address(self, address):
-        return Session.query(ChannelAddrDataBase).filter(ChannelAddrDataBase.address == address).one()
+        try:
+            Session.query(ChannelAddrDataBase).filter(ChannelAddrDataBase.address == address).one()
+        except:
+            return "query failed"
 
     def update_address(self, address, ip, port, public_key="NULL"):
         try:
