@@ -34,7 +34,10 @@ class ChannelAddress(object):
 
     def add_address(self, address, ip="NULL", port="NULL", public_key="NULL"):
         try:
-            Session.add(ChannelAddrDataBase(address=address, ip=ip, port=port, public_key= public_key))
+            if self.query_address(address):
+                Session.merge(ChannelAddrDataBase(address=address, ip=ip, port=port, public_key= public_key))
+            else:
+                Session.add(ChannelAddrDataBase(address=address, ip=ip, port=port, public_key= public_key))
             Session.commit()
         except:
             raise ChannelDBAddFail

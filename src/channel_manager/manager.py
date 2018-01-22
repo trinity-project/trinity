@@ -84,7 +84,7 @@ def get_channel_state(address):
                           ]
         channel_info  = {
             "channel_name": ch.channel_name,
-            "channel_state": ch.senderinDB,
+            "channel_state": str(State(ch.stateinDB)),
              "tx_info": channel_detail
         }
         channel_infos.append(channel_info)
