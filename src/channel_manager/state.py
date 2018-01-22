@@ -157,7 +157,10 @@ class ChannelState(object):
         return None
 
     def update_channel_state(self, state):
-        return self.update_channel_to_database(state=state.value)
+        self.find_channel()
+        self.match.state = state.value
+        Session.commit()
+        #return self.update_channel_to_database(state=state.value)
 
     def delete_channle_in_database(self):
         try:
