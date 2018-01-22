@@ -172,10 +172,10 @@ class Channel(ChannelFile, ChannelState):
                 raise NoBalanceEnough
             else:
                 transdetail[0]["trans"] = -int(count)
-            sender_balance -=int(count)
+                sender_balance -=int(count)
             transdetail[0]["balance"] = sender_balance
 
-            transdetail[1]["deposit"] = int(self.sender_deposit)
+            transdetail[1]["deposit"] = int(self.receiver_deposit)
             receiver_balance = self.get_address_balance(self.receiver, channels)
             transdetail[1]["trans"] = int(count)
             receiver_balance += int(count)
@@ -216,8 +216,11 @@ class Channel(ChannelFile, ChannelState):
 
             transdetail[1]["deposit"] = int(self.receiver_deposit)
             receiver_balance = self.get_address_balance(self.receiver, channels)
-            transdetail[1]["trans"] = -int(count)
-            receiver_balance -=int(count)
+            if count > sender_balance:
+                raise NoBalanceEnough
+            else:
+                transdetail[1]["trans"] = -int(count)
+                receiver_balance -=int(count)
             transdetail[1]["balance"] = receiver_balance
 
             tx_id = int(channels[-1]["tx_id"])
