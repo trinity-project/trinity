@@ -55,6 +55,7 @@ def close_channel(sender_addr, receiver_addr,channel_name):
 def get_balance_onchain(address,asset_type="TNC"):
     return manager.get_balance_onchain(address, asset_type)
 
+
 @jsonrpc.method("udpatedeposit")
 def update_deposit(address, channel_name, asset_type, value):
     return manager.update_deposit(address, channel_name, asset_type, value)

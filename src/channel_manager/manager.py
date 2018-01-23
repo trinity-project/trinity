@@ -52,6 +52,7 @@ def send_raw_transaction(sender_address, channel_name, hex):
     receiver_cache = ch.receiver_deposit_cache
     ch.update_channel_deposit(sender_deposit= sender_deposit+sender_cache,
                               receiver_deposit = receiver_deposit+receiver_cache)
+    ch.update_deposit_cache(sender_deposit_cache=0, receiver_deposit_cache=0)
     ch.update_channel_state(State.OPEN)
     return None
 
@@ -148,7 +149,7 @@ def update_deposit(address, channel_name, asset_type, value):
             channel.update_channel_state(state=State.OPENING)
             return {"channel_name": channel.channel_name,
                     "trad_info": raw_tans}
-    elif  channel.receiver == address:
+    elif channel.receiver == address:
         raw_tans = blockchain.NewTransection(asset_type, address, Contract_addr, int(value))
         channel.update_channel_to_database(receiver_deposit_cache=int(value))
         channel.update_channel_state(state=State.OPENING)
