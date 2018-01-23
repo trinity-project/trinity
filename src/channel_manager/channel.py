@@ -78,9 +78,10 @@ class Channel(ChannelFile, ChannelState):
         if not self.find_channel():
             self.create_channelfile(**transinfo)
             if self.check_channelfile():
-                self.add_channle_to_database(sender= self.sender, receiver= self.receiver, channel_name= self.channel_name,
-                                             state=State.OPENING, sender_deposit = sender_deposit,receiver_deposit= reciever_deposit,
-                                             open_block_number = open_block_number, settle_timeout=settle_timeout)
+                self.add_channle_to_database(sender= self.sender, receiver= self.receiver, channel_name=self.channel_name,
+                                             state=State.OPENING, sender_deposit=0,receiver_deposit=0,
+                                             open_block_number = open_block_number, sender_deposit_cache=sender_deposit,
+                                             receiver_deposit_cache=reciever_deposit,settle_timeout=settle_timeout)
             else:
                 raise ChannelFileNoExist
         else:
@@ -145,6 +146,16 @@ class Channel(ChannelFile, ChannelState):
         else:
             return None
 
+    def get_address_deposit(self, address, channels = None):
+        if not channels:
+            channels = self.read_channel()
+        trans_detail = channels[-1]["tx_detail"]
+        trans = [i for i in trans_detail if i["address"] == address]
+        if trans:
+            return int(trans[0]["deposit"])
+        else:
+            return None
+
     @check_channel_exist
     def sender_to_receiver(self, count):
         transdetail = [
@@ -166,8 +177,10 @@ class Channel(ChannelFile, ChannelState):
             raise ChannelNotInOpenState
         else:
             channels = self.read_channel()
+            sender_deposit = self.get_address_deposit(self.sender, channels)
             transdetail[0]["deposit"] = int(self.sender_deposit)
-            sender_balance = self.get_address_balance(self.sender, channels)
+            delta = int(self.sender_deposit) - int(sender_deposit)
+            sender_balance = self.get_address_balance(self.sender, channels) + delta
             if count > sender_balance:
                 raise NoBalanceEnough
             else:
@@ -175,8 +188,10 @@ class Channel(ChannelFile, ChannelState):
                 sender_balance -=int(count)
             transdetail[0]["balance"] = sender_balance
 
+            receiver_deposit = self.get_address_deposit(self.receiver, channels)
             transdetail[1]["deposit"] = int(self.receiver_deposit)
-            receiver_balance = self.get_address_balance(self.receiver, channels)
+            delta = int(self.receiver_deposit) - int(receiver_deposit)
+            receiver_balance = self.get_address_balance(self.receiver, channels) + delta
             transdetail[1]["trans"] = int(count)
             receiver_balance += int(count)
             transdetail[1]["balance"] = receiver_balance
@@ -235,7 +250,6 @@ class Channel(ChannelFile, ChannelState):
 
     def has_channel(self):
         return self.find_channel()
-
 
 
 def get_channelnames_via_address(address):
