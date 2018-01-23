@@ -10,7 +10,8 @@ from exception import (
     ChannelSettling,
     ChannelNotInOpenState,
     NoBalanceEnough,
-    TransCanNotBelessThanZ
+    TransCanNotBelessThanZ,
+    ChannelExist
 )
 
 class State(IntEnum):
@@ -76,7 +77,11 @@ class Channel(ChannelFile, ChannelState):
                       ]
         transinfo = {"tx_id":0,"tx_detail":transdetail}
         if not self.find_channel():
-            self.create_channelfile(**transinfo)
+            try:
+                self.create_channelfile(**transinfo)
+            except ChannelExist:
+                return self.channelname
+
             if self.check_channelfile():
                 self.add_channle_to_database(sender= self.sender, receiver= self.receiver, channel_name=self.channel_name,
                                              state=State.OPENING, sender_deposit=0,receiver_deposit=0,
