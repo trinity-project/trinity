@@ -31,13 +31,13 @@ def regist_channel(sender_addr, receiver_addr, asset_type,deposit, open_blockcha
                         "trad_info": "Channel exist but in state %s" %str(State(channel.state_in_database))}
             else:
                 raw_tans = blockchain.NewTransection(asset_type, sender_addr, Contract_addr, int(deposit))
-                channel.update_channel_to_database(sender_deposit=channel.sender_deposit + int(deposit))
+                channel.update_channel_to_database(sender_deposit_cache= int(deposit))
                 channel.update_channel_state(state=State.OPENING)
                 return {"channel_name": channel.channel_name,
                         "trad_info": raw_tans}
         elif channel.sender == receiver_addr and channel.receiver == sender_addr:
             raw_tans = blockchain.NewTransection(asset_type, receiver_addr, Contract_addr, int(deposit))
-            channel.update_channel_to_database(receiver_deposit=channel.receiver_deposit + int(deposit))
+            channel.update_channel_to_database(receiver_deposit_cache= int(deposit))
             channel.update_channel_state(state=State.OPENING)
             return {"channel_name": channel.channel_name,
                     "trad_info": raw_tans}
@@ -60,6 +60,12 @@ def send_raw_transaction(sender_address, channel_name, hex):
     blockchain.send_raw_transection(hex)
     sender,receiver = split_channel_name(channel_name)
     ch = Channel(sender, receiver)
+    sender_deposit = ch.sender_deposit
+    receiver_deposit = ch.receiver_deposit
+    sender_cache = ch.sender_deposit_cache
+    receiver_cache = ch.receiver_deposit_cache
+    ch.update_channel_deposit(sender_deposit= sender_deposit+sender_cache,
+                              receiver_deposit = receiver_deposit+receiver_cache)
     ch.update_channel_state(State.OPEN)
     return None
 
@@ -125,8 +131,8 @@ def close_channel(sender_addr, receiver_addr,channel_name):
     return ch.close()
 
 
-
-
+def get_balance_onchain(address, asset_type):
+    return blockchain.get_balance(address,Configure[asset_type.upper()])
 
 if __name__ == "__main__":
     result  = get_channel_state("AY8r7uG6rH7MRLhABALZvf8jM4bCSfn3YJ")

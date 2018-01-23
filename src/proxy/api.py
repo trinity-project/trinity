@@ -51,6 +51,10 @@ def close_channel(sender_addr, receiver_addr,channel_name):
     else:
         return State.raise_fail(102,"Close Channel Fail")
 
+@jsonrpc.method("getbalanceonchain")
+def get_balance_onchain(address,asset_type="TNC"):
+    return manager.get_balance_onchain(address, asset_type)
+
 
 
 if __name__ == '__main__':

@@ -83,6 +83,9 @@ class ChannelDatabase(Base):
     open_block_number = Column(Integer())
     start_block_number = Column(BigInteger())
     settle_timeout = Column(Integer())
+    sender_deposit_cache = Column(Float())
+    receiver_deposit_cache = Column(Float())
+
 
 engine = create_engine('sqlite:///'+DATABASE_PAHT)
 DBSession = sessionmaker(bind=engine)
@@ -123,6 +126,14 @@ class ChannelState(object):
         return self.match.receiver_deposit
 
     @property
+    def sender_deposit_cache(self):
+        return self.match.sender_deposit_cache
+
+    @property
+    def receiver_deposit_cache(self):
+        return self.match.receiver_deposit_cache
+
+    @property
     def sender_deposit(self):
         return self.match.sender_deposit
 
@@ -134,10 +145,14 @@ class ChannelState(object):
     def state_in_database(self):
         return self.match.state if self.match else None
 
-    def add_channle_to_database(self, sender, receiver, channel_name, state, sender_deposit,receiver_deposit,open_block_number, settle_timeout, start_block_number = 0):
+    def add_channle_to_database(self, sender, receiver, channel_name, state, sender_deposit,receiver_deposit,
+                                open_block_number, settle_timeout, sender_deposit_cache, receiver_deposit_cache,
+                                start_block_number = 0):
         channel_state = ChannelDatabase(receiver=receiver, sender= sender, channel_name=channel_name, state=state.value,
                                         sender_deposit=sender_deposit,receiver_deposit = receiver_deposit,
                                         open_block_number=open_block_number, settle_timeout = settle_timeout,
+                                        sender_deposit_cache=sender_deposit_cache,
+                                        receiver_deposit_cache=receiver_deposit_cache,
                                         start_block_number=start_block_number)
         try:
             Session.add(channel_state)
@@ -157,12 +172,34 @@ class ChannelState(object):
         return None
 
     def update_channel_state(self, state):
-        print(self.channelname)
         ch = Session.query(ChannelDatabase).filter(ChannelDatabase.channel_name == self.channelname).one()
-        print(ch)
-        ch.state = state.value
-        Session.commit()
+        if ch:
+            ch.state = state.value
+            Session.commit()
+            return True
+        else:
+            return False
         #return self.update_channel_to_database(state=state.value)
+
+    def update_deposit_cache(self,sender_deposit_cache, receiver_deposit_cache):
+        ch = Session.query(ChannelDatabase).filter(ChannelDatabase.channel_name == self.channelname).one()
+        if ch:
+            ch.sender_deposit_cache = sender_deposit_cache
+            ch.receiver_deposit_cache = receiver_deposit_cache
+            Session.commit()
+            return True
+        else:
+            return False
+
+    def update_channel_deposit(self, sender_deposit, receiver_deposit):
+        ch = Session.query(ChannelDatabase).filter(ChannelDatabase.channel_name == self.channelname).one()
+        if ch:
+            ch.sender_deposit = sender_deposit
+            ch.receiver_deposit = receiver_deposit
+            Session.commit()
+            return True
+        else:
+            return False
 
     def delete_channle_in_database(self):
         try:
