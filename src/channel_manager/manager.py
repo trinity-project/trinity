@@ -131,6 +131,9 @@ def close_channel(sender_addr, receiver_addr,channel_name):
     return ch.close()
 
 
+def get_balance_onchain(address, asset_type):
+    return blockchain.get_balance(address,Configure[asset_type.upper()])
+
 if __name__ == "__main__":
     result  = get_channel_state("AY8r7uG6rH7MRLhABALZvf8jM4bCSfn3YJ")
     print(result)

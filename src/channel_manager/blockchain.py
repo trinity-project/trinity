@@ -21,3 +21,6 @@ def NewTransection(asset_type,from_addr, to_addr, count):
     print("Signature")
     return ""
 
+
+def get_balance(address, asset_id):
+    return ""
