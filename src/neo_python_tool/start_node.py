@@ -15,7 +15,8 @@ from neo.Core.Blockchain import Blockchain
 from neo.Implementations.Blockchains.LevelDB.LevelDBBlockchain import LevelDBBlockchain
 from neo.Settings import settings
 
-from model import Session, Vout, LocalBlockCout
+
+from model import SessionBlock, Vout, LocalBlockCout
 
 
 # If you want the log messages to also be saved in a logfile, enable the
@@ -48,16 +49,16 @@ def custom_background_code():
             return tx_info
         return None
 
-    session = Session()
-    localBlockCount = session.query(LocalBlockCout).all()
+    sessionblock = SessionBlock()
+    localBlockCount = sessionblock.query(LocalBlockCout).all()
     if localBlockCount:
         localBlockCountInstace = localBlockCount[0]
         local_block_count = localBlockCountInstace.height
     else:
         local_block_count = 0
         localBlockCountInstace = LocalBlockCout(height=0)
-        session.add(localBlockCountInstace)
-        session.commit()
+        sessionblock.add(localBlockCountInstace)
+        sessionblock.commit()
 
     logger.info("Block %s/ %s ", local_block_count, str(Blockchain.Default().HeaderHeight))
     t1 = int(time())
@@ -79,21 +80,24 @@ def custom_background_code():
                         for number, vout in enumerate(tx_info["vout"]):
                             vout = Vout(tx_id=tx_info["txid"], address=vout["ScriptHash"], asset_id=vout["AssetId"],
                                         vout_number=number, value=vout["Value"])
-                            session.add(vout)
-                            session.commit()
+                            sessionblock.add(vout)
+                            sessionblock.commit()
 
                         for vin in tx_info["vin"]:
-                            class_instacce = session.query(Vout).filter(Vout.tx_id == vin["txid"],
+                            try:
+                                class_instacce = sessionblock.query(Vout).filter(Vout.tx_id == vin["txid"],
                                                                         Vout.vout_number == vin["vout"]).one()
-                            if class_instacce:
-                                # print ("delete vout tx_id:{0} ".format(class_instacce.tx_id))
-                                session.delete(class_instacce)
-                                session.commit()
+                                if class_instacce:
+                                    # print ("delete vout tx_id:{0} ".format(class_instacce.tx_id))
+                                    sessionblock.delete(class_instacce)
+                                    sessionblock.commit()
+                            except:
+                                print("query vout error")
 
             local_block_count += 1
             localBlockCountInstace.height = local_block_count
-            session.add(localBlockCountInstace)
-            session.commit()
+            sessionblock.add(localBlockCountInstace)
+            sessionblock.commit()
 
         else:
             sleep(15)
@@ -116,7 +120,6 @@ def main():
     # Run all the things (blocking call)
     reactor.run()
     logger.info("Shutting down.")
-
 
 if __name__ == "__main__":
     main()
