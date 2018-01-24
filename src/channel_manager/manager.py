@@ -156,11 +156,10 @@ def update_deposit(address, channel_name, asset_type, value):
     else:
         return {"error":"channel name not match the address"}
     channel.update_channel_state(state=State.OPENING)
-    tx_id = channel.channel_txid
-    tx_detail = channel.channel_transdetail
-    channel.update_channel(tx_id=int(tx_id) + 1, tx_detail=tx_detail)
     return {"channel_name": channel.channel_name,
             "trad_info": raw_tans}
+
+
 
 if __name__ == "__main__":
     result  = send_raw_transaction("AY8r7uG6rH7MRLhABALZvf8jM4bCSfn3YJ",

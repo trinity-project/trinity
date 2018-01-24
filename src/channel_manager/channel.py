@@ -84,7 +84,7 @@ class Channel(ChannelFile, ChannelState):
 
     @check_channel_exist
     def close(self):
-        if self.state_in_database != State.SETTLING:
+        if self.state_in_database == State.SETTLING:
             raise ChannelSettling
         else:
             self.find_channel()
@@ -95,6 +95,8 @@ class Channel(ChannelFile, ChannelState):
                                              open_block_number = self.match.open_block_number,
                                             settle_timeout=self.match.settle_timeout,
                                             start_block_number=self.match.start_block_number)
+            self.delete_channel()
+            self.delete_channle_in_database()
 
     @check_channel_exist
     def settle(self):
