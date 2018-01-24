@@ -85,9 +85,13 @@ class Channel(ChannelFile, ChannelState):
         if self.state_in_database == State.SETTLING:
             raise ChannelSettling
         else:
-            self.find_channel()
-            self.delete_channel()
-            self.delete_channle_in_database()
+            try:
+                self.delete_channel()
+                self.delete_channle_in_database()
+            except:
+                return False
+        return True
+
 
     @check_channel_exist
     def settle(self):
