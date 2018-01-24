@@ -55,7 +55,7 @@ def send_raw_transaction(sender_address, channel_name, hex):
     ch.update_deposit_cache(sender_deposit_cache=0, receiver_deposit_cache=0)
     ch.set_channel_open()
 
-    return None
+    return "SUCCESS"
 
 
 
