@@ -247,8 +247,6 @@ class ChannelFile(object):
         return os.path.exists(self.channel_file_name)
 
 
-
-
 def query_channel_from_address(address, role="both"):
     if role not in ("both", "sender", "receiver"):
         raise QureyRoleNotCorrect

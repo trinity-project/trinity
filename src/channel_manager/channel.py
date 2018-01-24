@@ -67,6 +67,7 @@ class Channel(ChannelFile, ChannelState):
                                              state=State.OPENING, sender_deposit=0,receiver_deposit=0,
                                              open_block_number = open_block_number, sender_deposit_cache=sender_deposit,
                                              receiver_deposit_cache=reciever_deposit,settle_timeout=settle_timeout)
+            self.initialize_channel_file()
             return self.channel_name
         else:
             raise ChannelExistInDb
@@ -267,7 +268,7 @@ class Channel(ChannelFile, ChannelState):
 
     def set_channel_open(self):
         if not self.has_channel():
-            self.initialize_channel_file()
+            return "No channel find"
         else:
             tx_id = self.channel_txid
             sender_balance = self.get_address_balance(self.sender)
@@ -289,6 +290,7 @@ class Channel(ChannelFile, ChannelState):
             self.update_channel(**trans_info)
         self.update_channel_state(State.OPEN)
         self.update_deposit_cache(sender_deposit_cache=0, receiver_deposit_cache=0)
+        return "SUCCESS"
 
 
 def get_channelnames_via_address(address):
