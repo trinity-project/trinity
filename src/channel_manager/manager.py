@@ -163,7 +163,9 @@ def update_deposit(address, channel_name, asset_type, value):
             "trad_info": raw_tans}
 
 if __name__ == "__main__":
-    result  = get_channel_state("AY8r7uG6rH7MRLhABALZvf8jM4bCSfn3YJ")
+    result  = send_raw_transaction("AY8r7uG6rH7MRLhABALZvf8jM4bCSfn3YJ",
+                                   "AATT55AeVVHHBBxxpp44TTHH55kk55nnii11xx22mm8811PP77HHggaaJJUUWW88hh97",
+                                   "899999919919919191991919111111111111111")
     print(result)
 
 

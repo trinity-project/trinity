@@ -288,10 +288,10 @@ class Channel(ChannelFile, ChannelState):
                  "balance": receiver_balance + self.receiver_deposit_cache,
                  }
             ]
-            trans_info = {"tx_id": tx_id + 1, "tx_detail": tx_detail}
-            ch.update_channel(**trans_info)
+            trans_info = {"tx_id": int(tx_id)+ 1, "tx_detail": tx_detail}
+            self.update_channel(**trans_info)
 
-        ch.update_channel_state(State.OPEN)
+        self.update_channel_state(State.OPEN)
 
 
 def get_channelnames_via_address(address):
