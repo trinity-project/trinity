@@ -80,7 +80,6 @@ class Channel(ChannelFile, ChannelState):
             self.delete_channel()
 
 
-    @check_channel_exist
     def close(self):
         if self.state_in_database == State.SETTLING:
             raise ChannelSettling
@@ -243,7 +242,7 @@ class Channel(ChannelFile, ChannelState):
         return self.state_in_database == State.CLOSED
 
     def has_channel(self):
-        return self.find_channel()
+        return self.find_channel() and self.has_channel_file()
 
     def initialize_channel_file(self):
         transdetail = [
