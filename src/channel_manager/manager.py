@@ -78,6 +78,7 @@ def get_channel_state(address):
         channel_info  = {
             "channel_name": ch.channel_name,
             "channel_state": str(State(ch.stateinDB)),
+            "open_block":ch.open_block_number,
              "tx_info": channel_detail
         }
         channel_infos.append(channel_info)
@@ -125,7 +126,7 @@ def get_balance_onchain(address, asset_type):
     :param asset_type:
     :return:
     """
-    return blockchain.get_balance(address,Configure[asset_type.upper()])
+    return blockchain.get_balance(address,asset_type.upper())
 
 
 def update_deposit(address, channel_name, asset_type, value):

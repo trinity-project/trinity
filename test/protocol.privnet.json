@@ -1,0 +1,42 @@
+{
+  "ProtocolConfiguration": {
+    "Magic": 9634471,
+    "AddressVersion": 23,
+    "StandbyValidators": [
+        "022f102d19c284db5d7afbac96d088789246da173184867b3d1a93df413affceb2",
+        "02810375fd2b449afd9650896833007a073e9767ec19ade925735220446ed2c230",
+        "03b2b3ecc9071be7ac013f7016746934a1dc588eeaf15de6840bbb4e9c9d03a6b7",
+        "035ba70fcd4b74f979de9d4f0f389a9a568762bad84a24e5ba5536092ba01f4450"
+    ],
+    "SeedList": [
+        "172.31.89.250:10333",
+        "172.31.89.251:10333",
+        "172.31.89.252:10333",
+        "172.31.89.253:10333",
+        "47.104.178.4:10333",
+        "47.104.81.20:10333"
+    ],
+    "RPCList":[
+      "127.0.0.1:10332"
+    ],
+    "SystemFee": {
+        "EnrollmentTransaction": 1000,
+        "IssueTransaction": 500,
+        "PublishTransaction": 500,
+        "RegisterTransaction": 10000
+    }
+  },
+
+  "ApplicationConfiguration": {
+    "DataDirectoryPath": "./Chains/privnet",
+    "NotificationDataPath": "Chains/Priv_Notif",
+    "NodePort": 10333,
+    "WsPort": 10334,
+    "UriPrefix": [ "http://*:10332" ],
+    "SslCert": "",
+    "SslCertPassword": "",
+    "VersionName":"/NEO-PYTHON:2.3.4/",
+    "BootstrapFile":"",
+    "DebugStorage":1
+  }
+}
