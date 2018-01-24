@@ -52,7 +52,7 @@ def send_raw_transaction(sender_address, channel_name, hex):
     receiver_cache = ch.receiver_deposit_cache
     ch.update_channel_deposit(sender_deposit= sender_deposit+sender_cache,
                               receiver_deposit = receiver_deposit+receiver_cache)
-    ch.update_deposit_cache(sender_deposit_cache=0, receiver_deposit_cache=0)
+
     ch.set_channel_open()
 
     return "SUCCESS"
@@ -129,6 +129,7 @@ def get_balance_onchain(address, asset_type):
     :return:
     """
     return blockchain.get_balance(address,asset_type)
+
 
 def update_deposit(address, channel_name, asset_type, value):
     """

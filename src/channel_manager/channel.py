@@ -88,13 +88,6 @@ class Channel(ChannelFile, ChannelState):
             raise ChannelSettling
         else:
             self.find_channel()
-            self.update_channel_to_database(sender= self.match.sender, receiver= self.match.receiver,
-                                            channel_name= self.match.channel_name,
-                                             state=State.CLOSED, sender_deposit = self.match.sender_deposit,
-                                            receiver_deposit= self.match.reciever_deposit,
-                                             open_block_number = self.match.open_block_number,
-                                            settle_timeout=self.match.settle_timeout,
-                                            start_block_number=self.match.start_block_number)
             self.delete_channel()
             self.delete_channle_in_database()
 
@@ -292,8 +285,8 @@ class Channel(ChannelFile, ChannelState):
             ]
             trans_info = {"tx_id": int(tx_id)+ 1, "tx_detail": tx_detail}
             self.update_channel(**trans_info)
-
         self.update_channel_state(State.OPEN)
+        self.update_deposit_cache(sender_deposit_cache=0, receiver_deposit_cache=0)
 
 
 def get_channelnames_via_address(address):
