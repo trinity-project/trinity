@@ -1,7 +1,7 @@
 {
-  "DBFile":"",
-  "BlockNet":"",
+  "DBFile":"channel.db",
+  "BlockNet":"http://localhost:20332",
   "TrinityNet":"",
-  "TNC":"0x000000000000000000000000000",
-  "ContractAddr":"0x1111111111111111111111"
+  "TNC":"0x0c34a8fd0109df360c7cf7ca454404901db77f5e",
+  "ContractAddr":"AMYkMsMJ6uViXETonpEiPwUg3RuBSfRkv8"
 }

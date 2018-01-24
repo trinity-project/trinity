@@ -22,5 +22,14 @@ def NewTransection(asset_type,from_addr, to_addr, count):
     return ""
 
 
-def get_balance(address, asset_id):
-    return ""
+def get_balance(address, asset_type):
+    return [{"AssetType":"TNC",
+            "Balance":10000},
+            {"AssetType":"NEO",
+            "Balance":10000},
+            {"AssetType":"NEOGAS",
+            "Balance":10000}]
+
+
+
+

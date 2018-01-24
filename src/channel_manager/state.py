@@ -145,6 +145,10 @@ class ChannelState(object):
     def state_in_database(self):
         return self.match.state if self.match else None
 
+    @property
+    def open_block_number(self):
+        return self.match.open_block_number
+
     def add_channle_to_database(self, sender, receiver, channel_name, state, sender_deposit,receiver_deposit,
                                 open_block_number, settle_timeout, sender_deposit_cache, receiver_deposit_cache,
                                 start_block_number = 0):

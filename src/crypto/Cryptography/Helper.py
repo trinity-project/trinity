@@ -362,3 +362,22 @@ def xor_bytes(a, b):
     for i in range(len(a)):
         res.append(a[i] ^ b[i])
     return bytes(res)
+
+
+def hex2interger(input):
+    tmp_list=[]
+    for i in range(0,len(input),2):
+        tmp_list.append(input[i:i+2])
+    hex_str="".join(list(reversed(tmp_list)))
+    output=int(hex_str,16)/100000000
+
+    return output
+
+if __name__=="__main__":
+    t = b'\x9fJ\xe7)\\\xa9\xcf\x93\xa5\xbb\xad\x7f\xb7\x15\x11l:\xdcU\xf7'
+    s =hash_to_wallet_address(t)
+    print(s)
+    print(len(s))
+
+    h = hex2interger(bytes_to_hex_string(b'\x00 J\xa9\xd1\x01'))
+    print(h)
