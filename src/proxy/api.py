@@ -56,7 +56,7 @@ def get_balance_onchain(local_address,asset_type=None):
     return manager.get_balance_onchain(local_address, asset_type)
 
 
-@jsonrpc.method("udpatedeposit")
+@jsonrpc.method("updatedeposit")
 def update_deposit(local_address, channel_name, asset_type, value):
     return manager.update_deposit(local_address, channel_name, asset_type, value)
 
