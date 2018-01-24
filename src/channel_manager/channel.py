@@ -79,8 +79,9 @@ class Channel(ChannelFile, ChannelState):
         if self.state_in_database != State.CLOSED:
             raise ChannleNotInCloseState
         else:
-            self.delete_channel()
             self.delete_channle_in_database()
+            self.delete_channel()
+
 
     @check_channel_exist
     def close(self):
