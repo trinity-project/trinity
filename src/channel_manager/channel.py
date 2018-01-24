@@ -116,14 +116,19 @@ class Channel(ChannelFile, ChannelState):
         return True
 
     def get_address_balance(self, address, channels = None):
-        if not channels:
-            channels = self.read_channel()
-        trans_detail = channels[-1]["tx_detail"]
-        trans = [i for i in trans_detail if i["address"]==address]
-        if trans:
-            return int(trans[0]["balance"])
-        else:
+        try:
+            if not channels:
+                channels = self.read_channel()
+            trans_detail = channels[-1]["tx_detail"]
+            trans = [i for i in trans_detail if i["address"]==address]
+            if trans:
+                return int(trans[0]["balance"])
+            else:
+                return None
+        except:
             return None
+
+
 
     def get_address_deposit(self, address, channels = None):
         if not channels:
