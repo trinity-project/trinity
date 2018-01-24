@@ -194,7 +194,7 @@ class Channel(ChannelFile, ChannelState):
             tx = {"tx_id":str(tx_id+1), "tx_detail":transdetail}
             self.update_channel(**tx)
 
-        return True
+        return "SUCCESS"
 
     @check_channel_exist
     def receiver_to_sender(self, count):
@@ -236,7 +236,7 @@ class Channel(ChannelFile, ChannelState):
             tx = {"tx_id": str(tx_id + 1), "tx_detail": transdetail}
             self.update_channel(**tx)
 
-        return True
+        return "SUCCESS"
 
     @check_channel_exist
     def check_closed(self):

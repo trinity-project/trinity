@@ -154,7 +154,6 @@ def update_deposit(address, channel_name, asset_type, value):
         channel.update_channel_to_database(receiver_deposit_cache=int(value))
     else:
         return {"error":"channel name not match the address"}
-    channel.update_channel_state(state=State.OPENING)
     return {"channel_name": channel.channel_name,
             "trad_info": raw_tans}
 
