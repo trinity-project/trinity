@@ -62,58 +62,36 @@ class Channel(ChannelFile, ChannelState):
         return ret
 
     def create(self, sender_deposit,open_block_number, settle_timeout, reciever_deposit=0):
-        transdetail = [
-                      { "address":self.sender,
-                        "deposit":sender_deposit,
-                        "trans":0,
-                        "balance":sender_deposit,
-
-                       },
-                      {"address": self.receiver,
-                       "deposit": reciever_deposit,
-                       "trans": 0,
-                       "balance": reciever_deposit,
-                       }
-                      ]
-        transinfo = {"tx_id":0,"tx_detail":transdetail}
         if not self.find_channel():
-            try:
-                self.create_channelfile(**transinfo)
-            except ChannelExist:
-                return self.channelname
-
-            if self.check_channelfile():
-                self.add_channle_to_database(sender= self.sender, receiver= self.receiver, channel_name=self.channel_name,
+            self.add_channle_to_database(sender= self.sender, receiver= self.receiver, channel_name=self.channel_name,
                                              state=State.OPENING, sender_deposit=0,receiver_deposit=0,
                                              open_block_number = open_block_number, sender_deposit_cache=sender_deposit,
                                              receiver_deposit_cache=reciever_deposit,settle_timeout=settle_timeout)
-            else:
-                raise ChannelFileNoExist
+            self.initialize_channel_file()
+            return self.channel_name
         else:
             raise ChannelExistInDb
-        return self.channel_name
 
     @check_channel_exist
     def delete(self):
         if self.state_in_database != State.CLOSED:
             raise ChannleNotInCloseState
         else:
-            self.delete_channel()
             self.delete_channle_in_database()
+            self.delete_channel()
 
-    @check_channel_exist
+
     def close(self):
-        if self.state_in_database != State.SETTLING:
+        if self.state_in_database == State.SETTLING:
             raise ChannelSettling
         else:
-            self.find_channel()
-            self.update_channel_to_database(sender= self.match.sender, receiver= self.match.receiver,
-                                            channel_name= self.match.channel_name,
-                                             state=State.CLOSED, sender_deposit = self.match.sender_deposit,
-                                            receiver_deposit= self.match.reciever_deposit,
-                                             open_block_number = self.match.open_block_number,
-                                            settle_timeout=self.match.settle_timeout,
-                                            start_block_number=self.match.start_block_number)
+            try:
+                self.delete_channel()
+                self.delete_channle_in_database()
+            except:
+                return False
+        return True
+
 
     @check_channel_exist
     def settle(self):
@@ -142,14 +120,19 @@ class Channel(ChannelFile, ChannelState):
         return True
 
     def get_address_balance(self, address, channels = None):
-        if not channels:
-            channels = self.read_channel()
-        trans_detail = channels[-1]["tx_detail"]
-        trans = [i for i in trans_detail if i["address"]==address]
-        if trans:
-            return int(trans[0]["balance"])
-        else:
+        try:
+            if not channels:
+                channels = self.read_channel()
+            trans_detail = channels[-1]["tx_detail"]
+            trans = [i for i in trans_detail if i["address"]==address]
+            if trans:
+                return int(trans[0]["balance"])
+            else:
+                return None
+        except:
             return None
+
+
 
     def get_address_deposit(self, address, channels = None):
         if not channels:
@@ -160,6 +143,16 @@ class Channel(ChannelFile, ChannelState):
             return int(trans[0]["deposit"])
         else:
             return None
+
+    @property
+    def channel_txid(self):
+        channels = self.read_channel()
+        return channels[-1]["tx_id"]
+
+    @property
+    def channel_transdetail(self):
+        channels = self.read_channel()
+        return channels[-1]["tx_detail"]
 
     @check_channel_exist
     def sender_to_receiver(self, count):
@@ -205,7 +198,7 @@ class Channel(ChannelFile, ChannelState):
             tx = {"tx_id":str(tx_id+1), "tx_detail":transdetail}
             self.update_channel(**tx)
 
-        return True
+        return "SUCCESS"
 
     @check_channel_exist
     def receiver_to_sender(self, count):
@@ -247,14 +240,61 @@ class Channel(ChannelFile, ChannelState):
             tx = {"tx_id": str(tx_id + 1), "tx_detail": transdetail}
             self.update_channel(**tx)
 
-        return True
+        return "SUCCESS"
 
     @check_channel_exist
     def check_closed(self):
         return self.state_in_database == State.CLOSED
 
     def has_channel(self):
-        return self.find_channel()
+        return self.find_channel() and self.has_channel_file()
+
+    def initialize_channel_file(self):
+        transdetail = [
+            {"address": self.sender,
+             "deposit": 0,
+             "trans": 0,
+             "balance": 0,
+
+             },
+            {"address": self.receiver,
+             "deposit": 0,
+             "trans": 0,
+             "balance": 0,
+             }
+        ]
+        transinfo = {"tx_id": 0, "tx_detail": transdetail}
+        try:
+            self.create_channelfile(**transinfo)
+        except ChannelExist:
+            pass
+        return self.channel_name
+
+    def set_channel_open(self):
+        if not self.has_channel():
+            return "No channel find"
+        else:
+            tx_id = self.channel_txid
+            sender_balance = self.get_address_balance(self.sender)
+            receiver_balance = self.get_address_balance(self.receiver)
+            tx_detail = [
+                {"address": self.sender,
+                 "deposit": self.sender_deposit,
+                 "trans": 0,
+                 "balance": sender_balance + self.sender_deposit_cache,
+
+                 },
+                {"address": self.receiver,
+                 "deposit": self.receiver_deposit,
+                 "trans": 0,
+                 "balance": receiver_balance + self.receiver_deposit_cache,
+                 }
+            ]
+            trans_info = {"tx_id": int(tx_id)+ 1, "tx_detail": tx_detail}
+            self.update_channel(**trans_info)
+        self.update_channel_state(State.OPEN)
+        self.update_deposit_cache(sender_deposit_cache=0, receiver_deposit_cache=0)
+        return "SUCCESS"
 
 
 def get_channelnames_via_address(address):

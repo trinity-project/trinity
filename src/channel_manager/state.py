@@ -207,8 +207,7 @@ class ChannelState(object):
 
     def delete_channle_in_database(self):
         try:
-            self.find_channel()
-            self.match.delete()
+            Session.query(ChannelDatabase).filter(ChannelDatabase.channel_name == self.channelname).delete()
             Session.commit()
         except:
             raise
@@ -244,7 +243,7 @@ class ChannelFile(object):
     def delete_channel(self):
         return os.remove(self.channel_file_name)
 
-    def check_channelfile(self):
+    def has_channel_file(self):
         return os.path.exists(self.channel_file_name)
 
 

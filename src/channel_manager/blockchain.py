@@ -23,13 +23,31 @@ def NewTransection(asset_type,from_addr, to_addr, count):
 
 
 def get_balance(address, asset_type):
-    return [{"AssetType":"TNC",
-            "Balance":10000},
-            {"AssetType":"NEO",
-            "Balance":10000},
-            {"AssetType":"NEOGAS",
-            "Balance":10000}]
+    if asset_type:
+        return get_asset_balance(address, asset_type.upper())
+    else:
+        assets_balance = []
+        for asset in Configure["AssetList"]:
+            for a, v in asset.items():
+                asset_type.append(get_asset_balance(address, a))
 
+
+def get_asset_id(asset_type):
+    asset = filter(lambda x: asset_type in x , Configure["AssetList"])
+    if asset:
+        return asset[0].getdefault(asset_type, None)
+    else:
+        return None
+
+def get_asset_balance(address, asset_type):
+    if get_asset_id(asset_type):
+        return {"AssetType": asset_type,
+            "Balance":100000}
+    else:
+        return None
+
+def query_asset_balance():
+    return 1000
 
 
 

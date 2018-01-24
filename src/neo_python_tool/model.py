@@ -16,7 +16,7 @@ from sqlalchemy.orm import sessionmaker, relationship
 
 # engine = create_engine('mysql://root:root@localhost/test')
 engine = create_engine('sqlite:///privtnet.db')
-Session = sessionmaker(bind=engine)
+SessionBlock = sessionmaker(bind=engine)
 Base = declarative_base()
 
 

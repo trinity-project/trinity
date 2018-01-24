@@ -3,9 +3,9 @@ import logging
 from  channel_manager.channel import Channel, State, get_channelnames_via_address
 from  channel_manager import blockchain
 from utils.channel import split_channel_name
-from  channel_manager.state import ChannelDatabase, ChannelFile, ChannelState, ChannelAddress
-from  exception import UnKnownType, NoChannelFound, ChannelNotInOpenState,ChannelFileNoExist,ChannelExistInDb
-from  utils.common import CommonItem
+from channel_manager.state import ChannelDatabase, ChannelFile, ChannelState, ChannelAddress
+from exception import ChannelExist, NoChannelFound, ChannelNotInOpenState,ChannelFileNoExist,ChannelExistInDb
+from utils.common import CommonItem
 from utils.channel import split_channel_name
 from configure import Configure
 
@@ -52,9 +52,9 @@ def send_raw_transaction(sender_address, channel_name, hex):
     receiver_cache = ch.receiver_deposit_cache
     ch.update_channel_deposit(sender_deposit= sender_deposit+sender_cache,
                               receiver_deposit = receiver_deposit+receiver_cache)
-    ch.update_deposit_cache(sender_deposit_cache=0, receiver_deposit_cache=0)
-    ch.update_channel_state(State.OPEN)
-    return None
+
+    return ch.set_channel_open()
+
 
 
 def get_channel_state(address):
@@ -126,7 +126,7 @@ def get_balance_onchain(address, asset_type):
     :param asset_type:
     :return:
     """
-    return blockchain.get_balance(address,asset_type.upper())
+    return blockchain.get_balance(address,asset_type)
 
 
 def update_deposit(address, channel_name, asset_type, value):
@@ -138,8 +138,10 @@ def update_deposit(address, channel_name, asset_type, value):
     :param value:
     :return:
     """
+
     sender, receiver = split_channel_name(channel_name)
     channel = Channel(sender, receiver)
+
     if channel.sender == address:
         if channel.state_in_database != State.OPEN:
             return {"channel_name": channel.channel_name,
@@ -147,21 +149,20 @@ def update_deposit(address, channel_name, asset_type, value):
         else:
             raw_tans = blockchain.NewTransection(asset_type, address, Contract_addr, int(value))
             channel.update_channel_to_database(sender_deposit_cache=int(value))
-            channel.update_channel_state(state=State.OPENING)
-            return {"channel_name": channel.channel_name,
-                    "trad_info": raw_tans}
     elif channel.receiver == address:
         raw_tans = blockchain.NewTransection(asset_type, address, Contract_addr, int(value))
         channel.update_channel_to_database(receiver_deposit_cache=int(value))
-        channel.update_channel_state(state=State.OPENING)
-        return {"channel_name": channel.channel_name,
-                "trad_info": raw_tans}
     else:
         return {"error":"channel name not match the address"}
+    return {"channel_name": channel.channel_name,
+            "trad_info": raw_tans}
+
 
 
 if __name__ == "__main__":
-    result  = get_channel_state("AY8r7uG6rH7MRLhABALZvf8jM4bCSfn3YJ")
+    result  = send_raw_transaction("AY8r7uG6rH7MRLhABALZvf8jM4bCSfn3YJ",
+                                   "AATT55AeVVHHBBxxpp44TTHH55kk55nnii11xx22mm8811PP77HHggaaJJUUWW88hh97",
+                                   "899999919919919191991919111111111111111")
     print(result)
 
 

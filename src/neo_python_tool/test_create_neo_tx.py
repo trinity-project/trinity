@@ -9,7 +9,7 @@ from neocore.UInt256 import UInt256
 from neocore.IO.BinaryWriter import BinaryWriter
 from neocore.Cryptography.Crypto import Crypto
 import binascii
-
+from neo_python_tool import start_node
 
 asset_type = "neo"
 address_from="Aco5Kx36gFHuHZphM32PhLpgQi9iyo3iak"
@@ -91,8 +91,6 @@ def main():
 
 
 
-if __name__ == "__main__":
-    main()
 
 
 

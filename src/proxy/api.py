@@ -47,16 +47,16 @@ def sender_to_receiver(sender_addr, receiver_addr, channel_name, asset_type, cou
 @jsonrpc.method("closechannel")
 def close_channel(sender_addr, receiver_addr,channel_name):
     if manager.close_channel(sender_addr, receiver_addr,channel_name):
-        return State.success()
+        return "SUCCESS"
     else:
-        return State.raise_fail(102,"Close Channel Fail")
+        return "Close Channel Fail"
 
 @jsonrpc.method("getbalanceonchain")
 def get_balance_onchain(local_address,asset_type=None):
     return manager.get_balance_onchain(local_address, asset_type)
 
 
-@jsonrpc.method("udpatedeposit")
+@jsonrpc.method("updatedeposit")
 def update_deposit(local_address, channel_name, asset_type, value):
     return manager.update_deposit(local_address, channel_name, asset_type, value)
 
