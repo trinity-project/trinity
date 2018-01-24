@@ -63,16 +63,13 @@ class Channel(ChannelFile, ChannelState):
 
     def create(self, sender_deposit,open_block_number, settle_timeout, reciever_deposit=0):
         if not self.find_channel():
-            if self.check_channelfile():
-                self.add_channle_to_database(sender= self.sender, receiver= self.receiver, channel_name=self.channel_name,
+            self.add_channle_to_database(sender= self.sender, receiver= self.receiver, channel_name=self.channel_name,
                                              state=State.OPENING, sender_deposit=0,receiver_deposit=0,
                                              open_block_number = open_block_number, sender_deposit_cache=sender_deposit,
                                              receiver_deposit_cache=reciever_deposit,settle_timeout=settle_timeout)
-            else:
-                raise ChannelFileNoExist
+            return self.channel_name
         else:
             raise ChannelExistInDb
-        return self.channel_name
 
     @check_channel_exist
     def delete(self):
