@@ -1,4 +1,4 @@
-# utf-8
+# coding = utf-8
 import requests
 
 
@@ -85,91 +85,91 @@ class NeoApi(object):
 if __name__ == "__main__":
     test = NeoApi("http://106.15.91.150:20552")
     print(" 分别查询通道信息  预期 根据实际情况确定")
-    result2 = test.test_getchannelstate("AZjHj5Ym3nCwcYQVYiEd4KHNFhjmpNJzTJ")
-    result2 = test.test_getchannelstate("AMQ9LPR72KuX1btUJ9Q12vJubWf1Ragwr7")
+    result2 = test.test_getchannelstate("AQshqW7RcncskL1Dvw1XyKqvAPpzPaDGGC")
+    result2 = test.test_getchannelstate("AdRqiG9E6uSrY6PScYGW2ByvHRzepd9RCA")
     print(" 清除channel 预期 第一步如果存在 删除成功  第一步如果不存在 删除失败")
-    result2 = test.test_closechannel("AZjHj5Ym3nCwcYQVYiEd4KHNFhjmpNJzTJ", "AMQ9LPR72KuX1btUJ9Q12vJubWf1Ragwr7",
-                                     "AAZMjQH9jL5PYRm732nKCuwXc1YbQtVUYJi9EQd142KvHJNuFbhWjfm1pRNaJgzwTrJ7")
+    result2 = test.test_closechannel("AQshqW7RcncskL1Dvw1XyKqvAPpzPaDGGC", "AdRqiG9E6uSrY6PScYGW2ByvHRzepd9RCA",
+                                     "AAQdsRhqqiWG79REc6nucSsrkYL61PDSvcwY1GXWy2KBqyvvAHPRpzzePpadD9GRGCCA")
     print(" 分别查询通道信息  预期为空")
-    result2 = test.test_getchannelstate("AZjHj5Ym3nCwcYQVYiEd4KHNFhjmpNJzTJ")
-    result2 = test.test_getchannelstate("AMQ9LPR72KuX1btUJ9Q12vJubWf1Ragwr7")
+    result2 = test.test_getchannelstate("AQshqW7RcncskL1Dvw1XyKqvAPpzPaDGGC")
+    result2 = test.test_getchannelstate("AdRqiG9E6uSrY6PScYGW2ByvHRzepd9RCA")
     print(" 一个地址注册 预期返回成功")
-    result1 = test.test_registeraddress("AZjHj5Ym3nCwcYQVYiEd4KHNFhjmpNJzTJ")
+    result1 = test.test_registeraddress("AQshqW7RcncskL1Dvw1XyKqvAPpzPaDGGC")
     print(" 分别查询通道信息  预期为空")
-    result2 = test.test_getchannelstate("AZjHj5Ym3nCwcYQVYiEd4KHNFhjmpNJzTJ")
-    result2 = test.test_getchannelstate("AMQ9LPR72KuX1btUJ9Q12vJubWf1Ragwr7")
+    result2 = test.test_getchannelstate("AQshqW7RcncskL1Dvw1XyKqvAPpzPaDGGC")
+    result2 = test.test_getchannelstate("AdRqiG9E6uSrY6PScYGW2ByvHRzepd9RCA")
     print(" 另一个地址注册 预期返回成功")
-    result1 = test.test_registeraddress("AMQ9LPR72KuX1btUJ9Q12vJubWf1Ragwr7")
+    result1 = test.test_registeraddress("AdRqiG9E6uSrY6PScYGW2ByvHRzepd9RCA")
     print(" 分别查询通道信息  预期为空")
-    result2 = test.test_getchannelstate("AZjHj5Ym3nCwcYQVYiEd4KHNFhjmpNJzTJ")
-    result2 = test.test_getchannelstate("AMQ9LPR72KuX1btUJ9Q12vJubWf1Ragwr7")
+    result2 = test.test_getchannelstate("AQshqW7RcncskL1Dvw1XyKqvAPpzPaDGGC")
+    result2 = test.test_getchannelstate("AdRqiG9E6uSrY6PScYGW2ByvHRzepd9RCA")
     print(" 一方发起新建状态通道 并上缴押金  预期返回待签名的交易信息")
-    result = test.test_registchannle("AZjHj5Ym3nCwcYQVYiEd4KHNFhjmpNJzTJ",
-                                     "AMQ9LPR72KuX1btUJ9Q12vJubWf1Ragwr7", "tnc", "100", "789087")
+    result = test.test_registchannle("AQshqW7RcncskL1Dvw1XyKqvAPpzPaDGGC",
+                                     "AdRqiG9E6uSrY6PScYGW2ByvHRzepd9RCA", "tnc", "100", "789087")
     print(" 分别查询通道信息 预期为  获取到状态通道信息  押金 余额 都为0 ， 通道状态为opening")
-    result2 = test.test_getchannelstate("AZjHj5Ym3nCwcYQVYiEd4KHNFhjmpNJzTJ")
-    result2 = test.test_getchannelstate("AMQ9LPR72KuX1btUJ9Q12vJubWf1Ragwr7")
+    result2 = test.test_getchannelstate("AQshqW7RcncskL1Dvw1XyKqvAPpzPaDGGC")
+    result2 = test.test_getchannelstate("AdRqiG9E6uSrY6PScYGW2ByvHRzepd9RCA")
     print(" 发送带签名交易信息 预期返回成功")
-    result4 = test.test_sendrawtransaction("AZjHj5Ym3nCwcYQVYiEd4KHNFhjmpNJzTJ",
-                                           'AAZMjQH9jL5PYRm732nKCuwXc1YbQtVUYJi9EQd142KvHJNuFbhWjfm1pRNaJgzwTrJ7',
+    result4 = test.test_sendrawtransaction("AQshqW7RcncskL1Dvw1XyKqvAPpzPaDGGC",
+                                           'AAQdsRhqqiWG79REc6nucSsrkYL61PDSvcwY1GXWy2KBqyvvAHPRpzzePpadD9GRGCCA',
                                            "0xxxxxxxxxxxxxxxxxxxxxxxxxxxxx")
     print(" 分别查询通道信息 预期为  获取到状态通道信息  一方押金 余额 都为0 ，另一方押金 余额都为押金值， 通道状态为open")
-    result2 = test.test_getchannelstate("AZjHj5Ym3nCwcYQVYiEd4KHNFhjmpNJzTJ")
-    result2 = test.test_getchannelstate("AMQ9LPR72KuX1btUJ9Q12vJubWf1Ragwr7")
+    result2 = test.test_getchannelstate("AQshqW7RcncskL1Dvw1XyKqvAPpzPaDGGC")
+    result2 = test.test_getchannelstate("AdRqiG9E6uSrY6PScYGW2ByvHRzepd9RCA")
     print(" 另一方更新押金 上缴押金  预期返回待签名的交易信息")
-    result = test.test_updatedeposit("AMQ9LPR72KuX1btUJ9Q12vJubWf1Ragwr7",
-                                     'AAZMjQH9jL5PYRm732nKCuwXc1YbQtVUYJi9EQd142KvHJNuFbhWjfm1pRNaJgzwTrJ7',
+    result = test.test_updatedeposit("AdRqiG9E6uSrY6PScYGW2ByvHRzepd9RCA",
+                                     'AAQdsRhqqiWG79REc6nucSsrkYL61PDSvcwY1GXWy2KBqyvvAHPRpzzePpadD9GRGCCA',
                                      "tnc", "100")
     print(" 分别查询通道信息 预期为  获取到状态通道信息   一方押金 余额 都为0 ，另一方押金 余额都为押金值， 通道状态为open")
-    result2 = test.test_getchannelstate("AZjHj5Ym3nCwcYQVYiEd4KHNFhjmpNJzTJ")
-    result2 = test.test_getchannelstate("AMQ9LPR72KuX1btUJ9Q12vJubWf1Ragwr7")
+    result2 = test.test_getchannelstate("AQshqW7RcncskL1Dvw1XyKqvAPpzPaDGGC")
+    result2 = test.test_getchannelstate("AdRqiG9E6uSrY6PScYGW2ByvHRzepd9RCA")
     print(" 发送带签名交易信息 预期返回成功")
-    result4 = test.test_sendrawtransaction("AMQ9LPR72KuX1btUJ9Q12vJubWf1Ragwr7",
-                                           'AAZMjQH9jL5PYRm732nKCuwXc1YbQtVUYJi9EQd142KvHJNuFbhWjfm1pRNaJgzwTrJ7',
+    result4 = test.test_sendrawtransaction("AdRqiG9E6uSrY6PScYGW2ByvHRzepd9RCA",
+                                           'AAQdsRhqqiWG79REc6nucSsrkYL61PDSvcwY1GXWy2KBqyvvAHPRpzzePpadD9GRGCCA',
                                            "0xxxxxxxxxxxxxxxxxxxxxxxxxxxxx")
     print(" 分别查询通道信息 预期为  获取到状态通道信息  押金 都为100 余额都为100， 通道状态为open")
-    result2 = test.test_getchannelstate("AZjHj5Ym3nCwcYQVYiEd4KHNFhjmpNJzTJ")
-    result2 = test.test_getchannelstate("AMQ9LPR72KuX1btUJ9Q12vJubWf1Ragwr7")
+    result2 = test.test_getchannelstate("AQshqW7RcncskL1Dvw1XyKqvAPpzPaDGGC")
+    result2 = test.test_getchannelstate("AdRqiG9E6uSrY6PScYGW2ByvHRzepd9RCA")
     print(" 一方发起链下交易给对方转账20 预期返回成功")
-    test.test_sendertoreceiver("AZjHj5Ym3nCwcYQVYiEd4KHNFhjmpNJzTJ", "AMQ9LPR72KuX1btUJ9Q12vJubWf1Ragwr7",
-                               'AAZMjQH9jL5PYRm732nKCuwXc1YbQtVUYJi9EQd142KvHJNuFbhWjfm1pRNaJgzwTrJ7',
+    test.test_sendertoreceiver("AQshqW7RcncskL1Dvw1XyKqvAPpzPaDGGC", "AdRqiG9E6uSrY6PScYGW2ByvHRzepd9RCA",
+                               'AAQdsRhqqiWG79REc6nucSsrkYL61PDSvcwY1GXWy2KBqyvvAHPRpzzePpadD9GRGCCA',
                                "tnc", "20")
     print(" 分别查询通道信息 预期为  获取到状态通道信息  押金 都为100 余额发送方剩余80，余额接收方剩余为120 通道状态为open")
-    result2 = test.test_getchannelstate("AZjHj5Ym3nCwcYQVYiEd4KHNFhjmpNJzTJ")
-    result2 = test.test_getchannelstate("AMQ9LPR72KuX1btUJ9Q12vJubWf1Ragwr7")
+    result2 = test.test_getchannelstate("AQshqW7RcncskL1Dvw1XyKqvAPpzPaDGGC")
+    result2 = test.test_getchannelstate("AdRqiG9E6uSrY6PScYGW2ByvHRzepd9RCA")
     print(" 另一方发起链下交易给对方转账20 预期返回成功")
-    test.test_sendertoreceiver("AMQ9LPR72KuX1btUJ9Q12vJubWf1Ragwr7", "AZjHj5Ym3nCwcYQVYiEd4KHNFhjmpNJzTJ",
-                               'AAZMjQH9jL5PYRm732nKCuwXc1YbQtVUYJi9EQd142KvHJNuFbhWjfm1pRNaJgzwTrJ7',
+    test.test_sendertoreceiver("AdRqiG9E6uSrY6PScYGW2ByvHRzepd9RCA", "AQshqW7RcncskL1Dvw1XyKqvAPpzPaDGGC",
+                               'AAQdsRhqqiWG79REc6nucSsrkYL61PDSvcwY1GXWy2KBqyvvAHPRpzzePpadD9GRGCCA',
                                "tnc", "20")
     print(" 分别查询通道信息 预期为  获取到状态通道信息  押金 余额 都为100 ， 通道状态为open")
-    result2 = test.test_getchannelstate("AZjHj5Ym3nCwcYQVYiEd4KHNFhjmpNJzTJ")
-    result2 = test.test_getchannelstate("AMQ9LPR72KuX1btUJ9Q12vJubWf1Ragwr7")
+    result2 = test.test_getchannelstate("AQshqW7RcncskL1Dvw1XyKqvAPpzPaDGGC")
+    result2 = test.test_getchannelstate("AdRqiG9E6uSrY6PScYGW2ByvHRzepd9RCA")
 
     print(" 原端更新押金 上缴押金  预期返回待签名的交易信息")
-    result = test.test_updatedeposit("AZjHj5Ym3nCwcYQVYiEd4KHNFhjmpNJzTJ",
-                                     'AAZMjQH9jL5PYRm732nKCuwXc1YbQtVUYJi9EQd142KvHJNuFbhWjfm1pRNaJgzwTrJ7',
+    result = test.test_updatedeposit("AQshqW7RcncskL1Dvw1XyKqvAPpzPaDGGC",
+                                     'AAQdsRhqqiWG79REc6nucSsrkYL61PDSvcwY1GXWy2KBqyvvAHPRpzzePpadD9GRGCCA',
                                      "tnc", "100")
     print(" 分别查询通道信息 预期为  获取到状态通道信息  押金 余额 都为100 ， 通道状态为open")
-    result2 = test.test_getchannelstate("AZjHj5Ym3nCwcYQVYiEd4KHNFhjmpNJzTJ")
-    result2 = test.test_getchannelstate("AMQ9LPR72KuX1btUJ9Q12vJubWf1Ragwr7")
+    result2 = test.test_getchannelstate("AQshqW7RcncskL1Dvw1XyKqvAPpzPaDGGC")
+    result2 = test.test_getchannelstate("AdRqiG9E6uSrY6PScYGW2ByvHRzepd9RCA")
     print(" 发送带签名交易信息 预期返回成功")
-    result4 = test.test_sendrawtransaction("AZjHj5Ym3nCwcYQVYiEd4KHNFhjmpNJzTJ",
-                                           'AAZMjQH9jL5PYRm732nKCuwXc1YbQtVUYJi9EQd142KvHJNuFbhWjfm1pRNaJgzwTrJ7',
+    result4 = test.test_sendrawtransaction("AQshqW7RcncskL1Dvw1XyKqvAPpzPaDGGC",
+                                           'AAQdsRhqqiWG79REc6nucSsrkYL61PDSvcwY1GXWy2KBqyvvAHPRpzzePpadD9GRGCCA',
                                            "0xxxxxxxxxxxxxxxxxxxxxxxxxxxxx")
     print(" 分别查询通道信息 预期为  获取到状态通道信息  源端押金 余额 都为200  目的端押金余额都为100， 通道状态为open")
-    result2 = test.test_getchannelstate("AZjHj5Ym3nCwcYQVYiEd4KHNFhjmpNJzTJ")
-    result2 = test.test_getchannelstate("AMQ9LPR72KuX1btUJ9Q12vJubWf1Ragwr7")
+    result2 = test.test_getchannelstate("AQshqW7RcncskL1Dvw1XyKqvAPpzPaDGGC")
+    result2 = test.test_getchannelstate("AdRqiG9E6uSrY6PScYGW2ByvHRzepd9RCA")
     print(" 一方发起链下交易给对方转账20 预期返回成功")
-    test.test_sendertoreceiver("AZjHj5Ym3nCwcYQVYiEd4KHNFhjmpNJzTJ", "AMQ9LPR72KuX1btUJ9Q12vJubWf1Ragwr7",
-                               'AAZMjQH9jL5PYRm732nKCuwXc1YbQtVUYJi9EQd142KvHJNuFbhWjfm1pRNaJgzwTrJ7',
+    test.test_sendertoreceiver("AQshqW7RcncskL1Dvw1XyKqvAPpzPaDGGC", "AdRqiG9E6uSrY6PScYGW2ByvHRzepd9RCA",
+                               'AAQdsRhqqiWG79REc6nucSsrkYL61PDSvcwY1GXWy2KBqyvvAHPRpzzePpadD9GRGCCA',
                                "tnc", "20")
     print(" 分别查询通道信息 预期为  获取到状态通道信息  源端押金 都为200 余额 180 目的端押金100 余额120 通道状态为open")
-    result2 = test.test_getchannelstate("AZjHj5Ym3nCwcYQVYiEd4KHNFhjmpNJzTJ")
-    result2 = test.test_getchannelstate("AMQ9LPR72KuX1btUJ9Q12vJubWf1Ragwr7")
+    result2 = test.test_getchannelstate("AQshqW7RcncskL1Dvw1XyKqvAPpzPaDGGC")
+    result2 = test.test_getchannelstate("AdRqiG9E6uSrY6PScYGW2ByvHRzepd9RCA")
     print(" 另一方发起链下交易给对方转账20 预期返回成功")
-    test.test_sendertoreceiver("AMQ9LPR72KuX1btUJ9Q12vJubWf1Ragwr7", "AZjHj5Ym3nCwcYQVYiEd4KHNFhjmpNJzTJ",
-                               'AAZMjQH9jL5PYRm732nKCuwXc1YbQtVUYJi9EQd142KvHJNuFbhWjfm1pRNaJgzwTrJ7',
+    test.test_sendertoreceiver("AdRqiG9E6uSrY6PScYGW2ByvHRzepd9RCA", "AQshqW7RcncskL1Dvw1XyKqvAPpzPaDGGC",
+                               'AAQdsRhqqiWG79REc6nucSsrkYL61PDSvcwY1GXWy2KBqyvvAHPRpzzePpadD9GRGCCA',
                                "tnc", "20")
     print("分别查询通道信息 预期为  获取到状态通道信息  源端押金 余额 都为200 ， 目的端 押金 余额 为100 通道状态为open")
-    result2 = test.test_getchannelstate("AZjHj5Ym3nCwcYQVYiEd4KHNFhjmpNJzTJ")
-    result2 = test.test_getchannelstate("AMQ9LPR72KuX1btUJ9Q12vJubWf1Ragwr7")
+    result2 = test.test_getchannelstate("AQshqW7RcncskL1Dvw1XyKqvAPpzPaDGGC")
+    result2 = test.test_getchannelstate("AdRqiG9E6uSrY6PScYGW2ByvHRzepd9RCA")
