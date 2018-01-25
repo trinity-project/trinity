@@ -5,7 +5,7 @@ import pprint
 from sqlalchemy import create_engine, and_
 from sqlalchemy.orm import sessionmaker
 
-from model import Vout, LocalBlockCout
+from neo_python_tool.model import Vout, LocalBlockCout
 import os
 
 PATH =  os.path.dirname(__file__)
