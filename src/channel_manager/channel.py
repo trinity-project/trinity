@@ -80,18 +80,13 @@ class Channel(ChannelFile, ChannelState):
             self.delete_channle_in_database()
             self.delete_channel()
 
-
     def close(self):
-        if self.state_in_database == State.SETTLING:
-            raise ChannelSettling
-        else:
-            try:
-                self.delete_channel()
-                self.delete_channle_in_database()
-            except:
-                return False
+        try:
+            self.delete_channel()
+            self.delete_channle_in_database()
+        except:
+            return False
         return True
-
 
     @check_channel_exist
     def settle(self):
@@ -115,7 +110,6 @@ class Channel(ChannelFile, ChannelState):
                                                 settle_timeout=self.match.settle_timeout,
                                                 start_block_number=self.match.start_block_number)
 
-
     def settle_banlace_in_lockchain(self):
         return True
 
@@ -131,8 +125,6 @@ class Channel(ChannelFile, ChannelState):
                 return None
         except:
             return None
-
-
 
     def get_address_deposit(self, address, channels = None):
         if not channels:
