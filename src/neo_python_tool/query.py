@@ -2,35 +2,39 @@
 # -*- coding: utf-8 -*-
 import pprint
 
-from sqlalchemy import create_engine
+from sqlalchemy import create_engine, and_
 from sqlalchemy.orm import sessionmaker
 
 from model import Vout, LocalBlockCout
+import os
 
-engine = create_engine('sqlite:///privtnet.db')
-Session = sessionmaker(bind=engine)
+PATH =  os.path.dirname(__file__)
+BlockDB = os.path.join(PATH,"privtnet.db")
 
-session=Session()
+engine = create_engine('sqlite:///'+BlockDB)
+SessionBlock = sessionmaker(bind=engine)
 
-localBlockCount = session.query(LocalBlockCout).all()
-if localBlockCount:
-    localBlockCountInstace=localBlockCount[0]
-    print (u"目前同步的区块数:",localBlockCountInstace.height)
+sessionblock=SessionBlock()
+
+def get_current_block_number():
+    localBlockCount = sessionblock.query(LocalBlockCout).all()
+    if localBlockCount:
+        localBlockCountInstace=localBlockCount[0]
+        print ("Current Block Number:",localBlockCountInstace.height)
+        return localBlockCountInstace.height
+    else:
+        return None
 
 
-def get_utxo_by_address(address):
-    class_instacce=session.query(Vout).filter(Vout.address==address).all()
-    reszult=[]
+def get_utxo_by_address(address, asset_id):
+    class_instacce=sessionblock.query(Vout).filter(and_(Vout.address==address, Vout.asset_id == asset_id)).all()
+    result=[]
     if class_instacce:
         for i in class_instacce:
-            reszult.append (i.to_json())
-        return reszult
+            result.append (i.to_json())
+        return result
 
 
-address="AVV143sXT2Veq8wKDT9Q2Skp2bezMZk2"  #更换不同的地址，返回相应的未消费的输出
-
-
-pprint.pprint(get_utxo_by_address(address))
 
 
 

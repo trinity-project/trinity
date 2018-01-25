@@ -70,10 +70,10 @@ def get_channel_state(address):
         ch = Channel(channel.sender, channel.receiver)
         channel_detail = [{"address": ch.sender,
                            "deposit": ch.sender_deposit,
-                           "balance": ch.get_address_balance(ch.sender)},
+                           "balance": ch.get_address_balance(ch.sender) if ch.get_address_balance(ch.sender) else 0},
                           {"address": ch.receiver,
                            "deposit": ch.receiver_deposit,
-                           "balance": ch.get_address_balance(ch.receiver)}
+                           "balance": ch.get_address_balance(ch.receiver) if ch.get_address_balance(ch.receiver) else 0}
                           ]
         channel_info  = {
             "channel_name": ch.channel_name,

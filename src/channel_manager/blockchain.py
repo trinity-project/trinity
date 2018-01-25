@@ -1,5 +1,6 @@
 from .neo_api import neo_api
 from configure import Configure
+from neo_python_tool import query
 
 
 NeoServer = neo_api.NeoApi(Configure["BlockNet"])
@@ -39,15 +40,16 @@ def get_asset_id(asset_type):
     else:
         return None
 
+
 def get_asset_balance(address, asset_type):
-    if get_asset_id(asset_type):
+    asset_id = get_asset_id(asset_type)
+    if asset_id:
+        balance = query.get_utxo_by_address(address,asset_id.replace("0x",""))
         return {"AssetType": asset_type,
-            "Balance":100000}
+            "Balance":balance}
     else:
         return None
 
-def query_asset_balance():
-    return 1000
 
 
 
