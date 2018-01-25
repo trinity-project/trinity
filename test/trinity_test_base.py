@@ -1,5 +1,6 @@
 # utf-8
 import requests
+import json
 
 
 class CommonItem(object):
@@ -43,7 +44,11 @@ class NeoApi(object):
         if result.status_code != requests.codes.ok:
             raise result.raise_for_status()
         else:
-            print(result.json())
+            self.print_result(result.json()["result"])
+            return result.json()
+
+    def print_result(self, result):
+        print(json.dumps(result, indent=2))
 
     def generate_payload(self, method, params):
         payload = {
@@ -88,8 +93,9 @@ if __name__ == "__main__":
     result2 = test.test_getchannelstate("AZjHj5Ym3nCwcYQVYiEd4KHNFhjmpNJzTJ")
     result2 = test.test_getchannelstate("AMQ9LPR72KuX1btUJ9Q12vJubWf1Ragwr7")
     print(" 清除channel 预期 第一步如果存在 删除成功  第一步如果不存在 删除失败")
-    result2 = test.test_closechannel("AZjHj5Ym3nCwcYQVYiEd4KHNFhjmpNJzTJ", "AMQ9LPR72KuX1btUJ9Q12vJubWf1Ragwr7",
+    result = test.test_closechannel("AZjHj5Ym3nCwcYQVYiEd4KHNFhjmpNJzTJ", "AMQ9LPR72KuX1btUJ9Q12vJubWf1Ragwr7",
                                      "AAZMjQH9jL5PYRm732nKCuwXc1YbQtVUYJi9EQd142KvHJNuFbhWjfm1pRNaJgzwTrJ7")
+    assert(result["result"]=="SUCCESS")
     print(" 分别查询通道信息  预期为空")
     result2 = test.test_getchannelstate("AZjHj5Ym3nCwcYQVYiEd4KHNFhjmpNJzTJ")
     result2 = test.test_getchannelstate("AMQ9LPR72KuX1btUJ9Q12vJubWf1Ragwr7")
