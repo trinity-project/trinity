@@ -84,10 +84,10 @@ class NeoApi(object):
 
 if __name__ == "__main__":
     test = NeoApi("http://106.15.91.150:20552")
-    print(" 分别查询通道信息  预期为空")
+    print(" 分别查询通道信息  预期 根据实际情况确定")
     result2 = test.test_getchannelstate("AZjHj5Ym3nCwcYQVYiEd4KHNFhjmpNJzTJ")
     result2 = test.test_getchannelstate("AMQ9LPR72KuX1btUJ9Q12vJubWf1Ragwr7")
-    print(" 清除channel")
+    print(" 清除channel 预期 第一步如果存在 删除成功  第一步如果不存在 删除失败")
     result2 = test.test_closechannel("AZjHj5Ym3nCwcYQVYiEd4KHNFhjmpNJzTJ", "AMQ9LPR72KuX1btUJ9Q12vJubWf1Ragwr7",
                                      "AAZMjQH9jL5PYRm732nKCuwXc1YbQtVUYJi9EQd142KvHJNuFbhWjfm1pRNaJgzwTrJ7")
     print(" 分别查询通道信息  预期为空")
