@@ -99,9 +99,9 @@ def sender_to_receiver(sender_addr, receiver_addr, channel_name, asset_type, cou
     sender,receiver = split_channel_name(channel_name)
     ch = Channel(sender,receiver)
     if sender_addr == ch.sender and receiver_addr == ch.receiver:
-        return ch.sender_to_receiver(int(count))
+        return ch.sender_to_receiver(float(count))
     elif receiver_addr == ch.sender and sender_addr == ch.receiver:
-        return ch.receiver_to_sender(int(count))
+        return ch.receiver_to_sender(float(count))
     else:
         return {"error":"Address and Channelname not match"}
 
@@ -116,7 +116,9 @@ def close_channel(sender_addr, receiver_addr,channel_name):
     """
     sender, receiver = split_channel_name(channel_name)
     ch = Channel(sender, receiver)
-    return ch.close()
+    ch.update_channel_state(State.SETTLING)
+    return ch.settle_banlace_onblockchain()
+
 
 
 def get_balance_onchain(address, asset_type):
@@ -148,10 +150,10 @@ def update_deposit(address, channel_name, asset_type, value):
                     "trad_info": "Channel exist but in state %s" % str(State(channel.state_in_database))}
         else:
             raw_tans = blockchain.NewTransection(asset_type, address, Contract_addr, int(value))
-            channel.update_channel_to_database(sender_deposit_cache=int(value))
+            channel.update_channel_to_database(sender_deposit_cache=float(value))
     elif channel.receiver == address:
-        raw_tans = blockchain.NewTransection(asset_type, address, Contract_addr, int(value))
-        channel.update_channel_to_database(receiver_deposit_cache=int(value))
+        raw_tans = blockchain.NewTransection(asset_type, address, Contract_addr, float(value))
+        channel.update_channel_to_database(receiver_deposit_cache=float(value))
     else:
         return {"error":"channel name not match the address"}
     return {"channel_name": channel.channel_name,

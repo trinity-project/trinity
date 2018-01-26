@@ -43,17 +43,20 @@ def sc_notify(event):
         depoist_in(address=sender,value=value)
     elif sender == ContractAddr:
         depoist_out(address=receiver, value=value)
+    print("sc_notification")
 
 
 def depoist_in(address, value):
+    print("depost in")
     channel_name = get_channelnames_via_address(address)
     if channel_name:
+        print(channel_name)
         sender, receiver = split_channel_name(channel_name)
         ch = Channel(sender, receiver)
         if address == sender and ch.stateinDB == State.OPENING and value == ch.sender_deposit_cache:
-            ch.update_channel_state(State.OPEN)
+            ch.set_channel_open()
         elif address == receiver and ch.stateinDB == State.OPENING and value == ch.receiver_deposit_cache:
-            ch.update_channel_state(State.OPEN)
+            ch.set_channel_open()
         else:
             return None
     else:
@@ -66,8 +69,7 @@ def depoist_out(address,value):
     if channel_name:
         sender, receiver = split_channel_name(channel_name)
         ch = Channel(sender, receiver)
-        ch.delete_channle_in_database()
-        ch.delete_channel()
+        ch.close()
     else:
         return None
     return address
@@ -101,4 +103,5 @@ def main():
     reactor.run()
     logger.info("Shutting down.")
 
-main()
+if __name__ == "__main__":
+    main()
