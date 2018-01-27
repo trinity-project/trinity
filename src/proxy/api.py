@@ -85,6 +85,10 @@ def get_balance_onchain(local_address,asset_type=None):
 def update_deposit(local_address, channel_name, asset_type, value):
     return manager.update_deposit(local_address, channel_name, asset_type, value)
 
+@jsonrpc.method("allocateaddress")
+def allocate_address():
+    return manager.allocate_address()
+
 
 
 if __name__ == '__main__':

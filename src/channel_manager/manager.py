@@ -170,16 +170,19 @@ def update_deposit(address, channel_name, asset_type, value):
             return {"channel_name": channel.channel_name,
                     "trad_info": "Channel exist but in state %s" % str(State(channel.state_in_database))}
         else:
-            raw_tans = blockchain.NewTransection(asset_type, address, Contract_addr, int(value))
+            raw_tans = blockchain.NewTransection(asset_type, address, Contract_addr, value)
             channel.update_channel_to_database(sender_deposit_cache=float(value))
     elif channel.receiver == address:
-        raw_tans = blockchain.NewTransection(asset_type, address, Contract_addr, float(value))
+        raw_tans = blockchain.NewTransection(asset_type, address, Contract_addr, value)
         channel.update_channel_to_database(receiver_deposit_cache=float(value))
     else:
         return {"error":"channel name not match the address"}
     return {"channel_name": channel.channel_name,
             "trad_info": raw_tans}
 
+
+def allocate_address():
+    return blockchain.allocate_address()
 
 
 if __name__ == "__main__":

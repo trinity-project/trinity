@@ -39,13 +39,12 @@ def setting_transection(sender, receiver, channel_name):
 
 
 def send_raw_transection(hax):
-    #return NeoServer.sendrawtransaction(hax)
-    return True
+    return neo_api.send_raw_tx(hax)
 
 
 def NewTransection(asset_type,from_addr, to_addr, count):
-    print("Signature")
-    return ""
+    tx_data= neo_api.invocate_contract_tx(from_addr, to_addr, asset_type.upper(), count)
+    return tx_data["tx_data"]
 
 
 def get_balance(address, asset_type):
@@ -81,3 +80,7 @@ def get_asset_balance(address, asset_type):
 def distribute_balance(address, asset_type, value):
     asset_id = get_asset_id(asset_type.upper())
     return NeoServer.sendtoaddress(asset_id, address, value)
+
+
+def allocate_address():
+    return neo_api.allocate_address()
