@@ -90,6 +90,11 @@ def allocate_address():
     return manager.allocate_address()
 
 
+@jsonrpc.method("tx_onchain")
+def tx_onchain(from_addr, to_addr, asset_type, value):
+    return manager.tx_onchain(from_addr, to_addr, asset_type, value)
+
+
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', debug=True)

@@ -518,7 +518,7 @@ def invocate_contract_tx(address_from,address_to, asset_id, count):
     param = {"address_from":address_from,
 "address_to":address_to,
 "amount":int(count),
-"contract_hash":configure.Configure["AssetList"].get(asset_id).replace("0x","")
+"contract_hash":asset_id.replace("0x","")
 }
     result = requests.post(method, json=param)
     return result.json()
@@ -527,6 +527,31 @@ def invocate_contract_tx(address_from,address_to, asset_id, count):
 def send_raw_tx(sign_tx_data=""):
     method = NEOSERVER+"sendRawtransaction"
     param = {"sign_tx_data":sign_tx_data}
+    result = requests.post(method, json=param)
+    return result.json()
+
+
+
+def allocate_address():
+    method = NEOSERVER+"allocateaddress"
+    result = requests.post(method)
+    return result.json()
+
+
+def signature(address, hex):
+    method = NEOSERVER+"signature"
+    param = {"address":address,
+             "tx_data":hex}
+    result = requests.post(method, json=param)
+    return result.json()
+
+
+def tx_onchain(from_addr, to_addr, asset_id, value):
+    method = NEOSERVER + "txonchain"
+    param = {"address_from": from_addr,
+             "address_to":to_addr,
+             "contract_hash": asset_id.replace("0x",""),
+             "count": int(value)}
     result = requests.post(method, json=param)
     return result.json()
 

@@ -185,6 +185,11 @@ def allocate_address():
     return blockchain.allocate_address()
 
 
+def tx_onchain(from_addr, to_addr, asset_type, value):
+    return blockchain.tx_onchain(from_addr, to_addr, asset_type.upper(), value)
+
+
+
 if __name__ == "__main__":
     result  = send_raw_transaction("AY8r7uG6rH7MRLhABALZvf8jM4bCSfn3YJ",
                                    "AATT55AeVVHHBBxxpp44TTHH55kk55nnii11xx22mm8811PP77HHggaaJJUUWW88hh97",

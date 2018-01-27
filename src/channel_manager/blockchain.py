@@ -31,7 +31,7 @@ from functools import reduce
 NeoServer = neo_api.NeoApi(Configure["BlockNet"])
 
 def add_to_channel(address, type, public_key, signature, channel_name, deposit=0, open_block_number=10 ):
-        return True
+    return True
 
 
 def setting_transection(sender, receiver, channel_name):
@@ -43,7 +43,7 @@ def send_raw_transection(hax):
 
 
 def NewTransection(asset_type,from_addr, to_addr, count):
-    tx_data= neo_api.invocate_contract_tx(from_addr, to_addr, asset_type.upper(), count)
+    tx_data= neo_api.invocate_contract_tx(from_addr, to_addr, Configure["AssetList"].get(asset_type.upper()), count)
     return tx_data["tx_data"]
 
 
@@ -84,3 +84,6 @@ def distribute_balance(address, asset_type, value):
 
 def allocate_address():
     return neo_api.allocate_address()
+
+def tx_onchain(from_addr, to_addr, asset_type, value):
+    return neo_api.tx_onchain(from_addr, to_addr,Configure["AssetList"].get(asset_type), value)
