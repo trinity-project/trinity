@@ -74,7 +74,7 @@ while True:
                             new_instance=Balance(address=vout["address"],neo_balance=vout["value"])
                             Balance.save(new_instance)
 
-                    else:
+                    elif vout["asset"]==GAS_ASSETID:
                         GasVout.save(tx_id=tx["txid"], address=vout["address"], asset_id=vout["asset"], vout_number=vout["n"], value=Decimal(vout["value"]))
                         exist_instance=session.query(Balance).filter(Balance.address==vout["address"]).first()
                         if exist_instance:
