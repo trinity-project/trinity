@@ -1,3 +1,27 @@
+"""Author: Trinity Core Team
+
+MIT License
+
+Copyright (c) 2018 Trinity
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE."""
+
 from .neo_api import neo_api
 from configure import Configure
 from neo_python_tool import query
@@ -7,7 +31,7 @@ from functools import reduce
 NeoServer = neo_api.NeoApi(Configure["BlockNet"])
 
 def add_to_channel(address, type, public_key, signature, channel_name, deposit=0, open_block_number=10 ):
-        return True
+    return True
 
 
 def setting_transection(sender, receiver, channel_name):
@@ -15,13 +39,12 @@ def setting_transection(sender, receiver, channel_name):
 
 
 def send_raw_transection(hax):
-    #return NeoServer.sendrawtransaction(hax)
-    return True
+    return neo_api.send_raw_tx(hax)
 
 
 def NewTransection(asset_type,from_addr, to_addr, count):
-    print("Signature")
-    return ""
+    tx_data= neo_api.invocate_contract_tx(from_addr, to_addr, Configure["AssetList"].get(asset_type.upper()), count)
+    return tx_data["tx_data"]
 
 
 def get_balance(address, asset_type):
@@ -57,3 +80,10 @@ def get_asset_balance(address, asset_type):
 def distribute_balance(address, asset_type, value):
     asset_id = get_asset_id(asset_type.upper())
     return NeoServer.sendtoaddress(asset_id, address, value)
+
+
+def allocate_address():
+    return neo_api.allocate_address()
+
+def tx_onchain(from_addr, to_addr, asset_type, value):
+    return neo_api.tx_onchain(from_addr, to_addr,Configure["AssetList"].get(asset_type), value)

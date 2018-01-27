@@ -1,7 +1,31 @@
+"""Author: Trinity Core Team
+
+MIT License
+
+Copyright (c) 2018 Trinity
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE."""
+
 import logging
 
-from  channel_manager.channel import Channel, State, get_channelnames_via_address
-from  channel_manager import blockchain
+from channel_manager.channel import Channel, State, get_channelnames_via_address
+from channel_manager import blockchain
 from utils.channel import split_channel_name
 from channel_manager.state import ChannelDatabase, ChannelFile, ChannelState, ChannelAddress
 from exception import ChannelExist, NoChannelFound, ChannelNotInOpenState,ChannelFileNoExist,ChannelExistInDb
@@ -16,19 +40,21 @@ log = logging.getLogger(__name__)
 
 def regist_channel(sender_addr, receiver_addr, asset_type,deposit, open_blockchain):
     """
-
-    :param sender_addr:
-    :param receiver_addr:
-    :param asset_type:
-    :param deposit:
-    :param open_blockchain:
-    :return:
+    This func is to register channel
+    :param sender_addr: String, the sender address
+    :param receiver_addr: String, receiver's address
+    :param asset_type: String, asset type should be symbol name , asset id should be configured in the configure.json
+    :param deposit:  String, depoist number in block chain
+    :param open_blockchain:  Open block chain number
+    :return: Dictionary, {"channel_name":channel_name,
+                "trad_info":raw_tans}
     """
     channel = Channel(sender_addr,receiver_addr)
     if channel.find_channel():
         return {"error": "channel already exist"}
     else:
-        channel_name = channel.create(sender_deposit=int(deposit),reciever_deposit=0,open_block_number=int(open_blockchain),settle_timeout=10)
+        channel_name = channel.create(sender_deposit=int(deposit),reciever_deposit=0,
+                                      open_block_number=int(open_blockchain),settle_timeout=10)
         raw_tans = blockchain.NewTransection(asset_type, sender_addr, Contract_addr, int(deposit))
         return {"channel_name":channel_name,
                 "trad_info":raw_tans}
@@ -36,11 +62,10 @@ def regist_channel(sender_addr, receiver_addr, asset_type,deposit, open_blockcha
 
 def send_raw_transaction(sender_address, channel_name, hex):
     """
-
-    :param sender_address:
-    :param channel_name:
-    :param hex:
-    :return:
+    :param sender_address: String, the sender address
+    :param channel_name: String, channel name
+    :param hex: String, the digital signature string
+    :return: String, SUCCESS
     """
 
     blockchain.send_raw_transection(hex)
@@ -52,17 +77,15 @@ def send_raw_transaction(sender_address, channel_name, hex):
     receiver_cache = ch.receiver_deposit_cache
     ch.update_channel_deposit(sender_deposit= sender_deposit+sender_cache,
                               receiver_deposit = receiver_deposit+receiver_cache)
-
     return ch.set_channel_open()
 
 
 
 def get_channel_state(address):
     """
-
-    :param sender_addr:
-    :param receiver_addr:
-    :return:
+    :param sender_addr: String, the sender address
+    :param receiver_addr: String, receiver's address
+    :return: Dictionary, the chnnnel information
     """
     channel_infos =[]
     channels = get_channelnames_via_address(address)
@@ -88,12 +111,11 @@ def get_channel_state(address):
 
 def sender_to_receiver(sender_addr, receiver_addr, channel_name, asset_type, count):
     """
-
-    :param sender_addr:
-    :param receiver_addr:
-    :param channel_name:
-    :param asset_type:
-    :param count:
+    :param sender_addr: String, the sender address
+    :param receiver_addr: String, receiver's address
+    :param channel_name: String, channel name
+    :param asset_type: String, asset type should be symbol name , asset id should be configured in the configure.json
+    :param count:  String, depoist number in block chain
     :return:
     """
     sender,receiver = split_channel_name(channel_name)
@@ -108,10 +130,9 @@ def sender_to_receiver(sender_addr, receiver_addr, channel_name, asset_type, cou
 
 def close_channel(sender_addr, receiver_addr,channel_name):
     """
-
-    :param sender_addr:
-    :param receiver_addr:
-    :param channel_name:
+    :param sender_addr: String, the sender address
+    :param receiver_addr: String, receiver's address
+    :param channel_name: String, channel name
     :return:
     """
     sender, receiver = split_channel_name(channel_name)
@@ -123,10 +144,9 @@ def close_channel(sender_addr, receiver_addr,channel_name):
 
 def get_balance_onchain(address, asset_type):
     """
-
-    :param address:
-    :param asset_type:
-    :return:
+    :param address: String, address
+    :param asset_type: String, asset type should be symbol name , asset id should be configured in the configure.json
+    :return: Blance
     """
     return blockchain.get_balance(address,asset_type)
 
@@ -134,11 +154,12 @@ def get_balance_onchain(address, asset_type):
 def update_deposit(address, channel_name, asset_type, value):
     """
 
-    :param address:
-    :param channel_name:
-    :param asset_type:
-    :param value:
-    :return:
+    :param address: String , address
+    :param channel_name: String, channel name
+    :param asset_type: String, asset type
+    :param value: String , the deposit number
+    :return: {"channel_name": channel.channel_name,
+            "trad_info": raw_tans}
     """
 
     sender, receiver = split_channel_name(channel_name)
@@ -149,15 +170,23 @@ def update_deposit(address, channel_name, asset_type, value):
             return {"channel_name": channel.channel_name,
                     "trad_info": "Channel exist but in state %s" % str(State(channel.state_in_database))}
         else:
-            raw_tans = blockchain.NewTransection(asset_type, address, Contract_addr, int(value))
+            raw_tans = blockchain.NewTransection(asset_type, address, Contract_addr, value)
             channel.update_channel_to_database(sender_deposit_cache=float(value))
     elif channel.receiver == address:
-        raw_tans = blockchain.NewTransection(asset_type, address, Contract_addr, float(value))
+        raw_tans = blockchain.NewTransection(asset_type, address, Contract_addr, value)
         channel.update_channel_to_database(receiver_deposit_cache=float(value))
     else:
         return {"error":"channel name not match the address"}
     return {"channel_name": channel.channel_name,
             "trad_info": raw_tans}
+
+
+def allocate_address():
+    return blockchain.allocate_address()
+
+
+def tx_onchain(from_addr, to_addr, asset_type, value):
+    return blockchain.tx_onchain(from_addr, to_addr, asset_type.upper(), value)
 
 
 
