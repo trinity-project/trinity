@@ -59,7 +59,7 @@ def get_balance(address, asset_type):
                         "type": "Hash160",
                         "value": ToScriptHash(address).ToString()
                     }]
-        result = NeoServer.invokefunction(scripthash, operation *params)
+        result = NeoServer.invokefunction(scripthash, operation,params)
         balance = result.value
         return hex2interger(balance)
 
