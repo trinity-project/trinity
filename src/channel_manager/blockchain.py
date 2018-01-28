@@ -26,6 +26,8 @@ from .neo_api import neo_api
 from configure import Configure
 from neo_python_tool import query
 from functools import reduce
+from neo_python_tool.rpcServer.transfer_tnc import ToScriptHash
+from crypto.Cryptography.Helper import hex2interger
 
 
 NeoServer = neo_api.NeoApi(Configure["BlockNet"])
@@ -48,13 +50,18 @@ def NewTransection(asset_type,from_addr, to_addr, count):
 
 
 def get_balance(address, asset_type):
-    if asset_type:
-        return get_asset_balance(address, asset_type.upper())
+    if asset_type.upper() == "NEO" or asset_type.upper() == "NEOGAS":
+        return get_Neoasset_balance(address, asset_type.upper())
     else:
-        assets_balance = []
-        for asset in Configure["AssetList"]:
-            for a, v in asset.items():
-                asset_type.append(get_asset_balance(address, a))
+        scripthash =  Configure["AssetList"].get(asset_type.upper)
+        operation = "balanceOf"
+        params = [{
+                        "type": "Hash160",
+                        "value": ToScriptHash(address).ToString()
+                    }]
+        result = NeoServer.invokefunction(scripthash, operation *params)
+        balance = result.value
+        return hex2interger(balance)
 
 
 def get_asset_id(asset_type):
@@ -65,7 +72,7 @@ def get_asset_id(asset_type):
         return None
 
 
-def get_asset_balance(address, asset_type):
+def get_Neoasset_balance(address, asset_type):
     asset_id = get_asset_id(asset_type)
     if asset_id:
         balancelist = [ float(i.value) for i in query.get_utxo_by_address(address,asset_id.replace("0x",""))]
@@ -84,6 +91,7 @@ def distribute_balance(address, asset_type, value):
 
 def allocate_address():
     return neo_api.allocate_address()
+
 
 def tx_onchain(from_addr, to_addr, asset_type, value):
     return neo_api.tx_onchain(from_addr, to_addr,Configure["AssetList"].get(asset_type), value)

@@ -508,6 +508,13 @@ class NeoApi(object):
         params = [asset_id, address, value, fee]
         return self.post_request(self.generate_payload("sendtoaddress", params))
 
+    def invokefunction(self,  scripthash, operation, *options):
+        params = [scripthash, operation, options]
+        return self.post_request(self.generate_payload("invokefunction",params))
+
+
+
+
 
 NEOSERVER = "http://47.88.35.235:8000/api/"
 import configure
