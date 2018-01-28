@@ -53,7 +53,7 @@ def get_balance(address, asset_type):
     if asset_type.upper() == "NEO" or asset_type.upper() == "NEOGAS":
         return get_Neoasset_balance(address, asset_type.upper())
     else:
-        scripthash =  Configure["AssetList"].get(asset_type.upper).replace("0x","")
+        scripthash =  Configure["AssetList"].get(asset_type.upper()).replace("0x","")
         operation = "balanceOf"
         params = [{
                         "type": "Hash160",
