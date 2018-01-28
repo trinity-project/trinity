@@ -540,8 +540,8 @@ def send_raw_tx(sign_tx_data=""):
 
 
 def allocate_address():
-    method = NEOSERVER+"allocateaddress"
-    result = requests.post(method)
+    method = NEOSERVER+"getRandomAddress"
+    result = requests.post(method,json={})
     return result.json()
 
 
