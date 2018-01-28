@@ -26,13 +26,13 @@ from sqlalchemy import Column, String, create_engine, Integer, Float, BigInteger
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy.ext.declarative import declarative_base
 import os
-import hashlib
+from configure import Configure
 from crypto import crypto_channel, uncryto_channel
 from exception import ChannelDBAddFail, ChannelDBUpdateFail, ChannelExist, QureyRoleNotCorrect
 
 Base = declarative_base()
 
-DATABASE_PAHT = "/tmp/test.db"
+DATABASE_PAHT = Configure["DBFile"]
 
 
 class ChannelAddrDataBase(Base):
