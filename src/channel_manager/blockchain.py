@@ -22,7 +22,7 @@ LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE."""
 
-from .neo_api import neo_api
+from channel_manager.neo_api import neo_api
 from configure import Configure
 from neo_python_tool import query
 from functools import reduce
@@ -53,16 +53,18 @@ def get_balance(address, asset_type):
     if asset_type.upper() == "NEO" or asset_type.upper() == "NEOGAS":
         return get_Neoasset_balance(address, asset_type.upper())
     else:
-        scripthash =  Configure["AssetList"].get(asset_type.upper)
+        scripthash =  Configure["AssetList"].get(asset_type.upper).replace("0x","")
         operation = "balanceOf"
         params = [{
                         "type": "Hash160",
                         "value": ToScriptHash(address).ToString()
                     }]
-        result = NeoServer.invokefunction(scripthash, operation,params)
-        balance = result.value
-        return hex2interger(balance)
-
+        result = NeoServer.invokefunction(scripthash, operation, params)
+        balance = result.result.stack[0].get("value")
+        if balance:
+            return hex2interger(balance)
+        else:
+            return 0
 
 def get_asset_id(asset_type):
     asset = filter(lambda x: asset_type in x , Configure["AssetList"])
@@ -95,3 +97,5 @@ def allocate_address():
 
 def tx_onchain(from_addr, to_addr, asset_type, value):
     return neo_api.tx_onchain(from_addr, to_addr,Configure["AssetList"].get(asset_type), value)
+
+

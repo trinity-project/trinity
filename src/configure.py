@@ -32,5 +32,5 @@ with open(Configure_file,'r') as f:
     Configure = json.load(f)
 
 filepath = os.path.join(os.path.dirname(__file__), 'logging.conf')
-logging.config.fileConfig(filepath)
-Logger = logging.getLogger()
+#logging.config.fileConfig(filepath)
+#Logger = logging.getLogger()

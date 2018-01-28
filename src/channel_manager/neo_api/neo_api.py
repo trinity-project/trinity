@@ -31,7 +31,7 @@ import json
 
 import requests
 
-from .api_error import APIParamError, APIResultError
+from channel_manager.neo_api.api_error import APIParamError, APIResultError
 
 from utils.common import CommonItem
 
