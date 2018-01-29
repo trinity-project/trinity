@@ -105,6 +105,16 @@ def tx_onchain(from_addr, to_addr, asset_type, value):
     return manager.tx_onchain(from_addr, to_addr, asset_type, value)
 
 
+@jsonrpc.method("depositin")
+def depositin(address, value):
+    logger.info("depositin %s" %address)
+    return manager.depositin(address, value)
+
+
+@jsonrpc.method("depositout")
+def depoistout(address, value):
+    logger.info("depositout %s" %address)
+    return manager.depoistout(address, value)
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', debug=True)
