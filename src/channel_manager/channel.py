@@ -26,6 +26,7 @@ import time
 from channel_manager import blockchain
 from channel_manager.state import ChannelFile, ChannelState, query_channel_from_address
 from enum import IntEnum
+from configure import Configure
 from exception import (
     ChannelFileNoExist,
     ChannelExistInDb,
@@ -122,9 +123,9 @@ class Channel(ChannelFile, ChannelState):
         return self.get_address_balance(self.receiver)
 
     def settle_banlace_onblockchain(self):
-        return blockchain.distribute_balance(address=self.sender, asset_type="TNC",
+        return blockchain.tx_onchain(from_addr=Configure["ContractAddr"], to_addr=self.sender, asset_type="TNC",
                                              value=self.sender_balance) \
-               and blockchain.distribute_balance(address=self.receiver, asset_type="TNC",
+               and blockchain.tx_onchain(from_addr=Configure["ContractAddr"],to_addr=self.receiver, asset_type="TNC",
                                                  value=self.receiver_balance)
 
     def get_address_balance(self, address, channels = None):
