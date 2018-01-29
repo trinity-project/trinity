@@ -46,6 +46,7 @@ class State(IntEnum):
     SETTLING = 3
     SETTLED = 4
     CLOSED = 5
+    UPDATING = 6
 
 def check_channel_exist(func):
         def wrapper(self, *args, **kwargs):
