@@ -288,6 +288,8 @@ class Channel(ChannelFile, ChannelState):
             tx_id = self.channel_txid
             sender_balance = self.get_address_balance(self.sender)
             receiver_balance = self.get_address_balance(self.receiver)
+            print(self.sender_deposit_cache)
+            print(self.sender_deposit)
             self.update_channel_deposit(sender_deposit=self.sender_deposit + self.sender_deposit_cache,
                                         receiver_deposit=self.receiver_deposit + self.receiver_deposit_cache)
             tx_detail = [
