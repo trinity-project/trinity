@@ -27,10 +27,12 @@ import os
 import logging
 
 Configure_file = os.path.join(os.path.dirname(__file__),"configure.json")
+ChannelDBFile = os.path.join(os.path.dirname(__file__),"channel.db")
 
 with open(Configure_file,'r') as f:
     Configure = json.load(f)
 
+Configure["DBFile"] = ChannelDBFile
 filepath = os.path.join(os.path.dirname(__file__), 'logging.conf')
 #logging.config.fileConfig(filepath)
 #Logger = logging.getLogger()
