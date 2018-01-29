@@ -68,7 +68,7 @@ def send_raw_transaction(sender_address, channel_name, hex):
     :return: String, SUCCESS
     """
 
-    blockchain.send_raw_transection(hex)
+
     sender,receiver = split_channel_name(channel_name)
     ch = Channel(sender, receiver)
     sender_deposit = ch.sender_deposit
@@ -77,6 +77,7 @@ def send_raw_transaction(sender_address, channel_name, hex):
     receiver_cache = ch.receiver_deposit_cache
     ch.update_channel_deposit(sender_deposit= sender_deposit+sender_cache,
                               receiver_deposit = receiver_deposit+receiver_cache)
+    blockchain.send_raw_transection(hex)
     #return ch.set_channel_open()
     return "SUCCESS"
 
