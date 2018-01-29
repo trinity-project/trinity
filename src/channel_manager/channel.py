@@ -186,6 +186,7 @@ class Channel(ChannelFile, ChannelState):
             sender_deposit = self.get_address_deposit(self.sender, channels)
             transdetail[0]["deposit"] = float(self.sender_deposit)
             delta = float(self.sender_deposit) - float(sender_deposit)
+            print(delta)
             sender_balance = self.get_address_balance(self.sender, channels) + delta
             print(self.sender, sender_balance)
             if count > sender_balance:

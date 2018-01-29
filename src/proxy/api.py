@@ -85,7 +85,7 @@ def close_channel(sender_addr, receiver_addr,channel_name):
 
 @jsonrpc.method("getbalanceonchain")
 def get_balance_onchain(local_address,asset_type=None):
-    logger.info("getbalanceonchain %s" %local_address)
+    #logger.info("getbalanceonchain %s" %local_address)
     return manager.get_balance_onchain(local_address, asset_type)
 
 
