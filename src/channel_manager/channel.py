@@ -290,8 +290,7 @@ class Channel(ChannelFile, ChannelState):
             receiver_balance = self.get_address_balance(self.receiver)
             print(self.sender_deposit_cache)
             print(self.sender_deposit)
-            self.update_channel_deposit(sender_deposit=self.sender_deposit + self.sender_deposit_cache,
-                                        receiver_deposit=self.receiver_deposit + self.receiver_deposit_cache)
+
             tx_detail = [
                 {"address": self.sender,
                  "deposit": self.sender_deposit + self.sender_deposit_cache,
@@ -307,7 +306,8 @@ class Channel(ChannelFile, ChannelState):
             ]
             trans_info = {"tx_id": str(int(tx_id)+ 1), "tx_detail": tx_detail}
             self.update_channel(**trans_info)
-
+            self.update_channel_deposit(sender_deposit=self.sender_deposit + self.sender_deposit_cache,
+                                        receiver_deposit=self.receiver_deposit + self.receiver_deposit_cache)
             self.update_channel_state(State.OPEN)
             self.update_deposit_cache(sender_deposit_cache=0, receiver_deposit_cache=0)
 
