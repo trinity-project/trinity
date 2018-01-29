@@ -29,6 +29,7 @@ from channel_manager.state import ChannelAddress
 from exception import ChannelDBAddFail
 from channel_manager import manager
 from flask_cors import CORS
+from logzero import logger
 
 
 app = Flask(__name__)
@@ -38,6 +39,7 @@ jsonrpc = JSONRPC(app, "/")
 
 @jsonrpc.method("registeaddress")
 def regist_address(address, port = "20556"):
+    logger.info("registeaddress %s" %address)
     ip_info = request.headers.getlist("X-Forwarded-For")[0] if request.headers.getlist("X-Forwarded-For") \
         else request.remote_addr
     channel_address = ChannelAddress()
@@ -51,26 +53,31 @@ def regist_address(address, port = "20556"):
 
 @jsonrpc.method("registchannle")
 def regist_channle(sender_addr, receiver_addr, asset_type,deposit, open_blockchain):
+    logger.info("registchannle %s  %s" %(sender_addr, receiver_addr))
     return manager.regist_channel(sender_addr, receiver_addr, asset_type,deposit, open_blockchain)
 
 
 @jsonrpc.method("getchannelstate")
 def get_channel_state(local_address):
+    logger.info("getchannelstate %s" %local_address)
     return manager.get_channel_state(local_address)
 
 
 @jsonrpc.method("sendrawtransaction")
 def send_raw_transaction(sender_address,channel_name, hex):
+    logger.info("sendrawtransaction %s" %channel_name)
     return manager.send_raw_transaction(sender_address, channel_name, hex)
 
 
 @jsonrpc.method("sendertoreceiver")
 def sender_to_receiver(sender_addr, receiver_addr, channel_name, asset_type, count):
+    logger.info("sendertoreceiver %s %s %s" %(sender_addr, receiver_addr, count))
     return manager.sender_to_receiver(sender_addr, receiver_addr, channel_name, asset_type, count)
 
 
 @jsonrpc.method("closechannel")
 def close_channel(sender_addr, receiver_addr,channel_name):
+    logger.info("closechannel %s" %channel_name)
     if manager.close_channel(sender_addr, receiver_addr,channel_name):
         return "SUCCESS"
     else:
@@ -78,11 +85,13 @@ def close_channel(sender_addr, receiver_addr,channel_name):
 
 @jsonrpc.method("getbalanceonchain")
 def get_balance_onchain(local_address,asset_type=None):
+    logger.info("getbalanceonchain %s" %local_address)
     return manager.get_balance_onchain(local_address, asset_type)
 
 
 @jsonrpc.method("updatedeposit")
 def update_deposit(local_address, channel_name, asset_type, value):
+    logger.info("updatedeposit %s %s %s" %(channel_name, local_address, value))
     return manager.update_deposit(local_address, channel_name, asset_type, value)
 
 @jsonrpc.method("allocateaddress")
@@ -92,6 +101,7 @@ def allocate_address():
 
 @jsonrpc.method("txonchain")
 def tx_onchain(from_addr, to_addr, asset_type, value):
+    logger.info("txonchain %s %s %s" %(from_addr, to_addr, value))
     return manager.tx_onchain(from_addr, to_addr, asset_type, value)
 
 
