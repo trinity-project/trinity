@@ -283,7 +283,7 @@ class Channel(ChannelFile, ChannelState):
     def set_channel_open(self):
         print("set_channel_open", self.channelname)
         if not self.has_channel():
-            return "No channel find"
+            print("No channel find")
         else:
             tx_id = self.channel_txid
             sender_balance = self.get_address_balance(self.sender)
