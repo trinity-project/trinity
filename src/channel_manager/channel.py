@@ -283,34 +283,31 @@ class Channel(ChannelFile, ChannelState):
         if not self.has_channel():
             return "No channel find"
         else:
-            sender_deposit = self.sender_deposit
-            receiver_deposit = self.receiver_deposit
-            sender_cache = self.sender_deposit_cache
-            receiver_cache = self.receiver_deposit_cache
-
             tx_id = self.channel_txid
             sender_balance = self.get_address_balance(self.sender)
             receiver_balance = self.get_address_balance(self.receiver)
+            self.update_channel_deposit(sender_deposit=self.sender_deposit + self.sender_deposit_cache,
+                                        receiver_deposit=self.receiver_deposit + self.receiver_deposit_cache)
             tx_detail = [
                 {"address": self.sender,
-                 "deposit": sender_deposit + sender_cache,
+                 "deposit": self.sender_deposit + self.sender_deposit_cache,
                  "trans": 0,
                  "balance": sender_balance + self.sender_deposit_cache,
 
                  },
                 {"address": self.receiver,
-                 "deposit": receiver_deposit + receiver_cache,
+                 "deposit": self.receiver_deposit + self.receiver_deposit_cache,
                  "trans": 0,
                  "balance": receiver_balance + self.receiver_deposit_cache,
                  }
             ]
             trans_info = {"tx_id": str(int(tx_id)+ 1), "tx_detail": tx_detail}
             self.update_channel(**trans_info)
-        self.update_channel_deposit(sender_deposit=sender_deposit + sender_cache,
-                                    receiver_deposit=receiver_deposit + receiver_cache)
-        self.update_channel_state(State.OPEN)
-        self.update_deposit_cache(sender_deposit_cache=0, receiver_deposit_cache=0)
-        return "SUCCESS"
+
+            self.update_channel_state(State.OPEN)
+            self.update_deposit_cache(sender_deposit_cache=0, receiver_deposit_cache=0)
+
+            return "SUCCESS"
 
 
 def get_channelnames_via_address(address):
