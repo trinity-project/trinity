@@ -88,21 +88,24 @@ def depoist_in(address, value):
             ch.set_channel_open()
             success_channel.append(channel.channel_name)
         else:
-            return None
-    print(success_channel)
-    return success_channel
+            continue
+    print("depost in",success_channel)
+
 
 
 def depoist_out(address,value):
     print("deposit_out", address)
-    channel_name = get_channelnames_via_address(address)
-    if channel_name:
-        sender, receiver = split_channel_name(channel_name)
-        ch = Channel(sender, receiver)
-        ch.close()
-    else:
-        return None
-    return address
+    channels = get_channelnames_via_address(address)
+    success_channel = []
+    for channel in channels:
+        if channel.stateinDB == State.SETTLING.value:
+            sender, receiver = split_channel_name(channel.channel_name)
+            ch = Channel(sender, receiver)
+            ch.close()
+            success_channel.append(channel.channel_name)
+        else:
+            continue
+        print("depost out", success_channel)
 
 
 def custom_background_code():
