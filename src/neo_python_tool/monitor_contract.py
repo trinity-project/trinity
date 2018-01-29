@@ -73,6 +73,7 @@ def sc_notify(event):
 def depoist_in(address, value):
     print("depost_in", address)
     channels = get_channelnames_via_address(address)
+    print(channels)
     success_channel = []
     for channel in channels:
         print(channel.channel_name)
