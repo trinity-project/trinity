@@ -71,17 +71,19 @@ def sc_notify(event):
 
 
 def depoist_in(address, value):
-    print("depost in")
+    print("depost_in", address)
     channels = get_channelnames_via_address(address)
     success_channel = []
     for channel in channels:
         print(channel.channel_name)
         sender, receiver = split_channel_name(channel.channel_name)
         ch = Channel(sender, receiver)
-        if address == sender and value == ch.sender_deposit_cache:
+        #if address == sender and value == ch.sender_deposit_cache:
+        if address == sender:
             ch.set_channel_open()
             success_channel.append(channel.channel_name)
-        elif address == receiver and value == ch.receiver_deposit_cache:
+        #elif address == receiver and value == ch.receiver_deposit_cache:
+        elif address == receiver:
             ch.set_channel_open()
             success_channel.append(channel.channel_name)
         else:
@@ -91,6 +93,7 @@ def depoist_in(address, value):
 
 
 def depoist_out(address,value):
+    print("deposit_out", address)
     channel_name = get_channelnames_via_address(address)
     if channel_name:
         sender, receiver = split_channel_name(channel_name)

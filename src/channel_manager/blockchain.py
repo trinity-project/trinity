@@ -46,7 +46,14 @@ def send_raw_transection(hax):
 
 def NewTransection(asset_type,from_addr, to_addr, count):
     tx_data= neo_api.invocate_contract_tx(from_addr, to_addr, Configure["AssetList"].get(asset_type.upper()), count)
-    return tx_data["tx_data"]
+    print(tx_data)
+    if tx_data.get("tx_data"):
+        return tx_data.get("tx_data"),True
+    try:
+        return tx_data.get("message"),False
+    except KeyError:
+        return "Transaction Error",False
+
 
 
 def get_balance(address, asset_type):

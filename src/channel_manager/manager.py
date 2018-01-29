@@ -53,11 +53,16 @@ def regist_channel(sender_addr, receiver_addr, asset_type,deposit, open_blockcha
     if channel.find_channel():
         return {"error": "channel already exist"}
     else:
-        channel_name = channel.create(sender_deposit=int(deposit),reciever_deposit=0,
+        raw_tans,state = blockchain.NewTransection(asset_type, sender_addr, Contract_addr, int(deposit))
+        if state:
+            channel_name = channel.create(sender_deposit=int(deposit),reciever_deposit=0,
                                       open_block_number=int(open_blockchain),settle_timeout=10)
-        raw_tans = blockchain.NewTransection(asset_type, sender_addr, Contract_addr, int(deposit))
-        return {"channel_name":channel_name,
-                "trad_info":raw_tans}
+
+            return {"channel_name": channel_name,
+                    "trad_info": raw_tans}
+        else:
+            return {"channel_name":None,
+                    "trad_info":raw_tans}
 
 
 def send_raw_transaction(sender_address, channel_name, hex):
@@ -172,11 +177,13 @@ def update_deposit(address, channel_name, asset_type, value):
             return {"channel_name": channel.channel_name,
                     "trad_info": "Channel exist but in state %s" % str(State(channel.state_in_database))}
         else:
-            raw_tans = blockchain.NewTransection(asset_type, address, Contract_addr, value)
-            channel.update_channel_to_database(sender_deposit_cache=float(value))
+            raw_tans ,state= blockchain.NewTransection(asset_type, address, Contract_addr, value)
+            if state:
+                channel.update_channel_to_database(sender_deposit_cache=float(value))
     elif channel.receiver == address:
-        raw_tans = blockchain.NewTransection(asset_type, address, Contract_addr, value)
-        channel.update_channel_to_database(receiver_deposit_cache=float(value))
+        raw_tans, state = blockchain.NewTransection(asset_type, address, Contract_addr, value)
+        if state:
+            channel.update_channel_to_database(receiver_deposit_cache=float(value))
     else:
         return {"error":"channel name not match the address"}
     return {"channel_name": channel.channel_name,

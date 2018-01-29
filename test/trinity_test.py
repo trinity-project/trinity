@@ -76,12 +76,12 @@ if __name__ == "__main__":
     import time
     test= NeoApi("http://localhost:5000")
     #result1 = test.test_registeraddress("AT5AVHBxp4TH5k5ni1x2m81P7HgaJUW8h8")
-    #result = test.test_registchannle("AT5AVHBxp4TH5k5ni1x2m81P7HgaJUW8h8","AT5eVHBxp4TH5k5ni1x2m81P7HgaJUW8h7","tnc","100","789087")
+    result = test.test_registchannle("AZLtmATYKJLJgdTEap1osdFTpfmnexBCLZ","AT5eVHBxp4TH5k5ni1x2m81P7HgaJUW8h7","tnc","100","789087")
     
-    for i in range(100):
-        time.sleep(0.5)
-        result2= test.test_getchannelstate("AT5AVHBxp4TH5k5ni1x2m81P7HgaJUW8h8")
-        test.test_getchannelstate("AT5eVHBxp4TH5k5ni1x2m81P7HgaJUW8h7")
+    #for i in range(100):
+    #    time.sleep(0.5)
+    #    result2= test.test_getchannelstate("AT5AVHBxp4TH5k5ni1x2m81P7HgaJUW8h8")
+    #    test.test_getchannelstate("AT5eVHBxp4TH5k5ni1x2m81P7HgaJUW8h7")
 
 
 

@@ -557,8 +557,8 @@ def tx_onchain(from_addr, to_addr, asset_id, value):
     method = NEOSERVER + "txonchain"
     param = {"address_from": from_addr,
              "address_to":to_addr,
-             "contract_hash": asset_id.replace("0x",""),
-             "count": int(value)}
+             "amount": int(value),
+             "asset_type": asset_id.replace("0x","")
+             }
     result = requests.post(method, json=param)
     return result.json()
-
