@@ -1,5 +1,28 @@
 '''
-This neo api python implementation
+Neo api python implementation
+"""Author: Trinity Core Team
+
+MIT License
+
+Copyright (c) 2018 Trinity
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE."""
 
 '''
 
@@ -8,7 +31,7 @@ import json
 
 import requests
 
-from .api_error import APIParamError, APIResultError
+from channel_manager.neo_api.api_error import APIParamError, APIResultError
 
 from utils.common import CommonItem
 
@@ -485,3 +508,57 @@ class NeoApi(object):
         params = [asset_id, address, value, fee]
         return self.post_request(self.generate_payload("sendtoaddress", params))
 
+    def invokefunction(self,  scripthash, operation, options):
+        params = [scripthash, operation, options]
+        return self.post_request(self.generate_payload("invokefunction",params))
+
+
+
+
+
+NEOSERVER = "http://47.88.35.235:8000/api/"
+import configure
+
+
+def invocate_contract_tx(address_from,address_to, asset_id, count):
+    method = NEOSERVER+"contructTx"
+    param = {"address_from":address_from,
+"address_to":address_to,
+"amount":int(count),
+"contract_hash":asset_id.replace("0x","")
+}
+    result = requests.post(method, json=param)
+    return result.json()
+
+
+def send_raw_tx(sign_tx_data=""):
+    method = NEOSERVER+"sendRawtransaction"
+    param = {"sign_tx_data":sign_tx_data}
+    result = requests.post(method, json=param)
+    return result.json()
+
+
+
+def allocate_address():
+    method = NEOSERVER+"getRandomAddress"
+    result = requests.post(method,json={})
+    return result.json()
+
+
+def signature(address, hex):
+    method = NEOSERVER+"signature"
+    param = {"address":address,
+             "tx_data":hex}
+    result = requests.post(method, json=param)
+    return result.json()
+
+
+def tx_onchain(from_addr, to_addr, asset_id, value):
+    method = NEOSERVER + "txonchain"
+    param = {"address_from": from_addr,
+             "address_to":to_addr,
+             "amount": int(value),
+             "asset_type": asset_id.replace("0x","")
+             }
+    result = requests.post(method, json=param)
+    return result.json()

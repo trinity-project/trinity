@@ -374,10 +374,6 @@ def hex2interger(input):
     return output
 
 if __name__=="__main__":
-    t = b'\x9fJ\xe7)\\\xa9\xcf\x93\xa5\xbb\xad\x7f\xb7\x15\x11l:\xdcU\xf7'
-    s =hash_to_wallet_address(t)
-    print(s)
-    print(len(s))
+    result = hex2interger("00ab510d")
+    print(result)
 
-    h = hex2interger(bytes_to_hex_string(b'\x00 J\xa9\xd1\x01'))
-    print(h)

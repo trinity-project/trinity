@@ -1,3 +1,27 @@
+"""Author: Trinity Core Team
+
+MIT License
+
+Copyright (c) 2018 Trinity
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE."""
+
 from configure import Configure
 import threading
 from time import sleep
@@ -43,34 +67,45 @@ def sc_notify(event):
         depoist_in(address=sender,value=value)
     elif sender == ContractAddr:
         depoist_out(address=receiver, value=value)
+    print("sc_notification")
 
 
 def depoist_in(address, value):
-    channel_name = get_channelnames_via_address(address)
-    if channel_name:
-        sender, receiver = split_channel_name(channel_name)
+    print("depost_in", address)
+    channels = get_channelnames_via_address(address)
+    print(channels)
+    success_channel = []
+    for channel in channels:
+        print(channel.channel_name)
+        sender, receiver = split_channel_name(channel.channel_name)
         ch = Channel(sender, receiver)
-        if address == sender and ch.stateinDB == State.OPENING and value == ch.sender_deposit_cache:
-            ch.update_channel_state(State.OPEN)
-        elif address == receiver and ch.stateinDB == State.OPENING and value == ch.receiver_deposit_cache:
-            ch.update_channel_state(State.OPEN)
+        #if address == sender and value == ch.sender_deposit_cache:
+        if address == sender:
+            ch.set_channel_open()
+            success_channel.append(channel.channel_name)
+        #elif address == receiver and value == ch.receiver_deposit_cache:
+        elif address == receiver:
+            ch.set_channel_open()
+            success_channel.append(channel.channel_name)
         else:
-            return None
-    else:
-        return None
-    return address
+            continue
+    print("depost in",success_channel)
+
 
 
 def depoist_out(address,value):
-    channel_name = get_channelnames_via_address(address)
-    if channel_name:
-        sender, receiver = split_channel_name(channel_name)
-        ch = Channel(sender, receiver)
-        ch.delete_channle_in_database()
-        ch.delete_channel()
-    else:
-        return None
-    return address
+    print("deposit_out", address)
+    channels = get_channelnames_via_address(address)
+    success_channel = []
+    for channel in channels:
+        if channel.state == State.SETTLING.value:
+            sender, receiver = split_channel_name(channel.channel_name)
+            ch = Channel(sender, receiver)
+            ch.close()
+            success_channel.append(channel.channel_name)
+        else:
+            continue
+        print("depost out", success_channel)
 
 
 def custom_background_code():
@@ -93,7 +128,7 @@ def main():
 
     # Start a thread with custom code
     d = threading.Thread(target=custom_background_code)
-    d.setDaemon(True)  # daemonizing the thread will kill it when the main thread is quit
+    d.setDaemon(True)
     d.start()
 
     # Run all the things (blocking call)
@@ -101,4 +136,5 @@ def main():
     reactor.run()
     logger.info("Shutting down.")
 
-main()
+if __name__ == "__main__":
+    main()

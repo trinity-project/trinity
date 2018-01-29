@@ -73,15 +73,15 @@ class NeoApi(object):
 
 
 if __name__ == "__main__":
+    import time
     test= NeoApi("http://localhost:5000")
-    result1 = test.test_registeraddress("AT5AVHBxp4TH5k5ni1x2m81P7HgaJUW8h8")
-    result = test.test_registchannle("AT5AVHBxp4TH5k5ni1x2m81P7HgaJUW8h9","AT5eVHBxp4TH5k5ni1x2m81P7HgaJUW8h7","tnc","100","789087")
-    result5 = test.test_registchannle("AT5eVHBxp4TH5k5ni1x2m81P7HgaJUW8h7","AT5AVHBxp4TH5k5ni1x2m81P7HgaJUW8h9","tnc","100","789087")
-    result2= test.test_getchannelstate("AT5AVHBxp4TH5k5ni1x2m81P7HgaJUW8h9")
-    result3=test.test_getchannelstate("AT5eVHBxp4TH5k5ni1x2m81P7HgaJUW8h7")
-    result4= test.test_sendrawtransaction("AT5AVHBxp4TH5k5ni1x2m81P7HgaJUW8h9",'AATT55AeVVHHBBxxpp44TTHH55kk55nnii11xx22mm8811PP77HHggaaJJUUWW88hh97',"0xxxxxxxxxxxxxxxxxxxxxxxxxxxxx")
-    test.test_getchannelstate("AT5AVHBxp4TH5k5ni1x2m81P7HgaJUW8h9")
-    test.test_sendertoreceiver("AT5AVHBxp4TH5k5ni1x2m81P7HgaJUW8h9","AT5eVHBxp4TH5k5ni1x2m81P7HgaJUW8h7",'AATT55AeVVHHBBxxpp44TTHH55kk55nnii11xx22mm8811PP77HHggaaJJUUWW88hh97',"tnc","20")
+    #result1 = test.test_registeraddress("AT5AVHBxp4TH5k5ni1x2m81P7HgaJUW8h8")
+    result = test.test_registchannle("AZLtmATYKJLJgdTEap1osdFTpfmnexBCLZ","AT5eVHBxp4TH5k5ni1x2m81P7HgaJUW8h7","tnc","100","789087")
+    
+    #for i in range(100):
+    #    time.sleep(0.5)
+    #    result2= test.test_getchannelstate("AT5AVHBxp4TH5k5ni1x2m81P7HgaJUW8h8")
+    #    test.test_getchannelstate("AT5eVHBxp4TH5k5ni1x2m81P7HgaJUW8h7")
 
 
 

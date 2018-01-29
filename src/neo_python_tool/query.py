@@ -1,36 +1,64 @@
-
 # -*- coding: utf-8 -*-
+"""Author: Trinity Core Team
+
+MIT License
+
+Copyright (c) 2018 Trinity
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE."""
+
 import pprint
 
-from sqlalchemy import create_engine
+from sqlalchemy import create_engine, and_
 from sqlalchemy.orm import sessionmaker
 
-from model import Vout, LocalBlockCout
+from neo_python_tool.model import Vout, LocalBlockCout
+import os
 
-engine = create_engine('sqlite:///privtnet.db')
-Session = sessionmaker(bind=engine)
+PATH =  os.path.dirname(__file__)
+BlockDB = os.path.join(PATH,"privtnet.db")
 
-session=Session()
+engine = create_engine('sqlite:///'+BlockDB)
+SessionBlock = sessionmaker(bind=engine)
 
-localBlockCount = session.query(LocalBlockCout).all()
-if localBlockCount:
-    localBlockCountInstace=localBlockCount[0]
-    print (u"目前同步的区块数:",localBlockCountInstace.height)
+sessionblock=SessionBlock()
+
+def get_current_block_number():
+    localBlockCount = sessionblock.query(LocalBlockCout).all()
+    if localBlockCount:
+        localBlockCountInstace=localBlockCount[0]
+        print ("Current Block Number:",localBlockCountInstace.height)
+        return localBlockCountInstace.height
+    else:
+        return None
 
 
-def get_utxo_by_address(address):
-    class_instacce=session.query(Vout).filter(Vout.address==address).all()
-    reszult=[]
+def get_utxo_by_address(address, asset_id):
+    class_instacce=sessionblock.query(Vout).filter(and_(Vout.address==address, Vout.asset_id == asset_id)).all()
+    result=[]
     if class_instacce:
         for i in class_instacce:
-            reszult.append (i.to_json())
-        return reszult
+            result.append (i.to_json())
+        return result
 
 
-address="AVV143sXT2Veq8wKDT9Q2Skp2bezMZk2"  #更换不同的地址，返回相应的未消费的输出
 
-
-pprint.pprint(get_utxo_by_address(address))
 
 
 

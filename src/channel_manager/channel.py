@@ -1,6 +1,32 @@
+"""Author: Trinity Core Team
+
+MIT License
+
+Copyright (c) 2018 Trinity
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE."""
+
 import time
+from channel_manager import blockchain
 from channel_manager.state import ChannelFile, ChannelState, query_channel_from_address
 from enum import IntEnum
+from configure import Configure
 from exception import (
     ChannelFileNoExist,
     ChannelExistInDb,
@@ -20,6 +46,7 @@ class State(IntEnum):
     SETTLING = 3
     SETTLED = 4
     CLOSED = 5
+    UPDATING = 6
 
 def check_channel_exist(func):
         def wrapper(self, *args, **kwargs):
@@ -80,44 +107,27 @@ class Channel(ChannelFile, ChannelState):
             self.delete_channle_in_database()
             self.delete_channel()
 
-
     def close(self):
-        if self.state_in_database == State.SETTLING:
-            raise ChannelSettling
-        else:
-            try:
-                self.delete_channel()
-                self.delete_channle_in_database()
-            except:
-                return False
+        try:
+            self.delete_channel()
+            self.delete_channle_in_database()
+        except:
+            return False
         return True
 
+    @property
+    def sender_balance(self):
+        return self.get_address_balance(self.sender)
 
-    @check_channel_exist
-    def settle(self):
-        if self.state_in_database != State.OPEN:
-            raise ChannelNotInOpenState
-        else:
-            self.find_channel()
-            self.update_channel_to_database(sender=self.match.sender, receiver=self.match.receiver,
-                                            channel_name=self.match.channel_name,
-                                            state=State.SETTLING, sender_deposit=self.match.sender_deposit,
-                                            receiver_deposit=self.match.reciever_deposit,
-                                            open_block_number=self.match.open_block_number,
-                                            settle_timeout=self.match.settle_timeout,
-                                            start_block_number=self.match.start_block_number)
-            if self.settle_banlace_in_lockchain():
-                self.update_channel_to_database(sender=self.match.sender, receiver=self.match.receiver,
-                                                channel_name=self.match.channel_name,
-                                                state=State.SETTLED, sender_deposit=self.match.sender_deposit,
-                                                receiver_deposit=self.match.reciever_deposit,
-                                                open_block_number=self.match.open_block_number,
-                                                settle_timeout=self.match.settle_timeout,
-                                                start_block_number=self.match.start_block_number)
+    @property
+    def receiver_balance(self):
+        return self.get_address_balance(self.receiver)
 
-
-    def settle_banlace_in_lockchain(self):
-        return True
+    def settle_banlace_onblockchain(self):
+        return blockchain.tx_onchain(from_addr=Configure["ContractAddr"], to_addr=self.sender, asset_type="TNC",
+                                             value=self.sender_balance) \
+               and blockchain.tx_onchain(from_addr=Configure["ContractAddr"],to_addr=self.receiver, asset_type="TNC",
+                                                 value=self.receiver_balance)
 
     def get_address_balance(self, address, channels = None):
         try:
@@ -132,15 +142,13 @@ class Channel(ChannelFile, ChannelState):
         except:
             return None
 
-
-
     def get_address_deposit(self, address, channels = None):
         if not channels:
             channels = self.read_channel()
         trans_detail = channels[-1]["tx_detail"]
         trans = [i for i in trans_detail if i["address"] == address]
         if trans:
-            return int(trans[0]["deposit"])
+            return float(trans[0]["deposit"])
         else:
             return None
 
@@ -176,22 +184,22 @@ class Channel(ChannelFile, ChannelState):
         else:
             channels = self.read_channel()
             sender_deposit = self.get_address_deposit(self.sender, channels)
-            transdetail[0]["deposit"] = int(self.sender_deposit)
-            delta = int(self.sender_deposit) - int(sender_deposit)
+            transdetail[0]["deposit"] = float(self.sender_deposit)
+            delta = float(self.sender_deposit) - float(sender_deposit)
             sender_balance = self.get_address_balance(self.sender, channels) + delta
             if count > sender_balance:
                 raise NoBalanceEnough
             else:
-                transdetail[0]["trans"] = -int(count)
-                sender_balance -=int(count)
+                transdetail[0]["trans"] = -float(count)
+                sender_balance -=float(count)
             transdetail[0]["balance"] = sender_balance
 
             receiver_deposit = self.get_address_deposit(self.receiver, channels)
-            transdetail[1]["deposit"] = int(self.receiver_deposit)
-            delta = int(self.receiver_deposit) - int(receiver_deposit)
+            transdetail[1]["deposit"] = float(self.receiver_deposit)
+            delta = float(self.receiver_deposit) - float(receiver_deposit)
             receiver_balance = self.get_address_balance(self.receiver, channels) + delta
-            transdetail[1]["trans"] = int(count)
-            receiver_balance += int(count)
+            transdetail[1]["trans"] = float(count)
+            receiver_balance += float(count)
             transdetail[1]["balance"] = receiver_balance
 
             tx_id = int(channels[-1]["tx_id"])
@@ -221,19 +229,19 @@ class Channel(ChannelFile, ChannelState):
             raise ChannelNotInOpenState
         else:
             channels = self.read_channel()
-            transdetail[0]["deposit"] = int(self.sender_deposit)
+            transdetail[0]["deposit"] = float(self.sender_deposit)
             sender_balance = self.get_address_balance(self.sender, channels)
-            transdetail[0]["trans"] = int(count)
-            sender_balance += int(count)
+            transdetail[0]["trans"] = float(count)
+            sender_balance += float(count)
             transdetail[0]["balance"] = sender_balance
 
-            transdetail[1]["deposit"] = int(self.receiver_deposit)
+            transdetail[1]["deposit"] = float(self.receiver_deposit)
             receiver_balance = self.get_address_balance(self.receiver, channels)
             if count > sender_balance:
                 raise NoBalanceEnough
             else:
-                transdetail[1]["trans"] = -int(count)
-                receiver_balance -=int(count)
+                transdetail[1]["trans"] = -float(count)
+                receiver_balance -=float(count)
             transdetail[1]["balance"] = receiver_balance
 
             tx_id = int(channels[-1]["tx_id"])
@@ -263,7 +271,7 @@ class Channel(ChannelFile, ChannelState):
              "balance": 0,
              }
         ]
-        transinfo = {"tx_id": 0, "tx_detail": transdetail}
+        transinfo = {"tx_id": "0", "tx_detail": transdetail}
         try:
             self.create_channelfile(**transinfo)
         except ChannelExist:
@@ -271,30 +279,35 @@ class Channel(ChannelFile, ChannelState):
         return self.channel_name
 
     def set_channel_open(self):
+        print("set_channel_open", self.channelname)
         if not self.has_channel():
             return "No channel find"
         else:
             tx_id = self.channel_txid
             sender_balance = self.get_address_balance(self.sender)
             receiver_balance = self.get_address_balance(self.receiver)
+            self.update_channel_deposit(sender_deposit=self.sender_deposit + self.sender_deposit_cache,
+                                        receiver_deposit=self.receiver_deposit + self.receiver_deposit_cache)
             tx_detail = [
                 {"address": self.sender,
-                 "deposit": self.sender_deposit,
+                 "deposit": self.sender_deposit + self.sender_deposit_cache,
                  "trans": 0,
                  "balance": sender_balance + self.sender_deposit_cache,
 
                  },
                 {"address": self.receiver,
-                 "deposit": self.receiver_deposit,
+                 "deposit": self.receiver_deposit + self.receiver_deposit_cache,
                  "trans": 0,
                  "balance": receiver_balance + self.receiver_deposit_cache,
                  }
             ]
-            trans_info = {"tx_id": int(tx_id)+ 1, "tx_detail": tx_detail}
+            trans_info = {"tx_id": str(int(tx_id)+ 1), "tx_detail": tx_detail}
             self.update_channel(**trans_info)
-        self.update_channel_state(State.OPEN)
-        self.update_deposit_cache(sender_deposit_cache=0, receiver_deposit_cache=0)
-        return "SUCCESS"
+
+            self.update_channel_state(State.OPEN)
+            self.update_deposit_cache(sender_deposit_cache=0, receiver_deposit_cache=0)
+
+            return "SUCCESS"
 
 
 def get_channelnames_via_address(address):

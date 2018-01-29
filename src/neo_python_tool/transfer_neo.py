@@ -1,25 +1,52 @@
+"""
+Minimal NEO node with custom code in a background thread.
+
+It will log events from all smart contracts on the blockchain
+as they are seen in the received blocks.
+"""
+import json
+import threading
+import time
+
+import binascii
 from base58 import b58decode
+from decimal import Decimal
+from logzero import logger
+from twisted.internet import reactor, task
+
+from neo.Core.Helper import Helper
 from neo.Core.TX.Transaction import TransactionOutput, ContractTransaction,TransactionInput
 from neo.Core.TX.TransactionAttribute import TransactionAttribute, TransactionAttributeUsage
 from neo.IO.MemoryStream import MemoryStream
+from neo.Network.NodeLeader import NodeLeader
 from neo.Core.Blockchain import Blockchain
+from neo.Implementations.Blockchains.LevelDB.LevelDBBlockchain import LevelDBBlockchain
+from neo.Prompt.Utils import lookup_addr_str, parse_param
+from neo.Settings import settings
+from neocore.Cryptography.Crypto import Crypto
 from neocore.Fixed8 import Fixed8
 from neocore.UInt160 import UInt160
 from neocore.UInt256 import UInt256
+from neocore.KeyPair import KeyPair
+from neo.Implementations.Wallets.peewee.Models import NEP5Token as Nep5TokenModel
 from neocore.IO.BinaryWriter import BinaryWriter
+from neo.SmartContract.ContractParameterContext import ContractParametersContext
+from neo.VM.ScriptBuilder import ScriptBuilder
+from neo.Wallets.NEP5Token import NEP5Token
+from neo.SmartContract.Contract import Contract
 from neocore.Cryptography.Crypto import Crypto
 import binascii
-from neo_python_tool import start_node
+
 
 asset_type = "neo"
-address_from="Aco5Kx36gFHuHZphM32PhLpgQi9iyo3iak"
-address_to = "AS3ZbQpDbsNRhXqo4WchMfK7iCoA2ADpvh"
-amount =10
-change=970
+address_from="AV2hTUE7q8tT3ECJnuccHeB6AU2C4CvKi3"
+address_to = "ALcC96eesqb9pQTWSDCQ8afqdyR4woUzhW"
+amount =1
+change=9
 preIndex=0
-input_txid="2b1977d5ef8410a278f501eda598ae07e50bf933d58ef2b56d4157cd2ac430ad"
-private_key="918cdce5458aaac7b8b444b1940855c435f364b99a15755fea031f44d6fa8d36"
-public_key="021a3a1a0f298c32fce1d7fdd3246acd29407b4e49d70bedc6ad97be836c4e7b88"
+input_txid="2b0cadf194b9f176ba51a6abc13f490ab49fafba4fc1753319d29ba212c151f7"
+private_key="c23e3dd5f88591a6b5be66c3c68e8f3e6969d9c67fd2d5f585e577071581e760"
+public_key="034e9d2751e1fec65a6a42bc097bdf55c7a79762df7d6e970277f46405c376683a"
 
 def get_asset_id(asset_type):
     assetId = None
@@ -81,16 +108,24 @@ def construct_tx():
 
 def main():
     tx = construct_tx()
+    print (tx.ToJson())
     tx_data = get_tx_data(tx)
 
     signstr =binascii.hexlify(Crypto.Sign(message=tx_data, private_key=private_key)).decode()
 
     rawtx_data = tx_data + "014140" + signstr + "2321" + public_key + "ac"
     print (rawtx_data)  #waiting for relay
+if __name__ == "__main__":
+    main()
 
 
-
-
-
-
-
+    # def hex2interger(input):
+    #     tmp_list = []
+    #     for i in range(0, len(input), 2):
+    #         tmp_list.append(input[i:i + 2])
+    #     hex_str = "".join(list(reversed(tmp_list)))
+    #     output = int(hex_str, 16)
+    #
+    #     return output
+    #
+    # print (hex2interger("bfc469dd56932409677278f6b7422f3e1f34481d"))
