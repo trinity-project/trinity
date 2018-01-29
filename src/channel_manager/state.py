@@ -200,6 +200,7 @@ class ChannelState(object):
         return None
 
     def update_channel_state(self, state):
+        print("update channel_state", self.channelname, str(state))
         ch = Session.query(ChannelDatabase).filter(ChannelDatabase.channel_name == self.channelname).one()
         if ch:
             ch.state = state.value

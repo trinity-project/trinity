@@ -278,7 +278,7 @@ class Channel(ChannelFile, ChannelState):
         return self.channel_name
 
     def set_channel_open(self):
-        print("set_channel_open")
+        print("set_channel_open", self.channelname)
         if not self.has_channel():
             return "No channel find"
         else:
