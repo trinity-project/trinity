@@ -186,7 +186,9 @@ class Channel(ChannelFile, ChannelState):
             sender_deposit = self.get_address_deposit(self.sender, channels)
             transdetail[0]["deposit"] = float(self.sender_deposit)
             delta = float(self.sender_deposit) - float(sender_deposit)
+            print(delta)
             sender_balance = self.get_address_balance(self.sender, channels) + delta
+            print(self.sender, sender_balance)
             if count > sender_balance:
                 raise NoBalanceEnough
             else:
@@ -281,13 +283,14 @@ class Channel(ChannelFile, ChannelState):
     def set_channel_open(self):
         print("set_channel_open", self.channelname)
         if not self.has_channel():
-            return "No channel find"
+            print("No channel find")
         else:
             tx_id = self.channel_txid
             sender_balance = self.get_address_balance(self.sender)
             receiver_balance = self.get_address_balance(self.receiver)
-            self.update_channel_deposit(sender_deposit=self.sender_deposit + self.sender_deposit_cache,
-                                        receiver_deposit=self.receiver_deposit + self.receiver_deposit_cache)
+            print(self.sender_deposit_cache)
+            print(self.sender_deposit)
+
             tx_detail = [
                 {"address": self.sender,
                  "deposit": self.sender_deposit + self.sender_deposit_cache,
@@ -303,7 +306,8 @@ class Channel(ChannelFile, ChannelState):
             ]
             trans_info = {"tx_id": str(int(tx_id)+ 1), "tx_detail": tx_detail}
             self.update_channel(**trans_info)
-
+            self.update_channel_deposit(sender_deposit=self.sender_deposit + self.sender_deposit_cache,
+                                        receiver_deposit=self.receiver_deposit + self.receiver_deposit_cache)
             self.update_channel_state(State.OPEN)
             self.update_deposit_cache(sender_deposit_cache=0, receiver_deposit_cache=0)
 

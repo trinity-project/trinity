@@ -197,6 +197,41 @@ def tx_onchain(from_addr, to_addr, asset_type, value):
     return blockchain.tx_onchain(from_addr, to_addr, asset_type.upper(), value)
 
 
+def depositin(adddress, value):
+    print("depost_in", address)
+    channels = get_channelnames_via_address(address)
+    print(channels)
+    success_channel = []
+    for channel in channels:
+        print(channel.channel_name)
+        sender, receiver = split_channel_name(channel.channel_name)
+        ch = Channel(sender, receiver)
+        # if address == sender and value == ch.sender_deposit_cache:
+        if address == sender:
+            ch.set_channel_open()
+            success_channel.append(channel.channel_name)
+        # elif address == receiver and value == ch.receiver_deposit_cache:
+        elif address == receiver:
+            ch.set_channel_open()
+            success_channel.append(channel.channel_name)
+        else:
+            continue
+    print("depost in", success_channel)
+
+def depoistout(address, value):
+    print("deposit_out", address)
+    channels = get_channelnames_via_address(address)
+    success_channel = []
+    for channel in channels:
+        if channel.state == State.SETTLING.value:
+            sender, receiver = split_channel_name(channel.channel_name)
+            ch = Channel(sender, receiver)
+            ch.close()
+            success_channel.append(channel.channel_name)
+        else:
+            continue
+        print("depost out", success_channel)
+
 
 if __name__ == "__main__":
     result  = send_raw_transaction("AY8r7uG6rH7MRLhABALZvf8jM4bCSfn3YJ",

@@ -53,13 +53,13 @@ def regist_address(address, port = "20556"):
 
 @jsonrpc.method("registchannle")
 def regist_channle(sender_addr, receiver_addr, asset_type,deposit, open_blockchain):
-    logger.info("registchannle %s  %s" %(sender_addr, receiver_addr))
+    logger.info("registchannle %s  %s %s" %(sender_addr, receiver_addr,deposit))
     return manager.regist_channel(sender_addr, receiver_addr, asset_type,deposit, open_blockchain)
 
 
 @jsonrpc.method("getchannelstate")
 def get_channel_state(local_address):
-    logger.info("getchannelstate %s" %local_address)
+    #logger.info("getchannelstate %s" %local_address)
     return manager.get_channel_state(local_address)
 
 
@@ -85,7 +85,7 @@ def close_channel(sender_addr, receiver_addr,channel_name):
 
 @jsonrpc.method("getbalanceonchain")
 def get_balance_onchain(local_address,asset_type=None):
-    logger.info("getbalanceonchain %s" %local_address)
+    #logger.info("getbalanceonchain %s" %local_address)
     return manager.get_balance_onchain(local_address, asset_type)
 
 
@@ -105,6 +105,16 @@ def tx_onchain(from_addr, to_addr, asset_type, value):
     return manager.tx_onchain(from_addr, to_addr, asset_type, value)
 
 
+@jsonrpc.method("depositin")
+def depositin(address, value):
+    logger.info("depositin %s" %address)
+    return manager.depositin(address, value)
+
+
+@jsonrpc.method("depositout")
+def depoistout(address, value):
+    logger.info("depositout %s" %address)
+    return manager.depoistout(address, value)
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', debug=True)
