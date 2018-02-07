@@ -1,6 +1,6 @@
-TRINITY
+Trinity
 ==============
-The trinity will provide a rapid way to trade off-chain. It works for tiny payments with any NEP-5 protocol supporting.
+Trinity acts as a lightning network for NEO in order to achieve real-time payments, low transaction fees, scalability, and privacy protection for NEO assets. Using state channel technology, Trinity will significantly increase blockchain throughput for NEP-5 token transfers.
 
 The trinity development is still ongoing. Its goal is to research easily network technologies, define protocols and make block chain payment easier.
 
