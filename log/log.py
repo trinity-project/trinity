@@ -60,15 +60,7 @@ LOGGING = {
             'formatter': 'release',
             'maxBytes': 5 * 1024 * 1024,
             'backupCount': 10
-        },
-        'mail_file': {
-            'level': 'DEBUG',
-            'class': 'logging.handlers.RotatingFileHandler',
-            'filename': os.path.join(BASE_LOG_DIR, 'Tersy2-mail.log'),
-            'formatter': 'release',
-            'maxBytes': 5 * 1024 * 1024,
-            'backupCount': 10
-        },
+        }
     },
     'loggers': {
         'logger': {
@@ -87,7 +79,7 @@ def set_log_file(filename):
     log_dir = LOGGING['handlers']['file']['filename']
     if not os.path.exists(log_dir):
         os.makedirs(log_dir)
-    log_path = os.path.join(log_dir, 'Tersy2-' + filename.lower() + '.log')
+    log_path = os.path.join(log_dir, 'test-' + filename.lower() + '.log')
     LOGGING['handlers']['file']['filename'] = log_path
 
 
