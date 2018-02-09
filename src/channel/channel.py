@@ -27,9 +27,19 @@ SOFTWARE."""
 class Channel(object):
     """
     """
-    def __init__(self):
-        pass
-
+    def __init__(self, sender, receiver):
+        self.sender = sender
+        self.receiver = receiver
     @property
     def state(self):
         return None
+
+    def send_deposit(self, asset_type, deposit):
+        pass
+
+    def update_deposit(self, deposit):
+        pass
+
+    def update_balance(self):
+
+        pass
