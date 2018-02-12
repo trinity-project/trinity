@@ -22,3 +22,14 @@ AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
 LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE."""
+import platform
+import operator
+
+# version x.y.z
+#   This version will have same meaning as Linux
+#       x -- Production version with big different feature
+#       y -- Odd number means formal version, Even number means development version
+#       z -- Count of fixing bugs
+__version__ = '1.1.1'
+__os_platform__     = platform.system().upper() if platform.system() else 'LINUX'
+__running_mode__    = (0 == operator.imod(int(__version__.split('.')[1]), 2))

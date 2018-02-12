@@ -22,28 +22,26 @@ AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
 LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE."""
-
-import logging
 import os
-from logging.handlers import RotatingFileHandler
-BASE_LOG_DIR = os.getcwd()
+import logging.config
+from trinity import __os_platform__, __running_mode__
 
+LOG = logging.getLogger('logger')
+# log configuration parts
+if __os_platform__ in ['LINUX']:
+    TRINITY_LOG_PATH = '/var/log/trinity'
+else:
+    TRINITY_LOG_PATH = os.getcwd().split(os.sep)[0]+os.sep+'temp'
 
-class Cfg(object):
-    RELEASE_MODE = False
-
-
-LOGGING = {
+log_settings = {
     'version': 1,
     'disable_existing_loggers': True,
     'formatters': {
         'release': {
-            'format': '%(asctime)s:%(levelname)s:%(filename)s:%(lineno)d:%(message)s'
+            'format': '[%(asctime)s] %(pathname)s line %(lineno)d %(levelname)s :%(message)s'
         },
         'debug': {
-            'format': '%(levelname)s %(asctime)s %(pathname)s %(filename)s %(module)s %(funcName)s %(lineno)d: %('
-                      'message)s'
-            # INFO 2016-09-03 16:25:20,067 /home/ubuntu/mysite/views.py views.py views get 29: some info...
+            'format': '[%(asctime)s] %(pathname)s line %(lineno)d %(levelname)s :%(message)s'
         },
     },
     'handlers': {
@@ -54,9 +52,8 @@ LOGGING = {
         },
         'file': {
             'level': 'DEBUG',
-            # 'class': 'logging.FileHandler',
             'class': 'logging.handlers.RotatingFileHandler',
-            'filename': BASE_LOG_DIR,
+            'filename': '{}{}{}'.format(TRINITY_LOG_PATH, os.sep, 'trinity.log'),
             'formatter': 'release',
             'maxBytes': 5 * 1024 * 1024,
             'backupCount': 10
@@ -64,49 +61,23 @@ LOGGING = {
     },
     'loggers': {
         'logger': {
-            'handlers': ['file'] if Cfg.RELEASE_MODE else ['file', 'console'],
-            'level': 'INFO' if Cfg.RELEASE_MODE else 'DEBUG',
-        },
-        'email_logger': {
-            'handlers': ['mail_file'],
-            'level': 'INFO'
-        },
+            'handlers': ['file'] if __running_mode__ else ['file', 'console'],
+            'level': 'INFO' if __running_mode__ else 'DEBUG',
+        }
     },
 }
 
 
-def set_log_file(filename):
-    log_dir = LOGGING['handlers']['file']['filename']
-    if not os.path.exists(log_dir):
-        os.makedirs(log_dir)
-    log_path = os.path.join(log_dir, 'test-' + filename.lower() + '.log')
-    LOGGING['handlers']['file']['filename'] = log_path
+def init_logger(log_path = None, file_name=None):
+    init_log_path = log_path if log_path else TRINITY_LOG_PATH
+    init_filename = file_name if file_name else 'trinity.log'
 
+    # create the log path
+    if not os.path.exists(init_log_path):
+        os.mkdir(init_log_path)
 
-LOG = logging.getLogger('logger')
-set_log_file('tnc')
-
-
-def init_logger():
-    log_dir = BASE_LOG_DIR
-    logfile = 'test.log'
-    if not os.path.exists(log_dir):
-        os.mkdir(log_dir)
-    LOG.name = logfile
-    level = getattr(logging, 'DEBUG')
-    print(level)
-    LOG.setLevel(level)
-    file_handler = RotatingFileHandler(log_dir + os.sep + logfile, 'a', 5 * 1024 * 1024, 10)
-    file_handler.setLevel(level)
-    stream_handler = logging.StreamHandler()
-    stream_handler.setLevel(level)
-    formatter = logging.Formatter('%(asctime)s:%(levelname)s:%(filename)s:%(lineno)d:%(message)s')
-    file_handler.setFormatter(formatter)
-    stream_handler.setFormatter(formatter)
-    LOG.addHandler(file_handler)
-    LOG.addHandler(stream_handler)
-
+    # load logger configuration
+    log_settings['handlers']['file']['filename'] = '{}{}{}'.format(init_log_path, os.sep, init_filename)
+    logging.config.dictConfig(log_settings)
 
 init_logger()
-LOG.info('test')
-LOG.debug('ok')
