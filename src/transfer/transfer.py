@@ -83,7 +83,7 @@ class Transaction(object):
     def verify_signature(self, message, signature, pubkey):
         return CryptoInstance().VerifySignature(message, str.encode(signature), pubkey)
 
-    def send_transection(self, address):
+    def send_transaction(self, address):
         pass
 
 
@@ -93,12 +93,12 @@ class TransferManager(object):
     """
     def __init__(self, message):
         self.message = message
-        self.transection = Transaction.from_dict(self.message)
+        self.transaction = Transaction.from_dict(self.message)
         self.channel = Channel(self.message["sender"], self.message["receiver"])
 
-    def passthrough_transection(self):
+    def pass_through_transaction(self):
         address_to = self.message.get("receiver")
-        self.transection.send_transection(address_to)
+        self.transaction.send_transaction(address_to)
 
 
 

@@ -23,6 +23,17 @@ LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE."""
 
+from exception import ChannelNotExist
+
+
+def check_channel_exist(func):
+        def wrapper(self, *args, **kwargs):
+            if not self.has_channel():
+                raise ChannelNotExist
+            else:
+                return func(self,*args, **kwargs)
+        return wrapper
+
 
 class Channel(object):
     """
@@ -30,6 +41,7 @@ class Channel(object):
     def __init__(self, sender, receiver):
         self.sender = sender
         self.receiver = receiver
+
     @property
     def state(self):
         return None
@@ -43,3 +55,6 @@ class Channel(object):
     def update_balance(self):
 
         pass
+
+    def has_channel(self):
+        return True
