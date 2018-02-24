@@ -25,9 +25,10 @@ SOFTWARE."""
 
 import time
 from enum import IntEnum
-from src.crypt.Crypto import CryptoInstance
-from src.crypt.Helper import bytes_to_hex_string
-from src.channel.channel import Channel
+from sserver.crypt.Crypto import CryptoInstance
+from sserver.crypt.Helper import bytes_to_hex_string
+from sserver.channel.channel import Channel
+from sserver.api.interface import GateWay
 
 class TransactionType(IntEnum):
     CREAT = 0
@@ -84,7 +85,7 @@ class Transaction(object):
         return CryptoInstance().VerifySignature(message, str.encode(signature), pubkey)
 
     def send_transaction(self, address):
-        pass
+        return GateWay.send_transaction(address, self.message)
 
 
 class TransferManager(object):
@@ -101,6 +102,5 @@ class TransferManager(object):
         self.transaction.send_transaction(address_to)
 
 
-
-
-
+class Settle(object):
+    pass

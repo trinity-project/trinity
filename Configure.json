@@ -1,0 +1,20 @@
+{
+  "GATEWAY":{
+    "url": "http://localhost",
+    "port": "20552",
+    "sslcert": "YourSslCertFile.xxx",
+    "sslcertpassword": "YourPassword"
+  },
+  "SSERVER":{
+    "url":"http://localhost",
+    "port":"20553",
+    "sslcert": "YourSslCertFile.xxx",
+    "sslcertpassword": "YourPassword"
+},
+  "BLOCKCHAIN":{
+    "url":"http://localhost",
+    "port":"20553",
+    "sslcert": "YourSslCertFile.xxx",
+    "sslcertpassword": "YourPassword"
+  }
+}

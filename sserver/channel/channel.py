@@ -24,27 +24,37 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE."""
 
 from exception import ChannelNotExist
+import hashlib
+from functools import wraps
 
 
 def check_channel_exist(func):
-        def wrapper(self, *args, **kwargs):
-            if not self.has_channel():
-                raise ChannelNotExist
-            else:
-                return func(self,*args, **kwargs)
-        return wrapper
+    @wraps(func)
+    def wrapper(self, *args, **kwargs):
+        if not self.has_channel():
+            raise ChannelNotExist
+        else:
+            return func(self,*args, **kwargs)
+    return wrapper
 
 
 class Channel(object):
     """
     """
-    def __init__(self, sender, receiver):
-        self.sender = sender
-        self.receiver = receiver
+    def __init__(self, founder, peer):
+        self.founder = founder
+        self.peer = peer
 
     @property
     def state(self):
         return None
+
+    @property
+    def channel_id(self):
+        hash256 = hashlib.sha256()
+        hash256.update(self.founder.encode("utf-8"))
+        hash256.update(self.peer.encode("utf-8"))
+        return hash256.hexdigest()
 
     def send_deposit(self, asset_type, deposit):
         pass
@@ -58,3 +68,14 @@ class Channel(object):
 
     def has_channel(self):
         return True
+
+    @classmethod
+    def from_address(cls, address1, address2, channel_id):
+        rets = [cls(address1, address2), cls(address2, address1)]
+        for ret in rets:
+            if ret.channel_id == channel_id:
+                return ret
+        return None
+
+    def create(self):
+        return

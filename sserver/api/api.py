@@ -25,7 +25,7 @@ SOFTWARE."""
 from flask import Flask, request
 from flask_jsonrpc import JSONRPC
 from exception import ChannelDBAddFail
-from src.channel import manager
+from sserver.channel import manager
 from flask_cors import CORS
 from log.log import LOG as log
 
@@ -49,7 +49,7 @@ def regist_address(address, pubkey):
     return "SUCCESS"
 
 
-@jsonrpc.method("registchannle")
+@jsonrpc.method("registchannel")
 def regist_channle(sender_addr, receiver_addr, asset_type,deposit, open_blockchain):
     log.info("registchannle %s  %s %s" %(sender_addr, receiver_addr,deposit))
     return manager.regist_channel(sender_addr, receiver_addr, asset_type,deposit, open_blockchain)
