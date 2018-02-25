@@ -24,6 +24,7 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE."""
 import pymongo
 from pymongo.errors import DuplicateKeyError
+from datetime import datetime
 from trinity import DATABASE_CONFIG as cfg
 from log import LOG
 
@@ -71,35 +72,88 @@ class DbManager(object):
     objects     = database_model
     db_table    = None
     primary_key = None
-    if db_table:
-        db_table.create_index(primary_key, unique=True)
 
-    @classmethod
-    def insert(cls, contents):
-        # the contents should be dict type.
-        if not isinstance(contents, dict):
-            LOG.error('The format of contents should be dict type, but {} is given.'.format(type(contents)))
-            return
+    def __init__(self, **kwargs):
+        self.contents = kwargs
+        if self.db_table:
+            self.db_table.create_index(self.primary_key, unique=True)
 
+    def save(self, **kwargs):
         # to check whether the contents is full of table items
-        if not cls.is_valid_contents(contents):
-            LOG.error('Keys of Content must be equal to {}'.format(cls.table_items))
+        if not self.is_valid_contents(self.contents):
+            print (self.contents)
+            LOG.error('Keys of Content must be equal to {}'.format(self.required_item))
             return
+
+        self.contents.update({'created_at':datetime.utcnow()})
+
+        if kwargs:
+            self.contents.update(kwargs)
 
         try:
-            cls.db_table.insert(contents)
+            self.db_table.insert(self.contents)
         except DuplicateKeyError as e:
-            LOG.exception('Primary Key {} is Duplicated. Exception: {}'.format(cls.primary_key, e))
+            LOG.exception('Primary Key {} is Duplicated. Exception: {}'.format(self.primary_key, e))
+            return
         except Exception as e:
-            LOG.exception('Exception occurred with primary key {}. Exception: {}'.format(cls.primary_key, e))
+            LOG.exception('Exception occurred with primary key {}. Exception: {}'.format(self.primary_key, e))
+            return
+
+        return True
+
+    def update(self, filter={}, update_many=False, **update):
+        """
+        Update one table items.
+        :param filter:
+        :param update:
+        :return:
+        """
+        if not isinstance(update, dict):
+            LOG.error('Dict must be used by update')
+            return False
+
+        if self.primary_key in update.keys():
+            LOG.error('Primary key MUST not be changed')
+            return False
+        if update_many:
+            result = self.db_table.update_many(filter, {'$set':update})
+        else:
+            result = self.db_table.update_one(filter, {'$set':update})
+
+        if 0 == result.matched_count or 0 == result.modified_count:
+            LOG.error('update_many: {}.{} items matched. {} items modified.'.format(update_many, result.matched_count,
+                                                                                    result.modified_count))
+            return False
+
+        return True
+
+    def delete(self, filter, delete_many=False):
+        """
+        Delete items from the table
+        :param filter:
+        :param delete_many:
+        :return:
+        """
+        if delete_many:
+            result = self.db_table.delete_many(filter)
+        else:
+            print (self.db_table.count(filter))
+            result = self.db_table.delete_one(filter)
+
+        if 0 >= result.deleted_count:
+            LOG.error('No table items are deleted.')
+            return False
+
+        return True
+
+    def query(self, filter):
+        pass
+
+    def is_valid_contents(self, contents):
+        return (set(contents.keys()) & set(self.required_item)) == set(self.required_item)
 
 
-    @classmethod
-    def is_valid_contents(cls, contents):
-        return False if (set(contents.keys()) ^ set(cls.table_items)) else True
-
-
-class TableAddress(DbManager):
+class Address(DbManager):
     """
         Descriptions    :
         contents        : {
@@ -109,9 +163,9 @@ class TableAddress(DbManager):
                         }
         Created         : 2018-02-13
     """
-    db_table    = DbManager.objects.db.Address
-    table_items = ['address', 'chain', 'public_key', 'created_at']
+    db_table = DbManager.objects.db.Address
     primary_key = 'address'
+    required_item = ['address', 'chain', 'public_key']
 
 
 class TableChannel(DbManager):
@@ -119,21 +173,20 @@ class TableChannel(DbManager):
         Descriptions    :
         Created         : 2018-02-13
     """
-    db_table    = DbManager.objects.db.Channel
-    table_items = ['channel_name', 'sender', 'receiver', 'balance', 'state', 'alive_block', 'created_at', 'exchange']
+    db_table = DbManager.objects.db.Channel
     primary_key = 'channel_name'
-    embedded_items  = {'exchange': ['asset_type', 'deposit']}
+    required_item = ['channel_name', 'sender', 'receiver', 'balance', 'state', 'alive_block', 'exchange']
+    embedded_item = {'exchange': ['asset_type', 'deposit']}
 
-    @classmethod
-    def is_valid_contents(cls, contents):
-        if super(TableChannel, cls).is_valid_contents(contents):
-            result_all = []
-            for embedded_key in cls.embedded_items.keys():
-                result_all.append(set(contents[embedded_key].keys() ^ set(cls.embedded_items[embedded_key])))
-            return False if any(result_all) else True
+    def is_valid_contents(self, contents):
+        if super(TableChannel, self).is_valid_contents(contents):
+            for embedded_key in self.embedded_item.keys():
+                if (set(contents[embedded_key].keys() & set(self.embedded_item[embedded_key]))
+                        != set(self.embedded_item[embedded_key])):
+                    return False
+            return True
 
         return False
-
 
 
 class TableAssetType(DbManager):
@@ -141,9 +194,9 @@ class TableAssetType(DbManager):
         Descriptions    :
         Created         : 2018-02-13
     """
-    db_table    = DbManager.objects.db.AssetType
-    table_items = ['asset_type', 'created_at']
+    db_table = DbManager.objects.db.AssetType
     primary_key = 'asset_type'
+    required_item = ['asset_type']
 
 
 class TableTransaction(DbManager):
@@ -151,14 +204,17 @@ class TableTransaction(DbManager):
         Descriptions    :
         Created         : 2018-02-13
     """
-    db_table    = DbManager.objects.db.Transaction
-    table_items = ['transaction', 'channel_name', 'nonce', 'tx_time', 'tx_type', 'asset_type', 'amount', 'pre_hash']
+    db_table = DbManager.objects.db.Transaction
     primary_key = 'transaction'
+    foreign_key = ['channel_name', 'asset_type']
+    required_item = ['transaction', 'channel_name', 'nonce', 'tx_time', 'tx_type', 'asset_type', 'amount', 'pre_hash']
 
 
 if '__main__' == __name__:
     print (database_model.uri)
-    TableAddress.insert({'address':"t address"})
-    TableChannel.insert({'channel_name': 'test channel'})
+    # Address(address = "t address", chain = '122334', public_key='test_pubkey',).save()
+    # Address().update({'address':'t address'}, update_many=False, created_at='aaaaa')
+    # Address().delete({'address':'t address'})
+    # TableChannel(channel_name='test channel', exchange = {'asset_type':'neo', 'deposit':1000}).save()
     # TableAssetType.insert({'asset_type': 'test asset type'})
     # TableTransaction.insert({'transaction': 'test transaction records'})
