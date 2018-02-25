@@ -34,15 +34,15 @@ class DbModel(object):
         Descriptions    :
         Created         : 2018-02-13
     """
+
     def __init__(self):
-        self.db_client  = pymongo.MongoClient(self.uri)
-        self.db         = self.db_client.get_database(self.db_name)
+        self.db_client = pymongo.MongoClient(self.uri)
+        self.db = self.db_client.get_database(self.db_name)
 
     @property
     def uri(self):
         # Standard URI format: mongodb://[dbuser:dbpassword@]host:port/dbname
-        uri_list = [cfg['type']+':']
-        uri_list.append(r'/'*2)
+        uri_list = [cfg['type'] + ':', r'/' * 2]
 
         # to get the authentication info from the configuration
         auth = cfg.get('authentication', {})
@@ -69,8 +69,8 @@ database_model = DbModel()
 
 
 class DbManager(object):
-    objects     = database_model
-    db_table    = None
+    objects = database_model
+    db_table = None
     primary_key = None
 
     def __init__(self, **kwargs):
@@ -81,11 +81,11 @@ class DbManager(object):
     def save(self, **kwargs):
         # to check whether the contents is full of table items
         if not self.is_valid_contents(self.contents):
-            print (self.contents)
+            print(self.contents)
             LOG.error('Keys of Content must be equal to {}'.format(self.required_item))
             return
 
-        self.contents.update({'created_at':datetime.utcnow()})
+        self.contents.update({'created_at': datetime.utcnow()})
 
         if kwargs:
             self.contents.update(kwargs)
@@ -101,7 +101,7 @@ class DbManager(object):
 
         return True
 
-    def update(self, filter={}, update_many=False, **update):
+    def update(self, filter=None, update_many=False, **update):
         """
         Update one table items.
         :param filter:
@@ -116,9 +116,9 @@ class DbManager(object):
             LOG.error('Primary key MUST not be changed')
             return False
         if update_many:
-            result = self.db_table.update_many(filter, {'$set':update})
+            result = self.db_table.update_many(filter, {'$set': update})
         else:
-            result = self.db_table.update_one(filter, {'$set':update})
+            result = self.db_table.update_one(filter, {'$set': update})
 
         if 0 == result.matched_count or 0 == result.modified_count:
             LOG.error('update_many: {}.{} items matched. {} items modified.'.format(update_many, result.matched_count,
@@ -137,7 +137,7 @@ class DbManager(object):
         if delete_many:
             result = self.db_table.delete_many(filter)
         else:
-            print (self.db_table.count(filter))
+            print(self.db_table.count(filter))
             result = self.db_table.delete_one(filter)
 
         if 0 >= result.deleted_count:
@@ -211,7 +211,7 @@ class TableTransaction(DbManager):
 
 
 if '__main__' == __name__:
-    print (database_model.uri)
+    print(database_model.uri)
     # Address(address = "t address", chain = '122334', public_key='test_pubkey',).save()
     # Address().update({'address':'t address'}, update_many=False, created_at='aaaaa')
     # Address().delete({'address':'t address'})
