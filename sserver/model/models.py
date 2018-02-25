@@ -72,6 +72,7 @@ class DbManager(object):
     objects = database_model
     db_table = None
     primary_key = None
+    required_item = None
 
     def __init__(self, **kwargs):
         self.contents = kwargs
@@ -81,7 +82,6 @@ class DbManager(object):
     def save(self, **kwargs):
         # to check whether the contents is full of table items
         if not self.is_valid_contents(self.contents):
-            print(self.contents)
             LOG.error('Keys of Content must be equal to {}'.format(self.required_item))
             return
 
@@ -101,10 +101,11 @@ class DbManager(object):
 
         return True
 
-    def update(self, filter=None, update_many=False, **update):
+    def update(self, filters=None, update_many=False, **update):
         """
-        Update one table items.
-        :param filter:
+        Update one table item.
+        :param filters:
+        :param update_many:
         :param update:
         :return:
         """
@@ -116,9 +117,9 @@ class DbManager(object):
             LOG.error('Primary key MUST not be changed')
             return False
         if update_many:
-            result = self.db_table.update_many(filter, {'$set': update})
+            result = self.db_table.update_many(filters, {'$set': update})
         else:
-            result = self.db_table.update_one(filter, {'$set': update})
+            result = self.db_table.update_one(filters, {'$set': update})
 
         if 0 == result.matched_count or 0 == result.modified_count:
             LOG.error('update_many: {}.{} items matched. {} items modified.'.format(update_many, result.matched_count,
@@ -127,18 +128,17 @@ class DbManager(object):
 
         return True
 
-    def delete(self, filter, delete_many=False):
+    def delete(self, filters=None, delete_many=False):
         """
         Delete items from the table
-        :param filter:
+        :param filters:
         :param delete_many:
         :return:
         """
         if delete_many:
-            result = self.db_table.delete_many(filter)
+            result = self.db_table.delete_many(filters)
         else:
-            print(self.db_table.count(filter))
-            result = self.db_table.delete_one(filter)
+            result = self.db_table.delete_one(filters)
 
         if 0 >= result.deleted_count:
             LOG.error('No table items are deleted.')
@@ -146,8 +146,11 @@ class DbManager(object):
 
         return True
 
-    def query(self, filter):
-        pass
+    def query(self, filters=None, *args, query_all=False, **kwargs):
+        if query_all:
+            return self.db_table.find(filters, *args, **kwargs)
+        else:
+            return [self.db_table.find_one(filters, *args, **kwargs)]
 
     def is_valid_contents(self, contents):
         return (set(contents.keys()) & set(self.required_item)) == set(self.required_item)
@@ -168,7 +171,7 @@ class Address(DbManager):
     required_item = ['address', 'chain', 'public_key']
 
 
-class TableChannel(DbManager):
+class Channel(DbManager):
     """
         Descriptions    :
         Created         : 2018-02-13
@@ -179,7 +182,7 @@ class TableChannel(DbManager):
     embedded_item = {'exchange': ['asset_type', 'deposit']}
 
     def is_valid_contents(self, contents):
-        if super(TableChannel, self).is_valid_contents(contents):
+        if super(Channel, self).is_valid_contents(contents):
             for embedded_key in self.embedded_item.keys():
                 if (set(contents[embedded_key].keys() & set(self.embedded_item[embedded_key]))
                         != set(self.embedded_item[embedded_key])):
@@ -189,7 +192,7 @@ class TableChannel(DbManager):
         return False
 
 
-class TableAssetType(DbManager):
+class AssetType(DbManager):
     """
         Descriptions    :
         Created         : 2018-02-13
@@ -199,20 +202,19 @@ class TableAssetType(DbManager):
     required_item = ['asset_type']
 
 
-class TableTransaction(DbManager):
+class Transaction(DbManager):
     """
         Descriptions    :
         Created         : 2018-02-13
     """
     db_table = DbManager.objects.db.Transaction
     primary_key = 'transaction'
-    foreign_key = ['channel_name', 'asset_type']
     required_item = ['transaction', 'channel_name', 'nonce', 'tx_time', 'tx_type', 'asset_type', 'amount', 'pre_hash']
 
 
 if '__main__' == __name__:
     print(database_model.uri)
-    # Address(address = "t address", chain = '122334', public_key='test_pubkey',).save()
+    # Address(address = "tt address", chain = '122334', public_key='test_pubkey',).save()
     # Address().update({'address':'t address'}, update_many=False, created_at='aaaaa')
     # Address().delete({'address':'t address'})
     # TableChannel(channel_name='test channel', exchange = {'asset_type':'neo', 'deposit':1000}).save()
