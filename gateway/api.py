@@ -53,6 +53,9 @@ def regist_channle(sender_addr, receiver_addr, asset_type,deposit, open_blockcha
 def get_channel_state(local_address):
     return s_server.get_channel_state(local_address)
 
+@jsonrpc.method("getmessage")
+def get_message(local_address):
+    return
 
 @jsonrpc.method("sendrawtransaction")
 def send_raw_transaction(sender_address,channel_name, hex):
@@ -66,7 +69,7 @@ def sender_to_receiver(sender_addr, receiver_addr, channel_name, asset_type, cou
 
 @jsonrpc.method("closechannel")
 def close_channel(sender_addr, receiver_addr,channel_name):
-    if s.close_channel(sender_addr, receiver_addr,channel_name):
+    if s_server.close_channel(sender_addr, receiver_addr,channel_name):
         return "SUCCESS"
     else:
         return "Close Channel Fail"

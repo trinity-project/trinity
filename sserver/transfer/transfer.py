@@ -30,6 +30,7 @@ from sserver.crypt.Helper import bytes_to_hex_string
 from sserver.channel.channel import Channel
 from sserver.api.interface import GateWay
 
+
 class TransactionType(IntEnum):
     CREAT = 0
     TRANS = 1
@@ -103,4 +104,12 @@ class TransferManager(object):
 
 
 class Settle(object):
-    pass
+    """
+
+    """
+    def __init__(self, channel_id, settle_timeout=1):
+        self.channel_id = channel_id
+        self.settle_timeout = settle_timeout
+
+    def send_settling(self):
+        pass
