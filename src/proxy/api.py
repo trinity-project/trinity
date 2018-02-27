@@ -38,7 +38,7 @@ jsonrpc = JSONRPC(app, "/")
 
 
 @jsonrpc.method("registeaddress")
-def regist_address(address, port = "20556"):
+def register_address(address, port = "20556"):
     logger.info("registeaddress %s" %address)
     ip_info = request.headers.getlist("X-Forwarded-For")[0] if request.headers.getlist("X-Forwarded-For") \
         else request.remote_addr
@@ -51,8 +51,8 @@ def regist_address(address, port = "20556"):
     return State.success()
 
 
-@jsonrpc.method("registchannle")
-def regist_channle(sender_addr, receiver_addr, asset_type,deposit, open_blockchain):
+@jsonrpc.method("registchannel")
+def register_channel(sender_addr, receiver_addr, asset_type,deposit, open_blockchain):
     logger.info("registchannle %s  %s %s" %(sender_addr, receiver_addr,deposit))
     return manager.regist_channel(sender_addr, receiver_addr, asset_type,deposit, open_blockchain)
 
