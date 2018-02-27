@@ -3,6 +3,9 @@ from base58 import b58decode
 from neocore.Cryptography.Crypto import Crypto
 from neocore.UInt160 import UInt160
 from neocore.BigInteger import BigInteger
+from neocore.KeyPair import KeyPair
+
+
 
 def createMultiSigAddress(script):
     scriptHash=Crypto.ToScriptHash(script)
@@ -59,3 +62,10 @@ def construct_opdata(addressFrom,addressTo,value,assetId):
     op_data+= "f1"                      # maybe THROWIFNOT
 
     return op_data
+
+def privtKey_to_publicKey(privtKey):
+
+    pk=binascii.unhexlify(privtKey)
+    keypair = KeyPair(pk)
+    vk=keypair.PublicKey.encode_point(True).decode()
+    return vk

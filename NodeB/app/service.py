@@ -1,7 +1,8 @@
 import time
 
 import requests
-from app.utils import createMultiSigAddress,ToScriptHash,int_to_hex,construct_opdata,privtkey_sign,hex_reverse
+from app.utils import createMultiSigAddress, ToScriptHash, int_to_hex, construct_opdata, privtkey_sign, hex_reverse, \
+    privtKey_to_publicKey
 from app.model import Balance
 from config import *
 
@@ -59,8 +60,9 @@ def send_raw_tx(rawTx):
     return "fail"
 
 
-def sign(txData,privtKey,publicKey):
+def sign(txData,privtKey):
     signature = privtkey_sign(txData,privtKey)
+    publicKey=privtKey_to_publicKey(privtKey)
     rawData=txData+"01"+"41"+"40"+signature+"23"+"21"+publicKey+"ac"
     return rawData
 

@@ -19,8 +19,8 @@ def construct_tx(addressFrom,addressTo,value,assetId):
 
 
 @jsonrpc.method("sign")
-def sign(txData,privtKey,publicKey):
-    return service.sign(txData,privtKey,publicKey)
+def sign(txData,privtKey):
+    return service.sign(txData,privtKey)
 
 
 @jsonrpc.method("multiSign")
