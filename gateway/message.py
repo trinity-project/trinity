@@ -30,5 +30,33 @@ class Message(DbManager):
 
     """
     db_table = DbManager.objects.db.Message
-    primary_key = 'address'
-    required_item = ['address', 'chain', 'public_key']
+    primary_key = "_id"
+    required_item = ["address", "type", "info", "state"]
+
+    def __init__(self, **kwargs):
+        self.contents = kwargs
+        if self.db_table:
+            self.db_table.create_index(self.primary_key)
+
+    @staticmethod
+    def put_message(address, type, info, state):
+        return Message(address=address, type=type, info=info, state=state).save()
+
+    @staticmethod
+    def update_message_state(id, state):
+        filter = {"_id": id}
+        return Message().update(filter, state=state)
+
+    @staticmethod
+    def get_message(address):
+        messages = Message().query({"address": "test2"}, query_all=True)
+        return [i for i in messages]
+
+
+if __name__ == "__main__":
+    result = Message.put_message(address = "test2", type = "trans", info="{'mytest':'mytest'}", state = "pending")
+    message = Message().query({"address": "test2", "state":"pending"}, query_all=True)
+    for i in message:
+        print(i)
+        id = i.get("_id")
+        Message.update_message_state(id, "close")

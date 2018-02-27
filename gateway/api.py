@@ -32,6 +32,7 @@ from flask_cors import CORS
 from log.log import LOG as log
 from gateway.interface import Sserver as s_server
 from gateway.interface import BlockChainServer as blockchain_server
+from gateway.message import Message
 
 
 app = Flask(__name__)
@@ -39,13 +40,13 @@ cors = CORS(app, support_credentials=True)
 jsonrpc = JSONRPC(app, "/")
 
 
-@jsonrpc.method("registeaddress")
-def regist_address(address, pubkey):
+@jsonrpc.method("registeraddress")
+def register_address(address, pubkey):
     return s_server.register_address(address, pubkey)
 
 
-@jsonrpc.method("registchannle")
-def regist_channle(sender_addr, receiver_addr, asset_type,deposit, open_blockchain):
+@jsonrpc.method("registerchannel")
+def register_channel(sender_addr, receiver_addr, asset_type,deposit, open_blockchain):
     return s_server.register_channel(sender_addr, receiver_addr, asset_type, deposit, open_blockchain)
 
 
@@ -53,9 +54,11 @@ def regist_channle(sender_addr, receiver_addr, asset_type,deposit, open_blockcha
 def get_channel_state(local_address):
     return s_server.get_channel_state(local_address)
 
+
 @jsonrpc.method("getmessage")
 def get_message(local_address):
-    return
+    return Message.get_message(local_address)
+
 
 @jsonrpc.method("sendrawtransaction")
 def send_raw_transaction(sender_address,channel_name, hex):

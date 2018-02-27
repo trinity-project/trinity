@@ -82,7 +82,7 @@ class Transaction(object):
         self.message.setdefault("signature", bytes_to_hex_string(sig))
 
     @staticmethod
-    def verify_signature(self, message, signature, pubkey):
+    def verify_signature(message, signature, pubkey):
         return CryptoInstance().VerifySignature(message, str.encode(signature), pubkey)
 
     def send_transaction(self, address):

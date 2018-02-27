@@ -214,9 +214,10 @@ class Transaction(DbManager):
 
 if '__main__' == __name__:
     print(database_model.uri)
-    Address(address = "tt address", chain = '122334', public_key='test_pubkey',).save()
+    #Address(address = "tt address", chain = '122334', public_key='test_pubkey',).save()
     # Address().update({'address':'t address'}, update_many=False, created_at='aaaaa')
     # Address().delete({'address':'t address'})
-    # TableChannel(channel_name='test channel', exchange = {'asset_type':'neo', 'deposit':1000}).save()
+    #Channel(channel_name='test channel', sender="test", receiver = "rtest", balance = "100", state = "open",
+            #alive_block = "100", exchange = {'asset_type':'neo', 'deposit':1000}).save()
     # TableAssetType.insert({'asset_type': 'test asset type'})
     # TableTransaction.insert({'transaction': 'test transaction records'})

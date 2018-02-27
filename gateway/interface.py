@@ -31,45 +31,45 @@ class Sserver(object):
     ServerConfig = CONFIGURE["SSERVER"]
     Server = ServiceProxy("{0}:{1}/api".format(ServerConfig["url"], ServerConfig["port"]))
 
-    @staticmethod
-    def register_address(self, address, pubkey):
+    @classmethod
+    def register_address( cls,address, pubkey):
         gatewaylog.info("register address",address, pubkey)
-        return self.Server.registeaddress(address, pubkey)
+        return cls.Server.registeaddress(address, pubkey)
 
-    @staticmethod
-    def register_channel(self, sender_addr, receiver_addr, asset_type, deposit, open_blockchain):
+    @classmethod
+    def register_channel(cls, sender_addr, receiver_addr, asset_type, deposit, open_blockchain):
         gatewaylog.info("register channel",sender_addr, receiver_addr, asset_type, deposit, open_blockchain)
-        return self.Server.registchannel(sender_addr, receiver_addr, asset_type, deposit, open_blockchain)
+        return cls.Server.registchannel(sender_addr, receiver_addr, asset_type, deposit, open_blockchain)
 
-    @staticmethod
-    def get_channel_state(self, local_address):
+    @classmethod
+    def get_channel_state(cls, local_address):
         gatewaylog.info("get channel state", local_address)
-        return self.Server.getchannelstate(local_address)
+        return cls.Server.getchannelstate(local_address)
 
-    @staticmethod
-    def send_raw_transaction(self, sender_address,channel_name, hex):
+    @classmethod
+    def send_raw_transaction(cls, sender_address,channel_name, hex):
         gatewaylog.info("send raw transaction", sender_address, channel_name, hex)
-        return self.Server.sendrawtransaction(sender_address, channel_name, hex)
+        return cls.Server.sendrawtransaction(sender_address, channel_name, hex)
 
-    @staticmethod
-    def sender_to_receiver(self, sender_addr, receiver_addr, channel_name, asset_type, count):
+    @classmethod
+    def sender_to_receiver(cls, sender_addr, receiver_addr, channel_name, asset_type, count):
         gatewaylog.info("sender to receiver",sender_addr, receiver_addr, count)
-        return self.Server.sendertoreceiver(sender_addr, receiver_addr, channel_name, asset_type, count)
+        return cls.Server.sendertoreceiver(sender_addr, receiver_addr, channel_name, asset_type, count)
 
-    @staticmethod
-    def close_channel(self, sender_addr, receiver_addr, channel_name):
+    @classmethod
+    def close_channel(cls, sender_addr, receiver_addr, channel_name):
         gatewaylog.info("closechannel", channel_name)
-        return self.Server.closechannel(sender_addr, receiver_addr, channel_name)
+        return cls.Server.closechannel(sender_addr, receiver_addr, channel_name)
 
 
 class BlockChainServer(object):
     ServerConfig = CONFIGURE["BLOCKCHAIN"]
     Server = ServiceProxy("{0}:{1}/api".format(ServerConfig["url"], ServerConfig["port"]))
 
-    @staticmethod
-    def get_balance_onchain(self, local_address,asset_type=None):
+    @classmethod
+    def get_balance_onchain(cls, local_address,asset_type=None):
         gatewaylog.info("getbalanceonchain %s" %local_address)
-        return self.Server.getbalanceonchain(local_address, asset_type)
+        return cls.Server.getbalanceonchain(local_address, asset_type)
 
 
 
