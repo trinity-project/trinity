@@ -2,17 +2,16 @@
 import requests
 import time
 from decimal import Decimal
-
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy import Column, Integer, String, Numeric
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
-
 import pymysql
+
+from NodeB.config import *
+
 pymysql.install_as_MySQLdb()
-
-
-engine = create_engine('mysql://root:root@192.168.203.64/test')
+engine = create_engine('mysql://%s:%s@%s/%s' %(MYSQLDATABASE["user"],MYSQLDATABASE["passwd"],MYSQLDATABASE["host"],MYSQLDATABASE["db"]))
 # engine = create_engine('sqlite:///test.db')
 Session = sessionmaker(bind=engine)
 Base = declarative_base()
@@ -100,13 +99,8 @@ Base.metadata.create_all(engine)
 
 
 
-NEO_ASSETID="0xc56f33fc6ecfcd0c225c4ab356fee59390af8560be0e930faebe74a6daff7c9b"
-GAS_ASSETID="0x602c79718b16e442de58778e148d0b1084e3b2dffd5de6b7b16cee7969282de7"
 
-url="http://127.0.0.1:10332"
-headers={
-    "Content-Type":"application/json"
-}
+
 class TRANSACTION_TYPE(object):
     CONTRACT="ContractTransaction"
     CLAIM="ClaimTransaction"
@@ -119,17 +113,18 @@ def getblockcount():
         "params": [],
         "id": 1
     }
-    res = requests.post(url, headers=headers, json=data).json()
+    res = requests.post(NEOCLIURL, headers=headers, json=data).json()
     return res
 
 def getblock(index):
+
     data = {
           "jsonrpc": "2.0",
           "method": "getblock",
           "params": [index,1],
           "id": 1
 }
-    res = requests.post(url, headers=headers, json=data).json()
+    res = requests.post(NEOCLIURL, headers=headers, json=data).json()
     return res
 
 
