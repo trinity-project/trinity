@@ -4,7 +4,7 @@ from flask import Flask
 from flask_jsonrpc import JSONRPC
 from flask_sqlalchemy import SQLAlchemy
 import pymysql
-from NodeB.config import MYSQLDATABASE
+from config import MYSQLDATABASE
 
 pymysql.install_as_MySQLdb()
 

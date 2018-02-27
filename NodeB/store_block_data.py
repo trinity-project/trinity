@@ -8,7 +8,7 @@ from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 import pymysql
 
-from NodeB.config import *
+from config import *
 
 pymysql.install_as_MySQLdb()
 engine = create_engine('mysql://%s:%s@%s/%s' %(MYSQLDATABASE["user"],MYSQLDATABASE["passwd"],MYSQLDATABASE["host"],MYSQLDATABASE["db"]))

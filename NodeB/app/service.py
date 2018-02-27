@@ -2,9 +2,8 @@ import time
 
 import requests
 from app.utils import createMultiSigAddress,ToScriptHash,int_to_hex,construct_opdata,privtkey_sign,hex_reverse
-
 from app.model import Balance
-
+from config import *
 
 def createMultiSigContract(publicKey1,publicKey2,publicKey3):
 
@@ -48,18 +47,13 @@ def construct_tx(addressFrom,addressTo,value,assetId):
 
 
 def send_raw_tx(rawTx):
-    url = "http://192.168.138.128:10332"
-    headers = {
-        "Content-Type": "application/json"
-    }
-
     data = {
         "jsonrpc": "2.0",
         "method": "sendrawtransaction",
         "params": [rawTx],
         "id": 1
     }
-    res = requests.post(url, headers=headers, json=data).json()
+    res = requests.post(NEOCLIURL, headers=headers, json=data).json()
     if res["result"]:
         return "success"
     return "fail"
@@ -88,16 +82,12 @@ def multi_sign(txData,privtKey1,privtKey2,verificationScript):
 
 def get_balance(address):
     balance=Balance.query.filter_by(address=address).first()
-    url = "http://192.168.138.128:10332"
-    headers = {
-        "Content-Type": "application/json"
-    }
 
     data = {
         "jsonrpc": "2.0",
         "method": "invokefunction",
         "params": [
-            "0c34a8fd0109df360c7cf7ca454404901db77f5e",
+            CONTRACTHASH,
             "balanceOf",
             [
                 {
@@ -108,7 +98,7 @@ def get_balance(address):
         ],
         "id": 1
     }
-    res = requests.post(url, headers=headers, json=data).json()
+    res = requests.post(NEOCLIURL, headers=headers, json=data).json()
     value=res["result"]["stack"][0]["value"]
     if balance:
         response={
