@@ -101,4 +101,4 @@ def get_Neoasset_balance(address, asset_type):
 
 
 def create_contract_address(sender_pubkey, receiver_pubkey, eyewitness_public_key):
-    return NeoServer.create_contract(sender_pubkey, receiver_pubkey, eyewitness_public_key)
+    return ns.createMultiSigContract(sender_pubkey, receiver_pubkey, eyewitness_public_key)
