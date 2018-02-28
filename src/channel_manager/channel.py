@@ -27,6 +27,7 @@ from channel_manager import blockchain
 from channel_manager.state import ChannelFile, ChannelState, query_channel_from_address
 from enum import IntEnum
 from configure import Configure
+from utils.channel import generate_channel_name
 from exception import (
     ChannelFileNoExist,
     ChannelExistInDb,
@@ -68,8 +69,8 @@ class Channel(ChannelFile, ChannelState):
 
     @property
     def channel_name(self):
-        channel_name = "".join(map(lambda x, y: x+y, self.sender, self.receiver))
-        peer_channel_name= "".join(map(lambda x, y: x+y, self.receiver, self.sender))
+        channel_name = generate_channel_name(self.sender, self.receiver)
+        peer_channel_name= generate_channel_name(self.receiver, self.sender)
         if ChannelState(peer_channel_name).find_channel():
             return peer_channel_name
         else:

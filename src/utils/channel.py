@@ -22,12 +22,23 @@ LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE."""
 
+
+import hashlib
+from channel_manager.state import ChannelState
+
 def split_channel_name(channel_name):
-    sender_addr = channel_name[::2]
-    receiver_addr = channel_name[1::2]
+    channel = ChannelState(channel_name)
+    sender_addr = channel.senderinDB
+    receiver_addr = channel.recieverinDB
     return sender_addr, receiver_addr
 
 def combine_channel_name(channel_name):
     t = [hex(ord(i)).replace("0x","") for i in channel_name]
     return "".join(t)
 
+
+def generate_channel_name(sender, receiver):
+    sha256 = hashlib.sha256()
+    sha256.update(sender.encode("utf-8"))
+    sha256.update(receiver.encode("utf-8"))
+    return sha256.hexdigest()
