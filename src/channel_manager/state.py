@@ -63,7 +63,8 @@ class ChannelAddress(object):
             return None
         return result
 
-    def get_publickey(self, address):
+    @staticmethod
+    def get_publickey(address):
         try:
             result = Session.query(ChannelAddrDataBase).filter(ChannelAddrDataBase.address == address).one()
         except:
