@@ -8,5 +8,6 @@
   "AssetList":{
     "NEO":"c56f33fc6ecfcd0c225c4ab356fee59390af8560be0e930faebe74a6daff7c9b",
     "NEOGAS":"602c79718b16e442de58778e148d0b1084e3b2dffd5de6b7b16cee7969282de7",
-    "TNC":"0x849d095d07950b9e56d0c895ec48ec5100cfdff1"}
+    "TNC":"0x849d095d07950b9e56d0c895ec48ec5100cfdff1"},
+  "EyewitnessPublicKey":"046f7218f737e122d3aca71b7dc4136b666ccdbb8d82a77d171fb243eb1082dca9e574648d5510c0dc5bb6fbd93384b1b714c9552e5427f34cf2f511e0ca4ed06b"
 }
