@@ -5,6 +5,7 @@ from neocore.UInt160 import UInt160
 from neocore.BigInteger import BigInteger
 from neocore.KeyPair import KeyPair
 from neocore.UInt256 import UInt256
+import time
 
 
 def createMultiSigAddress(script):
@@ -82,4 +83,90 @@ def createTxid(txData):
     hash = Crypto.Hash256(ba)
     return UInt256(data=hash).ToString()
 
+
+def createMultiSigContract(publicKey1,publicKey2,publicKey3):
+
+    script1="52"+"21"+publicKey1+"21"+publicKey2+"21"+publicKey3+"53ae"
+    script2="52"+"21"+publicKey2+"21"+publicKey1+"21"+publicKey3+"53ae"
+    address1=createMultiSigAddress(script1)
+    address2=createMultiSigAddress(script2)
+
+    return {
+        "contractForPublicKey1":{"script":script1,"address":address1},
+        "contractForPublicKey2":{"script":script2,"address":address2}
+    }
+
+
+
+def construct_tx(addressFrom,addressTo,value,assetId):
+    scripthash_from=ToScriptHash(addressFrom).ToString2()
+    timestamp = hex(int(time.time()))[2:]
+    op_data=construct_opdata(addressFrom,addressTo,value,assetId)
+    tx_data=""
+    contract_type="d1"
+    version="01"
+    tx_data+=contract_type
+    tx_data+=version
+    tx_data+=int_to_hex(len(op_data)/2)
+    tx_data+=op_data
+    tx_data+="0000000000000000"
+    tx_data+="02"       #attribute length
+    tx_data+="20"       #AttributeType.Script
+    tx_data+=scripthash_from
+    tx_data+="f0"            #AttributeType.Remark
+    tx_data+=int_to_hex(len(timestamp)/2)
+    tx_data+=timestamp
+    tx_data+="00"            #input length
+    tx_data+="00"            #output length
+    tx_id=createTxid(tx_data)
+    return {
+        "txid":tx_id,
+        "txData":tx_data
+    }
+
+
+
+def construct_deposit_tx(assetId,addressFrom,addressTo1,value1,addressTo2,value2):
+    scripthash_from=ToScriptHash(addressFrom).ToString2()
+    timestamp = hex(int(time.time()))[2:]
+    op_data=construct_opdata(addressFrom,addressTo1,value1,assetId)+construct_opdata(addressFrom,addressTo2,value2,assetId)
+    tx_data=""
+    contract_type="d1"
+    version="01"
+    tx_data+=contract_type
+    tx_data+=version
+    tx_data+=int_to_hex(len(op_data)/2)
+    tx_data+=op_data
+    tx_data+="0000000000000000"
+    tx_data+="02"       #attribute length
+    tx_data+="20"       #AttributeType.Script
+    tx_data+=scripthash_from
+    tx_data+="f0"            #AttributeType.Remark
+    tx_data+=int_to_hex(len(timestamp)/2)
+    tx_data+=timestamp
+    tx_data+="00"            #input length
+    tx_data+="00"            #output length
+    tx_id=createTxid(tx_data)
+    return {
+        "txid":tx_id,
+        "txData":tx_data
+    }
+
+
+
+
+def construct_raw_tx(txData,signature,publicKey):
+    rawData=txData+"01"+"41"+"40"+signature+"23"+"21"+publicKey+"ac"
+    return rawData
+
+
+def construct_deposit_raw_tx(txData,signature1,signature2,verificationScript):
+    invoke_script = int_to_hex(len(signature1) / 2) + signature1 + int_to_hex(len(signature2) / 2) + signature2
+    txData+="01"         #witness length
+    txData+=int_to_hex(len(invoke_script)/2)
+    txData+=invoke_script
+    txData+=int_to_hex(len(verificationScript)/2)
+    txData+=verificationScript
+    raw_data=txData
+    return raw_data
 

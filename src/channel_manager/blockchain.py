@@ -28,13 +28,13 @@ from neo_python_tool import query
 from functools import reduce
 from NodeB.utils import ToScriptHash
 from crypto.Cryptography.Helper import hex2interger
-from NodeB import service as ns
+from NodeB import utils as ns
 
 NeoServer = neo_api.NeoApi(Configure["BlockNet"])
 
 
 def send_raw_transaction(hax):
-    return ns.send_raw_tx(hax)
+    return NeoServer.sendRawTx(hax)
 
 def construct_raw_tx(tx_data, signature, publickey):
     return ns.construct_raw_tx(tx_data, signature, publickey)
