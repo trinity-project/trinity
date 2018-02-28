@@ -94,6 +94,8 @@ class Channel(ChannelFile, ChannelState):
         if not self.qeury_channel():
             sender_publickey = ChannelAddress.get_publickey(self.sender)
             receiver_publickey = ChannelAddress.get_publickey(self.receiver)
+            if not sender_publickey or not receiver_publickey:
+                return "no pub key or no register address with pubkey"
             contract = blockchain.create_contract_address(sender_publickey, receiver_publickey,
                                                           Configure["EyewitnessPublicKey"])
             contract_address = contract.get("contractForPublicKey1").get("address")
