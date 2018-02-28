@@ -5,7 +5,7 @@ from flask_jsonrpc import JSONRPC
 from flask_sqlalchemy import SQLAlchemy
 import pymysql
 from flask_cors import CORS
-from config import MYSQLDATABASE
+from NodeB.config import MYSQLDATABASE
 
 pymysql.install_as_MySQLdb()
 
