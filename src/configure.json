@@ -1,6 +1,7 @@
 {
   "DBFile":"channel.db",
   "BlockNet":"http://47.88.35.235:20332",
+  "NodeBNet":"http://47.88.35.235:21332",
   "TrinityNet":"",
   "TNC":"0x849d095d07950b9e56d0c895ec48ec5100cfdff1",
   "ContractAddr":"AKwTaNuXZiGDpL6NSz7fxiUkGpcDeRARoE",

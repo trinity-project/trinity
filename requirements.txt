@@ -26,3 +26,4 @@ SQLAlchemy==1.2.1
 urllib3==1.22
 Werkzeug==0.14.1
 zope.interface==4.4.3
+gevent==1.2.2
