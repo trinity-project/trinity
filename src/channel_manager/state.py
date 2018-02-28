@@ -137,6 +137,14 @@ class ChannelState(object):
         return self.match.contract_hash if self.match else None
 
     @property
+    def tx_data(self):
+        return self.match.tx_data if self.match else None
+
+    @property
+    def signature(self):
+        return self.match.signature if self.match else None
+
+    @property
     def open_block_number(self):
         return self.match.open_block_number
 
@@ -197,6 +205,15 @@ class ChannelState(object):
         except:
             raise ChannelDBUpdateFail
 
+    def update_signature(self,signature):
+        try:
+            ch = Session.query(ChannelDatabase).filter(ChannelDatabase.channel_name == self.channelname).one()
+            ch.signature = signature
+            Session.commit()
+            return True
+        except:
+            raise ChannelDBUpdateFail
+
     def delete_channel_in_database(self):
         try:
             Session.query(ChannelDatabase).filter(ChannelDatabase.channel_name == self.channelname).delete()
@@ -220,15 +237,19 @@ class Message(object):
 
     """
     @staticmethod
-    def push_message(address, type, message):
-        m = MessageDatabase(address=address, type=type, message=message)
+    def push_message(address, type, message,channel_name):
+        m = MessageDatabase(address=address, type=type, message=message, channel_name=channel_name, state = "pending")
         Session.add(m)
         Session.commit()
 
     @staticmethod
     def pull_message(address):
-        messages = Session.query(MessageDatabase).filter(MessageDatabase.address==address).all()
-        return [m.message for m in messages]
+        message_info ={}
+        messages = Session.query(MessageDatabase).filter(MessageDatabase.address==address).\
+            filter(MessageDatabase.state=="pending").all()
+        for m in messages:
+            message_info.setdefault(m.channel_name, m.message)
+        return message_info
 
 
 class ChannelFile(object):

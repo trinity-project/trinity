@@ -89,6 +89,11 @@ def get_balance_onchain(local_address,asset_type=None):
     return manager.get_balance_onchain(local_address, asset_type)
 
 
+@jsonrpc.method("settlerawtx")
+def settle_raw_tx(channel_name, txdata, signature):
+    return manager.settle_raw_tx(channel_name, txdata, signature)
+
+
 @jsonrpc.method("updatedeposit")
 def update_deposit(local_address, channel_name, asset_type, value):
     logger.info("updatedeposit %s %s %s" %(channel_name, local_address, value))

@@ -49,9 +49,12 @@ def deposit_transaction(asset_type,from_addr, to_addr, count):
     except KeyError:
         return "Transaction Error",False
 
+def construct_deposit_raw_tx(txData,signature1,signature2,verificationScript):
+    return ns.construct_deposit_raw_tx(txData,signature1,signature2,verificationScript)
+
 
 def distribute_deposit_tx(asset_type, addressFrom, addressTo1, value1, addressTo2, value2):
-    tx_data = NeoServer.constructDepositTx(Configure["AssetList"].get(asset_type.upper()), addressFrom, addressTo1, value1,
+    tx_data = ns.construct_deposit_tx(Configure["AssetList"].get(asset_type.upper()), addressFrom, addressTo1, value1,
                                      addressTo2, value2)
     if tx_data.get("txData") and tx_data.get("txid"):
         return tx_data.get("txData"), tx_data.get("txid"), True
@@ -66,7 +69,7 @@ def get_balance(address, asset_type):
     if asset_type.upper() == "NEO" or asset_type.upper() == "NEOGAS":
         return get_Neoasset_balance(address, asset_type.upper())
     else:
-        scripthash =  Configure["AssetList"].get(asset_type.upper()).replace("0x","")
+        scripthash = Configure["AssetList"].get(asset_type.upper()).replace("0x","")
         operation = "balanceOf"
         params = [{
                         "type": "Hash160",

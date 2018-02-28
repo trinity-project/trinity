@@ -27,7 +27,7 @@ import logging
 from channel_manager.channel import Channel, State, get_channelnames_via_address
 from channel_manager import blockchain
 from utils.channel import split_channel_name
-from channel_manager.state import Message
+from channel_manager.state import Message, ChannelState
 
 
 
@@ -232,6 +232,14 @@ def depoistout(address, value):
         else:
             continue
         print("depost out", success_channel)
+
+
+def settle_raw_tx(channel_name, txdata, signature):
+    sig_in_channel = ChannelState(channel_name)
+    if sig_in_channel.signature and sig_in_channel.signature != signature:
+        blockchain.construct_deposit_raw_tx(txdata, signature, sig_in_channel.signature, sig_in_channel.contract_hash)
+    else:
+        sig_in_channel.update_signature(signature)
 
 
 if __name__ == "__main__":
