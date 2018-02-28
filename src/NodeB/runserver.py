@@ -1,4 +1,4 @@
-from NodeB.app import app
+from NodeB.app.app import app
 
 
 
