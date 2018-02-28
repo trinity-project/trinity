@@ -1,7 +1,7 @@
 
 
-from app import  jsonrpc
-from app import service
+from NodeB.app import jsonrpc
+from NodeB.app import service
 
 
 

@@ -1,10 +1,10 @@
 import time
 
 import requests
-from app.utils import createMultiSigAddress, ToScriptHash, int_to_hex, construct_opdata, privtkey_sign, hex_reverse, \
+from NodeB.app.utils import createMultiSigAddress, ToScriptHash, int_to_hex, construct_opdata, privtkey_sign, hex_reverse, \
     privtKey_to_publicKey,createTxid
-from app.model import Balance,Tx
-from config import *
+from NodeB.app.model import Balance,Tx
+from NodeB.config import *
 
 def createMultiSigContract(publicKey1,publicKey2,publicKey3):
 

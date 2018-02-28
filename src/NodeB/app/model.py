@@ -6,7 +6,7 @@
 """
 
 
-from app import db
+from NodeB.app import db
 
 
 class Balance(db.Model):

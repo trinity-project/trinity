@@ -7,7 +7,7 @@ from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 import pymysql
 
-from config import *
+from NodeB.config import *
 
 CONTRACTHASH="849d095d07950b9e56d0c895ec48ec5100cfdff1"
 
