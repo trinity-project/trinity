@@ -44,17 +44,20 @@ class NodeBApi(object):
             self.nodeb_api_uri = Configure["NodeBNet"].replace('21332', str(nodeb_net_port))
         else:
             self.nodeb_api_uri = Configure["NodeBNet"]
-        self.nodeb_api_uri += '/api'
 
-    def get_channel_state_from_nodeb(self, data=None, json=None):
+    def get_channel_state_from_nodeb(self, data=None):
         """
 
         :return:
         """
-        url = self.nodeb_api_uri + '/confirmTx'
+        request_data = {}
+        if data:
+            request_data.update({'jsonrpc': '2.0',
+                            'method': 'confirmTx',
+                            'parmas': data,
+                            'id': 1})
 
-        if data or json:
-            return requests.post(url, data=data, json=json).json()
+            return requests.post(self.nodeb_api_uri, json=request_data).json()
 
         return None
 
@@ -159,7 +162,7 @@ class MonitorDaemon(object):
                 self.all_channels.update({ch.tx_id: ch.channel_name})
 
             # post data to the NODE-B
-            response = self.nodeb_api.get_channel_state_from_nodeb(json={'tx_id': list(set(tx_id_list))})
+            response = self.nodeb_api.get_channel_state_from_nodeb(data = list(set(tx_id_list)))
             self.add_task(task={expected_state.lower():response})
 
         # handle the request wrapped by self.count_per_second
@@ -170,7 +173,7 @@ class MonitorDaemon(object):
                 tx_id_list.append(ch.tx_id)
                 self.tx_id_channel_map.update({ch.tx_id: ch.channel_name})
 
-            response = self.nodeb_api.get_channel_state_from_nodeb(json={'tx_id': list(set(tx_id_list))})
+            response = self.nodeb_api.get_channel_state_from_nodeb(data = list(set(tx_id_list)))
             self.add_task(task={expected_state.lower():response})
 
         return
