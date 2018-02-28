@@ -26,7 +26,7 @@ from channel_manager.neo_api import neo_api
 from configure import Configure
 from neo_python_tool import query
 from functools import reduce
-from neo_python_tool.rpcServer.transfer_tnc import ToScriptHash
+from NodeB.app.utils import ToScriptHash
 from crypto.Cryptography.Helper import hex2interger
 from NodeB.app import service as ns
 
