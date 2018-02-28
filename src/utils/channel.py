@@ -25,6 +25,7 @@ SOFTWARE."""
 
 import hashlib
 from channel_manager.state import ChannelState
+import time
 
 def split_channel_name(channel_name):
     channel = ChannelState(channel_name)
@@ -32,13 +33,10 @@ def split_channel_name(channel_name):
     receiver_addr = channel.recieverinDB
     return sender_addr, receiver_addr
 
-def combine_channel_name(channel_name):
-    t = [hex(ord(i)).replace("0x","") for i in channel_name]
-    return "".join(t)
-
-
 def generate_channel_name(sender, receiver):
+    time_now = time.time()
     sha256 = hashlib.sha256()
     sha256.update(sender.encode("utf-8"))
     sha256.update(receiver.encode("utf-8"))
+    sha256.update(str(time_now).encode("utf-8"))
     return sha256.hexdigest()

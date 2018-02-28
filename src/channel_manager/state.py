@@ -22,30 +22,10 @@ LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE."""
 
-from sqlalchemy import Column, String, create_engine, Integer, Float, BigInteger
-from sqlalchemy.orm import sessionmaker
-from sqlalchemy.ext.declarative import declarative_base
 import os
-from configure import Configure
 from crypto import crypto_channel, uncryto_channel
-from exception import ChannelDBAddFail, ChannelDBUpdateFail, ChannelExist, QureyRoleNotCorrect
-
-Base = declarative_base()
-
-DATABASE_PAHT = Configure["DBFile"]
-
-
-class ChannelAddrDataBase(Base):
-    """
-    channel address table
-
-    """
-    __tablename__ = 'channel address database'
-
-    address = Column(String(256), primary_key=True)
-    ip = Column(String())
-    port = Column(String())
-    public_key = Column(String())
+from exception import ChannelDBAddFail, ChannelDBUpdateFail, ChannelExist, QureyRoleNotCorrect, ChannelNotExistInDb
+from channel_manager.model import ChannelAddrDataBase, ChannelDatabase, Session, MessageDatabase
 
 
 class ChannelAddress(object):
@@ -83,6 +63,13 @@ class ChannelAddress(object):
             return None
         return result
 
+    def get_publickey(self, address):
+        try:
+            result = Session.query(ChannelAddrDataBase).filter(ChannelAddrDataBase.address == address).one()
+        except:
+            return None
+        return result.public_key
+
     def update_address(self, address, ip, port, public_key="NULL"):
         try:
             Session.merge(ChannelAddrDataBase(address=address, ip=ip, port=port, public_key= public_key))
@@ -92,35 +79,6 @@ class ChannelAddress(object):
         return None
 
 
-class ChannelDatabase(Base):
-    """
-    channel table
-    """
-    __tablename__ = 'channel database'
-
-    channel_name = Column(String(256), primary_key=True)
-    receiver = Column(String(256))
-    sender = Column(String(256))
-    state = Column(Integer())
-    sender_deposit = Column(Float())
-    sender_txid = Column(String(),default="")
-    sender_contract_address = Column(String(), default="")
-    receiver_deposit = Column(Float())
-    receiver_txid = Column(String(),default="")
-    receiver_contract_address = Column(String(), default="")
-    open_block_number = Column(Integer())
-    start_block_number = Column(BigInteger())
-    settle_timeout = Column(Integer())
-    sender_deposit_cache = Column(Float())
-    receiver_deposit_cache = Column(Float())
-
-
-engine = create_engine('sqlite:///'+DATABASE_PAHT)
-DBSession = sessionmaker(bind=engine)
-Session = DBSession()
-Base.metadata.create_all(engine)
-
-
 class ChannelState(object):
     """
     Channel state
@@ -128,9 +86,9 @@ class ChannelState(object):
     def __init__(self, channelname):
         self.match = None
         self.channelname= channelname
-        self.find_channel()
+        self.qeury_channel()
 
-    def find_channel(self):
+    def qeury_channel(self):
         try:
             self.match = Session.query(ChannelDatabase).filter(ChannelDatabase.channel_name == self.channelname).one()
             return True if self.match else False
@@ -166,26 +124,32 @@ class ChannelState(object):
         return self.match.sender_deposit
 
     @property
-    def receiver_in_database(self):
-        return self.match.receiver if self.match else None
-        
+    def tx_id(self):
+        return self.match.tx_id if self.match else None
+
     @property
-    def state_in_database(self):
-        return self.match.state if self.match else None
+    def contract_address(self):
+        return self.match.contract_address if self.match else None
+
+    @property
+    def contract_hash(self):
+        return self.match.contract_hash if self.match else None
 
     @property
     def open_block_number(self):
         return self.match.open_block_number
 
-    def add_channle_to_database(self, sender, receiver, channel_name, state, sender_deposit,receiver_deposit,
+    def add_channel_to_database(self, sender, receiver, channel_name, state, sender_deposit,receiver_deposit,
                                 open_block_number, settle_timeout, sender_deposit_cache, receiver_deposit_cache,
-                                start_block_number = 0):
+                                 contract_address="", contract_hash="", tx_id="", start_block_number=0):
         channel_state = ChannelDatabase(receiver=receiver, sender= sender, channel_name=channel_name, state=state.value,
                                         sender_deposit=sender_deposit,receiver_deposit = receiver_deposit,
                                         open_block_number=open_block_number, settle_timeout = settle_timeout,
                                         sender_deposit_cache=sender_deposit_cache,
                                         receiver_deposit_cache=receiver_deposit_cache,
-                                        start_block_number=start_block_number)
+                                        start_block_number=start_block_number,
+                                        contract_address=contract_address,
+                                        contract_hash=contract_hash)
         try:
             Session.add(channel_state)
             Session.commit()
@@ -194,7 +158,7 @@ class ChannelState(object):
         return None
 
     def update_channel_to_database(self,**kwargs):
-        self.find_channel()
+        self.qeury_channel()
         try:
             for key, value in kwargs.items():
                 setattr(self.match, key,value)
@@ -204,43 +168,66 @@ class ChannelState(object):
         return None
 
     def update_channel_state(self, state):
-        print("update channel_state", self.channelname, str(state))
-        ch = Session.query(ChannelDatabase).filter(ChannelDatabase.channel_name == self.channelname).one()
-        if ch:
+        try:
+            ch = Session.query(ChannelDatabase).filter(ChannelDatabase.channel_name == self.channelname).one()
             ch.state = state.value
             Session.commit()
             return True
-        else:
-            return False
-        #return self.update_channel_to_database(state=state.value)
+        except:
+            raise ChannelDBUpdateFail
 
     def update_deposit_cache(self,sender_deposit_cache, receiver_deposit_cache):
-        ch = Session.query(ChannelDatabase).filter(ChannelDatabase.channel_name == self.channelname).one()
-        if ch:
+        try:
+            ch = Session.query(ChannelDatabase).filter(ChannelDatabase.channel_name == self.channelname).one()
             ch.sender_deposit_cache = sender_deposit_cache
             ch.receiver_deposit_cache = receiver_deposit_cache
             Session.commit()
             return True
-        else:
-            return False
+        except:
+            raise ChannelDBUpdateFail
 
     def update_channel_deposit(self, sender_deposit, receiver_deposit):
-        ch = Session.query(ChannelDatabase).filter(ChannelDatabase.channel_name == self.channelname).one()
-        if ch:
+        try:
+            ch = Session.query(ChannelDatabase).filter(ChannelDatabase.channel_name == self.channelname).one()
             ch.sender_deposit = sender_deposit
             ch.receiver_deposit = receiver_deposit
             Session.commit()
             return True
-        else:
-            return False
+        except:
+            raise ChannelDBUpdateFail
 
-    def delete_channle_in_database(self):
+    def delete_channel_in_database(self):
         try:
             Session.query(ChannelDatabase).filter(ChannelDatabase.channel_name == self.channelname).delete()
             Session.commit()
         except:
             raise
         return None
+
+    def update_txid(self, tx_id):
+        try:
+            ch = Session.query(ChannelDatabase).filter(ChannelDatabase.channel_name == self.channelname).one()
+            ch.tx_id = tx_id
+            Session.commit()
+            return True
+        except:
+            raise ChannelDBUpdateFail
+
+
+class Message(object):
+    """
+
+    """
+    @staticmethod
+    def push_message(address, type, message):
+        m = MessageDatabase(address=address, type=type, message=message)
+        Session.add(m)
+        Session.commit()
+
+    @staticmethod
+    def pull_message(address):
+        messages = Session.query(MessageDatabase).filter(MessageDatabase.address==address).all()
+        return [m.message for m in messages]
 
 
 class ChannelFile(object):
@@ -287,6 +274,8 @@ def query_channel_from_address(address, role="both"):
         result = Session.query(ChannelDatabase).filter(ChannelDatabase.sender == address).all()
         result.extend(Session.query(ChannelDatabase).filter(ChannelDatabase.receiver == address).all())
         return result
+
+
 
 
 if __name__ == "__main__":

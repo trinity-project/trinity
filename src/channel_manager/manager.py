@@ -27,11 +27,7 @@ import logging
 from channel_manager.channel import Channel, State, get_channelnames_via_address
 from channel_manager import blockchain
 from utils.channel import split_channel_name
-from channel_manager.state import ChannelDatabase, ChannelFile, ChannelState, ChannelAddress
-from exception import ChannelExist, NoChannelFound, ChannelNotInOpenState,ChannelFileNoExist,ChannelExistInDb
-from utils.common import CommonItem
-from utils.channel import split_channel_name
-from configure import Configure
+from channel_manager.state import Message
 
 
 
@@ -49,35 +45,34 @@ def regist_channel(sender_addr, receiver_addr, asset_type,deposit, open_blockcha
                 "trad_info":raw_tans}
     """
     channel = Channel(sender_addr,receiver_addr)
-    if channel.find_channel():
+    if channel.qeury_channel():
         return {"error": "channel already exist"}
     else:
-        raw_tans,state = blockchain.NewTransection(asset_type, sender_addr, channel.contract_address(sender_addr), int(deposit))
+        channel_name = channel.create(sender_deposit=int(deposit),
+                                      open_block_number=int(open_blockchain), settle_timeout=10)
+        raw_tans,tx_id, state = blockchain.deposit_transaction(asset_type, sender_addr, channel.contract_address,
+                                                         int(deposit))
         if state:
-            channel_name = channel.create(sender_deposit=int(deposit),reciever_deposit=0,
-                                      open_block_number=int(open_blockchain),settle_timeout=10)
-
+            channel.update_channel_to_database(tx_id=tx_id, state=State.OPENING)
             return {"channel_name": channel_name,
                     "contract_address": channel.contract_address,
                     "trad_info": raw_tans}
         else:
+            channel.delete_channel()
             return {"channel_name": None,
                     "contract_address": None,
                     "trad_info": raw_tans}
 
 
-def send_raw_transaction(sender_address, channel_name, hex):
+def send_raw_transaction(txdata, signature, publickey):
     """
     :param sender_address: String, the sender address
     :param channel_name: String, channel name
     :param hex: String, the digital signature string
     :return: String, SUCCESS
     """
-
-    blockchain.send_raw_transection(hex)
-    #return ch.set_channel_open()
-    return "SUCCESS"
-
+    raw_tx = blockchain.construct_raw_tx(txdata, signature, publickey)
+    return blockchain.send_raw_transaction(raw_tx)
 
 
 def get_channel_state(address):
@@ -86,6 +81,17 @@ def get_channel_state(address):
     :param receiver_addr: String, receiver's address
     :return: Dictionary, the chnnnel information
     """
+    message_info={}
+    message = Message.pull_message(address)
+    if message:
+        message_info["type"] = "signature"
+        message_info["message"] = message
+    else:
+        channel_info = _get_channel_states_info(address)
+        message_info["type"] = "transaction"
+        message_info["message"] = channel_info
+
+def _get_channel_states_info(address):
     channel_infos =[]
     channels = get_channelnames_via_address(address)
     for channel in channels:
@@ -103,7 +109,7 @@ def get_channel_state(address):
         else:
             channel_detail.append(recevier_info)
             channel_detail.append(sender_info)
-        channel_info  = {
+        channel_info = {
             "channel_name": ch.channel_name,
             "channel_state": str(State(ch.stateinDB)),
             "open_block":ch.open_block_number,
@@ -142,8 +148,7 @@ def close_channel(sender_addr, receiver_addr,channel_name):
     """
     sender, receiver = split_channel_name(channel_name)
     ch = Channel(sender, receiver)
-    ch.update_channel_state(State.SETTLING)
-    return ch.settle_banlace_onblockchain()
+    return ch.settle_balance_onchain()
 
 
 
@@ -171,34 +176,29 @@ def update_deposit(address, channel_name, asset_type, value):
     channel = Channel(sender, receiver)
 
     if channel.sender == address:
-        if channel.state_in_database != State.OPEN:
+        if channel.stateinDB != State.OPEN:
             return {"channel_name": channel.channel_name,
-                    "trad_info": "Channel exist but in state %s" % str(State(channel.state_in_database))}
+                    "trad_info": "Channel exist but in state %s" % str(State(channel.stateinDB))}
         else:
             channel.update_channel_to_database(sender_deposit_cache=float(value))
-            raw_tans ,state= blockchain.NewTransection(asset_type, address, Contract_addr, value)
+            raw_tans, tx_id, state= blockchain.deposit_transaction(asset_type, address,
+                                                                    channel.contract_address,value)
             if state:
-                channel.update_channel_state(state = State.UPDATING)
+                channel.update_channel_to_database(tx_id=tx_id, state=State.UPDATING)
     elif channel.receiver == address:
         channel.update_channel_to_database(receiver_deposit_cache=float(value))
-        raw_tans, state = blockchain.NewTransection(asset_type, address, Contract_addr, value)
+        raw_tans, tx_id, state = blockchain.deposit_transaction(asset_type, address,
+                                                                 channel.contract_address, value)
         if state:
-            channel.update_channel_state(state=State.UPDATING)
+            channel.update_channel_to_database(tx_id=tx_id, state=State.UPDATING)
+
     else:
         return {"error":"channel name not match the address"}
     return {"channel_name": channel.channel_name,
             "trad_info": raw_tans}
 
 
-def allocate_address():
-    return blockchain.allocate_address()
-
-
-def tx_onchain(from_addr, to_addr, asset_type, value):
-    return blockchain.tx_onchain(from_addr, to_addr, asset_type.upper(), value)
-
-
-def depositin(adddress, value):
+def depositin(address, value):
     print("depost_in", address)
     channels = get_channelnames_via_address(address)
     print(channels)
