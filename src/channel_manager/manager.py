@@ -33,7 +33,6 @@ from utils.common import CommonItem
 from utils.channel import split_channel_name
 from configure import Configure
 
-Contract_addr = Configure["ContractAddr"]
 
 
 log = logging.getLogger(__name__)
@@ -53,16 +52,18 @@ def regist_channel(sender_addr, receiver_addr, asset_type,deposit, open_blockcha
     if channel.find_channel():
         return {"error": "channel already exist"}
     else:
-        raw_tans,state = blockchain.NewTransection(asset_type, sender_addr, Contract_addr, int(deposit))
+        raw_tans,state = blockchain.NewTransection(asset_type, sender_addr, channel.contract_address(sender_addr), int(deposit))
         if state:
             channel_name = channel.create(sender_deposit=int(deposit),reciever_deposit=0,
                                       open_block_number=int(open_blockchain),settle_timeout=10)
 
             return {"channel_name": channel_name,
+                    "contract_address": channel.contract_address,
                     "trad_info": raw_tans}
         else:
-            return {"channel_name":None,
-                    "trad_info":raw_tans}
+            return {"channel_name": None,
+                    "contract_address": None,
+                    "trad_info": raw_tans}
 
 
 def send_raw_transaction(sender_address, channel_name, hex):

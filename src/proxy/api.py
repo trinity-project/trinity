@@ -38,13 +38,13 @@ jsonrpc = JSONRPC(app, "/")
 
 
 @jsonrpc.method("registeaddress")
-def register_address(address, port = "20556"):
+def register_address(address, port = "20556", public_key=None):
     logger.info("registeaddress %s" %address)
     ip_info = request.headers.getlist("X-Forwarded-For")[0] if request.headers.getlist("X-Forwarded-For") \
         else request.remote_addr
     channel_address = ChannelAddress()
     try:
-        channel_address.add_address(address, ip=ip_info, port= port)
+        channel_address.add_address(address, ip=ip_info, port= port, public_key=public_key)
     except ChannelDBAddFail:
         channel_address.delete_address(address)
         return State.raise_fail(101, "Can Not Add The Address")
@@ -94,10 +94,6 @@ def update_deposit(local_address, channel_name, asset_type, value):
     logger.info("updatedeposit %s %s %s" %(channel_name, local_address, value))
     return manager.update_deposit(local_address, channel_name, asset_type, value)
 
-@jsonrpc.method("allocateaddress")
-def allocate_address():
-    return manager.allocate_address()
-
 
 @jsonrpc.method("txonchain")
 def tx_onchain(from_addr, to_addr, asset_type, value):
@@ -116,5 +112,6 @@ def depoistout(address, value):
     logger.info("depositout %s" %address)
     return manager.depoistout(address, value)
 
-if __name__ == '__main__':
+
+if __name__ == "__main__":
     app.run(host='0.0.0.0', debug=True)

@@ -98,6 +98,7 @@ def depoist_out(address,value):
     channels = get_channelnames_via_address(address)
     success_channel = []
     for channel in channels:
+
         if channel.state == State.SETTLING.value:
             sender, receiver = split_channel_name(channel.channel_name)
             ch = Channel(sender, receiver)

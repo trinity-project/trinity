@@ -75,6 +75,9 @@ class Channel(ChannelFile, ChannelState):
         else:
             return channel_name
 
+    def contract_address(self, address):
+        return ""
+
     @property
     def to_dict(self):
         return self.__dict__
