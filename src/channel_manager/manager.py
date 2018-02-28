@@ -50,6 +50,10 @@ def regist_channel(sender_addr, receiver_addr, asset_type,deposit, open_blockcha
     else:
         channel_name = channel.create(sender_deposit=int(deposit),
                                       open_block_number=int(open_blockchain), settle_timeout=10)
+        if not channel_name:
+            return {"channel_name": None,
+                    "contract_address": None,
+                    "trad_info": "on pub key or not register pub key"}
         raw_tans,tx_id, state = blockchain.deposit_transaction(asset_type, sender_addr, channel.contract_address,
                                                          int(deposit))
         if state:
