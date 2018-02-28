@@ -63,6 +63,12 @@ def construct_opdata(addressFrom,addressTo,value,assetId):
 
     return op_data
 
+
+
+
+
+
+
 def privtKey_to_publicKey(privtKey):
 
     pk=binascii.unhexlify(privtKey)

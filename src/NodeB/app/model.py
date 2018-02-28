@@ -12,14 +12,14 @@ from app import db
 class Balance(db.Model):
     __tablename__ = 'balance'
     id = db.Column(db.Integer, primary_key=True)
-    address = db.Column(db.String(256))
+    address = db.Column(db.String(256),index=True)
     neo_balance = db.Column(db.Integer,default=0)
     gas_balance =db.Column(db.Numeric(16,8),default=0)
 
 class NeoVout(db.Model):
     __tablename__ = 'neo_vout'
     id = db.Column(db.Integer, primary_key=True)
-    tx_id = db.Column(db.String(256))
+    tx_id = db.Column(db.String(256),index=True)
     address = db.Column(db.String(256))
     asset_id = db.Column(db.String(256))
     vout_number = db.Column(db.Integer)
@@ -48,7 +48,7 @@ class NeoVout(db.Model):
 class GasVout(db.Model):
     __tablename__ = 'gas_vout'
     id = db.Column(db.Integer, primary_key=True)
-    tx_id = db.Column(db.String(256))
+    tx_id = db.Column(db.String(256),index=True)
     address = db.Column(db.String(256))
     asset_id = db.Column(db.String(256))
     vout_number = db.Column(db.Integer)
@@ -78,9 +78,9 @@ class GasVout(db.Model):
 class Tx(db.Model):
     __tablename__ = 'tx'
     id = db.Column(db.Integer, primary_key=True)
-    tx_id = db.Column(db.String(256))
+    tx_id = db.Column(db.String(256),index=True)
     tx_type = db.Column(db.String(32))
-    confirmed = db.Column(db.Boolean,default=False)
+    confirmed = db.Column(db.Boolean,default=False,index=True)
 
 
     @staticmethod

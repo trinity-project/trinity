@@ -16,11 +16,19 @@ def create_multisig_address(publicKey1,publicKey2,publicKey3):
 def construct_tx(addressFrom,addressTo,value,assetId):
     return service.construct_tx(addressFrom,addressTo,value,assetId)
 
+@jsonrpc.method("constructDepositTx")
+def construct_deposit_tx(assetId,addressFrom,addressTo1,value1,addressTo2,value2):
+    return service.construct_deposit_tx(assetId,addressFrom,addressTo1,value1,addressTo2,value2)
+
 
 @jsonrpc.method("constructRawTx")
 def construct_raw_tx(txData,signature,publicKey):
     return service.construct_raw_tx(txData,signature,publicKey)
 
+
+@jsonrpc.method("constructDepositRawTx")
+def construct_deposit_raw_tx(txData,signature1,signature2,verificationScript):
+    return service.construct_deposit_raw_tx(txData,signature1,signature2,verificationScript)
 
 
 @jsonrpc.method("sign")
@@ -50,3 +58,17 @@ def confirm_tx(txList):
 @jsonrpc.method("transferTnc")
 def transfer_tnc(addressFrom,addressTo):
     return service.transfer_tnc(addressFrom,addressTo)
+
+
+
+
+
+@jsonrpc.method("constructDepositTx")
+def construct_deposit_tx(assetId,addressFrom,addressTo1,value1,addressTo2,value2):
+    return service.construct_deposit_tx(assetId,addressFrom,addressTo1,value1,addressTo2,value2)
+
+
+
+@jsonrpc.method("constructDepositRawTx")
+def construct_deposit_raw_tx(txData,signature1,signature2,verificationScript):
+    return service.construct_deposit_raw_tx(txData,signature1,signature2,verificationScript)

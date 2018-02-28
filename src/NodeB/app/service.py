@@ -48,10 +48,49 @@ def construct_tx(addressFrom,addressTo,value,assetId):
 
 
 
+def construct_deposit_tx(assetId,addressFrom,addressTo1,value1,addressTo2,value2):
+    scripthash_from=ToScriptHash(addressFrom).ToString2()
+    timestamp = hex(int(time.time()))[2:]
+    op_data=construct_opdata(addressFrom,addressTo1,value1,assetId)+construct_opdata(addressFrom,addressTo2,value2,assetId)
+    tx_data=""
+    contract_type="d1"
+    version="01"
+    tx_data+=contract_type
+    tx_data+=version
+    tx_data+=int_to_hex(len(op_data)/2)
+    tx_data+=op_data
+    tx_data+="0000000000000000"
+    tx_data+="02"       #attribute length
+    tx_data+="20"       #AttributeType.Script
+    tx_data+=scripthash_from
+    tx_data+="f0"            #AttributeType.Remark
+    tx_data+=int_to_hex(len(timestamp)/2)
+    tx_data+=timestamp
+    tx_data+="00"            #input length
+    tx_data+="00"            #output length
+    tx_id=createTxid(tx_data)
+    return {
+        "txid":tx_id,
+        "txData":tx_data
+    }
+
+
+
+
 def construct_raw_tx(txData,signature,publicKey):
     rawData=txData+"01"+"41"+"40"+signature+"23"+"21"+publicKey+"ac"
     return rawData
 
+
+def construct_deposit_raw_tx(txData,signature1,signature2,verificationScript):
+    invoke_script = int_to_hex(len(signature1) / 2) + signature1 + int_to_hex(len(signature2) / 2) + signature2
+    txData+="01"         #witness length
+    txData+=int_to_hex(len(invoke_script)/2)
+    txData+=invoke_script
+    txData+=int_to_hex(len(verificationScript)/2)
+    txData+=verificationScript
+    raw_data=txData
+    return raw_data
 
 
 def send_raw_tx(rawTx):
@@ -136,7 +175,7 @@ def confirm_tx(txList):
 
 
 def transfer_tnc(addressFrom,addressTo):
-    tx_data=construct_tx(addressFrom=addressFrom,addressTo=addressTo,value=100,assetId="849d095d07950b9e56d0c895ec48ec5100cfdff1")
+    tx_data=construct_tx(addressFrom=addressFrom,addressTo=addressTo,value=10,assetId="849d095d07950b9e56d0c895ec48ec5100cfdff1")
     tx_id = tx_data["txid"]
     raw_data=sign(txData=tx_data["txData"],privtKey="0d94b060fe4a5f382174f75f3dca384ebc59c729cef92d553084c7c660a4c08f")
     response=send_raw_tx(raw_data)
