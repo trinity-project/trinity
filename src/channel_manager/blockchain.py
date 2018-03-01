@@ -40,13 +40,13 @@ def construct_raw_tx(tx_data, signature, publickey):
     return ns.construct_raw_tx(tx_data, signature, publickey)
 
 def deposit_transaction(asset_type,from_addr, to_addr, count):
-    tx_data= ns.construct_tx(from_addr, to_addr, Configure["AssetList"].get(asset_type.upper()), count)
+    tx_data= ns.construct_tx(from_addr, to_addr, count, Configure["AssetList"].get(asset_type.upper()))
     if tx_data.get("txData") and tx_data.get("txid"):
         return tx_data.get("txData"), tx_data.get("txid"), True
     try:
-        return tx_data.get("message"),False
+        return tx_data.get("message"),None, False
     except KeyError:
-        return "Transaction Error",False
+        return "Transaction Error",None, False
 
 def construct_deposit_raw_tx(txData,signature1,signature2,verificationScript):
     return ns.construct_deposit_raw_tx(txData,signature1,signature2,verificationScript)

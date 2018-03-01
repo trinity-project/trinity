@@ -39,10 +39,10 @@ class ChannelAddress(object):
     def add_address(self, address, ip="NULL", port="NULL", public_key="NULL"):
         try:
             if self.query_address(address):
-                print("query_address get %s" %address)
-                Session.merge(ChannelAddrDataBase(address=address, ip=ip, port=port, public_key= public_key))
+                print("query_address get %s" % address)
+                Session.merge(ChannelAddrDataBase(address=address, ip=ip, port=port, public_key=public_key))
             else:
-                Session.add(ChannelAddrDataBase(address=address, ip=ip, port=port, public_key= public_key))
+                Session.add(ChannelAddrDataBase(address=address, ip=ip, port=port, public_key=public_key))
             Session.commit()
         except:
             raise ChannelDBAddFail
@@ -73,7 +73,7 @@ class ChannelAddress(object):
 
     def update_address(self, address, ip, port, public_key="NULL"):
         try:
-            Session.merge(ChannelAddrDataBase(address=address, ip=ip, port=port, public_key= public_key))
+            Session.merge(ChannelAddrDataBase(address=address, ip=ip, port=port, public_key=public_key))
             Session.commit()
         except:
             raise ChannelDBUpdateFail
@@ -84,15 +84,16 @@ class ChannelState(object):
     """
     Channel state
     """
+
     def __init__(self, channelname):
         self.match = None
-        self.channelname= channelname
+        self.channelname = channelname
         self.qeury_channel()
 
     def qeury_channel(self):
         try:
-            self.match = Session.query(ChannelDatabase).filter(ChannelDatabase.channel_name == self.channelname).one()
-            return True if self.match else False
+            self.match = Session.query(ChannelDatabase).filter(ChannelDatabase.channel_name == self.channel_name).one()
+            return True
         except:
             return False
 
@@ -148,12 +149,12 @@ class ChannelState(object):
     def open_block_number(self):
         return self.match.open_block_number
 
-    def add_channel_to_database(self, sender, receiver, channel_name, state, sender_deposit,receiver_deposit,
+    def add_channel_to_database(self, sender, receiver, channel_name, state, sender_deposit, receiver_deposit,
                                 open_block_number, settle_timeout, sender_deposit_cache, receiver_deposit_cache,
-                                 contract_address="", contract_hash="", tx_id="", start_block_number=0):
-        channel_state = ChannelDatabase(receiver=receiver, sender= sender, channel_name=channel_name, state=state.value,
-                                        sender_deposit=sender_deposit,receiver_deposit = receiver_deposit,
-                                        open_block_number=open_block_number, settle_timeout = settle_timeout,
+                                contract_address="", contract_hash="", tx_id="", start_block_number=0):
+        channel_state = ChannelDatabase(receiver=receiver, sender=sender, channel_name=channel_name, state=state.value,
+                                        sender_deposit=sender_deposit, receiver_deposit=receiver_deposit,
+                                        open_block_number=open_block_number, settle_timeout=settle_timeout,
                                         sender_deposit_cache=sender_deposit_cache,
                                         receiver_deposit_cache=receiver_deposit_cache,
                                         start_block_number=start_block_number,
@@ -166,11 +167,21 @@ class ChannelState(object):
             raise ChannelDBAddFail
         return None
 
-    def update_channel_to_database(self,**kwargs):
+    @staticmethod
+    def query_channel_name(sender, receiver):
+        channel1 = Session.query(ChannelDatabase).filter(ChannelDatabase.sender == sender). \
+                filter(ChannelDatabase.receiver == receiver).filter(ChannelDatabase.state !=5).all()
+        channel2 = Session.query(ChannelDatabase). \
+                filter(ChannelDatabase.sender == receiver). \
+                filter(ChannelDatabase.receiver == sender).filter(ChannelDatabase.state !=5).all()
+        channel = channel1 if channel1 else channel2
+        return channel[0].channel_name if channel else None
+
+    def update_channel_to_database(self, **kwargs):
         self.qeury_channel()
         try:
             for key, value in kwargs.items():
-                setattr(self.match, key,value)
+                setattr(self.match, key, value)
             Session.commit()
         except:
             raise ChannelDBUpdateFail
@@ -185,7 +196,7 @@ class ChannelState(object):
         except:
             raise ChannelDBUpdateFail
 
-    def update_deposit_cache(self,sender_deposit_cache, receiver_deposit_cache):
+    def update_deposit_cache(self, sender_deposit_cache, receiver_deposit_cache):
         try:
             ch = Session.query(ChannelDatabase).filter(ChannelDatabase.channel_name == self.channelname).one()
             ch.sender_deposit_cache = sender_deposit_cache
@@ -205,7 +216,7 @@ class ChannelState(object):
         except:
             raise ChannelDBUpdateFail
 
-    def update_signature(self,signature):
+    def update_signature(self, signature):
         try:
             ch = Session.query(ChannelDatabase).filter(ChannelDatabase.channel_name == self.channelname).one()
             ch.signature = signature
@@ -236,19 +247,22 @@ class Message(object):
     """
 
     """
+
     @staticmethod
-    def push_message(address, type, message,channel_name):
-        m = MessageDatabase(address=address, type=type, message=message, channel_name=channel_name, state = "pending")
+    def push_message(address, type, message, channel_name):
+        m = MessageDatabase(address=address, type=type, message=message, channel_name=channel_name, state="pending")
         Session.add(m)
         Session.commit()
 
     @staticmethod
     def pull_message(address):
-        message_info ={}
-        messages = Session.query(MessageDatabase).filter(MessageDatabase.address==address).\
-            filter(MessageDatabase.state=="pending").all()
+        message_info = {}
+        messages = Session.query(MessageDatabase).filter(MessageDatabase.address == address). \
+            filter(MessageDatabase.state == "pending").all()
         for m in messages:
             message_info.setdefault(m.channel_name, m.message)
+            messages.state = "done"
+        Session.commit()
         return message_info
 
 
@@ -257,7 +271,6 @@ class ChannelFile(object):
 
     """
     PATH = os.path.dirname(__file__)
-
 
     @property
     def channel_file_name(self):
@@ -270,12 +283,12 @@ class ChannelFile(object):
             self.update_channel(**kwargs)
 
     def update_channel(self, **kwargs):
-        with open(self.channel_file_name,"ab+") as f:
+        with open(self.channel_file_name, "ab+") as f:
             crypto_channel(f, **kwargs)
         return None
 
     def read_channel(self):
-        with open(self.channel_file_name,"rb") as f:
+        with open(self.channel_file_name, "rb") as f:
             return uncryto_channel(f)
 
     def delete_channel(self):
@@ -291,29 +304,21 @@ def query_channel_from_address(address, role="both"):
     if role == "sender":
         return Session.query(ChannelDatabase).filter(ChannelDatabase.sender == address).all()
     elif role == "receiver":
-        return  Session.query(ChannelDatabase).filter(ChannelDatabase.receiver == address).all()
+        return Session.query(ChannelDatabase).filter(ChannelDatabase.receiver == address).all()
     else:
         result = Session.query(ChannelDatabase).filter(ChannelDatabase.sender == address).all()
         result.extend(Session.query(ChannelDatabase).filter(ChannelDatabase.receiver == address).all())
         return result
 
 
-
-
 if __name__ == "__main__":
     from channel_manager.channel import State
-    channel =  ChannelAddress()
-    #channel.add_channle_to_database(sender="test_sender", sender_deposit=10, receiver="test_receiver", receiver_deposit=20, channel_name="testchannlenametest",
-     #                               open_block_number=1000, settle_timeout=100, state=State.OPENING)
-    #channel.add_channle_to_database(sender="test_sender", sender_deposit=10, receiver="test_receiver",
-      #                              receiver_deposit=20, channel_name="testchannelname",
-     #                               open_block_number=1000, settle_timeout=100, state=State.OPENING)
-    result = channel.add_address("test_sender1dt11","10.10.101.01")
+
+    channel = ChannelAddress()
+    # channel.add_channle_to_database(sender="test_sender", sender_deposit=10, receiver="test_receiver", receiver_deposit=20, channel_name="testchannlenametest",
+    #                               open_block_number=1000, settle_timeout=100, state=State.OPENING)
+    # channel.add_channle_to_database(sender="test_sender", sender_deposit=10, receiver="test_receiver",
+    #                              receiver_deposit=20, channel_name="testchannelname",
+    #                               open_block_number=1000, settle_timeout=100, state=State.OPENING)
+    result = channel.add_address("test_sender1dt11", "10.10.101.01")
     print(result)
-
-
-
-
-
-
-

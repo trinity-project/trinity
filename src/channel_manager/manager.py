@@ -28,6 +28,7 @@ from channel_manager.channel import Channel, State, get_channelnames_via_address
 from channel_manager import blockchain
 from utils.channel import split_channel_name
 from channel_manager.state import Message, ChannelState
+from logzero import logger
 
 
 
@@ -45,6 +46,7 @@ def regist_channel(sender_addr, receiver_addr, asset_type,deposit, open_blockcha
                 "trad_info":raw_tans}
     """
     channel = Channel(sender_addr,receiver_addr)
+    logger.info('start to register channel')
     if channel.qeury_channel():
         return {"error": "channel already exist"}
     else:
@@ -54,8 +56,10 @@ def regist_channel(sender_addr, receiver_addr, asset_type,deposit, open_blockcha
             return {"channel_name": None,
                     "contract_address": None,
                     "trad_info": "on pub key or not register pub key"}
+        channel.qeury_channel()
         raw_tans,tx_id, state = blockchain.deposit_transaction(asset_type, sender_addr, channel.contract_address,
                                                          int(deposit))
+
         if state:
             channel.update_channel_to_database(tx_id=tx_id, state=State.OPENING)
             return {"channel_name": channel_name,
@@ -90,6 +94,7 @@ def get_channel_state(address):
     if message:
         message_info["type"] = "signature"
         message_info["message"] = message
+
     else:
         channel_info = _get_channel_states_info(address)
         message_info["type"] = "transaction"
@@ -203,9 +208,7 @@ def update_deposit(address, channel_name, asset_type, value):
 
 
 def depositin(address, value):
-    print("depost_in", address)
     channels = get_channelnames_via_address(address)
-    print(channels)
     success_channel = []
     for channel in channels:
         print(channel.channel_name)

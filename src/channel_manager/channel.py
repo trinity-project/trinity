@@ -28,6 +28,7 @@ from channel_manager.state import ChannelFile, ChannelState, query_channel_from_
 from enum import IntEnum
 from configure import Configure
 from utils.channel import generate_channel_name
+from logzero import logger
 from exception import (
     ChannelFileNoExist,
     ChannelExistInDb,
@@ -70,12 +71,8 @@ class Channel(ChannelFile, ChannelState):
 
     @property
     def channel_name(self):
-        channel_name = generate_channel_name(self.sender, self.receiver)
-        peer_channel_name= generate_channel_name(self.receiver, self.sender)
-        if ChannelState(peer_channel_name).qeury_channel():
-            return peer_channel_name
-        else:
-            return channel_name
+        channel_name = ChannelState.query_channel_name(self.sender, self.receiver)
+        return channel_name if channel_name else generate_channel_name(self.sender, self.receiver)
 
     @property
     def to_dict(self):
@@ -112,7 +109,7 @@ class Channel(ChannelFile, ChannelState):
 
     @check_channel_exist
     def delete(self):
-        if self.stateinDB != State.CLOSED:
+        if self.stateinDB != State.CLOSED.value:
             raise ChannleNotInCloseState
         else:
             self.delete_channel_in_database()
@@ -140,8 +137,8 @@ class Channel(ChannelFile, ChannelState):
                                                                addressTo2=self.receiver, value2=self.receiver_balance)
         if state:
             self.update_channel_to_database(tx_id=tx_id, state=State.SETTLING)
-            Message.push_message(self.sender, "signature", raw_data)
-            Message.push_message(self.receiver, "signature", raw_data)
+            Message.push_message(self.sender, "signature", raw_data, self.channel_name)
+            Message.push_message(self.receiver, "signature", raw_data, self.channel_name)
 
     def get_address_balance(self, address, channels = None):
         try:
