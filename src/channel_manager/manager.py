@@ -244,8 +244,10 @@ def settle_raw_tx(address, channel_name, txdata, signature):
         sig_in_channel.update_sender_signature(signature)
     elif sig_in_channel.recieverinDB == address:
         sig_in_channel.update_receiver_signature(signature)
+        Message.set_message_done(address, channel_name)
     else:
         return "address not match the channel"
+    Message.set_message_done(address, channel_name)
 
     if sig_in_channel.sender_signature and sig_in_channel.receiver_signature and \
             sig_in_channel.stateinDB ==State.SETTLING.value:
@@ -253,6 +255,7 @@ def settle_raw_tx(address, channel_name, txdata, signature):
                                                        sig_in_channel.receiver_signature,
                                             sig_in_channel.contract_hash)
         blockchain.send_raw_transaction(raw_data)
+
 
 
 def tx_onchain(from_addr, to_addr, asset_type, value):
