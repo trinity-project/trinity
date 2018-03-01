@@ -57,8 +57,8 @@ class NodeBApi(object):
                                  'method': 'confirmTx',
                                  'params': [data],
                                  'id': 1})
-
-            return requests.post(self.nodeb_api_uri, json=request_data).json()
+            result = requests.post(self.nodeb_api_uri, json=request_data).json()
+            return result.get('result')
 
         return None
 
