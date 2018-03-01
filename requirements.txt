@@ -31,4 +31,4 @@ neocore==0.3.6
 pycrypto==2.6.1
 PyMySQL==0.8.0
 scrypt==0.8.0
-flask-cors-3.0.3
+flask-cors==3.0.3
