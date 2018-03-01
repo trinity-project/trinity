@@ -34,7 +34,8 @@ NeoServer = neo_api.NeoApi(Configure["BlockNet"])
 
 
 def send_raw_transaction(hax):
-    return NeoServer.sendRawTx(hax)
+    result = NeoServer.sendRawTx(hax).result
+    return result
 
 def construct_raw_tx(tx_data, signature, publickey):
     return ns.construct_raw_tx(tx_data, signature, publickey)

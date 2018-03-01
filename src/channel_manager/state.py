@@ -92,13 +92,14 @@ class ChannelState(object):
 
     def qeury_channel(self):
         try:
-            self.match = Session.query(ChannelDatabase).filter(ChannelDatabase.channel_name == self.channel_name).one()
+            self.match = Session.query(ChannelDatabase).filter(ChannelDatabase.channel_name == self.channelname).one()
             return True
         except:
             return False
 
     @property
     def stateinDB(self):
+
         return self.match.state
 
     @property
@@ -149,10 +150,10 @@ class ChannelState(object):
     def open_block_number(self):
         return self.match.open_block_number
 
-    def add_channel_to_database(self, sender, receiver, channel_name, state, sender_deposit, receiver_deposit,
+    def add_channel_to_database(self, sender, receiver, state, sender_deposit, receiver_deposit,
                                 open_block_number, settle_timeout, sender_deposit_cache, receiver_deposit_cache,
                                 contract_address="", contract_hash="", tx_id="", start_block_number=0):
-        channel_state = ChannelDatabase(receiver=receiver, sender=sender, channel_name=channel_name, state=state.value,
+        channel_state = ChannelDatabase(receiver=receiver, sender=sender, channel_name=self.channelname, state=state.value,
                                         sender_deposit=sender_deposit, receiver_deposit=receiver_deposit,
                                         open_block_number=open_block_number, settle_timeout=settle_timeout,
                                         sender_deposit_cache=sender_deposit_cache,
@@ -260,8 +261,9 @@ class Message(object):
         messages = Session.query(MessageDatabase).filter(MessageDatabase.address == address). \
             filter(MessageDatabase.state == "pending").all()
         for m in messages:
-            message_info.setdefault(m.channel_name, m.message)
-            messages.state = "done"
+            message_info.setdefault("channel_name", m.channel_name)
+            message_info.setdefault("raw_tx", m.message)
+            m.state = "done"
         Session.commit()
         return message_info
 

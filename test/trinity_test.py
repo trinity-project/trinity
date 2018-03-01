@@ -71,17 +71,26 @@ class NeoApi(object):
     def test_sendertoreceiver(self,sender, receiver, channel_name, asset_type,count):
         return self.post_request(self.generate_payload("sendertoreceiver",[sender, receiver, channel_name, asset_type, count]))
 
+    def test_close_channel(self, sender, receiver, channel_name):
+        return self.post_request(
+            self.generate_payload("closechannel", [sender, receiver, channel_name]))
+
+
+
 
 if __name__ == "__main__":
     import time
     test= NeoApi("http://localhost:5000")
     #result1 = test.test_registeraddress("AT5AVHBxp4TH5k5ni1x2m81P7HgaJUW8h8")
-    result = test.test_registchannle("AZLtmATYKJLJgdTEap1osdFTpfmnexBCLZ","AT5eVHBxp4TH5k5ni1x2m81P7HgaJUW8h7","tnc","100","789087")
-    
-    #for i in range(100):
-    #    time.sleep(0.5)
-    #    result2= test.test_getchannelstate("AT5AVHBxp4TH5k5ni1x2m81P7HgaJUW8h8")
-    #    test.test_getchannelstate("AT5eVHBxp4TH5k5ni1x2m81P7HgaJUW8h7")
+    result = test.test_close_channel("ATiabWLxT5sLQpkppZDK9JmCF9wBFYpX3V","AHSuAAA4vL6uCdA8uwDM9NLsvQ2YrTmWcU",
+                                     "63f54f013ce679feae82d42f63dbce1f04a1fe5000f8c1c5b8c3333beb2ac818")
+
+    result2= test.test_getchannelstate("ATiabWLxT5sLQpkppZDK9JmCF9wBFYpX3V")
+    result3 =test.test_getchannelstate("AHSuAAA4vL6uCdA8uwDM9NLsvQ2YrTmWcU")
+    time.sleep(10)
+    result2 = test.test_getchannelstate("ATiabWLxT5sLQpkppZDK9JmCF9wBFYpX3V")
+    test.test_getchannelstate("AHSuAAA4vL6uCdA8uwDM9NLsvQ2YrTmWcU")
+
 
 
 

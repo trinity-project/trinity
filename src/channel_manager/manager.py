@@ -59,7 +59,6 @@ def regist_channel(sender_addr, receiver_addr, asset_type,deposit, open_blockcha
         channel.qeury_channel()
         raw_tans,tx_id, state = blockchain.deposit_transaction(asset_type, sender_addr, channel.contract_address,
                                                          int(deposit))
-
         if state:
             channel.update_channel_to_database(tx_id=tx_id, state=State.OPENING)
             return {"channel_name": channel_name,
@@ -67,6 +66,7 @@ def regist_channel(sender_addr, receiver_addr, asset_type,deposit, open_blockcha
                     "trad_info": raw_tans}
         else:
             channel.delete_channel()
+            channel.delete_channel_in_database()
             return {"channel_name": None,
                     "contract_address": None,
                     "trad_info": raw_tans}
@@ -99,6 +99,7 @@ def get_channel_state(address):
         channel_info = _get_channel_states_info(address)
         message_info["type"] = "transaction"
         message_info["message"] = channel_info
+    return message_info
 
 def _get_channel_states_info(address):
     channel_infos =[]
@@ -224,10 +225,8 @@ def depositin(address, value):
             success_channel.append(channel.channel_name)
         else:
             continue
-    print("depost in", success_channel)
 
 def depoistout(address, value):
-    print("deposit_out", address)
     channels = get_channelnames_via_address(address)
     success_channel = []
     for channel in channels:
@@ -238,8 +237,6 @@ def depoistout(address, value):
             success_channel.append(channel.channel_name)
         else:
             continue
-        print("depost out", success_channel)
-
 
 def settle_raw_tx(channel_name, txdata, signature):
     sig_in_channel = ChannelState(channel_name)

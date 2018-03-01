@@ -97,11 +97,12 @@ class Channel(ChannelFile, ChannelState):
                                                           Configure["EyewitnessPublicKey"])
             contract_address = contract.get("contractForPublicKey1").get("address")
             contract_hash = contract.get("contractForPublicKey1").get("script")
-            self.add_channel_to_database(sender= self.sender, receiver= self.receiver, channel_name=self.channel_name,
+            self.add_channel_to_database(sender= self.sender, receiver= self.receiver,
                                              state=State.INITIAL, sender_deposit=0,receiver_deposit=0,
                                              open_block_number = open_block_number, sender_deposit_cache=sender_deposit,
                                              receiver_deposit_cache=receiver_deposit,settle_timeout=settle_timeout,
                                          contract_address=contract_address, contract_hash=contract_hash)
+            self.qeury_channel()
             self.initialize_channel_file()
             return self.channel_name
         else:

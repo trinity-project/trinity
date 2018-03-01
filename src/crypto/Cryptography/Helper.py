@@ -373,7 +373,11 @@ def hex2interger(input):
 
     return output
 
+
+def publickey_to_address(publickey):
+    return scripthash_to_address( redeem_to_scripthash( pubkey_to_redeem(publickey)))
+
 if __name__=="__main__":
-    result = hex2interger("00ab510d")
+    result = publickey_to_address("047e164ccc6b7e9db6d6c2d421c8ac13d4399e5408d27c017a6c871219899cb25112d41e14029e47ff43128669a57c7bd7c21a7310fa1583566a145ad688d7a527")
     print(result)
 
