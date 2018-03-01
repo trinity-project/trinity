@@ -68,7 +68,8 @@ class ChannelDatabase(Base):
     tx_id = Column(String())
     contract_address = Column(String())
     contract_hash = Column(String())
-    signature=Column(String())
+    sendersignature=Column(String())
+    receiversignature=Column(String())
 
 class MessageDatabase(Base):
     """

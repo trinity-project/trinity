@@ -238,12 +238,22 @@ def depoistout(address, value):
         else:
             continue
 
-def settle_raw_tx(channel_name, txdata, signature):
+def settle_raw_tx(address, channel_name, txdata, signature):
     sig_in_channel = ChannelState(channel_name)
-    if sig_in_channel.signature and sig_in_channel.signature != signature:
-        blockchain.construct_deposit_raw_tx(txdata, signature, sig_in_channel.signature, sig_in_channel.contract_hash)
+    if sig_in_channel.senderinDB == address:
+        sig_in_channel.update_sender_signature(signature)
+    elif sig_in_channel.recieverinDB == address:
+        sig_in_channel.update_receiver_signature(signature)
     else:
-        sig_in_channel.update_signature(signature)
+        return "address not match the channel"
+
+    if sig_in_channel.sender_signature and sig_in_channel.receiver_signature and \
+            sig_in_channel.stateinDB ==State.SETTLING.value:
+        raw_data = blockchain.construct_deposit_raw_tx(txdata, sig_in_channel.sender_signature,
+                                                       sig_in_channel.receiver_signature,
+                                            sig_in_channel.contract_hash)
+        blockchain.send_raw_transaction(raw_data)
+
 
 def tx_onchain(from_addr, to_addr, asset_type, value):
     print(from_addr, to_addr, asset_type, value)
@@ -254,8 +264,6 @@ def tx_onchain(from_addr, to_addr, asset_type, value):
     else:
         return {"tx_info":None,
          "tx_id": None}
-
-
 
 
 if __name__ == "__main__":

@@ -217,14 +217,6 @@ class ChannelState(object):
         except:
             raise ChannelDBUpdateFail
 
-    def update_signature(self, signature):
-        try:
-            ch = Session.query(ChannelDatabase).filter(ChannelDatabase.channel_name == self.channelname).one()
-            ch.signature = signature
-            Session.commit()
-            return True
-        except:
-            raise ChannelDBUpdateFail
 
     def delete_channel_in_database(self):
         try:
@@ -242,6 +234,41 @@ class ChannelState(object):
             return True
         except:
             raise ChannelDBUpdateFail
+
+    def update_sender_signature(self, signature):
+        try:
+            ch = Session.query(ChannelDatabase).filter(ChannelDatabase.channel_name == self.channelname).one()
+            ch.sendersignature = signature
+            Session.commit()
+            return True
+        except:
+            raise ChannelDBUpdateFail
+
+    def update_receiver_signature(self, signature):
+        try:
+            ch = Session.query(ChannelDatabase).filter(ChannelDatabase.channel_name == self.channelname).one()
+            ch.receiversignature = signature
+            Session.commit()
+            return True
+        except:
+            raise ChannelDBUpdateFail
+
+    @property
+    def sender_signature(self):
+        try:
+            ch = Session.query(ChannelDatabase).filter(ChannelDatabase.channel_name == self.channelname).one()
+            return ch.sendersignature
+        except:
+            return None
+
+    @property
+    def receiver_signature(self):
+        try:
+            ch = Session.query(ChannelDatabase).filter(ChannelDatabase.channel_name == self.channelname).one()
+            return ch.receiversignature
+        except:
+            return None
+
 
 
 class Message(object):
