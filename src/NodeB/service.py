@@ -90,9 +90,9 @@ def get_balance(address):
         }
     else:
         if value:
-            response={"tncBalance":int(hex_reverse(value),16)/100000000}
+            response={"tncBalance":int(hex_reverse(value),16)/100000000,"gasBalance":0,"neoBalance":0}
         else:
-            response={}
+            response={"tncBalance":0,"gasBalance":0,"neoBalance":0}
     return response
 
 
