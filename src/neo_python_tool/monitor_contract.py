@@ -94,14 +94,16 @@ class MonitorDaemon(object):
             logger.info('No monitor worker thread is created. Channel state will never be updated.')
             return
 
-        try:
-            while True:
+        while True:
+            try:
                 task = transport.get(timeout=self.worker_timeout)
                 if task:
                     callback(task)
-        except Exception as e:
-            # Never run here.
-            logger.error('Exception occurred in the worker thread. exceptions: {}'.format(e))
+            except Exception as e:
+                # Never run here.
+                logger.error('Exception occurred in the worker thread. exceptions: {}'.format(e))
+
+            gevent.sleep(0.5)
 
         return
 
@@ -115,8 +117,8 @@ class MonitorDaemon(object):
             return
 
         # timer event to handle the response from the NODE-B
-        try:
-            while True:
+        while True:
+            try:
                 start_time = datetime.now()
                 self.confirm_channel_state(self.all_opening_channels)
                 self.confirm_channel_state(self.all_settling_channels, 'settled')
@@ -128,9 +130,9 @@ class MonitorDaemon(object):
                 else:
                     # sleep 500 ms
                     gevent.sleep(0.5)
-
-        except Exception as e:
-            logger.error('exception info: {}'.format(e))
+            except Exception as e:
+                logger.error('exception info: {}'.format(e))
+                gevent.sleep(interval)
 
         # clear the spawn signal. should never run here.
         self.spawn_signal.clear()
