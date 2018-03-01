@@ -91,7 +91,7 @@ def get_balance_onchain(local_address,asset_type=None):
 
 @jsonrpc.method("settlerawtx")
 def settle_raw_tx(channel_name, txdata, signature):
-    return manager.settle_raw_tx(channel_name, txdata, signature)
+    return manager.settle_r
 
 
 @jsonrpc.method("updatedeposit")

@@ -248,6 +248,13 @@ def settle_raw_tx(channel_name, txdata, signature):
     else:
         sig_in_channel.update_signature(signature)
 
+def tx_onchain(from_addr, to_addr, asset_type, value):
+    tx_data, tx_id, state = blockchain.deposit_transaction(asset_type,from_addr, to_addr, value)
+    if state:
+        return tx_data, tx_id
+    
+
+
 
 if __name__ == "__main__":
     result  = send_raw_transaction("AY8r7uG6rH7MRLhABALZvf8jM4bCSfn3YJ",
