@@ -249,17 +249,15 @@ def settle_raw_tx(address, channel_name, txdata, signature):
         return "address not match the channel"
     Message.set_message_done(address, channel_name)
 
-    if sig_in_channel.sender_signature and sig_in_channel.receiver_signature and \
-            sig_in_channel.stateinDB ==State.SETTLING.value:
+    if sig_in_channel.sender_signature and sig_in_channel.receiver_signature:
+        print("sig_in_channel")
         raw_data = blockchain.construct_deposit_raw_tx(txdata, sig_in_channel.sender_signature,
                                                        sig_in_channel.receiver_signature,
                                             sig_in_channel.contract_hash)
         blockchain.send_raw_transaction(raw_data)
 
 
-
 def tx_onchain(from_addr, to_addr, asset_type, value):
-    print(from_addr, to_addr, asset_type, value)
     tx_data, tx_id, state = blockchain.deposit_transaction(asset_type,from_addr, to_addr, int(value))
     if state:
         return {"tx_info":tx_data,
