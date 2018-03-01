@@ -252,7 +252,7 @@ def tx_onchain(from_addr, to_addr, asset_type, value):
     tx_data, tx_id, state = blockchain.deposit_transaction(asset_type,from_addr, to_addr, value)
     if state:
         return tx_data, tx_id
-    
+
 
 
 
