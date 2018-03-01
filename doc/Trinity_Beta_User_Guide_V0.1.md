@@ -118,9 +118,7 @@ TNC水龙头是基于NEO TestNet的，以便大家在NEO TestNet上进行Trinity
 
 水龙头地址：
 
-```
 http://106.15.91.150
-```
 
 
 ## Channel节点交互
