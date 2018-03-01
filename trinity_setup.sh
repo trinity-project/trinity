@@ -1,5 +1,4 @@
 #!/bin/sh
-
 BASEDIR=`dirname $0`
 BASEDIR=`(cd "$BASEDIR"; pwd)`
 NODEB_DIR="$BASEDIR/src/NodeB"
