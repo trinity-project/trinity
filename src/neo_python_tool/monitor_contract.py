@@ -171,7 +171,7 @@ class MonitorDaemon(object):
         for loop_index in range(send_loop):
             start_index = loop_index * count_per_second
             tx_id_list = list()
-            for ch in channel_set[start_index::start_index+count_per_second]:
+            for ch in channel_set[start_index:start_index+count_per_second]:
                 tx_id_list.append(ch.tx_id)
                 self.tx_id_channel_map.update({ch.tx_id: ch.channel_name})
 

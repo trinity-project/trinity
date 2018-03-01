@@ -1,6 +1,6 @@
 {
   "DBFile":"channel.db",
-  "BlockNet":"http://47.88.35.235:21332",
+  "BlockNet":"http://localhost:20332",
   "NodeBNet":"http://localhost:21332",
   "TrinityNet":"",
   "AssetList":{
