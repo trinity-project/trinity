@@ -99,6 +99,7 @@ def createMultiSigContract(publicKey1,publicKey2,publicKey3):
 
 
 def construct_tx(addressFrom,addressTo,value,assetId):
+    print("construct_tx", addressFrom, addressTo, value, assetId)
     scripthash_from=ToScriptHash(addressFrom).ToString2()
     timestamp = hex(int(time.time()))[2:]
     op_data=construct_opdata(addressFrom,addressTo,value,assetId)
