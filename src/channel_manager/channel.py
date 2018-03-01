@@ -140,6 +140,9 @@ class Channel(ChannelFile, ChannelState):
             self.update_channel_to_database(tx_id=tx_id, state=State.SETTLING)
             Message.push_message(self.sender, "signature", raw_data, self.channel_name)
             Message.push_message(self.receiver, "signature", raw_data, self.channel_name)
+            return True
+        else:
+            return False
 
     def get_address_balance(self, address, channels = None):
         try:
