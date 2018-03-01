@@ -16,15 +16,13 @@ Trinity为基于NEO的链下扩容方案，Trinity service节点是基于NEO-CLI
 
 NEO-CLI节点部署请参考如下链接：
 
-中文参考链接：http://docs.neo.org/zh-cn/node/setup.html
+http://docs.neo.org/zh-cn/node/setup.html
 
-英文参考链接：http://docs.neo.org/en-us/node/setup.html
 
 为了方便试用验证，建议切换NEO-CLI节点至NEO的测试网，切换testnet方法参考如下链接：
 
-中文参考链接： http://docs.neo.org/zh-cn/node/testnet.html
+http://docs.neo.org/zh-cn/node/testnet.html
 
-英文参考链接：http://docs.neo.org/en-us/node/testnet.html
 
 注意：由于Trinity service节点需要使用NEO-CLI提供的API，NEO-CLI部署完毕之后，需要启动节点的同时开启 API，即需要使用如下命令启动NEO-CLI节点：
 
@@ -33,9 +31,8 @@ dotnet neo-cli.dll /rpc
 ```
 NEO-CLI节点启动成功之后，可使用命令进行节点状态的查看，建议等待节点完成区块同步之后再进行后续的部署操作；NEO-CLI命令参考如下链接：
 
-中文参考链接：http://docs.neo.org/zh-cn/node/cli.html
+http://docs.neo.org/zh-cn/node/cli.html
 
-英文参考链接：http://docs.neo.org/en-us/node/cli.html
 
 NEO-CLI节点需要持续保持在启动状态，以便为Trinity service节点提供必要的api服务。
 
