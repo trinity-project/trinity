@@ -7,7 +7,8 @@ export PYTHONPATH=$PYTHONPATH:$BASEDIR/src
 
 # requirements
 INSTALL_PACKAGE="$BASEDIR/requirements.txt"
-if [ 0 -ne `pipp3 install -r $INSTALL_PACKAGE` ]; then
+pip3 install -r $INSTALL_PACKAGE
+if [ 0 -ne $? ]; then
     echo -e 'Please check your python environment ...'
     echo -e 'requirements packages failed to be installed ...'
 fi

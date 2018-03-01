@@ -23,20 +23,17 @@ help_menu()
 
 start_nodeb_app()
 {
-    cd $NODEB_DIR
-    python ./runserver.py &
+    cd $NODEB_DIR && python3 ./runserver.py &
 }
 
 start_proxy_api_app()
 {
-    cd $MONITOR_CONTRACT
-    python api.py &
+    cd $TRINITY_PROXY && python3 api.py &
 }
 
 start_contract_monitor_app()
 {
-    cd $TRINITY_PROXY
-    python monitor_contract.py &
+    cd $MONITOR_CONTRACT && python3 monitor_contract.py &
 }
 
 while [ $# != 0 ]; do
@@ -44,22 +41,22 @@ while [ $# != 0 ]; do
     case "$curr_option" in
         -h|--help) # help command
             help_menu
-            return 0
+            exit 0
             ;;
 
         0|--start-nodeb)
             start_nodeb_app
-            return 0
+            exit 0
             ;;
 
         1|--start-proxy)
             start_proxy_api_app
-            return 0
+            exit 0
             ;;
 
         2|--start-monitor)
             start_contract_monitor_app
-            return 0
+            exit 0
             ;;
 
         3|--start-all)
@@ -70,13 +67,13 @@ while [ $# != 0 ]; do
             sleep 5
 
             start_contract_monitor_app
-            return 0
+            exit 0
             ;;
 
         *)
             echo "UnKnown argument : $#"
             help_menu
-            return 0
+            exit 0
             ;;
     esac
     shift
