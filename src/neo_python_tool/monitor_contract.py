@@ -165,7 +165,7 @@ class MonitorDaemon(object):
             tx_id_list = list()
             for ch in channel_set[send_loop*count_per_second::]:
                 tx_id_list.append(ch.tx_id)
-                self.all_channels.update({ch.tx_id: ch.channel_name})
+                self.tx_id_channel_map.update({ch.tx_id: ch.channel_name})
 
             # post data to the NODE-B
             response = self.nodeb_api.get_channel_state_from_nodeb(data = list(set(tx_id_list)))
