@@ -104,7 +104,7 @@ def get_balance(address):
 def confirm_tx(txList):
     response={}
     for tx in txList:
-        tx_instanse=Tx.query.filter_by(tx_id=tx).first()
+        tx_instanse=Tx.query.filter_by(tx_id="0x"+tx).first()
         if tx_instanse:
             response[tx]=True
         else:
