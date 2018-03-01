@@ -530,7 +530,7 @@ class NeoApi(object):
 
     def sendRawTx(self,TX):
         params = [TX]
-        return self.post_request(self.generate_payload("sendRawTx"),params)
+        return self.post_request(self.generate_payload("sendRawTx",params))
 
 
 NEOSERVER = "http://47.88.35.235:8000/api/"

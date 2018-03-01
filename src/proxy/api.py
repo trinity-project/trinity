@@ -64,9 +64,8 @@ def get_channel_state(local_address):
 
 
 @jsonrpc.method("sendrawtransaction")
-def send_raw_transaction(sender_address,channel_name, hex):
-    logger.info("sendrawtransaction %s" %channel_name)
-    return manager.send_raw_transaction(sender_address, channel_name, hex)
+def send_raw_transaction(txdata, signature, publickey):
+    return manager.send_raw_transaction(txdata, signature, publickey)
 
 
 @jsonrpc.method("sendertoreceiver")
