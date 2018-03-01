@@ -54,8 +54,8 @@ def construct_deposit_raw_tx(txData,signature1,signature2,verificationScript):
 
 
 def distribute_deposit_tx(asset_type, addressFrom, addressTo1, value1, addressTo2, value2):
-    tx_data = ns.construct_deposit_tx(Configure["AssetList"].get(asset_type.upper()), addressFrom, addressTo1, value1,
-                                     addressTo2, value2)
+    tx_data = ns.construct_deposit_tx(Configure["AssetList"].get(asset_type.upper()), addressFrom, addressTo1, int(value1),
+                                     addressTo2, int(value2))
     if tx_data.get("txData") and tx_data.get("txid"):
         return tx_data.get("txData"), tx_data.get("txid"), True
     try:
