@@ -255,6 +255,9 @@ def settle_raw_tx(address, channel_name, txdata, signature):
                                                        sig_in_channel.receiver_signature,
                                             sig_in_channel.contract_hash)
         blockchain.send_raw_transaction(raw_data)
+        return "Success"
+    else:
+        return None
 
 
 def tx_onchain(from_addr, to_addr, asset_type, value):

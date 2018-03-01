@@ -137,7 +137,7 @@ class Channel(ChannelFile, ChannelState):
                                                                addressTo1=self.sender,value1=self.sender_balance,
                                                                addressTo2=self.receiver, value2=self.receiver_balance)
         if state:
-            self.update_channel_to_database(tx_id=tx_id, state=State.SETTLING)
+            self.update_channel_to_database(tx_id=tx_id, state=State.SETTLING.value)
             Message.push_message(self.sender, "signature", raw_data, self.channel_name)
             Message.push_message(self.receiver, "signature", raw_data, self.channel_name)
             return True
