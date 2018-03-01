@@ -55,7 +55,7 @@ class NodeBApi(object):
         if data:
             request_data.update({'jsonrpc': '2.0',
                                  'method': 'confirmTx',
-                                 'parmas': data,
+                                 'params': [data],
                                  'id': 1})
 
             return requests.post(self.nodeb_api_uri, json=request_data).json()
