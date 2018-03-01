@@ -180,7 +180,7 @@ class MonitorDaemon(object):
                 self.tx_id_channel_map.update({ch.tx_id: ch.channel_name})
 
             response = self.nodeb_api.get_channel_state_from_nodeb(data = list(set(tx_id_list)))
-            self.add_task(task={expected_state.lower():response})
+            self.add_task(task={expected_state.lower(): response})
 
         return
 
@@ -189,26 +189,25 @@ class MonitorDaemon(object):
             return
 
         if task.get('open'):
-            tx_id_list = task.get('open')
+            tx_id_dict = task.get('open')
             expected_state = State.OPEN
         elif task.get('settled'):
-            tx_id_list = task.get('settled')
+            tx_id_dict = task.get('settled')
             expected_state = State.SETTLED
         else:
             logger.info('unknown expected state of channels')
             return
 
-        for tx_id_item in tx_id_list:
-            for tx_id, status in tx_id_item.keys():
-                if status is True:
-                    channel_set = Session.query(ChannelDatabase).filter(
-                        ChannelDatabase.channel_name == self.tx_id_channel_map[tx_id]).first()
-                    if channel_set:
-                        self.deposit_action[expected_state](channel_set.sender, 0)
-                        self.deposit_action[expected_state](channel_set.receiver, 0)
+        for tx_id, status in tx_id_dict.items():
+            if status is True:
+                channel_set = Session.query(ChannelDatabase).filter(
+                    ChannelDatabase.channel_name == self.tx_id_channel_map[tx_id]).first()
+                if channel_set:
+                    self.deposit_action[expected_state](channel_set.sender, 0)
+                    self.deposit_action[expected_state](channel_set.receiver, 0)
 
     def add_task(self, task):
-        tid_list = self.__t_reg.keys()
+        tid_list = list(self.__t_reg.keys())
         transport = self.__t_reg[tid_list[0]]
         transport.add_task(task)
 
