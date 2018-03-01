@@ -81,6 +81,7 @@ class MessageDatabase(Base):
     type = Column(String())
     message = Column(String())
     channel_name = Column(String())
+    state = Column(String())
 
 
 
