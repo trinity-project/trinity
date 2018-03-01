@@ -81,7 +81,12 @@ def get_balance(address):
         "id": 1
     }
     res = requests.post(NEOCLIURL, headers=headers, json=data).json()
-    value=res["result"]["stack"][0]["value"]
+    if res["result"]["state"]=="HALT, BREAK":
+
+        value=res["result"]["stack"][0]["value"]
+    else:
+        value=None
+
     if balance:
         response={
             "gasBalance":float(balance.gas_balance),
