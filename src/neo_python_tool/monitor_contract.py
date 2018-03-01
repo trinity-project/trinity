@@ -159,7 +159,7 @@ class MonitorDaemon(object):
         # handle the left channels
         if 0 != left_chan:
             tx_id_list = list()
-            for ch in channel_set[send_loop*self.count_per_second::]:
+            for ch in channel_set[send_loop*count_per_second::]:
                 tx_id_list.append(ch.tx_id)
                 self.all_channels.update({ch.tx_id: ch.channel_name})
 
@@ -167,7 +167,7 @@ class MonitorDaemon(object):
             response = self.nodeb_api.get_channel_state_from_nodeb(data = list(set(tx_id_list)))
             self.add_task(task={expected_state.lower():response})
 
-        # handle the request wrapped by self.count_per_second
+        # handle the request wrapped by count_per_second
         for loop_index in range(send_loop):
             start_index = loop_index * count_per_second
             tx_id_list = list()
