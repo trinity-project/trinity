@@ -296,15 +296,12 @@ class Channel(ChannelFile, ChannelState):
         return self.channel_name
 
     def set_channel_open(self):
-        print("set_channel_open", self.channelname)
         if not self.has_channel():
-            print("No channel find")
+            return ''
         else:
             tx_id = self.channel_txid
             sender_balance = self.get_address_balance(self.sender)
             receiver_balance = self.get_address_balance(self.receiver)
-            print(self.sender_deposit_cache)
-            print(self.sender_deposit)
 
             tx_detail = [
                 {"address": self.sender,

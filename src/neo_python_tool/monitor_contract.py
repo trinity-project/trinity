@@ -277,7 +277,7 @@ class MonitorDaemon(object):
 def main():
     monitor = MonitorDaemon()
     gevent.joinall([
-        gevent.spawn(monitor.daemon_monitor_timer_event, interval=0.5),
+        gevent.spawn(monitor.daemon_monitor_timer_event, interval=1),
         gevent.spawn(monitor.worker, callback = monitor.update_channel)
     ])
 
