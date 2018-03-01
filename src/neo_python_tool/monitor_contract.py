@@ -34,6 +34,7 @@ from datetime import datetime
 from configure import Configure
 from channel_manager.state import ChannelDatabase, Session
 from channel_manager.channel import State
+from channel_manager.manager import depositin, depoistout
 
 
 class NodeBApi(object):
@@ -53,9 +54,9 @@ class NodeBApi(object):
         request_data = {}
         if data:
             request_data.update({'jsonrpc': '2.0',
-                            'method': 'confirmTx',
-                            'parmas': data,
-                            'id': 1})
+                                 'method': 'confirmTx',
+                                 'parmas': data,
+                                 'id': 1})
 
             return requests.post(self.nodeb_api_uri, json=request_data).json()
 
@@ -80,6 +81,9 @@ class MonitorDaemon(object):
 
         #
         self.nodeb_api = NodeBApi()
+
+        # update channel api
+        self.deposit_action = {State.OPEN:depositin, State.SETTLED:depoistout}
 
     def worker(self, callback, *args, **kwargs):
         """
@@ -171,7 +175,7 @@ class MonitorDaemon(object):
         for loop_index in range(send_loop):
             start_index = loop_index * count_per_second
             tx_id_list = list()
-            for ch in channel_set[start_index:start_index+count_per_second]:
+            for ch in channel_set[start_index:start_index+count_per_second:]:
                 tx_id_list.append(ch.tx_id)
                 self.tx_id_channel_map.update({ch.tx_id: ch.channel_name})
 
@@ -200,10 +204,8 @@ class MonitorDaemon(object):
                     channel_set = Session.query(ChannelDatabase).filter(
                         ChannelDatabase.channel_name == self.tx_id_channel_map[tx_id]).first()
                     if channel_set:
-                        channel_set.state = expected_state
-
-        # save the database
-        Session.commit()
+                        self.deposit_action[expected_state](channel_set.sender, 0)
+                        self.deposit_action[expected_state](channel_set.receiver, 0)
 
     def add_task(self, task):
         tid_list = self.__t_reg.keys()
