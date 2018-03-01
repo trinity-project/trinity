@@ -157,7 +157,7 @@ class MonitorDaemon(object):
 
         # parse the all channels from the channel sets
         total_channels = len(channel_set)
-        send_loop = total_channels / count_per_second
+        send_loop = total_channels // count_per_second
         left_chan = total_channels % count_per_second
 
         # handle the left channels
