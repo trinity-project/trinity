@@ -283,6 +283,15 @@ class Message(object):
         Session.commit()
 
     @staticmethod
+    def set_message_done(address, channel_name):
+        message = Session.query(MessageDatabase).filter(MessageDatabase.address == address).\
+            filter(MessageDatabase.channel_name == channel_name).all()
+        if message:
+            message[0].state = "done"
+            Session.commit()
+        return None
+
+    @staticmethod
     def pull_message(address):
         message_info = {}
         messages = Session.query(MessageDatabase).filter(MessageDatabase.address == address). \
@@ -290,7 +299,6 @@ class Message(object):
         for m in messages:
             message_info.setdefault("channel_name", m.channel_name)
             message_info.setdefault("raw_tx", m.message)
-            m.state = "done"
         Session.commit()
         return message_info
 
