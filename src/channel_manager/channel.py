@@ -137,7 +137,7 @@ class Channel(ChannelFile, ChannelState):
                                                                addressTo1=self.sender,value1=self.sender_balance,
                                                                addressTo2=self.receiver, value2=self.receiver_balance)
         if state:
-            self.update_channel_to_database(tx_id=tx_id, state=State.SETTLING)
+            self.update_channel_to_database(tx_id=tx_id, state=State.SETTLING.value)
             Message.push_message(self.sender, "signature", raw_data, self.channel_name)
             Message.push_message(self.receiver, "signature", raw_data, self.channel_name)
             return True
@@ -296,15 +296,12 @@ class Channel(ChannelFile, ChannelState):
         return self.channel_name
 
     def set_channel_open(self):
-        print("set_channel_open", self.channelname)
         if not self.has_channel():
-            print("No channel find")
+            return ''
         else:
             tx_id = self.channel_txid
             sender_balance = self.get_address_balance(self.sender)
             receiver_balance = self.get_address_balance(self.receiver)
-            print(self.sender_deposit_cache)
-            print(self.sender_deposit)
 
             tx_detail = [
                 {"address": self.sender,
