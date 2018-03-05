@@ -32,7 +32,6 @@ from NodeB import utils as ns
 
 NeoServer = neo_api.NeoApi(Configure["BlockNet"])
 
-
 def send_raw_transaction(hax):
     result = NeoServer.sendRawTx(hax).result
     return result
@@ -63,6 +62,8 @@ def distribute_deposit_tx(asset_type, addressFrom, addressTo1, value1, addressTo
         return tx_data.get("message"), None, False
     except KeyError:
         return "Transaction Error", None, False
+
+
 
 
 

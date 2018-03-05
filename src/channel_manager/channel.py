@@ -184,12 +184,14 @@ class Channel(ChannelFile, ChannelState):
              "deposit": 0,
              "trans": 0,
              "balance": 0,
+             "time": time.asctime(time.localtime(time.time()))
 
              },
             {"address": self.receiver,
              "deposit": 0,
              "trans": 0,
              "balance": 0,
+             "time": time.asctime(time.localtime(time.time()))
              }
         ]
         if count <= 0:
@@ -232,12 +234,13 @@ class Channel(ChannelFile, ChannelState):
              "deposit": 0,
              "trans": 0,
              "balance": 0,
-
+             "time": time.asctime(time.localtime(time.time()))
              },
             {"address": self.receiver,
              "deposit": 0,
              "trans": 0,
              "balance": 0,
+             "time": time.asctime(time.localtime(time.time()))
              }
         ]
         if count <= 0:
@@ -280,12 +283,14 @@ class Channel(ChannelFile, ChannelState):
              "deposit": 0,
              "trans": 0,
              "balance": 0,
+             "time": time.asctime(time.localtime(time.time()))
 
              },
             {"address": self.receiver,
              "deposit": 0,
              "trans": 0,
              "balance": 0,
+             "time": time.asctime(time.localtime(time.time()))
              }
         ]
         transinfo = {"tx_id": "0", "tx_detail": transdetail}
@@ -308,12 +313,14 @@ class Channel(ChannelFile, ChannelState):
                  "deposit": self.sender_deposit + self.sender_deposit_cache,
                  "trans": 0,
                  "balance": sender_balance + self.sender_deposit_cache,
+                 "time": time.asctime(time.localtime(time.time()))
 
                  },
                 {"address": self.receiver,
                  "deposit": self.receiver_deposit + self.receiver_deposit_cache,
                  "trans": 0,
                  "balance": receiver_balance + self.receiver_deposit_cache,
+                 "time": time.asctime(time.localtime(time.time()))
                  }
             ]
             trans_info = {"tx_id": str(int(tx_id)+ 1), "tx_detail": tx_detail}

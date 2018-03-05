@@ -117,5 +117,10 @@ def depoistout(address, value):
     return manager.depoistout(address, value)
 
 
+@jsonrpc.method("gethistory")
+def get_history(channel_name, index=0, count=10):
+    return manager.get_history(channel_name, index, count)
+
+
 if __name__ == "__main__":
     app.run(host='0.0.0.0', debug=True)

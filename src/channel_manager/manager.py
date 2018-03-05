@@ -270,6 +270,17 @@ def tx_onchain(from_addr, to_addr, asset_type, value):
          "tx_id": None}
 
 
+def get_history(channel_name, index, count):
+    sender, receiver = split_channel_name(channel_name)
+    ch = Channel(sender, receiver)
+    result = ch.read_channel()
+    return result[int(index):int(index)+int(count)]
+
+
+
+
+
+
 if __name__ == "__main__":
     result  = send_raw_transaction("AY8r7uG6rH7MRLhABALZvf8jM4bCSfn3YJ",
                                    "AATT55AeVVHHBBxxpp44TTHH55kk55nnii11xx22mm8811PP77HHggaaJJUUWW88hh97",
