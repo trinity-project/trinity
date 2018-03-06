@@ -87,7 +87,7 @@ def get_channel_state(address):
     """
     :param sender_addr: String, the sender address
     :param receiver_addr: String, receiver's address
-    :return: Dictionary, the chnnnel information
+    :return: Dictionary, the channel information
     """
     message_info={}
     message = Message.pull_message(address)
@@ -123,6 +123,7 @@ def _get_channel_states_info(address):
             "channel_name": ch.channel_name,
             "channel_state": str(State(ch.stateinDB)),
             "open_block":ch.open_block_number,
+            "contract_address": ch.contract_address,
              "tx_info": channel_detail
         }
         channel_infos.append(channel_info)
