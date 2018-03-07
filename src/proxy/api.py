@@ -46,7 +46,7 @@ def register_address(address, port = "20556", public_key=None):
     try:
         channel_address.add_address(address, ip=ip_info, port= port, public_key=public_key)
     except ChannelDBAddFail:
-        channel_address.delete_address(address)
+        #channel_address.delete_address(address)
         return State.raise_fail(101, "Can Not Add The Address")
     return State.success()
 
