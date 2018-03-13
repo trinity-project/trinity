@@ -2,7 +2,7 @@
 ```
   NEP: to be assigned
   Title: Non-fungible Token Standard
-  Author: Allen Zhang <allenian@gmail.com>, JasonLiu<github:jasonliu91>
+  Author: Guangfeng Zhang <allenian@gmail.com>, Yongxin Liu<github:jasonliu91>
   Type: Standard
   Status: Draft
   Created: 2018-03-10
