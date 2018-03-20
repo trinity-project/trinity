@@ -36,23 +36,18 @@ The NEO-CLI node should remain open to provide necessary API services to the Tri
 ## Trinity service Node Deployment
 Development of the Trinity service node is based on the code of python3, thus dependent on python3. It is required that the Trinity service node be deployed on python3.5.2 or above.
 
-Run the following command to get master.zip of the Trinity service node:
+Open the following link to get the source code of the Trinity service node:
 
 ```
-wget https://github.com/trinity-project/trinity/archive/master.zip
+https://github.com/trinity-project/trinity/releases
 ```
 
-Run the following command to get trinity-master source code directory after unzipping master.zip:
-
-```
-unzip master.zip
-```
-Enter trinity-master/directory. Run the following command to install python dependent package of the Trinity service node:
+Enter trinity-0.1/directory. Run the following command to install python dependent package of the Trinity service node:
 
 ```
 pip3 install -r requirements.txt
 ```
-Enter trinity-master/src/directory. Run the following command to configurate python environment variables:
+Enter trinity-0.1/src/directory. Run the following command to configurate python environment variables:
 
 ```
 export PYTHONPATH=$PWD
@@ -69,44 +64,39 @@ mysql -uroot -p
 create database test；
 exit;
 ```
-Enter trinity-master/src/NodeB/directory. Run the following command to start block sync of nodeb:
+Enter trinity-0.1/src/NodeB/directory. Run the following command to start block sync of nodeb:
 
 ```
 python3 store_block_data.py -->null &
 ```
 
-Enter trinity-master/src/NodeB/directory. Run the following command to start RPC service of nodeb:
+Enter trinity-0.1/src/NodeB/directory. Run the following command to start RPC service of nodeb:
 
 ```
 python3 runserver.py &
 ```
 Note: The two services of nodeb correspond to config.py files under the same directory. The Trinity service node and the NEO CLI node are deployed on the same server and there is no need to change the config file using TestNet. The file can be set accordingly under other circumstances.
 
-Enter trinity-master/src/neo_python_tool/directory. Run the following command to start monitor service of the Trinity service node:
+Enter trinity-0.1/src/neo_python_tool/directory. Run the following command to start monitor service of the Trinity service node:
 
 ```
 python3 monitor_contract.py &
 ```
-Enter trinity-master/src/proxy/directory. Run the following command to start gateway service of the Trinity service node:
+Enter trinity-0.1/src/proxy/directory. Run the following command to start gateway service of the Trinity service node:
 
 ```
 python3 api.py &
 ```
-Note: The corresponding config file of gateway service is configure.json in trinity-master/src/ directory. The Trinity service node and the NEO CLI node are deployed on the same server and there is no need to change the config file using TestNet. The file can be set accordingly under other circumstances.
+Note: The corresponding config file of gateway service is configure.json in trinity-0.1/src/ directory. The Trinity service node and the NEO CLI node are deployed on the same server and there is no need to change the config file using TestNet. The file can be set accordingly under other circumstances.
 
 ## Trinity wallet Node Deployment
-The current Trinity wallet is a web version. Run the following command to get master.zip of the Trinity wallet node web version:
+The current Trinity wallet is a web version. Open the following link to get the source code of the Trinity wallet node web version:
 
 ```
-wget https://github.com/trinity-project/wallet-website/archive/master.zip
+https://github.com/trinity-project/wallet-website/releases
 ```
 
-Run the following command to get the source code directory of wallet-website-master after unzipping master.zip 
-```
-unzip master.zip
-```
-
-Use your explorer to open index.html in wallet-website-master to log in on the web version of the Trinity wallet.
+Use your explorer to open index.html in wallet-website-0.1 to log in on the web version of the Trinity wallet.
 
 It is worth mentioning that the current Trinity wallet web version only supports PEM private key. Please make copies of your private key and keep it in a secure place during the test. 
 
