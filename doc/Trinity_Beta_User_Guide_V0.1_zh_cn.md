@@ -39,23 +39,18 @@ NEO-CLI节点需要持续保持在启动状态，以便为Trinity service节点�
 ## Trinity service节点部署
 Trinity service节点基于python3的库进行开发，对python3有依赖，部署该节点的python环境要求不低于python3.5.2版本。
 
-通过如下方式获取Trinity service节点源码压缩包master.zip:
+通过访问如下链接获取Trinity service节点源码包:
 
 ```
-wget https://github.com/trinity-project/trinity/archive/master.zip
+https://github.com/trinity-project/trinity/releases
 ```
 
-通过如下命令对master.zip进行解压缩之后得到trinity-master源码目录：
-
-```
-unzip master.zip
-```
-进入trinity-master/目录，通过以下命令进行Trinity service节点的python依赖包的安装：
+进入trinity-0.1/目录，通过以下命令进行Trinity service节点的python依赖包的安装：
 
 ```
 pip3 install -r requirements.txt
 ```
-进入trinity-master/src/目录，通过以下命令配置python环境变量：
+进入trinity-0.1/src/目录，通过以下命令配置python环境变量：
 
 ```
 export PYTHONPATH=$PWD
@@ -72,44 +67,39 @@ mysql -uroot -p
 create database test；
 exit;
 ```
-进入trinity-master/src/NodeB/目录，通过如下命令启动nodeb的块同步服务：
+进入trinity-0.1/src/NodeB/目录，通过如下命令启动nodeb的块同步服务：
 
 ```
 python3 store_block_data.py -->null &
 ```
 
-进入trinity-master/src/NodeB/目录，通过如下命令启动nodeb的RPC服务：
+进入trinity-0.1/src/NodeB/目录，通过如下命令启动nodeb的RPC服务：
 
 ```
 python3 runserver.py &
 ```
 注意：nodeb的两个服务对应的配置文件为同目录下的config.py文件，trinity service节点与NEO CLI节点部署在同一个服务器上且使用TestNet测试不需要修改该配置文件，其他情况自行设置即可。
 
-进入trinity-master/src/neo_python_tool/目录，通过如下命令启动trinity service节点的monitor服务：
+进入trinity-0.1/src/neo_python_tool/目录，通过如下命令启动trinity service节点的monitor服务：
 
 ```
 python3 monitor_contract.py &
 ```
-进入trinity-master/src/proxy/目录，通过如下命令启动trinity service节点的gateway服务：
+进入trinity-0.1/src/proxy/目录，通过如下命令启动trinity service节点的gateway服务：
 
 ```
 python3 api.py &
 ```
-注意：gateway服务对应的配置文件为trinity-master/src/目录下的configure.json文件，trinity service节点与NEO CLI节点部署在同一个服务器上且使用TestNet测试不需要修改该配置文件，其他情况自行设置即可。
+注意：gateway服务对应的配置文件为trinity-0.1/src/目录下的configure.json文件，trinity service节点与NEO CLI节点部署在同一个服务器上且使用TestNet测试不需要修改该配置文件，其他情况自行设置即可。
 
 ## Trinity wallet节点部署
-Trinity wallet当前版本为web版,通过如下方式获取Trinity wallet节点web源码压缩包master.zip：
+Trinity wallet当前版本为web版,通过访问如下链接获取Trinity wallet节点web源码包：
 
 ```
-wget https://github.com/trinity-project/wallet-website/archive/master.zip
+https://github.com/trinity-project/wallet-website/releases
 ```
 
-通过如下命令对master.zip进行解压缩之后得到wallet-website-master源码目录：
-```
-unzip master.zip
-```
-
-使用浏览器打开wallet-website-master目录下的index.html即可登陆Trinity wallet的web页面。
+使用浏览器打开wallet-website-0.1目录下的index.html即可登陆Trinity wallet的web页面。
 
 值得一提的是当前Trinity wallet web版仅支持明文私钥格式，试用时务必做好私钥的安全备份工作。
 
