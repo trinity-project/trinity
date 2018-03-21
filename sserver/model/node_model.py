@@ -32,13 +32,14 @@ class TBLNode(DBManager):
         Modified        : 2018-03-21
     """
     db_table = DBClient().db.Node
-    primary_key = 'node'
-    required_item = ['node', 'ip', 'port', 'fee', 'state', 'tti', 'amount']
-    optional_item = ['spv_count']
+    primary_key = 'address'
+    required_item = ['address', 'ip', 'port', 'deposit', 'fee', 'state', 'tti', 'spv_count']
+    optional_item = ['node_name']
 
-    def add_one(self, node: str, ip: str, port: int, fee: int, state: str, tti: int, spv_count=0):
-        # to check whether the state is correct:
-        return super(TBLNode, self).add(node=node, ip=ip, port=port, fee=fee, state=state, tti=tti)
+    def add_one(self, address: str, ip: str, port: int, deposit: dict, fee: int,
+                state: str, tti: int, spv_count=0):
+        return super(TBLNode, self).add(address=address, ip=ip, port=port, deposit=deposit, fee=fee,
+                                        state=state, tti=tti, spv_count=0)
 
 
 class APINode(object):

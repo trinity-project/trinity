@@ -42,10 +42,10 @@ class TBLWalletAddress(DBManager):
     """
     db_table = DBClient().db.Address
     primary_key = 'address'
-    required_item = ['address', 'chain', 'public_key', 'node_ip']
+    required_item = ['address', 'chain', 'public_key', 'node']
 
-    def add_one(self, address:str, chain:EnumChainType, public_key:str, node_ip=None):
-        return super(TBLWalletAddress, self).add(address=address, chain=chain.value, public_key=public_key, node_ip=node_ip)
+    def add_one(self, address:str, chain:EnumChainType, public_key:str, node=None):
+        return super(TBLWalletAddress, self).add(address=address, chain=chain.value, public_key=public_key, node_ip=node)
 
 
 class APIWalletAddress(object):

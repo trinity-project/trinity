@@ -35,27 +35,54 @@ class TBLChannel(DBManager):
     """
     db_table = DBClient().db.Channel
     primary_key = 'channel'
-    required_item = ['channel', 'src_addr', 'dest_addr', 'balance', 'state', 'alive_block', 'deposit']
+    required_item = ['channel', 'src_addr', 'dest_addr', 'state', 'alive_block', 'deposit', 'balance']
 
-    def add_one(self, channel: str, src_addr: str, dest_addr: str, balance: int, state: str, alive_block: int,
-                deposit:dict):
+    def add_one(self, channel: str, src_addr: str, dest_addr: str, state: str, alive_block: int,
+                deposit:dict, balance={}):
+        """
+
+        :param channel:
+        :param src_addr:
+        :param dest_addr:
+        :param state:
+        :param alive_block:
+        :param deposit: format : {'source': {asset_type': amount}, 'destination': {'asset_type': amount}}
+        :param balance: same format as deposit // to add operation, maybe useless
+        :return:
+        """
         if not self.is_valid_channel_state(state):
             LOG.error('Error Channel state<{}> is used.'.format(state))
 
         # Guarantee no possession loss even if users do some wrong operations.
-        for asset_type in deposit.keys():
-            if not self.is_valid_asset_type(asset_type):
-                deposit.pop(asset_type)
+        if not self.remove_unsupported_asset(deposit.get('source')) or \
+            not self.remove_unsupported_asset(deposit.get('destination')):
+            return
 
         return super(TBLChannel, self).add(channel=channel, src_addr=src_addr, dest_addr=dest_addr,
-                                           balance=balance, state=state, alive_block=alive_block,
-                                           deposit=deposit)
+                                           state=state, alive_block=alive_block,
+                                           deposit=deposit, balance = deposit)
 
-    def is_valid_channel_state(self, state):
-        return state in EnumChannelState.__members__
+    def remove_unsupported_asset(self, asset):
+        if not asset:
+            return True
 
-    def is_valid_asset_type(self, asset_type):
-        return asset_type in EnumAssetType.__members__
+        try:
+            for asset_type in asset.keys():
+                if not self.is_valid_asset_type(asset_type):
+                    asset.pop(asset_type)
+        except Exception as exp_info:
+            LOG.error('Error asset of users. Asset: {}'.format(asset))
+            return False
+
+        return True
+
+    @staticmethod
+    def is_valid_channel_state(state):
+        return state.upper() in EnumChannelState.__members__
+
+    @staticmethod
+    def is_valid_asset_type(asset_type):
+        return asset_type.upper() in EnumAssetType.__members__
 
 
 class APIChannel(object):
