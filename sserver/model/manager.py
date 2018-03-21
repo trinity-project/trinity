@@ -80,7 +80,7 @@ class DBClient(object):
         self.__uri = ''.join(uri_list)
         LOG.info('Trinity Configuration DB URI: {}'.format(self.__uri))
 
-        return self._uri
+        return self.__uri
 
     @property
     def db_name(self):
