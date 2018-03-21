@@ -22,11 +22,56 @@ AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
 LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE."""
-from address_model import TBLWalletAddress, APIWalletAddress
-from channel_model import TBLChannel, APIChannel
-from node_model import TBLNode, APINode
-from transaction_model import TBLTransaction, APITransaction
+from enum import IntEnum
 
-__all__ = ['TBLWalletAddress', 'TBLChannel', 'TBLNode', 'TBLTransaction',
-           'APIWalletAddress', 'APIChannel', 'APINode', 'APITransaction', ]
+
+class EnumChainType(IntEnum):
+    TNC = 0
+    NEO = 0x4
+
+    # could be expanded in the future
+
+
+class EnumAssetType(IntEnum):
+    TNC = 0
+    NEO = 0x4
+
+
+class EnumNodeState(IntEnum):
+    ACTIVE = 0
+    INACTIVE = 0xFF
+
+
+class EnumChannelState(IntEnum):
+    INIT = 0
+    OPENING = 0x10  # in wait response state
+    OPENED = 0x11
+
+    SETTLING = 0x20
+    SETTLED = 0x21
+
+    CLOSING = 0x30
+    CLOSED = 0x31
+
+
+class EnumStatusCode(IntEnum):
+    OK = 0
+
+    InvalidDatabaseConnection = 0x10
+
+    PrimaryKeyNotFound = 0x20
+    PrimaryKeyNotFoundInAddingNewItem = 0x21
+    PrimaryKeyIsDuplicated = 0x22
+    PrimaryKeyInsertWithException = 0x23
+
+    DBDeletedWithoutAnyItems = 0x30
+    DBDeletedWithDangerousFilters = 0x31
+
+    DBQueryWithoutMatchedItems = 0x40
+
+    DBUpdatedButNoMatchedItemsOK = 0x50
+    DBUpdatedPartOfItemsOK = 0x51
+    DBUpdatedWithDangerousFilters = 0x52
+
+    NOK = 0xFF
 
