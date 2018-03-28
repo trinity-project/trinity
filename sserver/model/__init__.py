@@ -22,10 +22,10 @@ AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
 LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE."""
-from address_model import TBLWalletAddress, APIWalletAddress
-from channel_model import TBLChannel, APIChannel
-from node_model import TBLNode, APINode
-from transaction_model import TBLTransaction, APITransaction
+from .address_model import TBLWalletAddress, APIWalletAddress
+from .channel_model import TBLChannel, APIChannel
+from .node_model import TBLNode, APINode
+from .transaction_model import TBLTransaction, APITransaction
 
 __all__ = ['TBLWalletAddress', 'TBLChannel', 'TBLNode', 'TBLTransaction',
            'APIWalletAddress', 'APIChannel', 'APINode', 'APITransaction', ]

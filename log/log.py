@@ -29,7 +29,7 @@ from trinity import __os_platform__, __running_mode__
 LOG = logging.getLogger('logger')
 # log configuration parts
 if __os_platform__ in ['LINUX']:
-    TRINITY_LOG_PATH = '/var/log/trinity'
+    TRINITY_LOG_PATH = '/mnt/tnc/trinity'
 else:
     TRINITY_LOG_PATH = os.getcwd().split(os.sep)[0]+os.sep+'temp'
 
