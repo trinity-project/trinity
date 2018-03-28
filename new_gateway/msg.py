@@ -29,3 +29,51 @@ GS_TRADE_REQUEST = 0x3001
 GS_PUSH_TRADE_INFO = 0x3002
 
 
+
+if request_type == "join":
+    res = {
+        "type": "join_ack",
+        "body": {
+            "content": "weclome"
+        }
+    }
+elif request_type == "build_channel":
+    res = {
+        "type": "founder",
+        "body": {
+            "signature": "signature mock",
+            "data": {}
+        }
+    }
+elif request_type == "founder_ack":
+    res = {
+        "type": "channel_result",
+        "body": {
+            "result": "successful"
+        }
+    }
+
+# push msg type
+msg = {
+    "type": "block_info",
+    "body": {
+        "content": "This is a push message triggered by timer",
+        "blance": random.randint(1000, 9000)
+    }
+}
+
+msg = {
+    "type": "sync_state",
+    "body": {
+        "content": "This is a push message triggered by peer state changed",
+        "state": "other spv disconnectioned"
+    }
+}
+
+# spv msg AddChannel
+msg = {
+    "MessageType": "AddChannel",
+    "MessageBody": {
+        
+    }
+}

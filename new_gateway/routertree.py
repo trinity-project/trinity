@@ -23,6 +23,7 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE."""
 
 import json
+import copy
 from treelib import Node, Tree
 from treelib.exceptions import DuplicatedNodeIdError
 
@@ -81,28 +82,53 @@ class RouteTree(Tree):
     @classmethod
     def to_tree(cls, tr_json):
         tree = cls()
-        for item, value in json.loads(tr_json):
-            tree.expend_branch(tr_json = tr_json)
+        for item in json.loads(tr_json):
+            tree.expand_branch(tr_json = tr_json)
 
         return tree
 
 
     def expand_branch(self, tr_json, father= None):
         tr = json.loads(tr_json)
-        root = tr.keys()[0]
+        root = list(tr.keys())[0]
         try:
             self.create_node(tag=root, identifier=root, parent=father)
         except DuplicatedNodeIdError:
             pass
-        child = tr.values()[0].get("children")
+        # print(tr.values())
+        child = list(tr.values())[0].get("children")
+        # print(child)
         if child:
             for item in child:
-                return self.expand_branch(json.dumps(item), father=root)
+                self.expand_branch(json.dumps(item), father=root)
         else:
             pass
 
+    # Node(tag, nid, data)
+    # tag: readable noe name for human to 
+    # nid: unique id in scope three
+    def sync_tree(self, peer_tree):
+        """
+        get all peers node id\n
+        traversal all peers \n
+        deep copy current tree get the new_tree\n
+        make child as the new_tree root\n
+        """
+        new_peer_trees = list()
+        # peer_tree_root = peer_tree.root
+        copy_tree = copy.deepcopy(self)
+        copy_peer_tree = copy.deepcopy(peer_tree)
+        self.paste(self.root, copy_peer_tree)
+        peer_tree.paste(peer_tree.root, copy_tree)
+        return peer_tree
+        # for child in self.is_branch(self.root):
+        #     new_tree = copy.deepcopy(self)
+        #     new_tree.root = child
+        #     new_peer_trees.append(new_tree)
+        # return new_peer_trees
+        # return new_peer_trees
 
-
+    
 
 
 
