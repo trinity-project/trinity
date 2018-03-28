@@ -27,9 +27,43 @@ from pymongo.errors import DuplicateKeyError
 from datetime import datetime
 from jsonrpc import dispatcher
 
-from base_enum import EnumStatusCode
+from .base_enum import EnumStatusCode
 from trinity import DATABASE_CONFIG as cfg
 from log import LOG
+
+
+def connection_singleton(callback):
+    instance={}
+    def wrapper(*args):
+        if callback not in instance:
+            instance[callback] = callback(args[0])
+        return instance[callback]
+
+    return wrapper
+
+
+def rpc_response(name):
+    def handler(f):
+        def rpc_call_register(f, name):
+            try:
+                dispatcher.add_method(f, name)
+            except Exception as exp_info:
+                LOG.error("Failed to register RPC call<name: {}>.".format(name))
+
+        def wrapper(*args, **kwargs):
+            result = f(*args, **kwargs)
+            if isinstance(result, EnumStatusCode):
+                return {'status': result.value, 'status_content': result.name}
+            else:
+                return {'status': EnumStatusCode.OK.value,
+                        'status_content': EnumStatusCode.OK.name,
+                        'content': result}
+
+        # register the JSONRPC callback
+        rpc_call_register(f, name)
+
+        return wrapper
+    return handler
 
 
 class ModelSet(object):
@@ -95,20 +129,6 @@ class DBManager(object):
 
     ATTENTION: we didn't check any input from users, so each user MUST check whether their inputs are correct or not.
     """
-    primary_key = None
-    db_table = None
-    singleton_instance = None
-
-    def __init__(self):
-        self.primary_key = DBManager.primary_key
-        self.db_table = DBManager.db_table
-
-    def __new__(cls, *args, **kwargs):
-        if not cls.singleton_instance:
-            cls.singleton_instance = object.__new__(cls, *args, **kwargs)
-
-        return cls.singleton_instance
-
     def add(self, **kwargs):
         """
         Description: Realize the database 'add' operation.
@@ -214,6 +234,11 @@ class DBManager(object):
     def is_all(self, filters):
         return 'all' == filters.get(self.primary_key)
 
+    @classmethod
+    def close(cls):
+        if cls.client:
+            cls.client.close()
+
     @property
     def create_at(self):
         return {'create_at': datetime.utcnow(), 'update_at': ''}
@@ -221,6 +246,18 @@ class DBManager(object):
     @property
     def update_at(self):
         return {'update_at': datetime.utcnow()}
+
+    @property
+    def client(self):
+        return DBClient()
+
+    @property
+    def db_table(self):
+        return None
+
+    @property
+    def primary_key(self):
+        return None
 
     def __result_of_delete(self, result):
         if 0 >= result.deleted_count:
@@ -244,28 +281,3 @@ class DBManager(object):
             return EnumStatusCode.DBUpdatedPartOfItemsOK
 
         return EnumStatusCode.OK
-
-
-def rpc_response(name):
-    def handler(f):
-        def rpc_call_register(f, name):
-            try:
-                dispatcher.add_method(f, name)
-            except Exception as exp_info:
-                LOG.error("Failed to register RPC call<name: {}>.".format(name))
-
-        def wrapper(*args, **kwargs):
-            result = f(*args, **kwargs)
-            if isinstance(result, EnumStatusCode):
-                return {'status': result.value, 'status_content': result.name}
-            else:
-                return {'status': EnumStatusCode.OK.value,
-                        'status_content': EnumStatusCode.OK.name,
-                        'content': result}
-
-        # register the JSONRPC callback
-        rpc_call_register(f, name)
-
-        return wrapper
-    return handler
-

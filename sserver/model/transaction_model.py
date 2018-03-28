@@ -22,7 +22,7 @@ AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
 LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE."""
-from manager import DBClient, DBManager, rpc_response
+from .manager import DBManager, rpc_response, connection_singleton
 
 
 class TBLTransaction(DBManager):
@@ -31,17 +31,30 @@ class TBLTransaction(DBManager):
         Created         : 2018-02-13
         Modified        : 2018-03-21
     """
-    db_table = DBClient().db.Transaction
-    primary_key = 'transaction'
-    required_item = ['transaction', 'channel', 'nonce', 'tx_time', 'tx_type', 'asset_type', 'amount', 'pre_hash',
-                     'fee', 'state']
-
     def add_one(self, transaction: str, channel: str, nonce: int, tx_time: str, tx_type: str, asset_type: str,
                 amount: int, pre_hash: str, fee: int, state: str):
         # to check whether the state is correct:
         return super(TBLTransaction, self).add(transaction=transaction, channel=channel, nonce=nonce,
                                                tx_time=tx_time, tx_type=tx_type, asset_type=asset_type,
                                                amount=amount, pre_hash=pre_hash, fee=fee, state=state)
+
+    @property
+    @connection_singleton
+    def client(self):
+        return super(TBLTransaction, self).client
+
+    @property
+    def db_table(self):
+        return self.client.db.Transaction
+
+    @property
+    def primary_key(self):
+        return 'transaction'
+
+    @property
+    def required_item(self):
+        return ['transaction', 'channel', 'nonce', 'tx_time', 'tx_type', 'asset_type', 'amount', 'pre_hash',
+                'fee', 'state']
 
 
 class APITransaction(object):

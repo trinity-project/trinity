@@ -22,8 +22,8 @@ AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
 LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE."""
-from manager import DBClient, DBManager, rpc_response
-from base_enum import EnumAssetType, EnumChannelState
+from .manager import DBManager, rpc_response, connection_singleton
+from .base_enum import EnumAssetType, EnumChannelState
 from log import LOG
 
 
@@ -33,10 +33,6 @@ class TBLChannel(DBManager):
         Created         : 2018-02-13
         Modified        : 2018-03-21
     """
-    db_table = DBClient().db.Channel
-    primary_key = 'channel'
-    required_item = ['channel', 'src_addr', 'dest_addr', 'state', 'alive_block', 'deposit', 'balance']
-
     def add_one(self, channel: str, src_addr: str, dest_addr: str, state: str, alive_block: int,
                 deposit:dict, balance={}):
         """
@@ -83,6 +79,23 @@ class TBLChannel(DBManager):
     @staticmethod
     def is_valid_asset_type(asset_type):
         return asset_type.upper() in EnumAssetType.__members__
+
+    @property
+    @connection_singleton
+    def client(self):
+        return super(TBLChannel, self).client
+
+    @property
+    def db_table(self):
+        return self.client.db.Channel
+
+    @property
+    def primary_key(self):
+        return 'channel'
+
+    @property
+    def required_item(self):
+        return ['channel', 'src_addr', 'dest_addr', 'state', 'alive_block', 'deposit', 'balance']
 
 
 class APIChannel(object):

@@ -78,28 +78,41 @@ class LOG(object):
         pass
 
 
-class DBTestBase(TestCase):
+class MockDBClient(object):
     @property
-    def mongo_client(self):
-        attr = "_{}__mongo_client".format(self.__class__.__name__)
-        if hasattr(self, attr):
-            return self.__getattribute__(attr)
-        self.__setattr__(attr, manager.DBClient())
+    @mock.patch('pymongo.MongoClient', mongomock.MongoClient)
+    def client(self):
+        attr = "_{}__client".format(self.__class__.__name__)
+        if not hasattr(self, attr):
+            self.__setattr__(attr, manager.DBClient())
+
         return self.__getattribute__(attr)
 
     @property
     def database_name(self):
         return None
 
-    def drop_database(self):
-        if self.database_name:
-            self.mongo_client.db_client.drop_database(self.database_name)
+
+class DBTestBase(TestCase, MockDBClient):
+    """"""
+    def tearDown(self):
+        super(DBTestBase, self).tearDown()
+
+        # clear the database resources
+        self.clear_resources()
+
+    def clear_resources(self):
+        if self.client.db_client:
+            self.client.db_client.drop_database(self.database_name)
+            self.client.close()
+
 
 # *********************************************** Manager.py Unit Test *********************************************** #
 manager_test_db = 'ManagerTestDatabase'
 
 
 class DBClientTestBase(DBTestBase):
+    """"""
     @property
     def database_name(self):
         return manager_test_db
@@ -110,17 +123,18 @@ class DBClientTestBase(DBTestBase):
 class DBClientTest(DBClientTestBase):
 
     def test__DBClient_instance(self):
-        self.assertIsNotNone(self.mongo_client.db_client)
-        self.assertIsNotNone(self.mongo_client.db)
+        self.assertIsNotNone(self.client.db_client)
+        self.assertIsNotNone(self.client.db)
 
-        self.assertEqual(self.mongo_client.db_name, self.database_name)
-        self.assertEqual(self.mongo_client.uri, 'mongodb://localhost:27017/{}'.format(self.database_name))
+        self.assertEqual(self.client.db_name, self.database_name)
+        self.assertEqual(self.client.uri, 'mongodb://localhost:27017/{}'.format(self.database_name))
 
     def test_close(self):
-        self.mongo_client.close()
+        self.client.db_client.drop_database(self.database_name)
+        self.client.close()
 
-        self.assertIsNone(self.mongo_client.db_client)
-        self.assertIsNone(self.mongo_client.db)
+        self.assertIsNone(self.client.db_client)
+        self.assertIsNone(self.client.db)
 
 
 # @ut_db_congif(manager_test_db)
@@ -135,21 +149,58 @@ class DBClientTest(DBClientTestBase):
 #     pass
 
 # ******************************************** address_model.py Unit Test ******************************************** #
-address_model_test_db = 'AddressModelTestDatabase'
-
-
-class AddressModelTestBase(DBTestBase):
-    @property
-    def database_name(self):
-        return address_model_test_db
-
-
-@ut_db_congif(address_model_test_db)
-class TBLWalletAddressTest(AddressModelTestBase):
+class MockTBLWalletAddress(MockDBClient, address_model.TBLWalletAddress):
     pass
 
 
-@ut_db_congif(address_model_test_db)
+class AddressModelTestBase(DBTestBase):
+    def setUp(self):
+        super(AddressModelTestBase, self).setUp()
+        self.addr_inst = MockTBLWalletAddress()
+
+        tests_addres_data = [['AFxEyaWvxYkehJqBjWVDPdZbCAZjJnznC3',
+                              address_model.EnumChainType.NEO,
+                              '6PYVUQaLs2vSK8qsUjCF41AzEr1shV7EcsTfiwuNYRDWafoNGpFyTyUzGn',
+                              'node-1'],
+                             ['AczJdApfD9sYK6DjB2qwUeWk4xy6HqgjnL',
+                              address_model.EnumChainType.TNC,
+                              '6PYXQrqcjbbLsmqR9a6U3oi82hKbotz4brKUiuREjcqQVevYWPmU1kdUpg',
+                              'node-1'],
+                             ['AMb9fDfRiQvSEbqC11Jq8kzaKVc4jRNgAY',
+                              address_model.EnumChainType.NEO,
+                              '6PYWr57eAf5xsU4A5e9pqZBCaJpdGXuS9QrxMdit1jZUg9TUiHLgmxJkwc',
+                              'node-2'],
+                             ['AQDpt385NDxLLSKsiyQmjmHPGQn1ZbvdNb',
+                              address_model.EnumChainType.NEO,
+                              '6PYVexaFJHFiSYyEYvaLaRxzmmNatZSayqs82cZ1fhTQwkDraURNAhKKXw',
+                              'node-3']]
+
+        print (self.addr_inst.client, type(self.addr_inst.client))
+        print (self.addr_inst.client.uri)
+        print (self.addr_inst.db_table)
+
+        for item in tests_addres_data:
+            self.addr_inst.add_one(address=item[0], chain=item[1], public_key=item[2], node=item[3])
+
+        result = self.addr_inst.query_many({'address': 'all'})
+        print (result)
+
+
+class TBLWalletAddressTest(AddressModelTestBase):
+    def test__add_one(self):
+        #address_model.TBLWalletAddress.add_one()
+        pass
+
+    def test__query_one(self):
+        result = self.addr_inst.query_one({'node': 'node-1'})
+        print (result)
+
+        pass
+    #
+    # def test__(self):
+    #     address_model.TBLWalletAddress
+
+
 class APIWalletAddressTest(AddressModelTestBase):
     pass
 
