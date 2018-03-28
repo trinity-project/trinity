@@ -36,12 +36,18 @@ from wallet.ChannelManagement.channel import create_channel
 from wallet.TransactionManagement import message as mg
 from wallet.Interface.rpc_interface import MessageList
 import time
+from neo.Implementations.Wallets.peewee.UserWallet import UserWallet
+
+from neo.Wallets.utils import to_aes_key
+from wallet.configure import Configure
+
 
 # Logfile settings & setup
 LOGFILE_FN = os.path.join(PATH_USER_DATA, 'prompt.log')
 LOGFILE_MAX_BYTES = 5e7  # 50 MB
 LOGFILE_BACKUP_COUNT = 3  # 3 logfiles history
 settings.set_logfile(LOGFILE_FN, LOGFILE_MAX_BYTES, LOGFILE_BACKUP_COUNT)
+GateWayIP = Configure["GatewayIP"]
 
 # Prompt history filename
 FILENAME_PROMPT_HISTORY = os.path.join(PATH_USER_DATA, '.prompt.py.history')
@@ -168,11 +174,46 @@ class UserPromptInterface(PromptInterface):
                 traceback.print_stack()
                 traceback.print_exc()
 
+    def do_open(self, arguments):
+        if self.Wallet:
+            self.do_close_wallet()
+
+        item = get_arg(arguments)
+
+        if item and item == 'wallet':
+
+            path = get_arg(arguments, 1)
+
+            if path:
+
+                if not os.path.exists(path):
+                    print("Wallet file not found")
+                    return
+
+                passwd = prompt("[password]> ", is_password=True)
+                password_key = to_aes_key(passwd)
+
+                try:
+                    self.Wallet = UserWallet.Open(path, password_key)
+
+                    self._walletdb_loop = task.LoopingCall(self.Wallet.ProcessBlocks)
+                    self._walletdb_loop.start(1)
+
+                    print("Opened wallet at %s" % path)
+                except Exception as e:
+                    print("Could not open wallet: %s" % e)
+
+            else:
+                print("Please specify a path")
+        else:
+            print("Please specify something to open")
+
     def quit(self):
         print('Shutting down. This may take a bit...')
         self.go_on = False
         self.do_close_wallet()
         reactor.stop()
+        sys.exit()
 
     def do_channel(self,arguments):
         if not self.Wallet:
@@ -184,9 +225,13 @@ class UserPromptInterface(PromptInterface):
         print(command)
         if command == 'create':
             assert len(arguments) == 4
-            create_channel(self.Wallet, self.Wallet.address, get_arg(arguments, 1), get_arg(arguments, 2), get_arg(arguments, 3))
-
-
+            if not self.Wallet:
+                raise Exception("Please Open The Wallet First")
+            founder = "{}@{}".format(self.Wallet.pubkey,GateWayIP)
+            partner = get_arg(arguments, 1)
+            asset_type = get_arg(arguments, 2)
+            deposit = int(get_arg(arguments, 3).strip())
+            create_channel(founder, partner,asset_type, deposit)
 
     def get_completer(self):
 
@@ -221,11 +266,14 @@ class UserPromptInterface(PromptInterface):
                 pass
             else:
                 message = MessageList.pop()
-                _handlemessage(message, UserPrompt.Wallet)
+                self._handlemessage(message)
             time.sleep(0.3)
 
     def _handlemessage(self,message):
-        message_type = message.get("MessageType")
+        try:
+            message_type = message.get("MessageType")
+        except AttributeError:
+            return "Error Message"
         if message_type == "Founder":
             m_instance = mg.FounderMessage(message, self.Wallet)
         elif message_type == "Htlc":
@@ -298,7 +346,6 @@ def main():
     blockchain = LevelDBBlockchain(settings.chain_leveldb_path)
     Blockchain.RegisterBlockchain(blockchain)
 
-    global UserPrompt
     UserPrompt = UserPromptInterface()
 
 
@@ -309,26 +356,11 @@ def main():
     endpoint_rpc = "tcp:port={0}:interface={1}".format("20556", "0.0.0.0")
     endpoints.serverFromString(reactor, endpoint_rpc).listen(Site(api_server_rpc.app.resource()))
 
-    '''cli = UserPromptInterface()
     reactor.suggestThreadPoolSize(15)
-    reactor.callInThread(cli.run)
-    #reactor.callInThread(handlemaessage)
-    NodeLeader.Instance().Start()
-    reactor.run()
- '''
-
-    """def test():
-
-
-        t2 = gevent.spawn(mg.handlemaessage)
-        t1 = gevent.spawn(UserPrompt.run)
-
-        gevent.joinall([t2, t1])"""
-    reactor.suggestThreadPoolSize(15)
-
     reactor.callInThread(UserPrompt.run)
     reactor.callInThread(UserPrompt.handlemaessage)
     reactor.callInThread(monitorblock)
+    NodeLeader.Instance().Start()
     reactor.run()
 
     NotificationDB.close()

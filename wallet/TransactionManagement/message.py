@@ -25,7 +25,11 @@ from wallet.TransactionManagement.transaction import TrinityTransaction
 from neo.Core.Helper import Helper
 from wallet.utils import pubkey_to_address
 from TX.interface import *
-from wallet.ChannelManagement.channel import Channel
+from wallet.ChannelManagement import channel as ch
+from sserver.model.channel_model import APIChannel
+
+from wallet.configure import Configure
+GateWayIP = Configure["GatewayIP"]
 
 
 class Message(object):
@@ -42,8 +46,8 @@ class Message(object):
         self.error = message.get("Error")
 
     @staticmethod
-    def send(self, message):
-        pass
+    def send(message):
+        print(message)
 
 
 class RegisterMessage(Message):
@@ -110,7 +114,6 @@ class FounderMessage(TransactionMessage):
     "TxNonce": 0,
     "ChannelName":"090A8E08E0358305035709403",
     "MessageBody": {
-            ""
             "Founder": "",
             "Commitment":"",
             "RevocableDelivery":""
@@ -125,7 +128,7 @@ class FounderMessage(TransactionMessage):
         self.commitment = self.message_body.get("Commitment")
         self.revocable_delivery = self.message_body.get("RevocableDelivery")
         self.transaction = TrinityTransaction(self.channel_name, self.wallet)
-        self.sender_pubkey = self.founder.split("@")[0]
+        self.sender_pubkey = self.sender.split("@")[0]
         self.receiver_pubkey = self.receiver.split("@")[0]
         self.sender_address = pubkey_to_address(self.sender_pubkey)
         self.receiver_address = pubkey_to_address(self.receiver_pubkey)
@@ -133,6 +136,7 @@ class FounderMessage(TransactionMessage):
 
     def handle_message(self):
         verify, error = self.verify()
+        rdtxid= self.revocable_delivery.get("txId")
         if verify:
             self.send_responses()
             tx = self.transaction.read_transaction()
@@ -140,32 +144,33 @@ class FounderMessage(TransactionMessage):
                 if t.get("MessageType") == "Founder":
                     break
             else:
-                FounderMessage.create(self.channel_name, self.receiver_address, self.receiver_pubkey,
-                                      self.sender_pubkey, self.sender_address, self.wallet)
+                FounderMessage.create(self.channel_name, self.receiver_pubkey,
+                                      self.sender_pubkey, self.wallet)
+
+
         else:
             self.send_responses(error = error)
 
     @staticmethod
-    def create(channel_name, founder_address,founder_pubkey, partner_address, partner_pubkey, deposit, wallet):
+    def create(channel_name, self_pubkey, partner_pubkey, deposit, partner_ip):
         walletfounder = {
-            "pubkey":founder_pubkey,
-            "address":founder_address,
+            "pubkey":self_pubkey,
             "deposit":deposit
     }
         walletpartner = {
             "pubkey":partner_pubkey,
-            "address":partner_address,
             "deposit":deposit
     }
         founder = createFundingTx(walletpartner, walletfounder)
 
-        commitment = createCTX(founder.get("addressFunding"),partner_address, deposit, founder_address, deposit,
-                               partner_pubkey, founder_pubkey)
-
-        revocabledelivery = createRDTX(commitment.get("addressRSMC"), partner_address, deposit, commitment.get("txId"))
+        commitment = createCTX(founder.get("addressFunding"), deposit, deposit, self_pubkey,
+                               partner_pubkey, founder.get("scriptFunding"))
+        address_self = pubkey_to_address(self_pubkey)
+        revocabledelivery = createRDTX(commitment.get("addressRSMC"),address_self, deposit, commitment.get("txId"),
+                                       commitment.get("scriptRSMC"))
         message = { "MessageType":"Founder",
-                    "Sender": "9090909090909090909090909@127.0.0.1:20553",
-                    "Receiver":"101010101001001010100101@127.0.0.1:20552",
+                    "Sender": "{}@{}".format(self_pubkey, GateWayIP),
+                    "Receiver":"{}@{}".format(partner_pubkey, partner_ip),
                     "TxNonce": 0,
                     "ChannelName":channel_name,
                     "MessageBody": {
@@ -175,9 +180,7 @@ class FounderMessage(TransactionMessage):
                                       }
                  }
         FounderMessage.send(message)
-        tx_info = {"TX_Type":"Founder",
-                   "TX_INFO":message}
-        TrinityTransaction(channel_name, wallet).store_transaction(tx_info)
+
 
     def verify(self):
         return True, None
@@ -189,16 +192,17 @@ class FounderMessage(TransactionMessage):
                        "orginalData": self.commitment}
         rd_sig = {"txDataSing": self.sign_message(self.revocable_delivery.get("txData")),
                        "orginalData": self.revocable_delivery}
-        if not error:
+        if error:
             message_response = { "MessageType":"FounderSign",
                                 "Sender": self.receiver,
                                 "Receiver":self.sender,
                                  "ChannelName":self.channel_name,
                                 "TxNonce": 0,
-                                "MessageBody": {"Founder": self.sign_message(self.founder),
-                                                  "Commitment":self.sign_message(self.commitment),
-                                                  "RevocableDelivery":self.sign_message(self.revocable_delivery)
-                                                }
+                                "MessageBody": {"Founder": self.founder,
+                                                  "Commitment":self.commitment,
+                                                  "RevocableDelivery":self.revocable_delivery
+                                                },
+                                 "Error":error
                                 }
         else:
             message_response = { "MessageType":"FounderFail",
@@ -210,10 +214,10 @@ class FounderMessage(TransactionMessage):
                                                   "Commitment":commitment_sig,
                                                   "RevocableDelivery":rd_sig
                                                 },
-                                "Error": error
                                 }
 
         FounderMessage.send(message_response)
+
 
 
 class FounderResponsesMessage(TransactionMessage):
@@ -240,13 +244,17 @@ class FounderResponsesMessage(TransactionMessage):
     def handle_message(self):
         if self.error:
             return "{} message error"
-        if self.verify:
-            tx_info = {"TX_Type": "FounderSign",
-                       "TX_INFO": self.message}
-            self.transaction.store_transaction(tx_info)
-            if Channel.channel(self.channel_name).src_addr == self.wallet.address:
-                TrinityTransaction.sendrawtransaction(TrinityTransaction.genarate_raw_data())
-                
+        verify, error = self.verify()
+        if verify:
+            self.transaction.update_transaction("0", Founder=self.founder, Commitment=self.commitment,
+                                                RD = self.revocable_delivery)
+            if ch.Channel.channel(self.channel_name).src_addr == self.wallet.address:
+                signdata = self.founder.get("txDataSing")
+                txdata = self.founder.get("orginalData").get("txData")
+                signdata_self = self.sign_message(signdata)
+                witnes = self.founder.get("orginalData").get("witness").format(signOther=signdata,
+                                                                               signSelf=signdata_self)
+                TrinityTransaction.sendrawtransaction(TrinityTransaction.genarate_raw_data(txdata, witnes))
 
     def verify(self):
         return True, None
@@ -258,6 +266,7 @@ class RsmcMessage(TransactionMessage):
     "Sender": "9090909090909090909090909@127.0.0.1:20553",
     "Receiver":"101010101001001010100101@127.0.0.1:20552",
     "TxNonce": 1,
+    "ChannelName":"902ae9090232048575",
     "MessageBody": {
             "Commitment":"",
             "RevocableDelivery":"",
@@ -268,44 +277,50 @@ class RsmcMessage(TransactionMessage):
 
     def __init__(self, message, wallet):
         super().__init__(message,wallet)
+        self.channel_name = message.get("ChannelName")
         self.commitment = self.message_body.get("Commitment")
         self.revocable_delivery = self.message_body.get("RevocableDelivery")
         self.breach_remedy = self.message_body.get("BreachRemedy")
+        self.transaction = TrinityTransaction(self.channel_name, self.wallet)
+        self.sender_pubkey = self.sender.split("@")[0]
+        self.receiver_pubkey = self.receiver.split("@")[0]
+        self.sender_address = pubkey_to_address(self.sender_pubkey)
+        self.receiver_address = pubkey_to_address(self.receiver_pubkey)
+        self.transaction = TrinityTransaction(self.channel_name, self.wallet)
 
     def handle_message(self):
         verify, error = self.verify()
         if verify:
             self.send_responses()
+            ctxid = self.commitment.get("txID")
+            self.transaction.update_transaction(self.tx_nonce, MonitorTxId=ctxid)
         else:
             self.send_responses(error = error)
 
     @staticmethod
-    def create(founder_address,founder_pubkey, partner_address, partner_pubkey, deposit):
-        walletfounder = {
-            "pubkey":founder_pubkey,
-            "address":founder_address,
-            "deposit":deposit
-    }
-        walletpartner = {
-            "pubkey":partner_pubkey,
-            "address":partner_address,
-            "deposit":deposit
-    }
-        founder = createFundingTx(walletpartner, walletfounder)
-
-        commitment = createCTX(founder.get("addressFunding"),partner_address, deposit, founder_address, deposit,
-                               partner_pubkey, founder_pubkey)
-
-        revocabledelivery = createRDTX(commitment.get("addressRSMC"), partner_address, deposit, commitment.get("txId"))
+    def create(channel_name, wallet, sender_pubkey, receiver_pubkey, value, partner_ip):
+        founder = TrinityTransaction(channel_name, wallet).get_founder
+        channel = ch.Channel.channel(channel_name)
+        balance = channel.get_balance()
+        sender_address = pubkey_to_address(sender_pubkey)
+        receiver_address = pubkey_to_address(receiver_pubkey)
+        sender_balance = int(balance.get(sender_address)) - value
+        receiver_balance = int(balance.get(receiver_address)) -value
+        commitment = createCTX(founder["addressFunding"], sender_balance, receiver_balance,
+                               sender_pubkey, receiver_pubkey, founder["scriptRSMC"])
+        revocabledelivery = createRDTX(commitment.get("addressRSMC"), sender_address, sender_balance,
+                                       commitment.get("txId"),
+                                       commitment.get("scriptRSMC"))
+        breachremedy = createBRTX(founder["addressFunding"], receiver_address,sender_balance,commitment["scriptRSMC"])
         message = { "MessageType":"Founder",
-                    "Sender":"" ,
-                    "Receiver":"101010101001001010100101@127.0.0.1:20552",
+                    "Sender": "{}@{}".format(sender_pubkey, GateWayIP),
+                    "Receiver":"{}@{}".format(receiver_pubkey, partner_ip),
                     "TxNonce": 0,
-                    "ChannelName":"090A8E08E0358305035709403",
+                    "ChannelName":channel_name,
                     "MessageBody": {
-                                      "Founder": founder,
                                       "Commitment":commitment,
-                                       "RevocableDelivery":revocabledelivery
+                                       "RevocableDelivery":revocabledelivery,
+                                       "BreachRemedy": breachremedy
                                       }
                  }
         RsmcMessage.send(message)
@@ -316,13 +331,21 @@ class RsmcMessage(TransactionMessage):
 
     def send_responses(self, error = None):
         if not error:
+            breachremedy_sig = {"txDataSing": self.sign_message(self.breach_remedy.get("txData")),
+                           "orginalData": self.breach_remedy}
+            commitment_sig = {"txDataSing": self.sign_message(self.commitment.get("txData")),
+                              "orginalData": self.commitment}
+            rd_sig = {"txDataSing": self.sign_message(self.revocable_delivery.get("txData")),
+                      "orginalData": self.revocable_delivery}
+
             message_response = { "MessageType":"RsmcSign",
                                 "Sender": self.receiver,
                                 "Receiver":self.sender,
                                 "TxNonce": self.tx_nonce,
-                                "MessageBody": { "Commitment":self.sign_message(self.commitment),
-                                                  "RevocableDelivery":self.sign_message(self.revocable_delivery),
-                                                 "BreachRemedy":self.sign_message(self.breach_remedy),
+                                 "ChannelName":self.channel_name,
+                                "MessageBody": { "Commitment":commitment_sig,
+                                                  "RevocableDelivery":rd_sig,
+                                                 "BreachRemedy":breachremedy_sig,
                                                 }
                                 }
         else:
@@ -330,6 +353,7 @@ class RsmcMessage(TransactionMessage):
                                 "Sender": self.receiver,
                                 "Receiver":self.sender,
                                 "TxNonce": self.tx_nonce,
+                                 "ChannelName":self.channel_name,
                                 "MessageBody": { "Commitment":self.commitment,
                                                   "RevocableDelivery":self.revocable_delivery,
                                                  "BreachRemedy":self.breach_remedy,
@@ -365,12 +389,10 @@ class RsmcResponsesMessage(TransactionMessage):
     def handle_message(self):
         if self.error:
             return "{} message error"
-        if self.verify:
-            tx_info = {"Nonce":self.tx_nonce,
-                       "BreachRemedy":self.breach_remedy,
-                       "Commitment":self.commitment,
-                       "RevocableDelivery": self.revocable_delivery}
-            self.transaction.store_transaction(tx_info)
+        verify, error = self.verify()
+        if verify:
+            self.transaction.update_transaction(self.tx_nonce, Commitment=self.commitment,
+                                                RD=self.revocable_delivery, BR = self.breach_remedy)
 
     def verify(self):
         return True, None
@@ -381,19 +403,21 @@ class HtlcMessage(TransactionMessage):
     "Sender": "9090909090909090909090909@127.0.0.1:20553",
     "Receiver":"101010101001001010100101@127.0.0.1:20552",
     "TxNonce": 0,
+    "ChannelName":"3333333333333333333333333333",
     "MessageBody": {
-            "Commitment":"",
-            "RevocableDelivery":"",
-            "BreachRemedy":""
+            "HCTX":"",
+            "HEDTX":"",
+            "HTTX":""
         }
     }
     """
 
     def __init__(self, message, wallet):
         super().__init__(message,wallet)
-        self.commitment = self.message_body.get("Commitment")
-        self.revocable_delivery = self.message_body.get("RevocableDelivery")
-        self.breach_remedy = self.message_body.get("BreachRemedy")
+        self.hctx = self.message_body.get("HCTX")
+        self.hedtx = self.message_body.get("HEDTX")
+        self.httx = self.message_body.get("HTTX")
+        self.channel_name = message.get("ChannelName")
 
     def handle_message(self):
         verify, error = self.verify()
@@ -405,29 +429,66 @@ class HtlcMessage(TransactionMessage):
     def verify(self):
         return True, None
 
+    @staticmethod
+    def create(channel_name, wallet,senderpubkey, receiverpubkey, HTLCvalue, hashR,tx_nonce,partner_ip):
+        founder = TrinityTransaction(channel_name, wallet)
+        balance = ch.Channel.channel(channel_name).get_balance()
+        sender_address = pubkey_to_address(senderpubkey)
+        receiver_address = pubkey_to_address(receiverpubkey)
+        sender_balance = balance.get(sender_address)
+        receiver_balance = balance.get(receiver_address)
+        hctx = createHCTX(senderpubkey,receiverpubkey,HTLCvalue,sender_balance,
+                          receiver_balance,hashR,founder["addressFunding"],founder["scriptFunding"])
+        hedtx = createHEDTX(hctx["addressHTLC"], receiver_address, HTLCvalue, hctx["HTLCscript"])
+        httx = createHTTX(hctx["addressHTLC"], sender_address, HTLCvalue, hctx["HTLCscript"])
+        message = {"MessageType": "Founder",
+                   "Sender": "{}@{}".format(senderpubkey, GateWayIP),
+                   "Receiver": "{}@{}".format(receiverpubkey, partner_ip),
+                   "TxNonce":tx_nonce ,
+                   "ChannelName": channel_name,
+                   "MessageBody": {
+                       "HCTX": hctx,
+                       "HEDTX": hedtx,
+                       "HTTX": httx
+                        }
+                   }
+        HtlcMessage.send(message)
+
+
+
     def send_responses(self, error = None):
         if not error:
-            message_response = { "MessageType":"RsmcSign",
+            hctx_sig = {"txDataSing": self.sign_message(self.hctx.get("txData")),
+                                "orginalData": self.hctx}
+            hedtx_sig = {"txDataSing": self.sign_message(self.hedtx.get("txData")),
+                              "orginalData": self.hedtx}
+            httx_sig = {"txDataSing": self.sign_message(self.httx.get("txData")),
+                      "orginalData": self.httx}
+
+            message_response = { "MessageType":"HtlcSign",
                                 "Sender": self.receiver,
                                 "Receiver":self.sender,
                                 "TxNonce": self.tx_nonce,
-                                "MessageBody": { "Commitment":self.commitment,
-                                                  "RevocableDelivery":self.revocable_delivery,
-                                                 "BreachRemedy":self.breach_remedy,
-                                                }
+                                 "ChannelName": self.channel_name,
+                                "MessageBody": {
+                                                 "HCTX": hctx_sig,
+                                                 "HEDTX": hedtx_sig,
+                                                 "HTTX": httx_sig
+                                                  }
                                 }
         else:
             message_response = { "MessageType":"FounderFail",
                                 "Sender": self.receiver,
                                 "Receiver":self.sender,
-                                "TxNonce": 0,
-                                "MessageBody": { "Commitment":self.commitment,
-                                                  "RevocableDelivery":self.revocable_delivery,
-                                                 "BreachRemedy":self.breach_remedy,
-                                                },
+                                "TxNonce": self.tx_nonce,
+                                 "ChannelName": self.channel_name,
+                                "MessageBody": {
+                                                 "HCTX": self.hctx,
+                                                 "HEDTX": self.hedtx,
+                                                 "HTTX": self.httx
+                                                  },
                                 "Error": error
                                 }
-
         self.send(message_response)
 
 
@@ -448,20 +509,18 @@ class HtlcResponsesMessage(TransactionMessage):
     def __init__(self, message, wallet):
         super().__init__(message, wallet)
         self.channel_name = message.get("ChannelName")
-        self.breach_remedy = self.message_body.get("BreachRemedy")
-        self.commitment = self.message_body.get("Commitment")
-        self.revocable_delivery = self.message_body.get("RevocableDelivery")
+        self.hctx = self.message_body.get("HCTX")
+        self.hedtx = self.message_body.get("HEDTX")
+        self.httx = self.message_body.get("HTTX")
         self.transaction = TrinityTransaction(self.channel_name, self.wallet)
 
     def handle_message(self):
         if self.error:
             return "{} message error"
-        if self.verify:
-            tx_info = {"Nonce":self.tx_nonce,
-                       "BreachRemedy":self.breach_remedy,
-                       "Commitment":self.commitment,
-                       "RevocableDelivery": self.revocable_delivery}
-            self.transaction.store_transaction(tx_info)
+        verify, error = self.verify()
+        if verify:
+            self.transaction.update_transaction(self.tx_nonce, HCTX = self.hctx, HEDTX=self.hedtx, HTTX= self.httx)
+
 
     def verify(self):
         return True, None

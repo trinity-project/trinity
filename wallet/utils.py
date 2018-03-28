@@ -21,6 +21,14 @@ AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
 LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE."""
+from neocore.Cryptography.Crypto import Crypto
 
-def pubkey_to_address(address):
-    pass
+def pubkey_to_address(publickey: str):
+    script = b'21' + publickey.encode() + b'ac'
+    script_hash = Crypto.ToScriptHash(script)
+    address = Crypto.ToAddress(script_hash)
+    return address
+
+
+if __name__ == "__main__":
+    print(pubkey_to_address("03a6fcaac0e13dfbd1dd48a964f92b8450c0c81c28ce508107bc47ddc511d60e75"))

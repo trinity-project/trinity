@@ -23,7 +23,8 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE."""
 Configure = {
     "alias":"TrinityNode",# you can rename your node
-    "GatewayAddress":"http://localhost:20552",
+    "GatewayURL":"http://localhost:20553",
+    "GatewayIP":"10.10.10.10:20552",
     "Fee": 0,
     "Channel":{
         "CommitMinDeposit": 0, # the min commit deposit

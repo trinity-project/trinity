@@ -59,13 +59,24 @@ class TrinityTransaction(object):
          return self.wallet.LoadStoredData(self.channel)
 
     def store_transaction(self, tx_message):
-        with open(self.tx_file, "ab+") as f:
+        with open(self.tx_file, "wb+") as f:
             crypto_channel(f, **tx_message)
         return None
 
     def read_transaction(self):
         with open(self.tx_file, "rb") as f:
             return uncryto_channel(f)
+
+    def update_transaction(self, tx_nonce, **kwargs):
+        with open(self.tx_file, "wb+") as f:
+            message = uncryto_channel(f)
+            message = message if message else {}
+            subitem = message.get(tx_nonce)
+            subitem = subitem if subitem else {}
+            for key, value in kwargs.items():
+                subitem[key] = value
+            message[tx_nonce] = subitem
+            crypto_channel(f, **message)
 
     @staticmethod
     def sendrawtransaction(raw_data):
@@ -75,8 +86,12 @@ class TrinityTransaction(object):
         return result
 
     @staticmethod
-    def genarate_raw_data(txdata, txid, pubkey):
-        return ""
+    def genarate_raw_data(Singtxdata,Witness):
+        return Singtxdata+Witness
+
+    def get_founder(self):
+        tx = self.read_transaction()
+        return tx["0"]["Founder"]["orginalData"]
 
 
 def dic2btye(file_handler, **kwargs):

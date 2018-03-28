@@ -31,8 +31,6 @@ walletOther= {
 
 
 
-
-
 funding_tx = createFundingTx(walletSelf=walletSelf,walletOther=walletOther)
 
 C_tx = createCTX(addressFunding=funding_tx["addressFunding"],addressSelf=walletSelf["address"],
@@ -68,7 +66,6 @@ BR_tx = createBRTX(addressRSMC=C_tx["addressRSMC"],addressOther=walletOther["add
 #
 # address_from="ALcC96eesqb9pQTWSDCQ8afqdyR4woUzhW"
 # multi_contract=createMultiSigContract(["0299dc85df93fee8ff2230af0418cf8c5000296f0aed514fcc0ab0dd969ce0bdb0","034e9d2751e1fec65a6a42bc097bdf55c7a79762df7d6e970277f46405c376683a"])
-pass
 # address_from=multi_contract["address"]
 # verify_script=createVerifyScript("5221034e9d2751e1fec65a6a42bc097bdf55c7a79762df7d6e970277f46405c376683a2103eb0881d1d64754d50255bf16079ed6cbc3982463a8904cb919422b39178bef3f52ae")
 # print ("verify script:",verify_script)
