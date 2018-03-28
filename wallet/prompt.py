@@ -14,6 +14,9 @@ from prompt_toolkit.contrib.completers import WordCompleter
 from prompt_toolkit.shortcuts import print_tokens
 from prompt_toolkit.token import Token
 from twisted.internet import reactor, task, endpoints
+import gevent
+from gevent import monkey
+#monkey.patch_all()
 
 
 from neo import __version__
@@ -28,6 +31,11 @@ from wallet.BlockChain.monior import monitorblock
 from neo.Prompt.Utils import get_arg
 from wallet.Interface.rpc_interface import RpcInteraceApi
 from twisted.web.server import Site
+from neo.bin.prompt import PromptInterface
+from wallet.ChannelManagement.channel import create_channel
+from wallet.TransactionManagement import message as mg
+from wallet.Interface.rpc_interface import MessageList
+import time
 
 # Logfile settings & setup
 LOGFILE_FN = os.path.join(PATH_USER_DATA, 'prompt.log')
@@ -37,8 +45,8 @@ settings.set_logfile(LOGFILE_FN, LOGFILE_MAX_BYTES, LOGFILE_BACKUP_COUNT)
 
 # Prompt history filename
 FILENAME_PROMPT_HISTORY = os.path.join(PATH_USER_DATA, '.prompt.py.history')
-from neo.bin.prompt import PromptInterface
-from wallet.ChannelManagement.channel import create_channel
+
+
 
 class UserPromptInterface(PromptInterface):
 
@@ -62,7 +70,7 @@ class UserPromptInterface(PromptInterface):
 
     def run(self):
         dbloop = task.LoopingCall(Blockchain.Default().PersistBlocks)
-        dbloop.start(.1)
+        dbloop.start(.5)
 
         Blockchain.Default().PersistBlocks()
 
@@ -160,6 +168,12 @@ class UserPromptInterface(PromptInterface):
                 traceback.print_stack()
                 traceback.print_exc()
 
+    def quit(self):
+        print('Shutting down. This may take a bit...')
+        self.go_on = False
+        self.do_close_wallet()
+        reactor.stop()
+
     def do_channel(self,arguments):
         if not self.Wallet:
             print("Please open a wallet")
@@ -201,6 +215,29 @@ class UserPromptInterface(PromptInterface):
 
         return completer
 
+    def handlemaessage(self):
+        while True:
+            if not MessageList:
+                pass
+            else:
+                message = MessageList.pop()
+                _handlemessage(message, UserPrompt.Wallet)
+            time.sleep(0.3)
+
+    def _handlemessage(self,message):
+        message_type = message.get("MessageType")
+        if message_type == "Founder":
+            m_instance = mg.FounderMessage(message, self.Wallet)
+        elif message_type == "Htlc":
+            m_instance = mg.HtlcMessage(message, self.Wallet)
+        elif message_type == "Rsmc":
+            m_instance = mg.RsmcMessage(message, self.Wallet)
+        elif message_type == "RegisterChannel":
+            m_instance = mg.RegisterMessage(message, self.Wallet)
+        else:
+            return "No Message Type Fould"
+
+        return m_instance.handle_message()
 
 def main():
     parser = argparse.ArgumentParser()
@@ -261,30 +298,39 @@ def main():
     blockchain = LevelDBBlockchain(settings.chain_leveldb_path)
     Blockchain.RegisterBlockchain(blockchain)
 
-    # Try to set up a notification db
+    global UserPrompt
+    UserPrompt = UserPromptInterface()
+
+
     if NotificationDB.instance():
         NotificationDB.instance().start()
+
     api_server_rpc = RpcInteraceApi("20556")
     endpoint_rpc = "tcp:port={0}:interface={1}".format("20556", "0.0.0.0")
     endpoints.serverFromString(reactor, endpoint_rpc).listen(Site(api_server_rpc.app.resource()))
 
-    # Start the prompt interface
-    cli = UserPromptInterface()
-
-    # Run things
+    '''cli = UserPromptInterface()
     reactor.suggestThreadPoolSize(15)
     reactor.callInThread(cli.run)
-
-    #reactor.callInThread(monitorblock)
-
-
-
+    #reactor.callInThread(handlemaessage)
     NodeLeader.Instance().Start()
+    reactor.run()
+ '''
 
-    # reactor.run() is blocking, until `quit()` is called which stops the reactor.
+    """def test():
+
+
+        t2 = gevent.spawn(mg.handlemaessage)
+        t1 = gevent.spawn(UserPrompt.run)
+
+        gevent.joinall([t2, t1])"""
+    reactor.suggestThreadPoolSize(15)
+
+    reactor.callInThread(UserPrompt.run)
+    reactor.callInThread(UserPrompt.handlemaessage)
+    reactor.callInThread(monitorblock)
     reactor.run()
 
-    # After the reactor is stopped, gracefully shutdown the database.
     NotificationDB.close()
     Blockchain.Default().Dispose()
     NodeLeader.Instance().Shutdown()

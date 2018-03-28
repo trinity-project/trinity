@@ -23,31 +23,13 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE."""
 
 import json
-import base58
-import random
-import binascii
 from json.decoder import JSONDecodeError
-
 from klein import Klein
-from logzero import logger
-
-from neo.Settings import settings
-from neo.Core.Blockchain import Blockchain
 from neo.api.utils import json_response, cors_header
-from neo.Core.State.AccountState import AccountState
-from neo.Core.TX.Transaction import Transaction
-from neocore.UInt160 import UInt160
-from neocore.UInt256 import UInt256
-from neo.Core.Helper import Helper
-from neo.Network.NodeLeader import NodeLeader
-from neo.Core.State.StorageKey import StorageKey
-from neo.SmartContract.ApplicationEngine import ApplicationEngine
-from neo.SmartContract.ContractParameter import ContractParameter
-from neo.VM.ScriptBuilder import ScriptBuilder
-from neo.VM.VMState import VMStateStr
 from wallet.ChannelManagement import channel
 from wallet.TransactionManagement import transaction
-from wallet.TransactionManagement import management
+
+MessageList = []
 
 
 class RpcError(Exception):
@@ -152,5 +134,5 @@ class RpcInteraceApi(object):
             return transaction.querytransaction(params)
 
         elif method == "TransactionMessage":
-            return management.handlemaessage(params)
+            return MessageList.append(params)
 

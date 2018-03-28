@@ -67,15 +67,16 @@ class TrinityTransaction(object):
         with open(self.tx_file, "rb") as f:
             return uncryto_channel(f)
 
+    @staticmethod
+    def sendrawtransaction(raw_data):
+        tx_script = binascii.unhexlify(raw_data.encode('utf-8'))
+        transaction = Transaction.DeserializeFromBufer(tx_script)
+        result = NodeLeader.Instance().Relay(transaction)
+        return result
 
-
-
-
-def sendrawtransaction(raw_data):
-    tx_script = binascii.unhexlify(raw_data.encode('utf-8'))
-    transaction = Transaction.DeserializeFromBufer(tx_script)
-    result = NodeLeader.Instance().Relay(transaction)
-    return result
+    @staticmethod
+    def genarate_raw_data(txdata, txid, pubkey):
+        return ""
 
 
 def dic2btye(file_handler, **kwargs):

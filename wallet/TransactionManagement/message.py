@@ -25,6 +25,7 @@ from wallet.TransactionManagement.transaction import TrinityTransaction
 from neo.Core.Helper import Helper
 from wallet.utils import pubkey_to_address
 from TX.interface import *
+from wallet.ChannelManagement.channel import Channel
 
 
 class Message(object):
@@ -33,12 +34,14 @@ class Message(object):
     """
 
     def __init__(self, message):
+        self.message = message
         self.message_type = message.get("MessageType")
         self.receiver = message.get("Receiver")
         self.sender = message.get("Sender")
         self.message_body = message.get("MessageBody")
         self.error = message.get("Error")
 
+    @staticmethod
     def send(self, message):
         pass
 
@@ -58,11 +61,15 @@ class RegisterMessage(Message):
     }
     """
 
-    def __init__(self, message):
+    def __init__(self, message, wallet):
         super().__init__(message)
         self.deposit = self.message_body.get("Deposit")
+        self.wallet = wallet
 
     def handle_message(self):
+        if not self.wallet:
+            print("No Wallet Open")
+            return
         founder_pubkey = self.sender.split("@")[0]
         partner_pubkey = self.receiver.split("@")[0]
         founder_address = pubkey_to_address(founder_pubkey)
@@ -118,16 +125,28 @@ class FounderMessage(TransactionMessage):
         self.commitment = self.message_body.get("Commitment")
         self.revocable_delivery = self.message_body.get("RevocableDelivery")
         self.transaction = TrinityTransaction(self.channel_name, self.wallet)
+        self.sender_pubkey = self.founder.split("@")[0]
+        self.receiver_pubkey = self.receiver.split("@")[0]
+        self.sender_address = pubkey_to_address(self.sender_pubkey)
+        self.receiver_address = pubkey_to_address(self.receiver_pubkey)
+        self.transaction = TrinityTransaction(self.channel_name, self.wallet)
 
     def handle_message(self):
         verify, error = self.verify()
         if verify:
             self.send_responses()
+            tx = self.transaction.read_transaction()
+            for t in tx:
+                if t.get("MessageType") == "Founder":
+                    break
+            else:
+                FounderMessage.create(self.channel_name, self.receiver_address, self.receiver_pubkey,
+                                      self.sender_pubkey, self.sender_address, self.wallet)
         else:
             self.send_responses(error = error)
 
     @staticmethod
-    def create(founder_address,founder_pubkey, partner_address, partner_pubkey, deposit):
+    def create(channel_name, founder_address,founder_pubkey, partner_address, partner_pubkey, deposit, wallet):
         walletfounder = {
             "pubkey":founder_pubkey,
             "address":founder_address,
@@ -148,19 +167,28 @@ class FounderMessage(TransactionMessage):
                     "Sender": "9090909090909090909090909@127.0.0.1:20553",
                     "Receiver":"101010101001001010100101@127.0.0.1:20552",
                     "TxNonce": 0,
-                    "ChannelName":"090A8E08E0358305035709403",
+                    "ChannelName":channel_name,
                     "MessageBody": {
                                       "Founder": founder,
                                       "Commitment":commitment,
                                        "RevocableDelivery":revocabledelivery
                                       }
                  }
-        FounderMessage(message,None).send(message)
+        FounderMessage.send(message)
+        tx_info = {"TX_Type":"Founder",
+                   "TX_INFO":message}
+        TrinityTransaction(channel_name, wallet).store_transaction(tx_info)
 
     def verify(self):
         return True, None
 
     def send_responses(self, error = None):
+        founder_sig = {"txDataSing": self.sign_message(self.founder.get("txData")),
+                        "orginalData": self.founder}
+        commitment_sig = {"txDataSing": self.sign_message(self.commitment.get("txData")),
+                       "orginalData": self.commitment}
+        rd_sig = {"txDataSing": self.sign_message(self.revocable_delivery.get("txData")),
+                       "orginalData": self.revocable_delivery}
         if not error:
             message_response = { "MessageType":"FounderSign",
                                 "Sender": self.receiver,
@@ -178,14 +206,14 @@ class FounderMessage(TransactionMessage):
                                 "Receiver":self.sender,
                                  "ChannelName":self.channel_name,
                                 "TxNonce": 0,
-                                "MessageBody": {"Founder": self.founder,
-                                                  "Commitment":self.commitment,
-                                                  "RevocableDelivery":self.revocable_delivery
+                                "MessageBody": {"Founder": founder_sig,
+                                                  "Commitment":commitment_sig,
+                                                  "RevocableDelivery":rd_sig
                                                 },
                                 "Error": error
                                 }
 
-        self.send(message_response)
+        FounderMessage.send(message_response)
 
 
 class FounderResponsesMessage(TransactionMessage):
@@ -213,11 +241,12 @@ class FounderResponsesMessage(TransactionMessage):
         if self.error:
             return "{} message error"
         if self.verify:
-            tx_info = {"Nonce":self.tx_nonce,
-                       "Founder":self.founder,
-                       "Comitment":self.commitment,
-                       "RevocableDelivery":self.revocable_delivery}
+            tx_info = {"TX_Type": "FounderSign",
+                       "TX_INFO": self.message}
             self.transaction.store_transaction(tx_info)
+            if Channel.channel(self.channel_name).src_addr == self.wallet.address:
+                TrinityTransaction.sendrawtransaction(TrinityTransaction.genarate_raw_data())
+                
 
     def verify(self):
         return True, None
@@ -269,7 +298,7 @@ class RsmcMessage(TransactionMessage):
 
         revocabledelivery = createRDTX(commitment.get("addressRSMC"), partner_address, deposit, commitment.get("txId"))
         message = { "MessageType":"Founder",
-                    "Sender": "9090909090909090909090909@127.0.0.1:20553",
+                    "Sender":"" ,
                     "Receiver":"101010101001001010100101@127.0.0.1:20552",
                     "TxNonce": 0,
                     "ChannelName":"090A8E08E0358305035709403",
@@ -279,7 +308,7 @@ class RsmcMessage(TransactionMessage):
                                        "RevocableDelivery":revocabledelivery
                                       }
                  }
-        FounderMessage(message,None).send(message)
+        RsmcMessage.send(message)
 
 
     def verify(self):
