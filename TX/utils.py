@@ -18,6 +18,22 @@ def int_to_hex(input):
     return binascii.hexlify(bytes([int(input)])).decode()
 
 
+def pubkeyToAddressHash(pubkey):
+    pubkey="21"+pubkey+"ac"
+    sc =pubkey.encode()
+    sc_hash=Crypto.ToScriptHash(sc).ToString2()
+    return sc_hash
+
+
+def pubkeyToAddress(pubkey):
+    pubkey = "21" + pubkey + "ac"
+    sc =pubkey.encode()
+    address=Crypto.ToAddress(Crypto.ToScriptHash(sc))
+    return address
+
+
+
+
 def ToAddresstHash(address):
 
     data = b58decode(address)

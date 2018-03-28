@@ -5,7 +5,7 @@ from TX.MyTransaction import InvocationTransaction
 from TX.TransactionAttribute import TransactionAttribute, TransactionAttributeUsage
 from TX.config import *
 from TX.utils import hex_reverse, ToAddresstHash, createTxid, createMultiSigContract, create_opdata, \
-    createRSMCContract, createHTLCContract, createVerifyScript
+    createRSMCContract, createHTLCContract, createVerifyScript, pubkeyToAddress, pubkeyToAddressHash
 
 
 def createFundingTx(walletSelf,walletOther): #qian ming shi A de qian min zai hou
@@ -13,12 +13,10 @@ def createFundingTx(walletSelf,walletOther): #qian ming shi A de qian min zai ho
 
     :param walletSelf: dict {
             "pubkey":"",
-            "address":"",
             "deposit":0
     }
     :param walletOhter: dict {
             "pubkey":"",
-            "address":"",
             "deposit":0
     :return:
     '''
@@ -28,15 +26,15 @@ def createFundingTx(walletSelf,walletOther): #qian ming shi A de qian min zai ho
     time_stamp = TransactionAttribute(usage=TransactionAttributeUsage.Remark,
                                       data=bytearray.fromhex(hex(int(time.time()))[2:]))
     address_hash_self = TransactionAttribute(usage=TransactionAttributeUsage.Script,
-                                         data=ToAddresstHash(walletSelf["address"]).Data)
+                                         data=ToAddresstHash(pubkeyToAddress(walletSelf["pubkey"])).Data)
     address_hash_other = TransactionAttribute(usage=TransactionAttributeUsage.Script,
-                                         data=ToAddresstHash(walletOther["address"]).Data)
+                                         data=ToAddresstHash(pubkeyToAddress(walletOther["pubkey"])).Data)
     txAttributes = [address_hash_self, address_hash_other, time_stamp]
 
-    op_dataSelf = create_opdata(address_from=walletSelf["address"], address_to=contractAddress, value=walletSelf["deposit"],
-                             contract_hash=TNC)
-    op_dataOther = create_opdata(address_from=walletOther["address"], address_to=contractAddress, value=walletOther["deposit"],
-                             contract_hash=TNC)
+    op_dataSelf = create_opdata(address_from=pubkeyToAddress(walletSelf["pubkey"]), address_to=contractAddress,
+                                value=walletSelf["deposit"],contract_hash=TNC)
+    op_dataOther = create_opdata(address_from=pubkeyToAddress(walletOther["pubkey"]), address_to=contractAddress,
+                                 value=walletOther["deposit"],contract_hash=TNC)
 
     tx = InvocationTransaction()
     tx.Version = 1
@@ -46,25 +44,15 @@ def createFundingTx(walletSelf,walletOther): #qian ming shi A de qian min zai ho
         "txData":tx.get_tx_data(),
         "addressFunding":contractAddress,
         "txId": createTxid(tx.get_tx_data()),
-        "verifyScript":multi_contract["script"],
-        "witness":[
-            {
-                "invokeScript":"4140"+"signOther",
-                "verifyScript":"2321"+walletOther["pubkey"]+"ac",
-            },
-            {
-                "invokeScript": "4140" + "signSelf",
-                "verifyScript": "2321" + walletSelf["pubkey"] + "ac",
-            }
-
-        ],
+        "scriptFunding":multi_contract["script"],
+        "witness":"024140{signOther}2321"+walletOther["pubkey"]+"ac"+"4140{signSelf}2321"+walletSelf["pubkey"]+"ac"
     }
 
 
 
-def createCTX(addressFunding,addressSelf,balanceSelf,addressOther,balanceOther,pubkeySelf,pubkeyOther,fundingScript):
-    RSMCContract=createRSMCContract(hashSelf=ToAddresstHash(addressSelf).ToString2(),pubkeySelf=pubkeySelf,
-                       hashOther=ToAddresstHash(addressOther).ToString2(),pubkeyOther=pubkeyOther,magicTimestamp=time.time())
+def createCTX(addressFunding,balanceSelf,balanceOther,pubkeySelf,pubkeyOther,fundingScript):
+    RSMCContract=createRSMCContract(hashSelf=pubkeyToAddressHash(pubkeySelf),pubkeySelf=pubkeySelf,
+                       hashOther=pubkeyToAddressHash(pubkeyOther),pubkeyOther=pubkeyOther,magicTimestamp=time.time())
     time_stamp = TransactionAttribute(usage=TransactionAttributeUsage.Remark,
                                       data=bytearray.fromhex(hex(int(time.time()))[2:]))
     address_hash_funding = TransactionAttribute(usage=TransactionAttributeUsage.Script,
@@ -72,7 +60,7 @@ def createCTX(addressFunding,addressSelf,balanceSelf,addressOther,balanceOther,p
     txAttributes = [address_hash_funding, time_stamp]
 
     op_data_to_RSMC = create_opdata(address_from=addressFunding, address_to=RSMCContract["address"], value=balanceSelf,contract_hash=TNC)
-    op_data_to_other = create_opdata(address_from=addressFunding, address_to=addressOther, value=balanceOther,contract_hash=TNC)
+    op_data_to_other = create_opdata(address_from=addressFunding, address_to=pubkeyToAddress(pubkeyOther), value=balanceOther,contract_hash=TNC)
 
     tx = InvocationTransaction()
     tx.Version = 1
@@ -84,10 +72,7 @@ def createCTX(addressFunding,addressSelf,balanceSelf,addressOther,balanceOther,p
         "addressRSMC":RSMCContract["address"],
         "scriptRSMC":RSMCContract["script"],
         "txId":createTxid(tx.get_tx_data()),
-        "witness":{
-            "invokeScript":"0182"+"40"+"signSelf"+"40"+"signOther",
-            "verifyScript":"47"+fundingScript,
-        }
+        "witness":"018240{signSelf}40{signOther}47"+fundingScript
     }
 
 def createRDTX(addressRSMC,addressSelf,balanceSelf,CTxId,RSMCScript):
@@ -115,10 +100,8 @@ def createRDTX(addressRSMC,addressSelf,balanceSelf,CTxId,RSMCScript):
     return {
         "txData":tx.get_tx_data(),
         "txId":createTxid(tx.get_tx_data()),
-        "witness":{
-            "invokeScript":"01"+"blockheght"+"40"+"signSelf"+"40"+"signOther",
-            "verifyScript":createVerifyScript(RSMCScript),
-        }
+        "witness_part1":"01{lengthAll}{lengthOfBlockheight}{blockheight}40{signSelf}40{signOther}",
+        "witness_part2":createVerifyScript(RSMCScript)
     }
 
 def createBRTX(addressRSMC,addressOther,balanceSelf,RSMCScript):
@@ -142,17 +125,15 @@ def createBRTX(addressRSMC,addressOther,balanceSelf,RSMCScript):
     return {
         "txData":tx.get_tx_data(),
         "txId":createTxid(tx.get_tx_data()),
-        "witness":{
-            "invokeScript":"01"+"blockheght"+"40"+"signSelf"+"40"+"signOther",
-            "verifyScript":createVerifyScript(RSMCScript),
-        }
+        "witness_part1":"01{lengthAll}{lengthOfBlockheight}{blockheight}40{signSelf}40{signOther}",
+        "witness_part2":createVerifyScript(RSMCScript)
     }
 
 
-def createHCTX(pubkeySelf,pubkeyOther,addressSelf,addressOther,HTLCValue,balanceSelf,balanceOther,hashR,addressFunding):
+def createHCTX(pubkeySelf,pubkeyOther,HTLCValue,balanceSelf,balanceOther,hashR,addressFunding,fundingScript):
 
-    RSMCContract=createRSMCContract(hashSelf=ToAddresstHash(addressSelf).ToString2(),pubkeySelf=pubkeySelf,
-                       hashOther=ToAddresstHash(addressOther).ToString2(),pubkeyOther=pubkeyOther,magicTimestamp=time.time())
+    RSMCContract=createRSMCContract(hashSelf=pubkeyToAddressHash(pubkeySelf),pubkeySelf=pubkeySelf,
+                       hashOther=pubkeyToAddressHash(pubkeyOther),pubkeyOther=pubkeyOther,magicTimestamp=time.time())
 
     HTLCContract=createHTLCContract(pubkeySelf=pubkeySelf,pubkeyOther=pubkeyOther,futureTimestamp=int(time.time())+600,
                                     hashR=hashR)
@@ -164,7 +145,7 @@ def createHCTX(pubkeySelf,pubkeyOther,addressSelf,addressOther,HTLCValue,balance
 
     op_data_to_HTLC = create_opdata(address_from=addressFunding, address_to=HTLCContract["address"], value=HTLCValue,contract_hash=TNC)
     op_data_to_RSMC = create_opdata(address_from=addressFunding, address_to=RSMCContract["address"], value=balanceSelf-HTLCValue,contract_hash=TNC)
-    op_data_to_other = create_opdata(address_from=addressFunding, address_to=addressOther, value=balanceOther,contract_hash=TNC)
+    op_data_to_other = create_opdata(address_from=addressFunding, address_to=pubkeyToAddress(pubkeyOther), value=balanceOther,contract_hash=TNC)
 
     tx = InvocationTransaction()
     tx.Version = 1
@@ -177,11 +158,12 @@ def createHCTX(pubkeySelf,pubkeyOther,addressSelf,addressOther,HTLCValue,balance
         "addressHTLC":HTLCContract["address"],
         "RSMCscript":RSMCContract["script"],
         "HTLCscript":HTLCContract["script"],
-        "txId":createTxid(tx.get_tx_data())
+        "txId":createTxid(tx.get_tx_data()),
+        "witness": "018240{signSelf}40{signOther}47" + fundingScript
     }
 
 
-def createHEDTX(addressHTLC,addressOther,HTLCValue):
+def createHEDTX(addressHTLC,addressOther,HTLCValue,HTLCScript):
 
     time_stamp = TransactionAttribute(usage=TransactionAttributeUsage.Remark,
                                       data=bytearray.fromhex(hex(int(time.time()))[2:]))
@@ -197,10 +179,15 @@ def createHEDTX(addressHTLC,addressOther,HTLCValue):
     tx.Attributes = txAttributes
     tx.Script = binascii.unhexlify(op_data_to_other)
 
-    return tx.get_tx_data()
+    return {
+        "txData":tx.get_tx_data(),
+        "txId":createTxid(tx.get_tx_data()),
+        "witness_part1": "01{lengthAll}{lengthOfR}{R}40{signOther}40{signSelf}",
+        "witness_part2": createVerifyScript(HTLCScript)
+    }
 
 
-def createHTTX(addressHTLC, addressSelf, HTLCValue):
+def createHTTX(addressHTLC, addressSelf, HTLCValue,HTLCScript):
     time_stamp = TransactionAttribute(usage=TransactionAttributeUsage.Remark,
                                       data=bytearray.fromhex(hex(int(time.time()))[2:]))
     address_hash_HTLC = TransactionAttribute(usage=TransactionAttributeUsage.Script,
@@ -215,4 +202,9 @@ def createHTTX(addressHTLC, addressSelf, HTLCValue):
     tx.Attributes = txAttributes
     tx.Script = binascii.unhexlify(op_data_to_self)
 
-    return tx.get_tx_data()
+    return {
+        "txData":tx.get_tx_data(),
+        "txId":createTxid(tx.get_tx_data()),
+        "witness_part1": "01{lengthAll}{lengthOfR}{R}40{signOther}40{signSelf}",
+        "witness_part2": createVerifyScript(HTLCScript)
+    }

@@ -30,19 +30,21 @@ walletOther= {
 }
 
 
-def createRSMCTX():
+
 
 
 funding_tx = createFundingTx(walletSelf=walletSelf,walletOther=walletOther)
 
 C_tx = createCTX(addressFunding=funding_tx["addressFunding"],addressSelf=walletSelf["address"],
                  balanceSelf=walletSelf["deposit"],addressOther=walletOther["address"],
-                 balanceOther=walletOther["deposit"],pubkeySelf=walletSelf["pubkey"],pubkeyOther=walletOther["pubkey"])
+                 balanceOther=walletOther["deposit"],pubkeySelf=walletSelf["pubkey"],
+                 pubkeyOther=walletOther["pubkey"],fundingScript=funding_tx["scriptFunding"])
 
 RD_tx = createRDTX(addressRSMC= C_tx["addressRSMC"],addressSelf=walletSelf["address"],
-                   balanceSelf=walletSelf["deposit"],CTxId=C_tx["txId"])
+                   balanceSelf=walletSelf["deposit"],CTxId=C_tx["txId"],RSMCScript=C_tx["scriptRSMC"])
 
-BR_tx = createBRTX(addressRSMC=C_tx["addressRSMC"],addressOther=walletOther["address"],balanceSelf=walletSelf["deposit"])
+BR_tx = createBRTX(addressRSMC=C_tx["addressRSMC"],addressOther=walletOther["address"],
+                   balanceSelf=walletSelf["deposit"],RSMCScript=C_tx["scriptRSMC"])
 
 
 
