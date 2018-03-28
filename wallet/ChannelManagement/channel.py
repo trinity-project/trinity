@@ -28,7 +28,7 @@ from exception.exceptions import ChannelExist
 from sserver.model.address_model import APIWalletAddress
 from sserver.model.channel_model import APIChannel
 from sserver.model.base_enum import EnumChainType
-from wallet.TransactionManagement import transactionmessage as mg
+from wallet.TransactionManagement import message as mg
 
 APIWalletAddress.add_wallet_address("AMgjKQ58FLpiBGoUZdQ3YD51zQdNo2nrv8",EnumChainType.TNC,
                                     "02cebf1fbde4786f031d6aa0eaca2f5acd9627f54ff1c0510a18839946397d3633",
