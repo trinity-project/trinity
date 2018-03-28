@@ -108,18 +108,26 @@ def createRSMCContract(hashSelf,pubkeySelf,hashOther,pubkeyOther,magicTimestamp)
         "address":createMultiSigAddress(RSMCContract)
     }
 
-def createHTLCContract(futureTimestamp,pubkeyA,pubkeyB,hashR):
+
+
+
+def createHTLCContract(futureTimestamp,pubkeySelf,pubkeyOther,hashR):
     futureTimestamp=hex_reverse(hex(int(futureTimestamp)))
     contractTemplate="57c56b6c766b00527ac46c766b51527ac46c766b52527ac4616c766b52c3a76c766b53527ac46168184e656f2e426c6" \
                      "f636b636861696e2e4765744865696768746168184e656f2e426c6f636b636861696e2e4765744865616465726c766b" \
                      "54527ac46c766b54c36168174e656f2e4865616465722e47657454696d657374616d7004{futureTimestamp}9f6c76" \
-                     "6b55527ac46c766b55c3648600616c766b00c36121{pubkeyA}ac644e006c766b51c36121{pubkeyB}ac6422006c766b5" \
-                     "3c36114{hashR}9c620400006c766b56527ac46266006c766b00c36121{pubkeyA}ac642f006c766b51c36121{pubkeyB}" \
+                     "6b55527ac46c766b55c3648600616c766b00c36121{pubkeySelf}ac644e006c766b51c36121{pubkeyOther}ac6422006c766b5" \
+                     "3c36114{hashR}9c620400006c766b56527ac46266006c766b00c36121{pubkeySelf}ac642f006c766b51c36121{pubkeyOther}" \
                      "ac620400006c766b56527ac46203006c766b56c3616c7566"
 
-    HTLCContract=contractTemplate.format(futureTimestamp=futureTimestamp,pubkeyA=pubkeyA,pubkeyB=pubkeyB,hashR=hashR)
+    HTLCContract=contractTemplate.format(futureTimestamp=futureTimestamp,pubkeySelf=pubkeySelf,pubkeyOther=pubkeyOther,hashR=hashR)
 
-    return  HTLCContract
+
+    return  {
+        "script":HTLCContract,
+        "address":createMultiSigAddress(HTLCContract)
+    }
+
 
 
 def createMultiSigContract(publicKeyList):
