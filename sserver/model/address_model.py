@@ -22,7 +22,7 @@ AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
 LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE."""
-from manager import DBClient, DBManager, rpc_response
+from manager import DBManager, rpc_response, connection_singleton
 from base_enum import EnumChainType
 
 
@@ -40,12 +40,25 @@ class TBLWalletAddress(DBManager):
         Created         : 2018-02-13
         Modified        : 2018-03-20
     """
-    db_table = DBClient().db.Address
-    primary_key = 'address'
-    required_item = ['address', 'chain', 'public_key', 'node']
-
     def add_one(self, address:str, chain:EnumChainType, public_key:str, node=None):
         return super(TBLWalletAddress, self).add(address=address, chain=chain.value, public_key=public_key, node_ip=node)
+
+    @property
+    @connection_singleton
+    def client(self):
+        return super(TBLWalletAddress, self).client
+
+    @property
+    def db_table(self):
+        return self.client.db.Address
+
+    @property
+    def primary_key(self):
+        return 'address'
+
+    @property
+    def required_item(self):
+        return ['address', 'chain', 'public_key', 'node']
 
 
 class APIWalletAddress(object):

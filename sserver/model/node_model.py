@@ -22,7 +22,7 @@ AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
 LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE."""
-from manager import DBClient, DBManager, rpc_response
+from manager import DBManager, rpc_response, connection_singleton
 
 
 class TBLNode(DBManager):
@@ -31,15 +31,31 @@ class TBLNode(DBManager):
         Created         : 2018-02-13
         Modified        : 2018-03-21
     """
-    db_table = DBClient().db.Node
-    primary_key = 'address'
-    required_item = ['address', 'ip', 'port', 'deposit', 'fee', 'state', 'tti', 'spv_count']
-    optional_item = ['node_name']
-
     def add_one(self, address: str, ip: str, port: int, deposit: dict, fee: int,
                 state: str, tti: int, spv_count=0):
         return super(TBLNode, self).add(address=address, ip=ip, port=port, deposit=deposit, fee=fee,
                                         state=state, tti=tti, spv_count=0)
+
+    @property
+    @connection_singleton
+    def client(self):
+        return super(TBLNode, self).client
+
+    @property
+    def db_table(self):
+        return self.client.db.Channel
+
+    @property
+    def primary_key(self):
+        return 'address'
+
+    @property
+    def required_item(self):
+        return ['address', 'ip', 'port', 'deposit', 'fee', 'state', 'tti', 'spv_count']
+
+    @property
+    def optional_item(self):
+        return ['node_name']
 
 
 class APINode(object):
