@@ -41,7 +41,7 @@ class TBLWalletAddress(DBManager):
         Modified        : 2018-03-20
     """
     def add_one(self, address:str, chain:EnumChainType, public_key:str, node=None):
-        return super(TBLWalletAddress, self).add(address=address, chain=chain.value, public_key=public_key, node_ip=node)
+        return super(TBLWalletAddress, self).add(address=address, chain=chain.value, public_key=public_key, node=node)
 
     @property
     @connection_singleton

@@ -39,6 +39,11 @@ def parse_uri(uri):
 
 
 class RouteTree(Tree):
+    """
+    # Node(tag, nid, data)
+    # tag: readable noe name for human to
+    # nid: unique id in scope three
+    """
 
     def __init__(self):
         super().__init__()
@@ -47,47 +52,14 @@ class RouteTree(Tree):
         self.create_node(tag=tag, identifier=identifier, data=data)
         self.root = identifier
 
-    def find_father(self, nid):
-        node = self.get_node(nid)
-        return self.parent(node.identifier) if node else self.root
-
-    def update_subtree(self, tree_massage):
+    def find_router(self, identifier, policy=None):
         """
 
-        :param tree_massage:
-{
-	"Harry": {
-		"children": [{
-			"Bill": {
-				"data": null
-			}
-		}, {
-			"Jane": {
-				"children": [{
-					"Diane": {
-						"children": [{
-							"Mary": {
-								"data": null
-							}
-						}],
-						"data": null
-					}
-				}],
-				"data": null
-			}
-		}],
-		"data": null
-	}
-}
+        :param destination: use the url as the identifier
+        :param policy:      not used currently
         :return:
         """
-        new_root = tree_massage.keys()[0]
-        node  = self.get_node(new_root)
-        if node:
-            self.remove_node(new_root)
-        father = self.find_father(new_root)
-
-        return self.expand_branch(father = father, tr_json=tree_massage)
+        return [nid for nid in self.rsearch(identifier)][::-1]
 
     @classmethod
     def to_tree(cls, tr_json):
@@ -96,7 +68,6 @@ class RouteTree(Tree):
             tree.expand_branch(tr_json = tr_json)
 
         return tree
-
 
     def expand_branch(self, tr_json, father= None):
         tr = json.loads(tr_json)
@@ -114,15 +85,14 @@ class RouteTree(Tree):
         else:
             pass
 
-    # Node(tag, nid, data)
-    # tag: readable noe name for human to 
-    # nid: unique id in scope three
     def sync_tree(self, peer_tree):
         """
         get all peers node id\n
         traversal all peers \n
         deep copy current tree get the new_tree\n
         make child as the new_tree root\n
+        :param peer_tree:
+        :return:
         """
         new_peer_trees = list()
         # peer_tree_root = peer_tree.root
@@ -165,7 +135,7 @@ class SPVHashTable(object):
     hash_instance = None
 
     def __init__(self):
-        self.maps = {}
+        self.__maps = {}
         pass
 
     def __new__(cls, *args, **kwargs):
@@ -173,6 +143,10 @@ class SPVHashTable(object):
             cls.hash_instance = object.__new__(cls, *args, **kwargs)
 
         return cls.hash_instance
+
+    @property
+    def maps(self):
+        return self.__maps
 
     def find(self, key):
         """
@@ -195,6 +169,10 @@ class SPVHashTable(object):
             self.maps[key].append(value)
 
     def sync_table(self, hash_table):
+        """
+        :param hash_table: json or dict type
+        :return:
+        """
         if not hash_table:
             return
 
@@ -205,6 +183,5 @@ class SPVHashTable(object):
             else:
                 self.maps[key] = hash_table[key]
 
-    def serialize(self):
+    def to_json(self):
         return json.dumps(self.maps)
-
