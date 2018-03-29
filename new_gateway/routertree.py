@@ -160,7 +160,7 @@ class SPVHashTable(object):
         """
 
         :param key:     The public key string of the wallet
-        :param value:   the public key of the wallet
+        :param value:   the public key of the spv
         :return:
         """
         if key not in self.maps.keys():

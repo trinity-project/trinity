@@ -20,10 +20,10 @@ cg_tcp_buffersize = 1024
 # cg_connect_wallet_timeout = 5.0
 # 发生超时的情况socket连接wallet的最多次数
 # cg_try_connect_wallet_times = 3
-cg_tcp_addr = ("0.0.0.0", 8088)
-cg_wsocket_addr = ("0.0.0.0", 8765)
-cg_local_jsonrpc_addr = ("0.0.0.0", 5000)
-cg_remote_jsonrpc_addr = ("0.0.0.0", 5000)
+cg_tcp_addr = ("0.0.0.0", 8089)
+cg_wsocket_addr = ("0.0.0.0", 8766)
+cg_local_jsonrpc_addr = ("0.0.0.0", 5001)
+cg_remote_jsonrpc_addr = ("0.0.0.0", 5001)
 ###### Gateway ######
 
 
