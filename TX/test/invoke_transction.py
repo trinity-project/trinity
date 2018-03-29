@@ -1,4 +1,5 @@
 import binascii
+import pprint
 import time
 from neocore.BigInteger import BigInteger
 from neocore.Cryptography.Crypto import Crypto
@@ -6,64 +7,47 @@ from TX.MyTransaction import InvocationTransaction
 from TX.TransactionAttribute import TransactionAttribute, TransactionAttributeUsage
 from TX.config import *
 from TX.interface import createFundingTx, createCTX, createRDTX, createBRTX
-from TX.utils import hex_reverse, ToAddresstHash, int_to_hex, createTxid
-
-
-
-
-
-
-
-
-
-
+from TX.utils import hex_reverse, ToAddresstHash, int_to_hex, createTxid, pubkeyToAddress
 
 walletSelf= {
     "pubkey":"03ed45d1fdf6dbd5a6e5567b50d2b36b8ae5c1cd0123f26aba000fd3a72d6fbd28",
-    "address":"ASm37KDVtgNQRqd4eefYGKCGn8fQH3mHw2",
-    "deposit":10
+    # "address":"ASm37KDVtgNQRqd4eefYGKCGn8fQH3mHw2",
+    "deposit":5
 }
 walletOther= {
     "pubkey":"03d8f667ff2068751e117cd6dbe3ebe286dbbc7fbb7b1ef0fbf5eb068e8b783a94",
-    "address":"AJAd9ZaZCwLvdktHc1Rs7w3hmpVSBuTKzs",
-    "deposit":10
+    # "address":"AJAd9ZaZCwLvdktHc1Rs7w3hmpVSBuTKzs",
+    "deposit":5
 }
 
 
 
 
 
-funding_tx = createFundingTx(walletSelf=walletSelf,walletOther=walletOther)
 
-C_tx = createCTX(addressFunding=funding_tx["addressFunding"],addressSelf=walletSelf["address"],
-                 balanceSelf=walletSelf["deposit"],addressOther=walletOther["address"],
-                 balanceOther=walletOther["deposit"],pubkeySelf=walletSelf["pubkey"],
-                 pubkeyOther=walletOther["pubkey"],fundingScript=funding_tx["scriptFunding"])
-
-RD_tx = createRDTX(addressRSMC= C_tx["addressRSMC"],addressSelf=walletSelf["address"],
-                   balanceSelf=walletSelf["deposit"],CTxId=C_tx["txId"],RSMCScript=C_tx["scriptRSMC"])
-
-BR_tx = createBRTX(addressRSMC=C_tx["addressRSMC"],addressOther=walletOther["address"],
-                   balanceSelf=walletSelf["deposit"],RSMCScript=C_tx["scriptRSMC"])
-
-
-
+# funding_tx = createFundingTx(walletSelf=walletSelf, walletOther=walletOther)
 #
-# HC_tx =createHCTX(pubkeySelf="03ed45d1fdf6dbd5a6e5567b50d2b36b8ae5c1cd0123f26aba000fd3a72d6fbd28",
-#                   pubkeyOther="03d8f667ff2068751e117cd6dbe3ebe286dbbc7fbb7b1ef0fbf5eb068e8b783a94",
-#                   addressSelf="ASm37KDVtgNQRqd4eefYGKCGn8fQH3mHw2",addressOther="AJAd9ZaZCwLvdktHc1Rs7w3hmpVSBuTKzs",
-#                   HTLCValue=5,balanceSelf=10,
-#                   balanceOther=10,hashR="7c4a8d09ca3762af61e59520943dc26494f8941b",
-#                   addressFunding="AQmhy9TH8jVjz8YyBzFSQ2yhGcPAKUd96N")
+# self_C_tx = createCTX(addressFunding=funding_tx["addressFunding"], balanceSelf=walletSelf["deposit"],
+#                       balanceOther=walletOther["deposit"], pubkeySelf=walletSelf["pubkey"],
+#                       pubkeyOther=walletOther["pubkey"], fundingScript=funding_tx["scriptFunding"])
+#
+# self_RD_tx = createRDTX(addressRSMC=self_C_tx["addressRSMC"], addressSelf=pubkeyToAddress(walletSelf["pubkey"]),
+#                         balanceSelf=walletSelf["deposit"], CTxId=self_C_tx["txId"],
+#                         RSMCScript=self_C_tx["scriptRSMC"])
+
+# self_BR_tx = createBRTX(addressRSMC=other_C_tx["addressRSMC"], addressOther=pubkeyToAddress(walletSelf["pubkey"]),
+#                         balanceSelf=walletSelf["deposit"], RSMCScript=other_C_tx["scriptRSMC"])
 
 
-# HT_tx = createHTTX(addressHTLC="Aa39qp1dKx2cwqHyi4KULotprPfdeCpdJ4", addressSelf="ASm37KDVtgNQRqd4eefYGKCGn8fQH3mHw2", HTLCValue=5)
+self_BR_tx = createBRTX(addressRSMC="AeLBqqZom1EQpcuPSJn4wLtzJCVZ7azjgF", addressOther=pubkeyToAddress(walletOther["pubkey"]),
+                        balanceSelf=walletSelf["deposit"], RSMCScript="5dc56b6c766b00527ac46c766b51527ac46c766b52527ac46111313532323333313837352e3835373539376c766b53527ac461682953797374656d2e457865637574696f6e456e67696e652e476574536372697074436f6e7461696e65726c766b54527ac46c766b54c361681d4e656f2e5472616e73616374696f6e2e476574417474726962757465736c766b55527ac4616c766b55c36c766b56527ac4006c766b57527ac46258016c766b56c36c766b57c3c36c766b58527ac4616c766b58c36168154e656f2e4174747269627574652e4765744461746161141a3db733023a855ac2077926c60e4c1fb4d5af009c6c766b59527ac46c766b59c3646700616c766b00c3612103ed45d1fdf6dbd5a6e5567b50d2b36b8ae5c1cd0123f26aba000fd3a72d6fbd28ac642f006c766b51c3612103d8f667ff2068751e117cd6dbe3ebe286dbbc7fbb7b1ef0fbf5eb068e8b783a94ac620400006c766b5a527ac462b8006c766b58c36168154e656f2e4174747269627574652e4765744461746161147880ddceb5101a29e05ea09da1ad310539dc8e699c6c766b5b527ac46c766b5bc3644c00616c766b52c36c766b54c3617c653e016c766b5c527ac46c766b5cc36422006c766b52c36c766b00c36c766b51c3615272654a006c766b5a527ac4623700006c766b5a527ac4622c00616c766b57c351936c766b57527ac46c766b57c36c766b56c3c09f639ffe006c766b5a527ac46203006c766b5ac3616c756656c56b6c766b00527ac46c766b51527ac46c766b52527ac4616168184e656f2e426c6f636b636861696e2e4765744865696768746c766b53527ac46c766b00c302e803936c766b53c39f6c766b54527ac46c766b54c36466006c766b51c3612103ed45d1fdf6dbd5a6e5567b50d2b36b8ae5c1cd0123f26aba000fd3a72d6fbd28ac642f006c766b52c3612103d8f667ff2068751e117cd6dbe3ebe286dbbc7fbb7b1ef0fbf5eb068e8b783a94ac620400006c766b55527ac4620e00006c766b55527ac46203006c766b55c3616c75665ec56b6c766b00527ac46c766b51527ac4616c766b00c36168174e656f2e426c6f636b636861696e2e476574426c6f636b6c766b52527ac46c766b52c36168194e656f2e426c6f636b2e4765745472616e73616374696f6e736c766b53527ac46c766b51c361681d4e656f2e5472616e73616374696f6e2e476574417474726962757465736c766b54527ac4616c766b54c36c766b55527ac4006c766b56527ac462d1006c766b55c36c766b56c3c36c766b57527ac4616c766b57c36168154e656f2e4174747269627574652e476574446174616c766b58527ac4616c766b53c36c766b59527ac4006c766b5a527ac46264006c766b59c36c766b5ac3c36c766b5b527ac4616c766b5bc36168174e656f2e5472616e73616374696f6e2e476574486173686c766b58c39c6c766b5c527ac46c766b5cc3640e00516c766b5d527ac4624a00616c766b5ac351936c766b5a527ac46c766b5ac36c766b59c3c09f6393ff616c766b56c351936c766b56527ac46c766b56c36c766b55c3c09f6326ff006c766b5d527ac46203006c766b5dc3616c7566")
 
 
 
+# channelInfo=createChannel(walletSelf=walletSelf,walletOther=walletOther)
 
-
-
+# pprint.pprint(channelInfo)
+# print (channelInfo)
 # xx=createRD1ATX(addressA1B="AQfnZ3euLYqaEhdeTEqqqeQVtWYTtFHzFx",addressA="ALcC96eesqb9pQTWSDCQ8afqdyR4woUzhW",balanceA=2)
 #
 # address_from="ALcC96eesqb9pQTWSDCQ8afqdyR4woUzhW"

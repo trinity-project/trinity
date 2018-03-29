@@ -8,7 +8,7 @@ from TX.utils import hex_reverse, ToAddresstHash, createTxid, createMultiSigCont
     createRSMCContract, createHTLCContract, createVerifyScript, pubkeyToAddress, pubkeyToAddressHash
 
 
-def createFundingTx(walletSelf,walletOther): #qian ming shi A de qian min zai hou
+def createFundingTx(walletSelf,walletOther): #self sign is behind
     '''
 
     :param walletSelf: dict {
@@ -100,7 +100,7 @@ def createRDTX(addressRSMC,addressSelf,balanceSelf,CTxId,RSMCScript):
     return {
         "txData":tx.get_tx_data(),
         "txId":createTxid(tx.get_tx_data()),
-        "witness_part1":"01{lengthAll}{lengthOfBlockheight}{blockheight}40{signSelf}40{signOther}",
+        "witness_part1":"01{lengthAll}{lengthOfBlockheight}{blockheight}40{signOther}40{signSelf}fd",
         "witness_part2":createVerifyScript(RSMCScript)
     }
 
@@ -125,86 +125,6 @@ def createBRTX(addressRSMC,addressOther,balanceSelf,RSMCScript):
     return {
         "txData":tx.get_tx_data(),
         "txId":createTxid(tx.get_tx_data()),
-        "witness_part1":"01{lengthAll}{lengthOfBlockheight}{blockheight}40{signSelf}40{signOther}",
+        "witness_part1":"01{lengthAll}{lengthOfBlockheight}{blockheight}40{signOther}40{signSelf}fd",
         "witness_part2":createVerifyScript(RSMCScript)
-    }
-
-
-def createHCTX(pubkeySelf,pubkeyOther,HTLCValue,balanceSelf,balanceOther,hashR,addressFunding,fundingScript):
-
-    RSMCContract=createRSMCContract(hashSelf=pubkeyToAddressHash(pubkeySelf),pubkeySelf=pubkeySelf,
-                       hashOther=pubkeyToAddressHash(pubkeyOther),pubkeyOther=pubkeyOther,magicTimestamp=time.time())
-
-    HTLCContract=createHTLCContract(pubkeySelf=pubkeySelf,pubkeyOther=pubkeyOther,futureTimestamp=int(time.time())+600,
-                                    hashR=hashR)
-    time_stamp = TransactionAttribute(usage=TransactionAttributeUsage.Remark,
-                                      data=bytearray.fromhex(hex(int(time.time()))[2:]))
-    address_hash_funding = TransactionAttribute(usage=TransactionAttributeUsage.Script,
-                                         data=ToAddresstHash(addressFunding).Data)
-    txAttributes = [address_hash_funding, time_stamp]
-
-    op_data_to_HTLC = create_opdata(address_from=addressFunding, address_to=HTLCContract["address"], value=HTLCValue,contract_hash=TNC)
-    op_data_to_RSMC = create_opdata(address_from=addressFunding, address_to=RSMCContract["address"], value=balanceSelf-HTLCValue,contract_hash=TNC)
-    op_data_to_other = create_opdata(address_from=addressFunding, address_to=pubkeyToAddress(pubkeyOther), value=balanceOther,contract_hash=TNC)
-
-    tx = InvocationTransaction()
-    tx.Version = 1
-    tx.Attributes = txAttributes
-    tx.Script = binascii.unhexlify(op_data_to_RSMC+op_data_to_other+op_data_to_HTLC)
-
-    return {
-        "txData":tx.get_tx_data(),
-        "addressRSMC":RSMCContract["address"],
-        "addressHTLC":HTLCContract["address"],
-        "RSMCscript":RSMCContract["script"],
-        "HTLCscript":HTLCContract["script"],
-        "txId":createTxid(tx.get_tx_data()),
-        "witness": "018240{signSelf}40{signOther}47" + fundingScript
-    }
-
-
-def createHEDTX(addressHTLC,addressOther,HTLCValue,HTLCScript):
-
-    time_stamp = TransactionAttribute(usage=TransactionAttributeUsage.Remark,
-                                      data=bytearray.fromhex(hex(int(time.time()))[2:]))
-    address_hash_HTLC = TransactionAttribute(usage=TransactionAttributeUsage.Script,
-                                         data=ToAddresstHash(addressHTLC).Data)
-    txAttributes = [address_hash_HTLC, time_stamp]
-
-    op_data_to_other = create_opdata(address_from=addressHTLC, address_to=addressOther, value=HTLCValue,contract_hash=TNC)
-
-
-    tx = InvocationTransaction()
-    tx.Version = 1
-    tx.Attributes = txAttributes
-    tx.Script = binascii.unhexlify(op_data_to_other)
-
-    return {
-        "txData":tx.get_tx_data(),
-        "txId":createTxid(tx.get_tx_data()),
-        "witness_part1": "01{lengthAll}{lengthOfR}{R}40{signOther}40{signSelf}",
-        "witness_part2": createVerifyScript(HTLCScript)
-    }
-
-
-def createHTTX(addressHTLC, addressSelf, HTLCValue,HTLCScript):
-    time_stamp = TransactionAttribute(usage=TransactionAttributeUsage.Remark,
-                                      data=bytearray.fromhex(hex(int(time.time()))[2:]))
-    address_hash_HTLC = TransactionAttribute(usage=TransactionAttributeUsage.Script,
-                                             data=ToAddresstHash(addressHTLC).Data)
-    txAttributes = [address_hash_HTLC, time_stamp]
-
-    op_data_to_self = create_opdata(address_from=addressHTLC, address_to=addressSelf, value=HTLCValue,
-                                     contract_hash=TNC)
-
-    tx = InvocationTransaction()
-    tx.Version = 1
-    tx.Attributes = txAttributes
-    tx.Script = binascii.unhexlify(op_data_to_self)
-
-    return {
-        "txData":tx.get_tx_data(),
-        "txId":createTxid(tx.get_tx_data()),
-        "witness_part1": "01{lengthAll}{lengthOfR}{R}40{signOther}40{signSelf}",
-        "witness_part2": createVerifyScript(HTLCScript)
     }
