@@ -51,7 +51,6 @@ class RouteTree(Tree):
         node = self.get_node(nid)
         return self.parent(node.identifier) if node else self.root
 
-
     def update_subtree(self, tree_massage):
         """
 
