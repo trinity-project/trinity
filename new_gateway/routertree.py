@@ -26,6 +26,17 @@ import json
 import copy
 from treelib import Node, Tree
 from treelib.exceptions import DuplicatedNodeIdError
+import re
+
+
+def parse_uri(uri):
+    # fixed url format: publicKey@IP:PORT
+    if isinstance(uri, str):
+        return re.split('[@:]', uri)
+
+    return None
+
+
 
 class RouteTree(Tree):
 
@@ -135,13 +146,66 @@ class RouteTree(Tree):
         # return new_peer_trees
         # return new_peer_trees
 
-    
+
+class WalletSet(object):
+    def __init__(self, **kwargs):
+        self.address = None
+        self.ip = None
+        self.port = None
+        self.public_key = None
+        self.deposit = None
+        self.fee = 0
+
+        self.__dict__.update(kwargs)
 
 
+class SPVHashTable(object):
+    """
+    Description: use the dictionary to hash the spv table with wallet node address
+    """
+    hash_instance = None
 
+    def __init__(self):
+        self.maps = {}
+        pass
 
+    def __new__(cls, *args, **kwargs):
+        if not cls.hash_instance:
+            cls.hash_instance = object.__new__(cls, *args, **kwargs)
 
+        return cls.hash_instance
 
+    def find(self, key):
+        """
 
+        :param key: The public key string of the wallet
+        :return: list type. [spv-1-public-key , spv-2-public-key, ...]
+        """
+        return self.maps.get(key)
 
+    def add(self, key, value):
+        """
+
+        :param key:     The public key string of the wallet
+        :param value:   the public key of the wallet
+        :return:
+        """
+        if key not in self.maps.keys():
+            self.maps.update({key:[value]})
+        elif value not in self.maps.get(key):
+            self.maps[key].append(value)
+
+    def sync_table(self, hash_table):
+        if not hash_table:
+            return
+
+        for key in hash_table:
+            if key in self.maps:
+                self.maps[key].extend(hash_table[key])
+                self.maps[key] = list(set(self.maps[key]))
+            else:
+                self.maps[key] = hash_table[key]
+
+    def serialize(self):
+        return json.dumps(self.maps)
 
