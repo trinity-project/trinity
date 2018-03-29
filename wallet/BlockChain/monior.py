@@ -46,10 +46,8 @@ def monitorblock():
         logger.info("Block %s / %s", str(jsn), str(Blockchain.Default().HeaderHeight))
         time.sleep(15)
 
-
-
 def send_message_to_gateway(message):
-    pass
+    print(message)
 
 def handle_message(height):
     match_list=[]
