@@ -22,11 +22,12 @@ LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE."""
 from wallet.TransactionManagement.transaction import TrinityTransaction
-from neo.Core.Helper import Helper
+from neocore.Cryptography.Crypto import Crypto
 from wallet.utils import pubkey_to_address
 from TX.interface import *
 from wallet.ChannelManagement import channel as ch
 from sserver.model.channel_model import APIChannel
+import os
 
 from wallet.configure import Configure
 GateWayIP = Configure["GatewayIP"]
@@ -83,6 +84,42 @@ class RegisterMessage(Message):
 
         FounderMessage.create(founder_address,founder_pubkey, partner_address, partner_pubkey, self.deposit)
 
+
+class TestMessage(Message):
+
+    def __init__(self, message, wallet):
+        super().__init__(message)
+        self.wallet= wallet
+
+    def handle_message(self):
+        founder = "{}@{}".format(self.wallet.pubkey, GateWayIP)
+        ch.create_channel(founder, "292929929292929292@10.10.12.1:20332", "TNC", 10)
+
+
+class CreateChannel(Message):
+    """
+    { "MessageType":"CreateChannelMessage",
+    "Receiver":"101010101001001010100101@127.0.0.1:20552",
+    "ChannelName":"090A8E08E0358305035709403",
+    "MessageBody": {
+            "AssetType":"TNC",
+            "Value": 20
+        }
+    }
+    """
+    def __init__(self, message, wallet):
+        super().__init__(message)
+        self.wallet= wallet
+        self.receiver_pubkey, self.receiver_ip = self.message.get("Receiver").split("@")
+        self.channel_name = self.message.get("ChannelName")
+        self.asset_type = self.message_body.get("AssetType")
+        self.value = self.message_body.get("Value")
+
+    def handle_message(self):
+        tx_nonce = TrinityTransaction(self.channel_name, self.wallet).get_latest_nonceid()
+        RsmcMessage.create(self.channel_name, self.wallet, self.wallet.pubkey,
+                           self.receiver_pubkey, self.value, self.receiver_ip, str(tx_nonce+1))
+
 class TransactionMessage(Message):
     """
 
@@ -102,8 +139,9 @@ class TransactionMessage(Message):
         :param context:
         :return:
         """
-        keypair = self.wallet.LoadKeyPairs()[0]
-        res = Helper.Sign(context, keypair)
+        keypair = self.wallet.LoadKeyPairs().values()
+        keypair=[i for i in keypair][0]
+        res = binascii.hexlify(Crypto.Sign(message=context, private_key=bytes(keypair.PrivateKey))).decode()
         return res
 
 
@@ -130,16 +168,20 @@ class FounderMessage(TransactionMessage):
         self.commitment = self.message_body.get("Commitment")
         self.revocable_delivery = self.message_body.get("RevocableDelivery")
         self.transaction = TrinityTransaction(self.channel_name, self.wallet)
-        self.sender_pubkey = self.sender.split("@")[0]
-        self.receiver_pubkey = self.receiver.split("@")[0]
+        self.sender_pubkey, self.sender_ip = self.sender.split("@")
+        self.receiver_pubkey, self.receiver_ip= self.receiver.split("@")
         self.sender_address = pubkey_to_address(self.sender_pubkey)
         self.receiver_address = pubkey_to_address(self.receiver_pubkey)
         self.transaction = TrinityTransaction(self.channel_name, self.wallet)
 
     def handle_message(self):
         verify, error = self.verify()
-        rdtxid= self.revocable_delivery.get("txId")
         if verify:
+            rdtxid = self.revocable_delivery.get("txId")
+            if not self.wallet.LoadStoredData(self.channel_name):
+                self.wallet.SaveStoredData(self.channel_name, "{}.data".format(self.channel_name))
+                self.transaction.create_tx_file()
+
             self.send_responses()
             tx = self.transaction.read_transaction()
             for t in tx:
@@ -147,9 +189,7 @@ class FounderMessage(TransactionMessage):
                     break
             else:
                 FounderMessage.create(self.channel_name, self.receiver_pubkey,
-                                      self.sender_pubkey, self.wallet)
-
-
+                                      self.sender_pubkey, self.wallet, self.receiver_ip)
         else:
             self.send_responses(error = error)
 
@@ -163,6 +203,7 @@ class FounderMessage(TransactionMessage):
             "pubkey":partner_pubkey,
             "deposit":deposit
     }
+
         founder = createFundingTx(walletpartner, walletfounder)
 
         commitment = createCTX(founder.get("addressFunding"), deposit, deposit, self_pubkey,
@@ -248,6 +289,9 @@ class FounderResponsesMessage(TransactionMessage):
             return "{} message error"
         verify, error = self.verify()
         if verify:
+            if not self.wallet.LoadStoredData(self.channel_name):
+                self.wallet.SaveStoredData(self.channel_name, "{}.data".format(self.channel_name))
+                self.transaction.create_tx_file()
             self.transaction.update_transaction("0", Founder=self.founder, Commitment=self.commitment,
                                                 RD = self.revocable_delivery)
             if ch.Channel.channel(self.channel_name).src_addr == self.wallet.address:

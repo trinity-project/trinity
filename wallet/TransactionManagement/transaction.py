@@ -55,6 +55,9 @@ class TrinityTransaction(object):
     def signature(self, rawdata):
         return self.wallet.Sign(rawdata)
 
+    def create_tx_file(self):
+        os.mknod(os.path.join(TxDataDir, self.tx_file))
+
     def get_transaction_file(self):
          return self.wallet.LoadStoredData(self.channel)
 
@@ -100,6 +103,18 @@ class TrinityTransaction(object):
     def get_tx_nonce(self, tx_nonce):
         tx = self.read_transaction()
         return tx.get(tx_nonce)
+
+    def get_latest_nonceid(self):
+        tx = self.read_transaction()
+        nonce = []
+        for i in tx.keys():
+            try:
+                nonce.append(int(i))
+            except ValueError:
+                continue
+        return max(nonce)
+
+
 
 
 def dic2btye(file_handler, **kwargs):

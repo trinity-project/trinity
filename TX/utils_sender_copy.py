@@ -1,3 +1,11 @@
+
+
+
+
+
+
+
+
 import binascii
 
 from base58 import b58decode
@@ -90,7 +98,7 @@ def create_opdata(address_from, address_to, value, contract_hash):
     return op_data
 
 
-def createRSMCContract(hashSelf,pubkeySelf,hashOther,pubkeyOther,magicTimestamp):
+def createRSMCContract(hashSender,pubkeySender,hashReceiver,pubkeyReceiver,magicTimestamp):
     magicTimestamp = binascii.hexlify(str(magicTimestamp).encode()).decode()
     length=hex(int(len(magicTimestamp)/2))[2:]
     magicTimestamp=length+magicTimestamp
@@ -98,14 +106,14 @@ def createRSMCContract(hashSelf,pubkeySelf,hashOther,pubkeyOther,magicTimestamp)
                      "4656d2e457865637574696f6e456e67696e652e476574536372697074436f6e7461696e65726c766b54527ac46c766b" \
                      "54c361681d4e656f2e5472616e73616374696f6e2e476574417474726962757465736c766b55527ac4616c766b55c36" \
                      "c766b56527ac4006c766b57527ac46258016c766b56c36c766b57c3c36c766b58527ac4616c766b58c36168154e656f" \
-                     "2e4174747269627574652e476574446174616114{hashOther}9c6c766b59527ac46c766b59c3646700616c766b00c36121" \
-                     "{pubkeySelf}ac642f006c766b51c36121{pubkeyOther}ac620400006c766b5a527ac462b8006c766b58c36168154e656f2e4" \
-                     "174747269627574652e476574446174616114{hashSelf}9c6c766b5b527ac46c766b5bc3644c00616c766b52c36c766b5" \
+                     "2e4174747269627574652e476574446174616114{hashReceiver}9c6c766b59527ac46c766b59c3646700616c766b00c36121" \
+                     "{pubkeySender}ac642f006c766b51c36121{pubkeyReceiver}ac620400006c766b5a527ac462b8006c766b58c36168154e656f2e4" \
+                     "174747269627574652e476574446174616114{hashSender}9c6c766b5b527ac46c766b5bc3644c00616c766b52c36c766b5" \
                      "4c3617c653e016c766b5c527ac46c766b5cc36422006c766b52c36c766b00c36c766b51c3615272654a006c766b5a52" \
                      "7ac4623700006c766b5a527ac4622c00616c766b57c351936c766b57527ac46c766b57c36c766b56c3c09f639ffe006" \
                      "c766b5a527ac46203006c766b5ac3616c756656c56b6c766b00527ac46c766b51527ac46c766b52527ac4616168184e" \
                      "656f2e426c6f636b636861696e2e4765744865696768746c766b53527ac46c766b00c302e803936c766b53c39f6c766" \
-                     "b54527ac46c766b54c36466006c766b51c36121{pubkeySelf}ac642f006c766b52c36121{pubkeyOther}ac620400006c766b" \
+                     "b54527ac46c766b54c36466006c766b51c36121{pubkeySender}ac642f006c766b52c36121{pubkeyReceiver}ac620400006c766b" \
                      "55527ac4620e00006c766b55527ac46203006c766b55c3616c75665ec56b6c766b00527ac46c766b51527ac4616c766" \
                      "b00c36168174e656f2e426c6f636b636861696e2e476574426c6f636b6c766b52527ac46c766b52c36168194e656f2e" \
                      "426c6f636b2e4765745472616e73616374696f6e736c766b53527ac46c766b51c361681d4e656f2e5472616e7361637" \
@@ -116,7 +124,7 @@ def createRSMCContract(hashSelf,pubkeySelf,hashOther,pubkeyOther,magicTimestamp)
                      "46c766b5cc3640e00516c766b5d527ac4624a00616c766b5ac351936c766b5a527ac46c766b5ac36c766b59c3c09f63" \
                      "93ff616c766b56c351936c766b56527ac46c766b56c36c766b55c3c09f6326ff006c766b5d527ac46203006c766b5dc" \
                      "3616c7566"
-    RSMCContract=contractTemplate.format(hashOther=hashOther,pubkeySelf=pubkeySelf,hashSelf=hashSelf,pubkeyOther=pubkeyOther,\
+    RSMCContract=contractTemplate.format(hashReceiver=hashReceiver,pubkeySender=pubkeySender,hashSender=hashSender,pubkeyReceiver=pubkeyReceiver,\
                                          magicTimestamp=magicTimestamp)
 
     return  {
@@ -127,23 +135,22 @@ def createRSMCContract(hashSelf,pubkeySelf,hashOther,pubkeyOther,magicTimestamp)
 
 
 
-def createHTLCContract(futureTimestamp,pubkeySelf,pubkeyOther,hashR):
+def createHTLCContract(futureTimestamp,pubkeySender,pubkeyReceiver,hashR):
     futureTimestamp=hex_reverse(hex(int(futureTimestamp)))
     contractTemplate="57c56b6c766b00527ac46c766b51527ac46c766b52527ac4616c766b52c3a76c766b53527ac46168184e656f2e426c6" \
                      "f636b636861696e2e4765744865696768746168184e656f2e426c6f636b636861696e2e4765744865616465726c766b" \
                      "54527ac46c766b54c36168174e656f2e4865616465722e47657454696d657374616d7004{futureTimestamp}9f6c76" \
-                     "6b55527ac46c766b55c3648600616c766b00c36121{pubkeySelf}ac644e006c766b51c36121{pubkeyOther}ac6422006c766b5" \
-                     "3c36114{hashR}9c620400006c766b56527ac46266006c766b00c36121{pubkeySelf}ac642f006c766b51c36121{pubkeyOther}" \
+                     "6b55527ac46c766b55c3648600616c766b00c36121{pubkeySender}ac644e006c766b51c36121{pubkeyReceiver}ac6422006c766b5" \
+                     "3c36114{hashR}9c620400006c766b56527ac46266006c766b00c36121{pubkeySender}ac642f006c766b51c36121{pubkeyReceiver}" \
                      "ac620400006c766b56527ac46203006c766b56c3616c7566"
 
-    HTLCContract=contractTemplate.format(futureTimestamp=futureTimestamp,pubkeySelf=pubkeySelf,pubkeyOther=pubkeyOther,hashR=hashR)
+    HTLCContract=contractTemplate.format(futureTimestamp=futureTimestamp,pubkeySender=pubkeySender,pubkeyReceiver=pubkeyReceiver,hashR=hashR)
 
 
     return  {
         "script":HTLCContract,
         "address":createMultiSigAddress(HTLCContract)
     }
-
 
 
 def createMultiSigContract(publicKeyList):
@@ -154,7 +161,6 @@ def createMultiSigContract(publicKeyList):
     script+="52"
     script+="ae"
 
-
     address=createMultiSigAddress(script)
 
 
@@ -162,7 +168,3 @@ def createMultiSigContract(publicKeyList):
         "script":script,
         "address":address
     }
-
-
-xx=createTxid("d101a0040065cd1d1462b10d88ad9b147be8b3769d4b21e7cf76a604f5147880ddceb5101a29e05ea09da1ad310539dc8e6953c1087472616e73666572675e7fb71d90044445caf77c0c36df0901fda8340cf1040065cd1d1462b10d88ad9b147be8b3769d4b21e7cf76a604f5141a3db733023a855ac2077926c60e4c1fb4d5af0053c1087472616e73666572675e7fb71d90044445caf77c0c36df0901fda8340cf1000000000000000003207880ddceb5101a29e05ea09da1ad310539dc8e69201a3db733023a855ac2077926c60e4c1fb4d5af00f0045abcf0e30000")
-pass
