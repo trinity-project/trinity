@@ -7,19 +7,24 @@ from jsonrpcclient.aiohttp_client import aiohttpClient
 from config import cg_local_jsonrpc_addr, cg_remote_jsonrpc_addr
 
 @methods.add
-async def ping(msg):
+async def ShowNodeList(params):
     from gateway import gateway_singleton
-    return gateway_singleton.handle_jsonrpc_request('ping', msg)
-    """
-    """
-    # print(msg)
-    # res = {
-    #     "msgtype": "ack",
-    #     "result": "ok"
-    # }
-    # from gateway import gateway_singleton
-    # gateway_singleton.handle_jsonrpc(response)
-    # return json.dumps(res)
+    return gateway_singleton.handle_jsonrpc_request('ShowNodeList', params)
+
+@methods.add
+async def JoinNet(params):
+    from gateway import gateway_singleton
+    return gateway_singleton.handle_jsonrpc_request('JoinNet', params)
+
+@methods.add
+async def SyncWalletData(params):
+    from gateway import gateway_singleton
+    return gateway_singleton.handle_jsonrpc_request('SyncWalletData', params)
+
+@methods.add
+async def GetChannelInfo(params):
+    from gateway import gateway_singleton
+    return gateway_singleton.handle_jsonrpc_request('JoinNet', params)
     
 
 class AsyncJsonRpc():
@@ -40,13 +45,13 @@ class AsyncJsonRpc():
         web.run_app(app, host=cg_local_jsonrpc_addr[0], port=cg_local_jsonrpc_addr[1])
         
     @staticmethod
-    async def jsonrpc_request(loop, method, msg):
+    async def jsonrpc_request(loop, method, params):
         async with ClientSession(loop=loop) as session:
             edpoint = 'http://' + cg_remote_jsonrpc_addr[0] + ":" + str(cg_remote_jsonrpc_addr[1])
             client = aiohttpClient(session, endpoint)
-            response = await client.request(method, msg)
+            response = await client.request(method, params)
             from gateway import gateway_singleton
-            gateway_singleton.handle_jsonrpc_response(response)
+            gateway_singleton.handle_jsonrpc_response(method, response)
 
 if __name__ == "__main__":
     AsyncJsonRpc.start_jsonrpc_serv()

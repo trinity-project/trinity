@@ -37,3 +37,4 @@ cg_wg_backlog = 5
 ###### Wallet ######
 
 cg_debug = False
+seed = True

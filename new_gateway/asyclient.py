@@ -39,7 +39,7 @@ class ClientProtocol(Protocol):
             complete_bdata = b"".join(self.received)
             # handle message
             from gateway import gateway_singleton
-            gateway_singleton.handle_tcp_request(self, complete_bdata)
+            gateway_singleton.handle_tcp_request(self._transport, complete_bdata)
         else:
             print("数据还没有接收完毕")
 

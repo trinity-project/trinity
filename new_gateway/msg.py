@@ -29,31 +29,28 @@ GS_TRADE_REQUEST = 0x3001
 GS_PUSH_TRADE_INFO = 0x3002
 
 
+# msg bettwin node
+join_msg = {
+    "MessageType": "JoinNet",
+    "Sender":"03dc2841ddfb8c2afef94296693315a234026fa8f058c3e4259a04f8be6d540049@11.11.11.11:2222",
+    "Receiver":"03dc2841ddfb8c2afef94296693315a234026fa8f058c3e4259a04f8be6d540049@11.11.11.11:2222",
+    # "MessageBody": {
+    #     "Asstes":"TNC",
+    #     "Deposit":"100"
+    # }
+}
 
-if request_type == "join":
-    res = {
-        "type": "join_ack",
-        "body": {
-            "content": "weclome"
-        }
-    }
-elif request_type == "build_channel":
-    res = {
-        "type": "founder",
-        "body": {
-            "signature": "signature mock",
-            "data": {}
-        }
-    }
-elif request_type == "founder_ack":
-    res = {
-        "type": "channel_result",
-        "body": {
-            "result": "successful"
-        }
-    }
+ack_join_msg = {
+    "MessageType": "AckJoinNet",
+    "Sender":"03dc2841ddfb8c2afef94296693315a234026fa8f058c3e4259a04f8be6d540049@11.11.11.11:2222",
+    "Receiver":"03dc2841ddfb8c2afef94296693315a234026fa8f058c3e4259a04f8be6d540049@11.11.11.11:2222",
+    "WebList": [
+        "03dc2841ddfb8c2afef94296693315a234026fa8f058c3e4259a04f8be6d540049@11.11.11.11:2222"
+    ]
+}
 
-# push msg type
+
+# push spv msg type
 msg = {
     "type": "block_info",
     "body": {
@@ -73,7 +70,10 @@ msg = {
 # spv msg AddChannel
 msg = {
     "MessageType": "AddChannel",
+    "Sender":"03dc2841ddfb8c2afef94296693315a234026fa8f058c3e4259a04f8be6d540049@11.11.11.11:2222",
+    "Receiver":"03dc2841ddfb8c2afef94296693315a234026fa8f058c3e4259a04f8be6d540049@11.11.11.11:2222",
     "MessageBody": {
-        
+        "Asstes":"TNC",
+        "Deposit":"100"
     }
 }
