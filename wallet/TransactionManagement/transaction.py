@@ -55,17 +55,31 @@ class TrinityTransaction(object):
     def signature(self, rawdata):
         return self.wallet.Sign(rawdata)
 
+    def create_tx_file(self):
+        os.mknod(os.path.join(TxDataDir, self.tx_file))
+
     def get_transaction_file(self):
          return self.wallet.LoadStoredData(self.channel)
 
     def store_transaction(self, tx_message):
-        with open(self.tx_file, "ab+") as f:
+        with open(self.tx_file, "wb+") as f:
             crypto_channel(f, **tx_message)
         return None
 
     def read_transaction(self):
         with open(self.tx_file, "rb") as f:
             return uncryto_channel(f)
+
+    def update_transaction(self, tx_nonce, **kwargs):
+        with open(self.tx_file, "wb+") as f:
+            message = uncryto_channel(f)
+            message = message if message else {}
+            subitem = message.get(tx_nonce)
+            subitem = subitem if subitem else {}
+            for key, value in kwargs.items():
+                subitem[key] = value
+            message[tx_nonce] = subitem
+            crypto_channel(f, **message)
 
     @staticmethod
     def sendrawtransaction(raw_data):
@@ -75,8 +89,32 @@ class TrinityTransaction(object):
         return result
 
     @staticmethod
-    def genarate_raw_data(txdata, txid, pubkey):
-        return ""
+    def genarate_raw_data(Singtxdata,Witness):
+        return Singtxdata+Witness
+
+    def get_founder(self):
+        tx = self.read_transaction()
+        return tx["0"]["Founder"]["orginalData"]
+
+    def get_balance(self):
+        tx = self.read_transaction()
+        return tx["Blance"]
+
+    def get_tx_nonce(self, tx_nonce):
+        tx = self.read_transaction()
+        return tx.get(tx_nonce)
+
+    def get_latest_nonceid(self):
+        tx = self.read_transaction()
+        nonce = []
+        for i in tx.keys():
+            try:
+                nonce.append(int(i))
+            except ValueError:
+                continue
+        return max(nonce)
+
+
 
 
 def dic2btye(file_handler, **kwargs):

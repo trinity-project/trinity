@@ -1,5 +1,5 @@
 # coding: utf-8
-from asyncio import Protocol, get_event_loop
+from asyncio import Protocol, get_event_loop, iscoroutine
 
 class ClientManage():
     def __init__(self):
@@ -39,7 +39,7 @@ class ClientProtocol(Protocol):
             complete_bdata = b"".join(self.received)
             # handle message
             from gateway import gateway_singleton
-            gateway_singleton.handle_tcp_request(self, complete_bdata)
+            gateway_singleton.handle_tcp_request(self._transport, complete_bdata)
         else:
             print("数据还没有接收完毕")
 
@@ -60,7 +60,7 @@ class ClientProtocol(Protocol):
         self.state = "resumed"
 
 
-def create_connection(self, addr):
+def create_connection(addr):
     """
     如果server已经与地址为addr的host保持连接\n
     则直接使用server的连接通信\n
@@ -84,3 +84,12 @@ def create_connection(self, addr):
         return loop.create_connection(ClientProtocol, addr[0], addr[1])
     else:
         return server_transport
+
+async def send_tcp_msg(addr, msg):
+    transport = create_connection(addr)
+    if iscoroutine(transport):
+        con = await result
+        con.send(msg)
+    else:
+        transport.send(msg)
+

@@ -9,6 +9,10 @@ name = "pypi"
 
 websockets = "*"
 treelib = "*"
+aiohttp = "*"
+jsonrpcserver = "*"
+jsonrpcclient = {extras = ["aiohttp"]}
+requests = "*"
 
 
 [dev-packages]

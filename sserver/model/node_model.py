@@ -31,10 +31,10 @@ class TBLNode(DBManager):
         Created         : 2018-02-13
         Modified        : 2018-03-21
     """
-    def add_one(self, address: str, ip: str, port: int, deposit: dict, fee: int,
-                state: str, tti: int, spv_count=0):
-        return super(TBLNode, self).add(address=address, ip=ip, port=port, deposit=deposit, fee=fee,
-                                        state=state, tti=tti, spv_count=0)
+    def add_one(self, address: str, public_key:str, ip: str, port: int, deposit: dict, fee: int,
+                state: str, tti=0, type=''):
+        return super(TBLNode, self).add(address=address, public_key=public_key, ip=ip, port=port,
+                                        deposit=deposit, fee=fee, state=state, tti=tti, type='')
 
     @property
     @connection_singleton
@@ -51,11 +51,11 @@ class TBLNode(DBManager):
 
     @property
     def required_item(self):
-        return ['address', 'ip', 'port', 'deposit', 'fee', 'state', 'tti', 'spv_count']
+        return ['address', 'public_key', 'ip', 'port', 'deposit', 'fee', 'state', 'tti']
 
     @property
     def optional_item(self):
-        return ['node_name']
+        return ['node_name', 'type']
 
 
 class APINode(object):

@@ -27,8 +27,9 @@ from enum import IntEnum
 from exception.exceptions import ChannelExist
 from sserver.model.address_model import APIWalletAddress
 from sserver.model.channel_model import APIChannel
-from sserver.model.base_enum import EnumChainType
+from sserver.model.base_enum import EnumChainType,EnumChannelState
 from wallet.TransactionManagement import message as mg
+from wallet.utils import pubkey_to_address
 
 def get_gateway_ip():
     return "127.0.0.1:20554"
@@ -41,16 +42,6 @@ GateWayUrl = get_gateway_ip()
 
 
 
-class State(IntEnum):
-    INITIAL=0
-    OPENING = 1
-    OPEN = 2
-    SETTLING = 3
-    SETTLED = 4
-    CLOSED = 5
-    UPDATING = 6
-
-
 class Channel(object):
     """
 
@@ -58,10 +49,10 @@ class Channel(object):
     def __init__(self,founder, partner):
         self.founder = founder
         self.partner = partner
-        #self.founder_pubkey = APIWalletAddress.query_wallet_address(self.founder).public_key
-        #self.partner_pubkey = APIWalletAddress.query_wallet_address(self.partner).public_key
-        self.founder_pubkey = "02cebf1fbde4786f031d6aa0eaca2f5acd9627f54ff1c0510a18839946397d3633"
-        self.partner_pubkey = "02cebf1fbde4786f031d6aa0eaca2f5acd9627f54ff1c0510a18839946397d3633"
+        self.founder_pubkey = self.founder.split("@")[0]
+        self.founder_address = pubkey_to_address(self.founder_pubkey)
+        self.partner_pubkey = self.partner.split("@")[0]
+        self.partner_address = pubkey_to_address(self.partner_pubkey)
 
     @staticmethod
     def get_channel(address1, address2):
@@ -86,44 +77,48 @@ class Channel(object):
         md5s.update(str(time.time()).encode())
         return md5s.hexdigest().upper()
 
-    def create(self, asset_type, deposit, wallet):
-        if not wallet:
-            raise Exception("Please Open The Wallet First")
+    def create(self, asset_type, deposit, cli=True):
         if Channel.get_channel(self.founder, self.partner):
             raise ChannelExist
         self.start_time = time.time()
         self.asset_type = asset_type
-        self.depoist = {"asset_type":asset_type, "count":deposit}
+        self.deposit = {"source":{}.setdefault(asset_type, deposit), 'destination': {}.setdefault(asset_type, deposit)}
         self.channel_name = self._init_channle_name()
+        print(self.channel_name)
 
-        result = APIChannel.add_channel(self.channel_name,self.founder, self.partner,
-                     str(State.INITIAL.value), 0, self.depoist, self.start_time )
-        peer_ip = query_ip(self.partner)
-
-        message={"MessageType":"RegisterChannel",
-                 "Sender": "{}@{}".format(self.founder_pubkey,GateWayUrl),
-                 "Receiver": "{}@{}".format(self.partner_pubkey, peer_ip),
+        result = APIChannel.add_channel(self.channel_name,self.founder_address, self.partner_address,
+                     EnumChannelState.INIT.name, 0, self.deposit, 0)
+        print(result)
+        if cli:
+            message={"MessageType":"RegisterChannel",
+                 "Sender": self.founder,
+                 "Receiver": self.partner,
                  "MessageBody":{"ChannelName":self.channel_name,
-                                "Depoist":self.depoist,
+                                "Depoist":self.deposit,
                                 }
-        }
-        result = mg.Message().send(message)
-        if not result:
-            APIChannel.delete_channel(filters={"channel_name":self.channel_name})
+            }
+            return mg.Message.send(message)
 
         return result
 
-
     def delete(self):
         pass
+
+    def update_channel(self, **kwargs):
+        return APIChannel.update_channel(self.channel_name, **kwargs)
 
     @property
     def state(self):
         return None
 
+    def get_balance(self):
+        channel = APIChannel.query_channel(self.channel_name)
+        balance = channel.balance
+        return balance
 
-def create_channel(wallet, founder, partner, asset_type, depoist):
-    return Channel(founder, partner).create(asset_type, depoist, wallet)
+
+def create_channel(founder, partner, asset_type, depoist:int, cli=True):
+    return Channel(founder, partner).create(asset_type, depoist, cli)
 
 
 def get_channel_name_via_address(address1, address2):

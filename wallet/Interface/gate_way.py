@@ -21,15 +21,35 @@ AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
 LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE."""
-from neocore.Cryptography.Crypto import Crypto
 
-def pubkey_to_address(publickey: str):
-    script = b'21' + publickey.encode() + b'ac'
-    script_hash = Crypto.ToScriptHash(script)
-    address = Crypto.ToAddress(script_hash)
-    return address
+import requests
+from wallet.configure import Configure
 
 
-if __name__ == "__main__":
-    print(pubkey_to_address("03a6fcaac0e13dfbd1dd48a964f92b8450c0c81c28ce508107bc47ddc511d60e75"))
-    print(Crypto.Hash160("02cebf1fbde4786f031d6aa0eaca2f5acd9627f54ff1c0510a18839946397d3633".encode()))
+def join_gateway(publickey):
+    message = {"MessageType":"SyncWallet",
+               "MesssgeBody":{
+                   "Publickey":publickey,
+                   "CommitMinDeposit":Configure["Channel"]["CommitMinDeposit"],
+                   "Fee":Configure["Fee"]
+                   }
+               }
+    request = {
+        "jsonrpc": "2.0",
+        "method": "SyncWalletData",
+        "params": message,
+        "id": 1
+    }
+    result = requests.post(Configure["GatewayURL"], json=request)
+    return result.json()
+
+def send_message(message):
+    request= {
+            "jsonrpc": "2.0",
+            "method": "TransactionMessage",
+            "params": message,
+            "id": 1
+    }
+    result = requests.post(Configure["GatewayURL"], json=request)
+    return result.json()
+

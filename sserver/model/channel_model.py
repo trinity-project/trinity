@@ -42,7 +42,9 @@ class TBLChannel(DBManager):
         :param dest_addr:
         :param state:
         :param alive_block:
-        :param deposit: format : {'source': {asset_type': amount}, 'destination': {'asset_type': amount}}
+        :param deposit: format : {${address_1}: {${asset_type}: amount}, ${address_2}: {${asset_type}: amount}}
+                                    ${address_1} ${address_2} -- the node address of the channel bi-direction's owner
+                                    ${asset_type} -- current just support "NEO", "TNC"
         :param balance: same format as deposit // to add operation, maybe useless
         :return:
         """
@@ -50,9 +52,9 @@ class TBLChannel(DBManager):
             LOG.error('Error Channel state<{}> is used.'.format(state))
 
         # Guarantee no possession loss even if users do some wrong operations.
-        if not self.remove_unsupported_asset(deposit.get('source')) or \
-            not self.remove_unsupported_asset(deposit.get('destination')):
-            return
+        # if not self.remove_unsupported_asset(deposit.get('source')) or \
+        #     not self.remove_unsupported_asset(deposit.get('destination')):
+        #     return
 
         return super(TBLChannel, self).add(channel=channel, src_addr=src_addr, dest_addr=dest_addr,
                                            state=state, alive_block=alive_block,

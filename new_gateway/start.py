@@ -11,7 +11,9 @@ if __name__ == "__main__":
         get_event_loop().set_debug(cg_debug)
     try:
         gateway_singleton.start()
-    except KeyboardInterrupt:
-        gateway_singleton.clearn()
+    except Exception:
+        # gateway_singleton.clearn()
+        pass
     finally:
-        gateway_singleton.close()
+        # gateway_singleton.close()
+        pass

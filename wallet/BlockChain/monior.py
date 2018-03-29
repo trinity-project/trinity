@@ -35,21 +35,18 @@ def monitorblock():
         block = Blockchain.Default().GetBlock(str(Blockchain.Default().Height))
         try:
             block.LoadTransactions()
-        except AttributeError:
-            continue
-        jsn = block.ToJson()
-        jsn['confirmations'] = Blockchain.Default().Height - block.Index + 1
-        hash = Blockchain.Default().GetNextBlockHash(block.Hash)
-        if hash:
-            jsn['nextblockhash'] = '0x%s' % hash.decode('utf-8')
-
-        logger.info("Block %s / %s", str(jsn), str(Blockchain.Default().HeaderHeight))
+            jsn = block.ToJson()
+            jsn['confirmations'] = Blockchain.Default().Height - block.Index + 1
+            hash = Blockchain.Default().GetNextBlockHash(block.Hash)
+            if hash:
+                jsn['nextblockhash'] = '0x%s' % hash.decode('utf-8')
+                logger.info("Block %s / %s", str(jsn), str(Blockchain.Default().HeaderHeight))
+        except Exception as e:
+            logger.error("GetBlockError", e)
         time.sleep(15)
 
-
-
 def send_message_to_gateway(message):
-    pass
+    print(message)
 
 def handle_message(height):
     match_list=[]

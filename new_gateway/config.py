@@ -7,7 +7,7 @@ node 节点配置文件
 ###### Common ######
 
 # tcp数据结束标识符
-cg_end_mark = "/end"
+cg_end_mark = "eof"
 # tcp从socket读取数据包的缓存大小 字节单位
 cg_tcp_buffersize = 1024
 
@@ -17,11 +17,13 @@ cg_tcp_buffersize = 1024
 ###### Gateway ######
 
 # 设置socket连接wallet的超时 单位秒
-cg_connect_wallet_timeout = 5.0
+# cg_connect_wallet_timeout = 5.0
 # 发生超时的情况socket连接wallet的最多次数
-cg_try_connect_wallet_times = 3
+# cg_try_connect_wallet_times = 3
 cg_tcp_addr = ("0.0.0.0", 8088)
 cg_wsocket_addr = ("0.0.0.0", 8765)
+cg_local_jsonrpc_addr = ("0.0.0.0", 5000)
+cg_remote_jsonrpc_addr = ("0.0.0.0", 5000)
 ###### Gateway ######
 
 
@@ -34,4 +36,5 @@ cg_wg_backlog = 5
 
 ###### Wallet ######
 
-cg_debug = True
+cg_debug = False
+seed = True

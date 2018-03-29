@@ -29,3 +29,51 @@ GS_TRADE_REQUEST = 0x3001
 GS_PUSH_TRADE_INFO = 0x3002
 
 
+# msg bettwin node
+join_msg = {
+    "MessageType": "JoinNet",
+    "Sender":"03dc2841ddfb8c2afef94296693315a234026fa8f058c3e4259a04f8be6d540049@11.11.11.11:2222",
+    "Receiver":"03dc2841ddfb8c2afef94296693315a234026fa8f058c3e4259a04f8be6d540049@11.11.11.11:2222",
+    # "MessageBody": {
+    #     "Asstes":"TNC",
+    #     "Deposit":"100"
+    # }
+}
+
+ack_join_msg = {
+    "MessageType": "AckJoinNet",
+    "Sender":"03dc2841ddfb8c2afef94296693315a234026fa8f058c3e4259a04f8be6d540049@11.11.11.11:2222",
+    "Receiver":"03dc2841ddfb8c2afef94296693315a234026fa8f058c3e4259a04f8be6d540049@11.11.11.11:2222",
+    "WebList": [
+        "03dc2841ddfb8c2afef94296693315a234026fa8f058c3e4259a04f8be6d540049@11.11.11.11:2222"
+    ]
+}
+
+
+# push spv msg type
+msg = {
+    "type": "block_info",
+    "body": {
+        "content": "This is a push message triggered by timer",
+        "blance": random.randint(1000, 9000)
+    }
+}
+
+msg = {
+    "type": "sync_state",
+    "body": {
+        "content": "This is a push message triggered by peer state changed",
+        "state": "other spv disconnectioned"
+    }
+}
+
+# spv msg AddChannel
+msg = {
+    "MessageType": "AddChannel",
+    "Sender":"03dc2841ddfb8c2afef94296693315a234026fa8f058c3e4259a04f8be6d540049@11.11.11.11:2222",
+    "Receiver":"03dc2841ddfb8c2afef94296693315a234026fa8f058c3e4259a04f8be6d540049@11.11.11.11:2222",
+    "MessageBody": {
+        "Asstes":"TNC",
+        "Deposit":"100"
+    }
+}
