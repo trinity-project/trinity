@@ -93,6 +93,14 @@ class TrinityTransaction(object):
         tx = self.read_transaction()
         return tx["0"]["Founder"]["orginalData"]
 
+    def get_balance(self):
+        tx = self.read_transaction()
+        return tx["Blance"]
+
+    def get_tx_nonce(self, tx_nonce):
+        tx = self.read_transaction()
+        return tx.get(tx_nonce)
+
 
 def dic2btye(file_handler, **kwargs):
     """

@@ -40,6 +40,7 @@ from neo.Implementations.Wallets.peewee.UserWallet import UserWallet
 
 from neo.Wallets.utils import to_aes_key
 from wallet.configure import Configure
+from wallet.Interface import gate_way
 
 
 # Logfile settings & setup
@@ -55,11 +56,11 @@ FILENAME_PROMPT_HISTORY = os.path.join(PATH_USER_DATA, '.prompt.py.history')
 
 
 class UserPromptInterface(PromptInterface):
-
+    Channel = False
 
     def __init__(self):
         super().__init__()
-        user_commands = ["channel create {founder_address} {partner_address} {asset_type} {deposit}",
+        user_commands = ["channel open","channel create {founder_address} {partner_address} {asset_type} {deposit}",
                          "channel tx {channel_name} {asset_type} {count}",
                          "channel close {channel_name},"
                          "channel show {channel_name}"]
@@ -213,7 +214,6 @@ class UserPromptInterface(PromptInterface):
         self.go_on = False
         self.do_close_wallet()
         reactor.stop()
-        sys.exit()
 
     def do_channel(self,arguments):
         if not self.Wallet:
@@ -224,6 +224,8 @@ class UserPromptInterface(PromptInterface):
         command = get_arg(arguments)
         print(command)
         if command == 'create':
+            if not self.Channel:
+                self._channel_noopen()
             assert len(arguments) == 4
             if not self.Wallet:
                 raise Exception("Please Open The Wallet First")
@@ -232,6 +234,17 @@ class UserPromptInterface(PromptInterface):
             asset_type = get_arg(arguments, 2)
             deposit = int(get_arg(arguments, 3).strip())
             create_channel(founder, partner,asset_type, deposit)
+        elif command == "open":
+            walletHeight = self.Wallet.LoadStoredData("Height")
+            blockHeight = Blockchain.Default().HeaderHeight
+            if walletHeight >= blockHeight-10:
+                if gate_way.jion_gateway():
+                    self.Channel = True
+            else:
+                self._channel_noopen()
+
+    def _channel_noopen(self):
+        print("Please waite the block async")
 
     def get_completer(self):
 
