@@ -11,7 +11,8 @@ from asyncio import get_event_loop, gather, Task, sleep, ensure_future, iscorout
 from config import cg_tcp_addr, cg_wsocket_addr
 
 route_tree = RouteTree()
-route_tree.create_node("Daviv", "daviv")  # root node
+route_tree.create_node("Daviv", "Daviv")  # root node
+# tree.create_node("Jane", "jane", parent="daviv")
 web_list = set()
 # route_tree.create_node("Jane", "jane", parent="harry")
 class Gateway():
