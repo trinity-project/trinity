@@ -22,5 +22,34 @@ LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE."""
 
-def jion_gateway():
-    pass
+import requests
+from wallet.configure import Configure
+
+
+def join_gateway(publickey):
+    message = {"MessageType":"SyncWallet",
+               "MesssgeBody":{
+                   "Publickey":publickey,
+                   "CommitMinDeposit":Configure["Channel"]["CommitMinDeposit"],
+                   "Fee":Configure["Fee"]
+                   }
+               }
+    request = {
+        "jsonrpc": "2.0",
+        "method": "SyncWalletData",
+        "params": message,
+        "id": 1
+    }
+    result = requests.post(Configure["GatewayURL"], json=request)
+    return result.json()
+
+def send_message(message):
+    request= {
+            "jsonrpc": "2.0",
+            "method": "TransactionMessage",
+            "params": message,
+            "id": 1
+    }
+    result = requests.post(Configure["GatewayURL"], json=request)
+    return result.json()
+

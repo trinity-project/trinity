@@ -77,9 +77,7 @@ class UserPromptInterface(PromptInterface):
 
     def run(self):
         dbloop = task.LoopingCall(Blockchain.Default().PersistBlocks)
-        dbloop.start(.5)
-
-        Blockchain.Default().PersistBlocks()
+        dbloop.start(.1)
 
         tokens = [(Token.Neo, 'NEO'), (Token.Default, ' cli. Type '),
                   (Token.Command, '\'help\' '), (Token.Default, 'to get started')]
@@ -213,7 +211,7 @@ class UserPromptInterface(PromptInterface):
         print('Shutting down. This may take a bit...')
         self.go_on = False
         self.do_close_wallet()
-        reactor.stop()
+        reactor.crash()
 
     def do_channel(self,arguments):
         if not self.Wallet:
@@ -237,8 +235,8 @@ class UserPromptInterface(PromptInterface):
         elif command == "open":
             walletHeight = self.Wallet.LoadStoredData("Height")
             blockHeight = Blockchain.Default().HeaderHeight
-            if walletHeight >= blockHeight-10:
-                if gate_way.jion_gateway():
+            if int(walletHeight) >= int(blockHeight)-10:
+                if gate_way.join_gateway(self.Wallet.pubkey):
                     self.Channel = True
             else:
                 self._channel_noopen()
@@ -274,6 +272,10 @@ class UserPromptInterface(PromptInterface):
         return completer
 
     def handlemaessage(self):
+        password_key = to_aes_key("will1234567890")
+        self.Wallet = UserWallet.Open("hello", password_key)
+        self.Wallet.address, self.Wallet.pubkey = self.get_address()
+        print(self.Wallet.address, self.Wallet.pubkey)
         while True:
             if not MessageList:
                 pass
@@ -295,6 +297,11 @@ class UserPromptInterface(PromptInterface):
             m_instance = mg.RsmcMessage(message, self.Wallet)
         elif message_type == "RegisterChannel":
             m_instance = mg.RegisterMessage(message, self.Wallet)
+        elif message_type == "CreateChannelMessage":
+            print("here")
+            m_instance = mg.CreateChannel(message, self.Wallet)
+        elif message_type == "TestMessage":
+            m_instance = mg.TestMessage(message, self.Wallet)
         else:
             return "No Message Type Fould"
 
@@ -370,9 +377,9 @@ def main():
     endpoints.serverFromString(reactor, endpoint_rpc).listen(Site(api_server_rpc.app.resource()))
 
     reactor.suggestThreadPoolSize(15)
-    reactor.callInThread(UserPrompt.run)
+    #reactor.callInThread(UserPrompt.run)
     reactor.callInThread(UserPrompt.handlemaessage)
-    reactor.callInThread(monitorblock)
+    #reactor.callInThread(monitorblock)
     NodeLeader.Instance().Start()
     reactor.run()
 
