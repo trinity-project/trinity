@@ -47,6 +47,9 @@ class RouteTree(Tree):
     def __init__(self):
         super().__init__()
 
+        # record the route path
+        self.route_path = []
+
     def create(self,tag, identifier, data):
         self.create_node(tag=tag, identifier=identifier, data=data)
         self.root = identifier
@@ -54,11 +57,18 @@ class RouteTree(Tree):
     def find_router(self, identifier, policy=None):
         """
 
-        :param destination: use the url as the identifier
+        :param identifier:  use the url as the identifier
         :param policy:      not used currently
         :return:
         """
-        return [nid for nid in self.rsearch(identifier)][::-1]
+        self.route_path = [nid for nid in self.rsearch(identifier)][::-1]
+        return self.route_path
+
+    def next_jump(self, current_point):
+        try:
+            return self.route_path[self.route_path.index(current_point)+1]
+        except Exception:
+            return None
 
     @classmethod
     def to_tree(cls, tr_json):
