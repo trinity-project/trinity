@@ -104,26 +104,15 @@ class RouteTree(Tree):
         :param peer_tree:
         :return:
         """
-        new_peer_trees = list()
-        # peer_tree_root = peer_tree.root
-        copy_tree = copy.deepcopy(self)
         copy_peer_tree = copy.deepcopy(peer_tree)
         # if contains each other
         if peer_tree.contains(self.root):
             copy_peer_tree.remove_node(self.root)
         if self.contains(peer_tree.root):
             self.remove_node(peer_tree.root)
-            # copy_tree.remove_node()
-            # self.paste(self.root, copy_peer_tree)
         self.paste(self.root, copy_peer_tree)
-        peer_tree.paste(peer_tree.root, copy_tree)
-        return peer_tree
-        # for child in self.is_branch(self.root):
-        #     new_tree = copy.deepcopy(self)
-        #     new_tree.root = child
-        #     new_peer_trees.append(new_tree)
-        # return new_peer_trees
-        # return new_peer_trees
+            
+            
 
 
 class WalletSet(object):

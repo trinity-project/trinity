@@ -11,7 +11,7 @@ from asyncio import get_event_loop, gather, Task, sleep, ensure_future, iscorout
 from config import cg_tcp_addr, cg_wsocket_addr
 
 route_tree = RouteTree()
-# route_tree.create_node("Daviv", "Daviv")  # root node
+# route_tree.create_node(pk, ipport, data)  # root node
 # tree.create_node("Jane", "jane", parent="daviv")
 node_list = set()
 # get from wallet
@@ -76,7 +76,7 @@ class Gateway():
         loop = get_event_loop()
         loop.run_until_complete(services_future)
         self._save(services_future.result(), loop)
-        self._add_timer_push_web_task()
+        # self._add_timer_push_web_task()
         print("Gateway tcp service on: {}".format(cg_tcp_addr))
         print("Gateway websocket service on: {}".format(cg_wsocket_addr))
         AsyncJsonRpc.start_jsonrpc_serv()
@@ -240,9 +240,10 @@ class Gateway():
                     self.tcp_pk_dict[receiver_pk].send(utils.encode_bytes(data))
 
         elif msg_type == "SyncChannelState":
-            peer_tree =  RouteTree.to_tree(json.dumps(data))
+            pass
+            # peer_tree =  RouteTree.to_tree(json.dumps(data))
             # first change self tree and sync to self's neighbors
-            route_tree.sync_tree(peer_tree)
+            # route_tree.sync_tree(peer_tree)
         
         # test sync router tree
         # tr_dic = utils.decode_bytes(bdata)
@@ -263,7 +264,9 @@ class Gateway():
         """
         处理websocket请求
         """
-        data = utils.json_to_dict(strdata)
+        self._add_event_push_web_task()
+        # data = utils.json_to_dict(strdata)
+        data = {}
         msg_type = data.get("MessageType")
         # build map bettween spv pk_key with websocket connection
         if msg_type == "AddChannel":
@@ -359,11 +362,24 @@ class Gateway():
 
 
     def _add_event_push_web_task(self):
-        ensure_future(WsocketService.push_by_event(self.websocket.websockets))
+        utils.mock_node_list_data(route_tree)
+        message = {
+            "MessageType": "RouterInfo",
+            "RouterInfo": route_tree.to_json(with_data=True)
+        }
+        print(message)
+        ensure_future(WsocketService.push_by_event(self.websocket.websockets, message))
 
     def _add_timer_push_web_task(self):
         ensure_future(WsocketService.push_by_timer(self.websocket.websockets, 15))
     
+    def sync_channel_route_to_peer(self):
+        self_tree = node["route_tree"]
+        for child in self_tree.is_branch(self_tree.root):
+            node_object = self_tree.get_node(child)
+            pk = node_object.tag
+            self.tcp_pk_dict.get(pk).send(utils.encode_bytes(self_tree.to_json()))
+
 
     def handle_transaction_message(self, data):
         receiver_pk, receiver_ip_port = utils.parse_url(data["Receiver"])
@@ -468,3 +484,9 @@ class Gateway():
                 self.tcp_pk_dict[receiver_pk].send(utils.encode_bytes(data))
 
 gateway_singleton = Gateway()
+
+if __name__ == "__main__":
+    from routertree import SPVHashTable
+    spv_table = SPVHashTable()
+    utils.mock_node_list_data(route_tree, spv_table)
+    print(route_tree.nodes)

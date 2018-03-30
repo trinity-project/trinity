@@ -11,7 +11,7 @@ if __name__ == "__main__":
 
     
     c = Client()
-    addr = ("localhost", 8088)
+    addr = ("106.15.91.150", 8089)
     c.send(addr, (str_tree + "eof").encode("utf-8"))
     while(True):
         pass

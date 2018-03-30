@@ -10,19 +10,19 @@ class WsocketService:
     不可实例化
     """
     @staticmethod
-    async def push_by_event(cons):
+    async def push_by_event(cons, msg):
         """
         push spv triggered by some event
         """
         for con in cons:
             try:
-                msg = {
-                    "type": "sync_state",
-                    "body": {
-                        "content": "This is a push message triggered by peer state changed",
-                        "state": "other spv disconnectioned"
-                    }
-                }
+                # msg = {
+                #     "type": "sync_state",
+                #     "body": {
+                #         "content": "This is a push message triggered by peer state changed",
+                #         "state": "other spv disconnectioned"
+                #     }
+                # }
                 await con.send(json.dumps(msg))
             except Exception:
                 pass
@@ -53,6 +53,7 @@ class WsocketService:
         while True:
             from gateway import gateway_singleton
             try:
+                # every client first connected the server
                 print('client {} conected'.format(con.remote_address[1]))
                 # todo 数据包完是否整检测
                 message = await con.recv()
