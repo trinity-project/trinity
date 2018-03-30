@@ -419,7 +419,7 @@ def main():
     endpoints.serverFromString(reactor, endpoint_rpc).listen(Site(api_server_rpc.app.resource()))
 
     reactor.suggestThreadPoolSize(15)
-    #reactor.callInThread(UserPrompt.run)
+    reactor.callInThread(UserPrompt.run)
     reactor.callInThread(UserPrompt.handlemaessage)
     reactor.callInThread(monitorblock)
     NodeLeader.Instance().Start()
