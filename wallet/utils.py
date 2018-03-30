@@ -22,12 +22,19 @@ LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE."""
 from neocore.Cryptography.Crypto import Crypto
+import binascii
 
 def pubkey_to_address(publickey: str):
     script = b'21' + publickey.encode() + b'ac'
     script_hash = Crypto.ToScriptHash(script)
     address = Crypto.ToAddress(script_hash)
     return address
+
+
+def sign(wallet, context):
+    keypair = wallet.LoadKeyPairs().values()
+    keypair = [i for i in keypair][0]
+    res = binascii.hexlify(Crypto.Sign(message=context, private_key=bytes(keypair.PrivateKey))).decode()
 
 
 if __name__ == "__main__":

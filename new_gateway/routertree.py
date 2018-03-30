@@ -37,7 +37,6 @@ def parse_uri(uri):
     return None
 
 
-
 class RouteTree(Tree):
     """
     # Node(tag, nid, data)
@@ -48,6 +47,9 @@ class RouteTree(Tree):
     def __init__(self):
         super().__init__()
 
+        # record the route path
+        self.route_path = []
+
     def create(self,tag, identifier, data):
         self.create_node(tag=tag, identifier=identifier, data=data)
         self.root = identifier
@@ -55,11 +57,19 @@ class RouteTree(Tree):
     def find_router(self, identifier, policy=None):
         """
 
-        :param destination: use the url as the identifier
+        :param identifier:  use the url as the identifier
         :param policy:      not used currently
         :return:
         """
-        return [nid for nid in self.rsearch(identifier)][::-1]
+        self.route_path = [nid for nid in self.rsearch(identifier)][::-1]
+        return self.route_path
+
+    @property
+    def next_jump(self):
+        try:
+            return self.route_path[self.route_path.index(self.root)+1]
+        except Exception:
+            return None
 
     @classmethod
     def to_tree(cls, tr_json):
@@ -173,6 +183,10 @@ class SPVHashTable(object):
         :param hash_table: json or dict type
         :return:
         """
+        if isinstance(hash_table, str):
+            # decoder
+            hash_table = self.to_dict(hash_table)
+
         if not hash_table:
             return
 
@@ -185,3 +199,7 @@ class SPVHashTable(object):
 
     def to_json(self):
         return json.dumps(self.maps)
+
+    @staticmethod
+    def to_dict(s):
+        return json.loads(s)

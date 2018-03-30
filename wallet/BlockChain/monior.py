@@ -26,8 +26,11 @@ SOFTWARE."""
 from logzero import logger
 from neo.Core.Blockchain import Blockchain
 import time
-from wallet.TransactionManagement.transaction import BlockHightRegister, TxIDRegister
+from wallet.TransactionManagement.transaction import BlockHightRegister, TxIDRegister,TxDataDir, crypto_channel
+import os
+from wallet.Interface.gate_way import send_message
 
+BlockHeightRecord = os.path.join(TxDataDir,"block.data")
 
 def monitorblock():
 
@@ -40,16 +43,19 @@ def monitorblock():
             hash = Blockchain.Default().GetNextBlockHash(block.Hash)
             if hash:
                 jsn['nextblockhash'] = '0x%s' % hash.decode('utf-8')
+                send_message_to_gateway(jsn)
+                handle_message(Blockchain.Default().Height,jsn)
                 logger.info("Block %s / %s", str(jsn), str(Blockchain.Default().HeaderHeight))
         except Exception as e:
             logger.error("GetBlockError", e)
         time.sleep(15)
 
 def send_message_to_gateway(message):
-    print(message)
+    send_message(message)
 
-def handle_message(height):
+def handle_message(height,jsn):
     match_list=[]
+    block_txids = [i.get("txid") for i in jsn.get("tx")]
     for index,value in enumerate(BlockHightRegister):
         if value[0] == height:
             value[1](*value[1:])
@@ -58,11 +64,21 @@ def handle_message(height):
         BlockHightRegister.remove(i)
     match_list =[]
     for index, value in enumerate(TxIDRegister):
-        if value[0] == height:
-            value[1](*value[1:])
+        txid = value[0]
+        if txid in block_txids:
+            value[1](value[0],*value[1:])
             match_list.append(value)
     for i in match_list:
         TxIDRegister.remove(i)
+
+def register_monitor(*args):
+    TxIDRegister.append(args)
+
+def record_block(txid, block_height):
+    with open(BlockHeightRecord, "wb+") as f:
+        info = {}.setdefault(txid, block_height)
+        crypto_channel(f,**info)
+
 
 
 
