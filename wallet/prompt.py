@@ -311,10 +311,6 @@ class UserPromptInterface(PromptInterface):
         return completer
 
     def handlemaessage(self):
-        password_key = to_aes_key("will1234567890")
-        self.Wallet = UserWallet.Open("hello", password_key)
-        self.Wallet.address, self.Wallet.pubkey = self.get_address()
-        print(self.Wallet.address, self.Wallet.pubkey)
         while True:
             if MessageList:
                 message = MessageList.pop()
