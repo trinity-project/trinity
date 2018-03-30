@@ -37,7 +37,6 @@ def parse_uri(uri):
     return None
 
 
-
 class RouteTree(Tree):
     """
     # Node(tag, nid, data)
@@ -173,6 +172,10 @@ class SPVHashTable(object):
         :param hash_table: json or dict type
         :return:
         """
+        if isinstance(hash_table, str):
+            # decoder
+            hash_table = self.to_dict(hash_table)
+
         if not hash_table:
             return
 
@@ -185,3 +188,7 @@ class SPVHashTable(object):
 
     def to_json(self):
         return json.dumps(self.maps)
+
+    @staticmethod
+    def to_dict(s):
+        return json.loads(s)
