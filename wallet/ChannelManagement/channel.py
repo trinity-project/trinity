@@ -41,7 +41,6 @@ def query_ip(address):
 GateWayUrl = get_gateway_ip()
 
 
-
 class Channel(object):
     """
 
@@ -50,25 +49,35 @@ class Channel(object):
         self.founder = founder
         self.partner = partner
         self.founder_pubkey = self.founder.split("@")[0]
+        print(self.founder_pubkey)
         self.founder_address = pubkey_to_address(self.founder_pubkey)
         self.partner_pubkey = self.partner.split("@")[0]
         self.partner_address = pubkey_to_address(self.partner_pubkey)
 
+
     @staticmethod
     def get_channel(address1, address2):
-        #channel = APIChannel.batch_query_channel(filters={"src_addr":address1, "dest_adr":address2}, )
-        channel = None
-        if channel:
-            return channel
-        else:
-            #return APIChannel.batch_query_channel(filters={"src_addr":address2, "dest_adr":address1})
-            return None
+
+        try:
+            channel = APIChannel.batch_query_channel(filters={"src_addr": address1, "dest_adr": address2})
+            return channel["content"][0].channel
+        except:
+            try:
+                channel= APIChannel.batch_query_channel(filters={"src_addr":address2, "dest_adr":address1})
+                return channel["content"][0].channel
+            except:
+                return None
 
     @classmethod
     def channel(cls,channelname):
-        channel = APIChannel.query_channel(channel=channelname)
-        return cls(channel.src_addr, channel.dest_addr)
-
+        try:
+            channel = APIChannel.query_channel(channel=channelname)
+            channel_info = channel["content"][0]
+        except Exception as e:
+            return None
+        ch =cls(channel_info.src_addr, channel_info.dest_addr)
+        ch.channel_name = channelname
+        return ch
 
 
     def _init_channle_name(self):
@@ -82,13 +91,14 @@ class Channel(object):
             raise ChannelExist
         self.start_time = time.time()
         self.asset_type = asset_type
-        self.deposit = {"source":{}.setdefault(asset_type, deposit), 'destination': {}.setdefault(asset_type, deposit)}
+        self.deposit = {}
+        self.deposit[self.founder] = {}.setdefault(asset_type, deposit)
+        self.deposit[self.partner] = {}.setdefault(asset_type, deposit)
         self.channel_name = self._init_channle_name()
         print(self.channel_name)
 
-        result = APIChannel.add_channel(self.channel_name,self.founder_address, self.partner_address,
+        result = APIChannel.add_channel(self.channel_name,self.founder_pubkey, self.partner_pubkey,
                      EnumChannelState.INIT.name, 0, self.deposit, 0)
-        print(result)
         if cli:
             message={"MessageType":"RegisterChannel",
                  "Sender": self.founder,
@@ -111,10 +121,41 @@ class Channel(object):
     def state(self):
         return None
 
+    @property
+    def src_addr(self):
+        ch = self._get_channel()
+        if ch:
+            return ch.src_addr
+        else:
+            return None
+
+    @property
+    def dest_addr(self):
+        ch = self._get_channel()
+        if ch:
+            return ch.dest_addr
+        else:
+            return None
+
+    def _get_channel(self):
+        try:
+            channel = APIChannel.query_channel(self.channel_name)
+            return channel["content"][0]
+        except Exception as e:
+            print(e)
+            return None
+
     def get_balance(self):
+        ch = self._get_channel()
+        if ch:
+            return ch.balance
+        else:
+            return None
+
+    def get_deposit(self):
         channel = APIChannel.query_channel(self.channel_name)
-        balance = channel.balance
-        return balance
+        deposit = channel.deposit
+        return deposit
 
 
 def create_channel(founder, partner, asset_type, depoist:int, cli=True):
@@ -123,7 +164,7 @@ def create_channel(founder, partner, asset_type, depoist:int, cli=True):
 
 def get_channel_name_via_address(address1, address2):
     channel = Channel.get_channel(address1, address2)
-    return channel.channel_name
+    return channel.channel
 
 
 if __name__ == "__main__":
