@@ -64,9 +64,10 @@ class RouteTree(Tree):
         self.route_path = [nid for nid in self.rsearch(identifier)][::-1]
         return self.route_path
 
-    def next_jump(self, current_point):
+    @property
+    def next_jump(self):
         try:
-            return self.route_path[self.route_path.index(current_point)+1]
+            return self.route_path[self.route_path.index(self.root)+1]
         except Exception:
             return None
 
