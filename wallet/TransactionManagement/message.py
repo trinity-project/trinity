@@ -73,19 +73,20 @@ class RegisterMessage(Message):
     def __init__(self, message, wallet):
         super().__init__(message)
         self.deposit = self.message_body.get("Deposit")
+        self.asset_type = self.message_body.get("AssetType")
+        self.channel_name = self.message.get("ChannelName")
         self.wallet = wallet
 
     def handle_message(self):
         if not self.wallet:
             print("No Wallet Open")
             return
-        founder_pubkey = self.sender.split("@")[0]
-        partner_pubkey = self.receiver.split("@")[0]
+        founder_pubkey, founder_ip = self.sender.split("@")
+        partner_pubkey, partner_ip = self.receiver.split("@")
         founder_address = pubkey_to_address(founder_pubkey)
         partner_address = pubkey_to_address(partner_pubkey)
 
-        FounderMessage.create(founder_address,founder_pubkey, partner_address, partner_pubkey, self.deposit)
-
+        FounderMessage.create(self.channel_name,founder_pubkey,partner_pubkey, self.asset_type,self.deposit, partner_ip)
 
 class TestMessage(Message):
 
@@ -353,8 +354,8 @@ class RsmcMessage(TransactionMessage):
         if verify:
             self.send_responses()
             if self.transaction.get_tx_nonce(self.tx_nonce):
-            ctxid = self.commitment.get("txID")
-            self.transaction.update_transaction(self.tx_nonce, MonitorTxId=ctxid)
+                ctxid = self.commitment.get("txID")
+                self.transaction.update_transaction(self.tx_nonce, MonitorTxId=ctxid)
         else:
             self.send_responses(error = error)
 
