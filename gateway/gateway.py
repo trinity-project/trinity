@@ -110,7 +110,7 @@ class Gateway():
 
     def handle_tcp_request(self, transport, bdata):
         data = utils.decode_bytes(bdata)
-        sender = "xxxxxxxxxxxxxxx@localhost:8088"
+        sender = node["wallet_info"]["url"]
         msg_type = data.get("MessageType")
         if msg_type == "JoinNet":
             # join net sync node_list
@@ -136,7 +136,7 @@ class Gateway():
             peer_pk = utils.get_public_key(data["Sender"])
             self.tcp_pk_dict[peer_pk] = transport
 
-        elif msg_type == "TransactionMessage":
+        elif msg_type in ["Rsmc","FounderSign","Founder","RsmcSign","FounderFail"]:
             receiver_pk, receiver_ip_port = utils.parse_url(data["Receiver"])
             self_pk, self_ip_port = utils.parse_url(node["wallet_info"]["url"])
             # include router info situation
@@ -270,8 +270,11 @@ class Gateway():
         msg_type = data.get("MessageType")
         # build map bettween spv pk_key with websocket connection
         if msg_type == "AddChannel":
+            # first save the spv_pk and websocket connection map 
             spv_pk = utils.get_public_key(data["Sender"])
             self.ws_pk_dict[spv_pk] = websocket
+            # pass the message to wallet to handle
+            self._send_jsonrpc_msg("method", strdata)
         elif msg_type == "CombinationTransaction":
             pass
         elif msg_type == "GetRouterInfo":
@@ -365,9 +368,11 @@ class Gateway():
         utils.mock_node_list_data(route_tree)
         message = {
             "MessageType": "RouterInfo",
-            "RouterInfo": route_tree.to_json(with_data=True)
+            "RouterInfo": route_tree.to_dict(with_data=True)
         }
+
         print(message)
+        route_tree.show()
         ensure_future(WsocketService.push_by_event(self.websocket.websockets, message))
 
     def _add_timer_push_web_task(self):

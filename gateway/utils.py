@@ -145,7 +145,7 @@ def mock_node_list_data(route_tree):
     if route_tree.root:
         return
     parent_node = []
-    for count in range(5):
+    for count in range(3):
         fee = random.randint(1,10)
         deposit = random.randint(5, 100)
         ip_port = ".".join(([str(random.randint(10, 999))]*4)) + ":" + str(random.randint(1000, 9000))
@@ -156,17 +156,26 @@ def mock_node_list_data(route_tree):
             "Fee": fee,
             "Deposit": deposit,
             "PblickKey": pk,
+            "Ip": ip_port,
             "SpvList": [(ip_port, spk)]
         }
         if count == 0:
-            route_tree.create_node(ip_port, ip_port, data=data) # root
+            route_tree.create_node("node", ip_port, data=data) # root
             parent = ip_port
             parent_node.append(parent)
             ip_port = ".".join(([str(random.randint(10, 999))]*4)) + ":" + str(random.randint(1000, 9000))
-            route_tree.create_node(ip_port, ip_port, parent=parent, data=data) # root
+            pk = "abcdefghigklmn" + str(random.randint(1000, 9999))
+            data = {
+                "Fee": fee,
+                "Deposit": deposit,
+                "PblickKey": pk,
+                "Ip": ip_port,
+                "SpvList": [(ip_port, spk)]
+            }
+            route_tree.create_node("node", ip_port, parent=parent, data=data) # root
             parent_node.append(ip_port)
 
         else:
-            route_tree.create_node(ip_port, ip_port, parent=parent_node[random.randint(0,1)], data=data)
+            route_tree.create_node("node", ip_port, parent=parent_node[random.randint(0,1)], data=data)
 
     
