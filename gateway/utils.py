@@ -158,7 +158,7 @@ def generate_node_list_data(node):
             identifier=ip_port,
             data={
                 "Ip": ip_port,
-                "Public": pk,
+                "Pblickkey": pk,
                 "Name": node["name"],
                 "Deposit": node["wallet_info"]["deposit"],
                 "Fee": node["wallet_info"]["fee"],
