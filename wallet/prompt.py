@@ -42,7 +42,7 @@ from neo.Implementations.Wallets.peewee.UserWallet import UserWallet
 from neo.Wallets.utils import to_aes_key
 from wallet.Interface import gate_way
 from wallet.configure import Configure
-GateWayIP = Configure.get("GatewayURL")
+GateWayIP = Configure.get("GatewayIP")
 from functools import reduce
 
 
@@ -319,6 +319,7 @@ class UserPromptInterface(PromptInterface):
             time.sleep(0.3)
 
     def _handlemessage(self,message):
+        print("Receive Message： ",message)
         try:
             message_type = message.get("MessageType")
         except AttributeError:
