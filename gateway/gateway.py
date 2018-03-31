@@ -192,7 +192,7 @@ class Gateway():
         if type(params) == str:
             data = json.loads(params)
         else:
-            data = json.loads(params[0])
+            data = params
         msg_type = data.get("MessageType")
         if method == "ShowNodeList":
             return utils.generate_ack_show_node_list(node_list)
