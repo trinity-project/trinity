@@ -241,7 +241,7 @@ class Gateway():
                 return "{}"
 
     def handle_web_first_connect(self, websocket):
-        if node.get("wallet_info"):
+        if not node.get("wallet_info"):
             node["wallet_info"] = {
                 "deposit": 5,
                 "fee": 1,
