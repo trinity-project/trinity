@@ -21,10 +21,10 @@ async def SyncWalletData(params):
     from gateway import gateway_singleton
     return gateway_singleton.handle_jsonrpc_request('SyncWalletData', params)
 
-# @methods.add
-# async def GetChannelInfo(params):
-#     from gateway import gateway_singleton
-#     return gateway_singleton.handle_jsonrpc_request('JoinNet', params)
+@methods.add
+async def TransactionMessage(params):
+    from gateway import gateway_singleton
+    return gateway_singleton.handle_jsonrpc_request('TransactionMessage', params)
 
 @methods.add
 async def GetRouterInfo(params):

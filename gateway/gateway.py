@@ -2,42 +2,22 @@
 import pprint
 import json
 import utils
-from routertree import RouteTree, parse_uri
+from routertree import RouteTree, SPVHashTable
 from tcpservice import TcpService
 from wsocket import WsocketService
 from jsonrpc import AsyncJsonRpc
 from asyclient import send_tcp_msg
 from asyncio import get_event_loop, gather, Task, sleep, ensure_future, iscoroutine
-from config import cg_tcp_addr, cg_wsocket_addr
+from config import cg_tcp_addr, cg_wsocket_addr, cg_public_ip_port
 
-route_tree = RouteTree()
-# route_tree.create_node(pk, ipport, data)  # root node
-# tree.create_node("Jane", "jane", parent="daviv")
+
+# route_tree.create_node('node',cg_public_ip_port, data={Deposit:xx,Fee:xx,IP:xx,Publickey:xx,SpvList:[]})  # root node
 node_list = set()
-# get from wallet
-# local_url = "xxxxxxxxxxxx@0.0.0.0:8000"
-# wallet_info = {
-#     "fee": 3,
-#     "url": "xxxxxxxxxxxx@0.0.0.0:8000"
-# }
-route = {
-    "FullPath": ["A", "B", "C"],
-    "NextJump": "B"
-}
 node = {
     "wallet_info": None,
-    "route_tree": None,
-    "spv_table": None
+    "route_tree": RouteTree(),
+    "spv_table": SPVHashTable()
 }
-# websocket(connection) and spv url dictionary key: public key,value: websocket
-# ws_pk_dict = {
-
-# }
-# tcp transport(connection) and node url dictionary key: public key,value: transport
-# tcp_pk_dict = {
-    
-# }
-# route_tree.create_node("Jane", "jane", parent="harry")
 class Gateway():
     """
     gateway 类 定义了所有直接相关的行为与属性
@@ -137,128 +117,11 @@ class Gateway():
             self.tcp_pk_dict[peer_pk] = transport
 
         elif msg_type in ["Rsmc","FounderSign","Founder","RsmcSign","FounderFail"]:
-            receiver_pk, receiver_ip_port = utils.parse_url(data["Receiver"])
-            self_pk, self_ip_port = utils.parse_url(node["wallet_info"]["url"])
-            # include router info situation
-            if data.get("RouterInfo"):
-                router = data["RouterInfo"]
-                full_path = router["FullPath"]
-                next_jump = router["Next"]
-                # valid msg
-                if next_jump == node["wallet_info"]["url"]:
-                    # arrive end
-                    if full_path(len(full_path)-1)[0] == next_jump:
-                        # spv---node---spv siuation
-                        if len(full_path) == 1:
-                            # right active
-                            message = utils.generate_trigger_transaction_msg(
-                                node["wallet_info"]["url"],
-                                data["Receiver"],
-                                data["MessageBody"]["Value"] - node["wallet_info"]["Fee"]
-                            )
-                            pk = utils.parse_url(data["Receiver"])[0]
-                            self._send_wsocket_msg(self.ws_pk_dict[pk], json.dumps(message))
-                            # left active
-                            message = utils.generate_trigger_transaction_msg(
-                                data["Sender"],
-                                node["wallet_info"]["url"],
-                                data["MessageBody"]["Value"] - node["wallet_info"]["Fee"]
-                            )
-                            self._send_jsonrpc_msg("TransactionMessage", json.dumps(message))
-                        # xx--node--node--..--xx siuation
-                        else:
-                            # to self's spv
-                            if receiver_pk != self_pk:
-                                message = utils.generate_trigger_transaction_msg(
-                                    node["wallet_info"]["url"],
-                                    data["Receiver"],
-                                    data["MessageBody"]["Value"] - node["wallet_info"]["Fee"]
-                                )
-                                pk = utils.parse_url(data["Receiver"])[0]
-                                self._send_wsocket_msg(self.ws_pk_dict[pk], json.dumps(message))
-                            # to self's wallet 
-                            # previs hased send the transactions to this node
-                            # do nothing to the origin mesg
-                            else:
-                                pass
-                    # go on pass msg
-                    else:
-                        new_next_jump = full_path(full_path.index((next_jump, node["wallet_info"]["fee"])) + 1)[0]
-                        data["RouterInfo"]["Next"] = new_next_jump
-                        # node1--node2--xxx this for node1 siuation
-                        if data["Sender"] == node["wallet_info"]["url"]:
-                            message = utils.generate_trigger_transaction_msg(
-                                node["wallet_info"]["url"], # self
-                                new_next_jump,
-                                data["MessageBody"]["Value"]
-                            )
-                            self._send_jsonrpc_msg("TransactionMessage", json.dumps(message))
-                        # pxxx---node----exxx for node
-                        else:
-                            # pxxx is spv
-                            if utils.parse_url(data["Sender"])[1] == self_ip_port:
-                                # left active
-                                left_message = utils.generate_trigger_transaction_msg(
-                                    data["Sender"],
-                                    node["wallet_info"]["url"],
-                                    data["MessageBody"]["Value"] - node["wallet_info"]["Fee"]
-                                )
-                                # right active
-                                right_message = utils.generate_trigger_transaction_msg(
-                                    node["wallet_info"]["url"], # self
-                                    new_next_jump,
-                                    data["MessageBody"]["Value"] - node["wallet_info"]["fee"]
-                                )
-                                self._send_jsonrpc_msg("TransactionMessage", json.dumps(left_message))
-                                self._send_jsonrpc_msg("TransactionMessage", json.dumps(right_message))
-                            # pxxx is node
-                            else:
-                                message = utils.generate_trigger_transaction_msg(
-                                    node["wallet_info"]["url"], # self
-                                    new_next_jump,
-                                    data["MessageBody"]["Value"] - node["wallet_info"]["fee"]
-                                )
-                                self._send_jsonrpc_msg("TransactionMessage", json.dumps(message))
-                        pk = utils.parse_url(new_next_jump)[0]
-                        self.tcp_pk_dict.get(pk).send(utils.encode_bytes(data))
-                # invalid msg
-                else:
-                    pass
-            # no router info situation
-            # send the msg to receiver directly
-            else:
-                if receiver_ip_port == self_ip_port:
-                    # to self's spv
-                    if receiver_pk != self_pk:
-                        self._send_wsocket_msg(self.ws_pk_dict[receiver_pk], json.dumps(data))
-                    # to self's wallet
-                    else:
-                        self._send_jsonrpc_msg("TransactionMessage", json.loads(data))
-                
-                # to self's peer
-                else:
-                    self.tcp_pk_dict[receiver_pk].send(utils.encode_bytes(data))
+            self.handle_transaction_message(data)
 
         elif msg_type == "SyncChannelState":
-            pass
-            # peer_tree =  RouteTree.to_tree(json.dumps(data))
-            # first change self tree and sync to self's neighbors
-            # route_tree.sync_tree(peer_tree)
+            self.sync_channel_route_to_peer()
         
-        # test sync router tree
-        # tr_dic = utils.decode_bytes(bdata)
-        # peer_tree = RouteTree.to_tree(json.dumps(tr_dic))
-        # print("本地节点同步前树形结构")
-        # route_tree.show()
-        # print("peer 同步前的树形结构")
-        # peer_tree.show()
-        # new_peer_tree = route_tree.sync_tree(peer_tree)
-        # print("本地节点同步后树形结构")
-        # route_tree.show()
-        # print("peer 同步后的树形结构")
-        # new_peer_tree.show()
-        # print(new_peer_tree.all_nodes())
-        # print(peer_tree.show())
 
     def handle_wsocket_request(self, websocket, strdata):
         """
@@ -325,6 +188,7 @@ class Gateway():
 
     def handle_jsonrpc_request(self, method, params):
         data = json.loads(params)
+        msg_type = data.get("MessageType")
         if method == "ShowNodeList":
             return utils.generate_ack_show_node_list(node_list)
         if method == "JoinNet":
@@ -336,9 +200,13 @@ class Gateway():
             return "{'JoinNet': 'OK'}"
         elif method == "SyncWalletData":
             data = json.loads(params)
-            node["wallet_info"] = dat["MessageBody"]
-            node["wallet_info"]["url"] = node["wallet_info"]["PublicKey"]
-            return json.dumps(utils.generate_ack_sync_wallet_msg)
+            body = data.get("MessageBody")
+            node["wallet_info"] = {
+                "url": body["Publickey"] + "@" + cg_public_ip_port,
+                "deposit": body["CommitMinDeposit"],
+                "fee": body["Fee"]
+            }
+            return json.dumps(utils.generate_ack_sync_wallet_msg(node["wallet_info"]["url"]))
         # search chanenl router return the path
         elif method == "GetRouterInfo":
             receiver = data.get("Receiver")
@@ -362,7 +230,9 @@ class Gateway():
                     "Next": next_jump
                 }
                 return json.dumps(utils.generate_ack_router_info_msg(router))
-
+        elif method == "TransactionMessage":
+            if msg_type == "RegisterChannel":
+                return "{}"
 
     def _add_event_push_web_task(self):
         utils.mock_node_list_data(route_tree)
@@ -372,7 +242,7 @@ class Gateway():
         }
 
         print(message)
-        route_tree.show()
+        route_tree.show(line_type='ascii-en')
         ensure_future(WsocketService.push_by_event(self.websocket.websockets, message))
 
     def _add_timer_push_web_task(self):
@@ -384,7 +254,7 @@ class Gateway():
             node_object = self_tree.get_node(child)
             pk = node_object.tag
             self.tcp_pk_dict.get(pk).send(utils.encode_bytes(self_tree.to_json()))
-
+            
 
     def handle_transaction_message(self, data):
         receiver_pk, receiver_ip_port = utils.parse_url(data["Receiver"])
@@ -404,7 +274,7 @@ class Gateway():
                         message = utils.generate_trigger_transaction_msg(
                             node["wallet_info"]["url"],
                             data["Receiver"],
-                            data["MessageBody"]["Value"] - node["wallet_info"]["Fee"]
+                            data["MessageBody"]["Value"] - node["wallet_info"]["fee"]
                         )
                         pk = utils.parse_url(data["Receiver"])[0]
                         self._send_wsocket_msg(self.ws_pk_dict[pk], json.dumps(message))
@@ -412,7 +282,7 @@ class Gateway():
                         message = utils.generate_trigger_transaction_msg(
                             data["Sender"],
                             node["wallet_info"]["url"],
-                            data["MessageBody"]["Value"] - node["wallet_info"]["Fee"]
+                            data["MessageBody"]["Value"] - node["wallet_info"]["fee"]
                         )
                         self._send_jsonrpc_msg("TransactionMessage", json.dumps(message))
                     # xx--node--node--..--xx siuation
@@ -422,7 +292,7 @@ class Gateway():
                             message = utils.generate_trigger_transaction_msg(
                                 node["wallet_info"]["url"],
                                 data["Receiver"],
-                                data["MessageBody"]["Value"] - node["wallet_info"]["Fee"]
+                                data["MessageBody"]["Value"] - node["wallet_info"]["fee"]
                             )
                             pk = utils.parse_url(data["Receiver"])[0]
                             self._send_wsocket_msg(self.ws_pk_dict[pk], json.dumps(message))
@@ -451,7 +321,7 @@ class Gateway():
                             left_message = utils.generate_trigger_transaction_msg(
                                 data["Sender"],
                                 node["wallet_info"]["url"],
-                                data["MessageBody"]["Value"] - node["wallet_info"]["Fee"]
+                                data["MessageBody"]["Value"] - node["wallet_info"]["fee"]
                             )
                             # right active
                             right_message = utils.generate_trigger_transaction_msg(

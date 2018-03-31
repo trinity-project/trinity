@@ -126,10 +126,12 @@ def generate_trigger_transaction_msg(sender, receiver, value):
     }
     return message
 
-def generate_ack_sync_wallet_msg():
+def generate_ack_sync_wallet_msg(url):
     message = {
-        "MessageType": "AckSyncWallet"
-        # "MessageBody" {}
+        "MessageType": "AckSyncWallet",
+        "MessageBody":{
+            "Url": url
+        }
     }
     return message
 
@@ -140,6 +142,12 @@ def generate_ack_router_info_msg(router):
     }
     return message
 
+def generate_ack_TransactionMessage():
+    message = {
+        "MessageType": "AckTransactionMessage"
+    }
+    return message
+    
 def mock_node_list_data(route_tree):
     import random
     if route_tree.root:
