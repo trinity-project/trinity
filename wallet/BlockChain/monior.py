@@ -74,10 +74,14 @@ def handle_message(height,jsn):
 def register_monitor(*args):
     TxIDRegister.append(args)
 
+def register_block(*args):
+    BlockHightRegister.append(args)
+
 def record_block(txid, block_height):
     with open(BlockHeightRecord, "wb+") as f:
         info = {}.setdefault(txid, block_height)
         crypto_channel(f,**info)
+
 
 
 

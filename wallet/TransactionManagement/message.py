@@ -28,11 +28,10 @@ from wallet.ChannelManagement import channel as ch
 from sserver.model.channel_model import APIChannel
 from sserver.model.base_enum import EnumChannelState
 import os
-from wallet.BlockChain.monior import register_monitor
+from wallet.BlockChain.monior import register_monitor,register_block
 from wallet.configure import Configure
 from wallet.Interface.gate_way import send_message
 from wallet.utils import sign
-from wallet.BlockChain.monior import record_block
 GateWayIP = Configure["GatewayIP"]
 
 
@@ -362,17 +361,26 @@ class RsmcMessage(TransactionMessage):
 
     @staticmethod
     def create(channel_name, wallet, sender_pubkey, receiver_pubkey, value, partner_ip, tx_nonce, asset_type="TNC",
-               breachremedy=False,
+               breachremedy=False,cli =False,
                router = None, next_router=None):
-        #Todo check balance enght
         transaction = TrinityTransaction(channel_name, wallet)
         founder = transaction.get_founder()
-        balance = transaction.get_balance() # Todo check when the balance update
+        balance = transaction.get_balance()
+        if balance < value:
+            if cli:
+                return False, "No Balance"
+            else:
+                message =   { "MessageType":"CreateTransactionACK",
+    "Receiver":"{}@{}".format(receiver_pubkey,partner_ip),
+    "ChannelName":channel_name,
+    "Error": "No Balance"
+    }
         sender_balance = int(balance.get(sender_pubkey)) - value
         receiver_balance = int(balance.get(receiver_pubkey)) -value
         commitment = createCTX(founder["addressFunding"], sender_balance, receiver_balance,
                                sender_pubkey, receiver_pubkey, founder["scriptRSMC"])
-        revocabledelivery = createRDTX(commitment.get("addressRSMC"), sender_address, sender_balance,
+
+        revocabledelivery = createRDTX(commitment.get("addressRSMC"), pubkey_to_address(sender_pubkey), sender_balance,
                                        commitment.get("txId"),
                                        commitment.get("scriptRSMC"))
 
@@ -394,7 +402,7 @@ class RsmcMessage(TransactionMessage):
                 message.setdefault("NextRouter", next_router)
         else:
             founder = transaction.get_tx_nonce(tx_nonce=str(int(tx_nonce)-1))
-            breachremedy = createBRTX(founder["addressFunding"], receiver_address, sender_balance,
+            breachremedy = createBRTX(founder["addressFunding"], pubkey_to_address(receiver_pubkey), sender_balance,
                                       commitment["scriptRSMC"])
             breachremedy_sign = sign(wallet, breachremedy.get("txData"))
             message = {"MessageType": "Founder",
@@ -403,7 +411,7 @@ class RsmcMessage(TransactionMessage):
                        "TxNonce": tx_nonce,
                        "ChannelName": channel_name,
                        "MessageBody": {
-                           "BreachRemedy": breachremedy,
+                           "BreachRemedy": breachremedy_sign,
                            "AssetType": asset_type,
                            "Value": value
                            }
@@ -426,8 +434,17 @@ class RsmcMessage(TransactionMessage):
                     self.transaction.update_transaction(self.tx_nonce, BR=self.breach_remedy)
                     RsmcMessage.create(self.channel_name,self.wallet,self.receiver_pubkey,self.sender_pubkey,
                                        self.value,self.sender_ip, breachremedy=True)
+                    ctx = self.transaction.update_transaction(self.tx_nonce)
+                    monitor_ctxid = ctx.get("MonitorTxId")
+                    txdata = ctx.get("RevocableDelivery").get("orginalData").get("txData")
+                    txDataself = self.sign_message(txdata)
+                    txDataother = self.sign_message(ctx.get("RevocableDelivery").get("txDataSing")),
+                    witness = ctx.get("RevocableDelivery").get("orginalData").get("witness_part1")+\
+                              ctx.get("RevocableDelivery").get("orginalData").get("witness_part2")
+                    register_monitor(monitor_ctxid,monitor_height,txData+witness, txDataother, txDataself)
+
                     #Todo monitor B transaction
-                    #monitor_ctxid = self.transaction.get_tx_nonce().get("MonitorTxId")
+                    #monitor_ctxid = self.transaction.get_tx_nonce(str(int(self.tx_nonce)-1)).get("MonitorTxId")
                     #breach_remedy_sign = self.sign_message(self.breach_remedy.get("txDataSing"))
                     #rawdata =
                     #register_monitor(monitor_ctxid,  record_block, )
@@ -539,22 +556,23 @@ class HtlcMessage(TransactionMessage):
         receiver_address = pubkey_to_address(receiverpubkey)
         sender_balance = balance.get(sender_address)
         receiver_balance = balance.get(receiver_address)
-        hctx = createHCTX(senderpubkey,receiverpubkey,HTLCvalue,sender_balance,
-                          receiver_balance,hashR,founder["addressFunding"],founder["scriptFunding"])
-        hedtx = createHEDTX(hctx["addressHTLC"], receiver_address, HTLCvalue, hctx["HTLCscript"])
-        httx = createHTTX(hctx["addressHTLC"], sender_address, HTLCvalue, hctx["HTLCscript"])
-        message = {"MessageType": "Founder",
-                   "Sender": "{}@{}".format(senderpubkey, GateWayIP),
-                   "Receiver": "{}@{}".format(receiverpubkey, partner_ip),
-                   "TxNonce":tx_nonce ,
-                   "ChannelName": channel_name,
-                   "MessageBody": {
-                       "HCTX": hctx,
-                       "HEDTX": hedtx,
-                       "HTTX": httx
-                        }
-                   }
-        HtlcMessage.send(message)
+        #Todo
+        #hctx = createHCTX(senderpubkey,receiverpubkey,HTLCvalue,sender_balance,
+        #                 receiver_balance,hashR,founder["addressFunding"],founder["scriptFunding"])
+        #hedtx = createHEDTX(hctx["addressHTLC"], receiver_address, HTLCvalue, hctx["HTLCscript"])
+        #httx = createHTTX(hctx["addressHTLC"], sender_address, HTLCvalue, hctx["HTLCscript"])
+        #message = {"MessageType": "Founder",
+        #           "Sender": "{}@{}".format(senderpubkey, GateWayIP),
+        #           "Receiver": "{}@{}".format(receiverpubkey, partner_ip),
+        #           "TxNonce":tx_nonce ,
+        #          "ChannelName": channel_name,
+        #          "MessageBody": {
+        #               "HCTX": hctx,
+        #               "HEDTX": hedtx,
+        #               "HTTX": httx
+        #                }
+        #           }
+        #HtlcMessage.send(message)
 
 
 
@@ -628,7 +646,13 @@ class HtlcResponsesMessage(TransactionMessage):
 
 
 
-def monitor_founding(channel_name):
+def monitor_founding(height, channel_name):
     channel = ch.Channel.channel(channel_name)
     deposit = ch.Channel.get_deposit()
     channel.update_channel(state=EnumChannelState.OPENED.name, balance = deposit )
+
+def monitor_height(height, txdata, signother, signself):
+    register_block(str(int(height)+1000),send_rsmcr_transaction,height,txdata,signother, signself)
+
+def send_rsmcr_transaction(height,txdata,signother, signself):
+    pass
