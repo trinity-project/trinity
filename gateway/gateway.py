@@ -181,10 +181,11 @@ class Gateway():
         ensure_future(send_tcp_msg(addr, msg))
 
     def handle_wsocket_disconnection(self, websocket):
+        pass
         #self._add_event_push_web_task()
 
     def handle_jsonrpc_response(self, method, response):
-
+        
         print(response)
 
     def handle_jsonrpc_request(self, method, params):
