@@ -29,7 +29,7 @@ import json
 
 def join_gateway(publickey):
     message = {"MessageType":"SyncWallet",
-               "MesssgeBody":{
+               "MessageBody":{
                    "Publickey":publickey,
                    "CommitMinDeposit":Configure["Channel"]["CommitMinDeposit"],
                    "Fee":Configure["Fee"]
@@ -44,21 +44,23 @@ def join_gateway(publickey):
     result = requests.post(Configure["GatewayURL"], json=request)
     return result.json()
 
+
 def get_router_info(message):
     request = {
         "jsonrpc": "2.0",
         "method": "GetRouterInfo",
-        "params": json.dumps(message),
+        "params": [message],
         "id": 1
     }
     result = requests.post(Configure["GatewayURL"], json=request)
     return result.json()
 
+
 def send_message(message):
     request= {
             "jsonrpc": "2.0",
             "method": "TransactionMessage",
-            "params": [message],
+            "params": message,
             "id": 1
     }
     result = requests.post(Configure["GatewayURL"], json=request)

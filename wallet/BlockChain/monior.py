@@ -29,6 +29,7 @@ import time
 from wallet.TransactionManagement.transaction import BlockHightRegister, TxIDRegister,TxDataDir, crypto_channel
 import os
 from wallet.Interface.gate_way import send_message
+import json
 
 BlockHeightRecord = os.path.join(TxDataDir,"block.data")
 
