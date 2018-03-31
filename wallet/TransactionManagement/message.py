@@ -57,7 +57,7 @@ class Message(object):
 class RegisterMessage(Message):
     """
     transaction massage：
-    { "MessageType":"RegisterMessage",
+    { "MessageType":"RegisterChannel",
     "Sender": "9090909090909090909090909@127.0.0.1:20553",
     "Receiver":"101010101001001010100101@127.0.0.1:20552",
     "ChannelName":"090A8E08E0358305035709403",
