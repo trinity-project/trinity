@@ -27,6 +27,7 @@ SOFTWARE."""
 
 import binascii
 from neo.Core.TX.Transaction import Transaction
+from neocore.Cryptography.Crypto import Crypto
 from neocore.UInt160 import UInt160
 from neocore.UInt256 import UInt256
 from neo.Core.Helper import Helper
@@ -34,7 +35,7 @@ from neo.Network.NodeLeader import NodeLeader
 import json
 import os
 import pickle
-
+from TX.interface import *
 
 BlockHightRegister=[]
 TxIDRegister= []
@@ -162,12 +163,56 @@ def pickle_load(file):
         except EOFError:
             return pickles
 
+def scriptToAddress(script):
+    scriptHash=Crypto.ToScriptHash(script)
+    address=Crypto.ToAddress(scriptHash)
+    return address
 
+def construt_init_channel_transction(params):
 
+    walletSelf={
+        "pubkey":params[0],
+        "deposit":params[1],
+    }
+    walletOther={
+        "pubkey":params[2],
+        "deposit":params[3],
+    }
+    funding_tx = createFundingTx(walletSelf=walletSelf, walletOther=walletOther)
 
+    C_tx = createCTX(addressFunding=funding_tx["addressFunding"], balanceSelf=walletSelf["deposit"],
+                          balanceOther=walletOther["deposit"], pubkeySelf=walletSelf["pubkey"],
+                          pubkeyOther=walletOther["pubkey"], fundingScript=funding_tx["scriptFunding"])
 
+    RD_tx = createRDTX(addressRSMC=C_tx["addressRSMC"], addressSelf=pubkeyToAddress(walletSelf["pubkey"]),
+                            balanceSelf=walletSelf["deposit"], CTxId=C_tx["txId"],
+                            RSMCScript=C_tx["scriptRSMC"])
 
+    return {"funding_TX":funding_tx,"C_TX":C_tx,"R_TX":RD_tx}
 
+def construt_update_channel_transction(params):
+    walletSelf={
+        "pubkey":params[0],
+        "balance":params[1],
+    }
+    walletOther={
+        "pubkey":params[2],
+        "balance":params[3],
+    }
+    script_funding=params[4]
+    script_rsmc=params[5]
+    C_tx = createCTX(addressFunding=scriptToAddress(script_funding), balanceSelf=walletSelf["balance"],
+                          balanceOther=walletOther["balance"], pubkeySelf=walletSelf["pubkey"],
+                          pubkeyOther=walletOther["pubkey"], fundingScript=script_funding)
+
+    RD_tx = createRDTX(addressRSMC=C_tx["addressRSMC"], addressSelf=pubkeyToAddress(walletSelf["pubkey"]),
+                            balanceSelf=walletSelf["deposit"], CTxId=C_tx["txId"],
+                            RSMCScript=C_tx["scriptRSMC"])
+
+    BR_tx = createBRTX(addressRSMC=scriptToAddress(script_rsmc), addressOther=pubkeyToAddress(walletSelf["pubkey"]),
+                            balanceSelf=walletSelf["deposit"], RSMCScript=script_rsmc)
+
+    return {"BR_tx": BR_tx, "C_TX": C_tx, "R_TX": RD_tx}
 
 if __name__== "__main__":
     print(TxDataDir)

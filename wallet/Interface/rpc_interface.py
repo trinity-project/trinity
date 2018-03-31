@@ -136,5 +136,9 @@ class RpcInteraceApi(object):
         elif method == "TransactionMessage":
             return MessageList.append(params)
 
+        elif method == "ConstrutInitChannelTransction":
+            return transaction.construt_init_channel_transction(params)
 
+        elif method == "ConstrutUpdateChannelTransction":
+            return transaction.construt_update_channel_transction(params)
 
