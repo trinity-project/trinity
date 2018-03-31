@@ -187,7 +187,11 @@ class Gateway():
         print(response)
 
     def handle_jsonrpc_request(self, method, params):
-        data = json.loads(params)
+        # print(params)
+        if type(params) == str:
+            json.loads(params)
+        else:
+            data = json.loads(params[0])
         msg_type = data.get("MessageType")
         if method == "ShowNodeList":
             return utils.generate_ack_show_node_list(node_list)
@@ -199,7 +203,6 @@ class Gateway():
                 pass
             return "{'JoinNet': 'OK'}"
         elif method == "SyncWalletData":
-            data = json.loads(params)
             body = data.get("MessageBody")
             node["wallet_info"] = {
                 "url": body["Publickey"] + "@" + cg_public_ip_port,
@@ -235,14 +238,14 @@ class Gateway():
                 return "{}"
 
     def _add_event_push_web_task(self):
-        utils.mock_node_list_data(route_tree)
+        utils.mock_node_list_data(node["route_tree"])
         message = {
             "MessageType": "RouterInfo",
-            "RouterInfo": route_tree.to_dict(with_data=True)
+            "RouterInfo": node["route_tree"].to_dict(with_data=True)
         }
 
         print(message)
-        route_tree.show(line_type='ascii-en')
+        node["route_tree"].show(line_type='ascii')
         ensure_future(WsocketService.push_by_event(self.websocket.websockets, message))
 
     def _add_timer_push_web_task(self):
