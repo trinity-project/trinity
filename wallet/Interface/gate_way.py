@@ -38,7 +38,7 @@ def join_gateway(publickey):
     request = {
         "jsonrpc": "2.0",
         "method": "SyncWalletData",
-        "params": json.dumps(message),
+        "params": [message],
         "id": 1
     }
     result = requests.post(Configure["GatewayURL"], json=request)
