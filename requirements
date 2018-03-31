@@ -27,7 +27,6 @@ hyperlink==18.0.0
 idna==2.6
 incremental==17.5.0
 json-rpc==1.10.8
-jsonrpc==1.2
 klein==17.10.0
 logzero==1.5.0
 memory-profiler==0.52.0
