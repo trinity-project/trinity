@@ -187,9 +187,10 @@ class Gateway():
         print(response)
 
     def handle_jsonrpc_request(self, method, params):
-        # print(params)
+        print(params)
+        print(type(params))
         if type(params) == str:
-            json.loads(params)
+            data = json.loads(params)
         else:
             data = json.loads(params[0])
         msg_type = data.get("MessageType")
