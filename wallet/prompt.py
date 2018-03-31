@@ -324,6 +324,7 @@ class UserPromptInterface(PromptInterface):
             time.sleep(0.3)
 
     def _handlemessage(self,message):
+        message = json.dumps(message)
         print("Receive Message： ",message)
         try:
             message_type = message.get("MessageType")
