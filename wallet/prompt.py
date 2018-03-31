@@ -220,7 +220,6 @@ class UserPromptInterface(PromptInterface):
             print("Please open a wallet")
             return
         self.Wallet.address, self.Wallet.pubkey = self.get_address()
-        self.Wallet.url = "{}@{}".format(self.Wallet.pubkey,GateWayIP)
         command = get_arg(arguments)
         print(command)
         if command == 'create':
@@ -237,9 +236,13 @@ class UserPromptInterface(PromptInterface):
             walletHeight = self.Wallet.LoadStoredData("Height")
             blockHeight = Blockchain.Default().HeaderHeight
             # For Debug
-            result = gate_way.join_gateway(self.Wallet.pubkey)
-            print(result)
-            self.Channel = True
+            result = gate_way.join_gateway(self.Wallet.pubkey).get("result")
+            if result:
+                self.Wallet.url = result.get("MessageBody").get("Url")
+                self.Channel = True
+            else:
+                self._channel_noopen()
+
             """
             if int(walletHeight) >= int(blockHeight)-10:
                 if gate_way.join_gateway(self.Wallet.pubkey):

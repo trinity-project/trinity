@@ -58,7 +58,7 @@ def send_message(message):
     request= {
             "jsonrpc": "2.0",
             "method": "TransactionMessage",
-            "params": json.dumps(message),
+            "params": [message],
             "id": 1
     }
     result = requests.post(Configure["GatewayURL"], json=request)
