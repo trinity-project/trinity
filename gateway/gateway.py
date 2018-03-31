@@ -8,7 +8,7 @@ from wsocket import WsocketService
 from jsonrpc import AsyncJsonRpc
 from asyclient import send_tcp_msg
 from asyncio import get_event_loop, gather, Task, sleep, ensure_future, iscoroutine
-from config import cg_tcp_addr, cg_wsocket_addr, cg_public_ip_port
+from config import cg_tcp_addr, cg_wsocket_addr, cg_public_ip_port, cg_node_name
 
 
 # route_tree.create_node('node',cg_public_ip_port, data={Deposit:xx,Fee:xx,IP:xx,Publickey:xx,SpvList:[]})  # root node
@@ -16,7 +16,9 @@ node_list = set()
 node = {
     "wallet_info": None,
     "route_tree": RouteTree(),
-    "spv_table": SPVHashTable()
+    "spv_table": SPVHashTable(),
+    # configurable
+    "name": cg_node_name
 }
 class Gateway():
     """
@@ -127,7 +129,6 @@ class Gateway():
         """
         处理websocket请求
         """
-        self._add_event_push_web_task()
         # data = utils.json_to_dict(strdata)
         data = {}
         msg_type = data.get("MessageType")
@@ -238,6 +239,15 @@ class Gateway():
             if msg_type == "RegisterChannel":
                 return "{}"
 
+    def handle_web_first_connect(self, websocket):
+        node["wallet_info"] = {
+            "deposit": 5,
+            "fee": 1,
+            "url": "03a6fcaac0e13dfbd1dd48a964f92b8450c0c81c28ce508107bc47ddc511d60e75@" + cg_public_ip_port
+        }
+        message = utils.generate_node_list_data(node)
+        self._send_wsocket_msg(websocket, message)
+
     def _add_event_push_web_task(self):
         utils.mock_node_list_data(node["route_tree"])
         message = {
@@ -250,7 +260,8 @@ class Gateway():
         ensure_future(WsocketService.push_by_event(self.websocket.websockets, message))
 
     def _add_timer_push_web_task(self):
-        ensure_future(WsocketService.push_by_timer(self.websocket.websockets, 15))
+        message = {}
+        ensure_future(WsocketService.push_by_timer(self.websocket.websockets, 15, message))
     
     def sync_channel_route_to_peer(self):
         self_tree = node["route_tree"]

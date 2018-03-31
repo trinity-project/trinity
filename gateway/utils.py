@@ -147,43 +147,25 @@ def generate_ack_TransactionMessage():
         "MessageType": "AckTransactionMessage"
     }
     return message
-    
-def mock_node_list_data(route_tree):
-    import random
-    if route_tree.root:
-        return
-    parent_node = []
-    for count in range(3):
-        fee = random.randint(1,10)
-        deposit = random.randint(5, 100)
-        ip_port = ".".join(([str(random.randint(10, 999))]*4)) + ":" + str(random.randint(1000, 9000))
-        spk = "spvpublickey" + str(random.randint(1000, 9999))
-        # hash_table.add(ip_port, spk)
-        pk = "abcdefghigklmn" + str(random.randint(1000, 9999))
-        data = {
-            "Fee": fee,
-            "Deposit": deposit,
-            "PblickKey": pk,
-            "Ip": ip_port,
-            "SpvList": [(ip_port, spk)]
-        }
-        if count == 0:
-            route_tree.create_node("node", ip_port, data=data) # root
-            parent = ip_port
-            parent_node.append(parent)
-            ip_port = ".".join(([str(random.randint(10, 999))]*4)) + ":" + str(random.randint(1000, 9000))
-            pk = "abcdefghigklmn" + str(random.randint(1000, 9999))
-            data = {
-                "Fee": fee,
-                "Deposit": deposit,
-                "PblickKey": pk,
+
+def generate_node_list_data(node):
+    route_tree = node["route_tree"]
+    if not route_tree.root:
+        spv_table = node["spv_table"]
+        pk, ip_port = node["wallet_info"]["url"].split("@")
+        route_tree.create_node(
+            tag="node",
+            identifier=ip_port,
+            data={
                 "Ip": ip_port,
-                "SpvList": [(ip_port, spk)]
+                "Public": pk,
+                "Name": node["name"],
+                "Deposit": node["wallet_info"]["deposit"],
+                "Fee": node["wallet_info"]["fee"],
+                "SpvList": node["spv_table"].find(ip_port)
             }
-            route_tree.create_node("node", ip_port, parent=parent, data=data) # root
-            parent_node.append(ip_port)
-
-        else:
-            route_tree.create_node("node", ip_port, parent=parent_node[random.randint(0,1)], data=data)
-
+        )
+        return route_tree.to_json(with_data=True)
+    else:
+        return route_tree.to_json(with_data=True)
     

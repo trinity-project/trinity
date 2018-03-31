@@ -51,11 +51,18 @@ class AsyncJsonRpc():
     @staticmethod
     async def jsonrpc_request(loop, method, params):
         async with ClientSession(loop=loop) as session:
-            edpoint = 'http://' + cg_remote_jsonrpc_addr[0] + ":" + str(cg_remote_jsonrpc_addr[1])
+            endpoint = 'http://' + cg_remote_jsonrpc_addr[0] + ":" + str(cg_remote_jsonrpc_addr[1])
+            # endpoint = 'http://106.15.91.150:20556'
             client = aiohttpClient(session, endpoint)
             response = await client.request(method, params)
             from gateway import gateway_singleton
             gateway_singleton.handle_jsonrpc_response(method, response)
 
 if __name__ == "__main__":
-    AsyncJsonRpc.start_jsonrpc_serv()
+    message = {
+        "MessageType": "FounderSign"
+    }
+    asyncio.get_event_loop().run_until_complete(
+        AsyncJsonRpc.jsonrpc_request(asyncio.get_event_loop(), "TransactionMessage", message)
+    )
+    # AsyncJsonRpc.start_jsonrpc_serv()
