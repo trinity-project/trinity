@@ -25,11 +25,13 @@ SOFTWARE."""
 import os
 import logging.config
 from trinity import __os_platform__, __running_mode__
-
+LogDataDir = os.path.join(os.path.dirname(__file__),"log")
+if not os.path.exists(LogDataDir):
+    os.makedirs(LogDataDir)
 LOG = logging.getLogger('logger')
 # log configuration parts
 if __os_platform__ in ['LINUX']:
-    TRINITY_LOG_PATH = '/mnt/tnc/trinity'
+    TRINITY_LOG_PATH = os.path.join(LogDataDir,"trinity.log")
 else:
     TRINITY_LOG_PATH = os.getcwd().split(os.sep)[0]+os.sep+'temp'
 

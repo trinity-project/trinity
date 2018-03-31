@@ -163,6 +163,15 @@ def createMultiSigContract(publicKeyList):
         "address":address
     }
 
+def blockheight_to_script(input):
+    input=hex(input)[2:]
 
-xx=createTxid("d101a0040065cd1d1462b10d88ad9b147be8b3769d4b21e7cf76a604f5147880ddceb5101a29e05ea09da1ad310539dc8e6953c1087472616e73666572675e7fb71d90044445caf77c0c36df0901fda8340cf1040065cd1d1462b10d88ad9b147be8b3769d4b21e7cf76a604f5141a3db733023a855ac2077926c60e4c1fb4d5af0053c1087472616e73666572675e7fb71d90044445caf77c0c36df0901fda8340cf1000000000000000003207880ddceb5101a29e05ea09da1ad310539dc8e69201a3db733023a855ac2077926c60e4c1fb4d5af00f0045abcf0e30000")
-pass
+    if len(input) % 2 == 1:
+        input = "0" + input
+    be=bytearray (binascii.unhexlify(input))
+    be.reverse()
+    revese_hex=binascii.hexlify(be).decode()
+    revese_hex_len=binascii.hexlify(bytes([int(len(revese_hex)/2)])).decode()
+    len_all=str(83+int(revese_hex_len))
+    output="".join([len_all,revese_hex_len, revese_hex])
+    return output
