@@ -236,11 +236,15 @@ class UserPromptInterface(PromptInterface):
         elif command == "open":
             walletHeight = self.Wallet.LoadStoredData("Height")
             blockHeight = Blockchain.Default().HeaderHeight
+            # For Debug
+            if  gate_way.join_gateway(self.Wallet.pubkey):
+                    self.Channel = True
+            """
             if int(walletHeight) >= int(blockHeight)-10:
                 if gate_way.join_gateway(self.Wallet.pubkey):
                     self.Channel = True
             else:
-                self._channel_noopen()
+                self._channel_noopen()"""
         elif command == "tx":
             receiver = get_arg(arguments,1)
             asset_type = get_arg(arguments,2)
