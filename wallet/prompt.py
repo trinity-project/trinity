@@ -238,7 +238,7 @@ class UserPromptInterface(PromptInterface):
             # For Debug
             result = gate_way.join_gateway(self.Wallet.pubkey).get("result")
             if result:
-                self.Wallet.url = result.get("MessageBody").get("Url")
+                self.Wallet.url = json.loads(result).get("MessageBody").get("Url")
                 self.Channel = True
             else:
                 self._channel_noopen()
@@ -287,7 +287,8 @@ class UserPromptInterface(PromptInterface):
                     return
 
     def _channel_noopen(self):
-        print("Please waite the block async")
+        print("Please waite the block sync")
+        return
 
     def get_completer(self):
 
