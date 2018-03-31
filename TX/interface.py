@@ -100,8 +100,7 @@ def createRDTX(addressRSMC,addressSelf,balanceSelf,CTxId,RSMCScript):
     return {
         "txData":tx.get_tx_data(),
         "txId":createTxid(tx.get_tx_data()),
-        "witness_part1":"01{lengthAll}{lengthOfBlockheight}{blockheight}40{signOther}40{signSelf}fd",
-        "witness_part2":createVerifyScript(RSMCScript)
+        "witness":"01{blockheight_script}40{signOther}40{signSelf}fd"+createVerifyScript(RSMCScript)
     }
 
 def createBRTX(addressRSMC,addressOther,balanceSelf,RSMCScript):
@@ -125,6 +124,5 @@ def createBRTX(addressRSMC,addressOther,balanceSelf,RSMCScript):
     return {
         "txData":tx.get_tx_data(),
         "txId":createTxid(tx.get_tx_data()),
-        "witness_part1":"01{lengthAll}{lengthOfBlockheight}{blockheight}40{signOther}40{signSelf}fd",
-        "witness_part2":createVerifyScript(RSMCScript)
+        "witness": "01{blockheight_script}40{signOther}40{signSelf}fd" + createVerifyScript(RSMCScript)
     }
