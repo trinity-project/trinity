@@ -166,7 +166,7 @@ def generate_node_list_data(node):
             }
         )
         pitch_dic = route_tree.to_dict(with_data=True)
-        pitch_dic["children"] = []
+        pitch_dic["node"]["children"] = []
         return json.dumps(pitch_dic)
         #return route_tree.to_json(with_data=True)
     else:
