@@ -24,6 +24,7 @@ SOFTWARE."""
 
 import requests
 from wallet.configure import Configure
+import json
 
 
 def join_gateway(publickey):
@@ -37,7 +38,7 @@ def join_gateway(publickey):
     request = {
         "jsonrpc": "2.0",
         "method": "SyncWalletData",
-        "params": message,
+        "params": json.dumps(message),
         "id": 1
     }
     result = requests.post(Configure["GatewayURL"], json=request)
@@ -62,4 +63,5 @@ def send_message(message):
     }
     result = requests.post(Configure["GatewayURL"], json=request)
     return result.json()
+
 

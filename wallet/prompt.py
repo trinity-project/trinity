@@ -237,8 +237,9 @@ class UserPromptInterface(PromptInterface):
             walletHeight = self.Wallet.LoadStoredData("Height")
             blockHeight = Blockchain.Default().HeaderHeight
             # For Debug
-            if  gate_way.join_gateway(self.Wallet.pubkey):
-                    self.Channel = True
+            result = gate_way.join_gateway(self.Wallet.pubkey)
+            print(result)
+            self.Channel = True
             """
             if int(walletHeight) >= int(blockHeight)-10:
                 if gate_way.join_gateway(self.Wallet.pubkey):
