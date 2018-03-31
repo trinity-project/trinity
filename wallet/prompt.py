@@ -342,7 +342,7 @@ class UserPromptInterface(PromptInterface):
             m_instance = mg.HtlcMessage(message, self.Wallet)
         elif message_type == "Rsmc":
             m_instance = mg.RsmcMessage(message, self.Wallet)
-        elif message_type == "RegisterChannel":
+        elif message_type == "AddChannel":
             m_instance = mg.RegisterMessage(message, self.Wallet)
         elif message_type == "CreateTranscation":
             m_instance = mg.CreateTranscation(message, self.Wallet)

@@ -100,7 +100,7 @@ class Channel(object):
         result = APIChannel.add_channel(self.channel_name,self.founder_pubkey, self.partner_pubkey,
                      EnumChannelState.INIT.name, 0, self.deposit, 0)
         if cli:
-            message={"MessageType":"RegisterChannel",
+            message={"MessageType":"AddChannel",
                  "Sender": self.founder,
                  "Receiver": self.partner,
                  "MessageBody":{"ChannelName":self.channel_name,
