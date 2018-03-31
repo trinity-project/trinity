@@ -181,7 +181,7 @@ class Gateway():
         ensure_future(send_tcp_msg(addr, msg))
 
     def handle_wsocket_disconnection(self, websocket):
-        self._add_event_push_web_task()
+        #self._add_event_push_web_task()
 
     def handle_jsonrpc_response(self, method, response):
 
@@ -240,11 +240,12 @@ class Gateway():
                 return "{}"
 
     def handle_web_first_connect(self, websocket):
-        node["wallet_info"] = {
-            "deposit": 5,
-            "fee": 1,
-            "url": "03a6fcaac0e13dfbd1dd48a964f92b8450c0c81c28ce508107bc47ddc511d60e75@" + cg_public_ip_port
-        }
+        if node.get("wallet_info"):
+            node["wallet_info"] = {
+                "deposit": 5,
+                "fee": 1,
+                "url": "03a6fcaac0e13dfbd1dd48a964f92b8450c0c81c28ce508107bc47ddc511d60e75@" + cg_public_ip_port
+            }
         message = utils.generate_node_list_data(node)
         self._send_wsocket_msg(websocket, message)
 
