@@ -43,6 +43,16 @@ def join_gateway(publickey):
     result = requests.post(Configure["GatewayURL"], json=request)
     return result.json()
 
+def get_router_info():
+    request = {
+        "jsonrpc": "2.0",
+        "method": "GetRouterInfo",
+        "params": [],
+        "id": 1
+    }
+    result = requests.post(Configure["GatewayURL"], json=request)
+    return result.json()
+
 def send_message(message):
     request= {
             "jsonrpc": "2.0",

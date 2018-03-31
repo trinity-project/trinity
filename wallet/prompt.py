@@ -40,11 +40,9 @@ import time
 from neo.Implementations.Wallets.peewee.UserWallet import UserWallet
 
 from neo.Wallets.utils import to_aes_key
-from wallet.configure import Configure
 from wallet.Interface import gate_way
 from wallet.configure import Configure
 GateWayIP = Configure.get("GatewayURL")
-from wallet.Interface.gate_way import send_message
 from functools import reduce
 
 
@@ -264,21 +262,21 @@ class UserPromptInterface(PromptInterface):
                                "Value":count
                                }
                            }
-                router = send_message(message)
+                router = gate_way.get_router_info(message)
                 if router:
-                    r = router.get("Router")
-                    n = router.get("NextRouter")
+                    r = router.get("FatherPath")
+                    n = router.get("Next")
                     fee = reduce(lambda x, y:x+y,[int(i[1]) for i in r])
                     answer = prompt("will use fee %s , Do you still want tx? [Yes/No]> " %(str(fee)))
                     if answer.upper() == "YES":
-                        receiverpubkey,receiverip = n.split("@")
-                        channel_name = get_channel_name_via_address(self.Wallet.pubkey, receiverpubkey)
                         tx_nonce = trinitytx.TrinityTransaction(channel_name, self.Wallet).get_latest_nonceid()
                         mg.RsmcMessage.create(channel_name, self.Wallet, self.Wallet.pubkey,
-                                              receiverpubkey, int(count +fee), receiverip, str(tx_nonce + 1),
+                                              receiverpubkey, int(count), receiverip, str(tx_nonce + 1),
                                               asset_type="TNC",router= r, next_router=n)
                     else:
                         return None
+                else:
+                    return
 
     def _channel_noopen(self):
         print("Please waite the block async")
@@ -335,9 +333,8 @@ class UserPromptInterface(PromptInterface):
             m_instance = mg.RsmcMessage(message, self.Wallet)
         elif message_type == "RegisterChannel":
             m_instance = mg.RegisterMessage(message, self.Wallet)
-        elif message_type == "CreateChannelMessage":
-            print("here")
-            m_instance = mg.CreateChannel(message, self.Wallet)
+        elif message_type == "CreateTranscation":
+            m_instance = mg.CreateTranscation(message, self.Wallet)
         elif message_type == "TestMessage":
             m_instance = mg.TestMessage(message, self.Wallet)
         else:
