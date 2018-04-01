@@ -15,7 +15,9 @@ common_msg_dict = {
 }
 
 def _remove_end_mark(text):
-    text = text.replace(cg_end_mark, "")
+    patter = re.compile(cg_end_mark + "$")
+    text = re.sub(patter, "", text)
+    # text = text.replace(cg_end_mark, "")
     return text
 
 def _add_end_mark(text):
@@ -30,6 +32,7 @@ def decode_bytes(bdata, target="dict"):
     如果传入的target为"str" 则返回字符串
     """
     data = bdata.decode("utf-8")
+    print(data)
     if target == "dict":
         data = _remove_end_mark(data)
         data = json.loads(data)

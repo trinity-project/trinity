@@ -11,7 +11,7 @@ from asyncio import get_event_loop, gather, Task, sleep, ensure_future, iscorout
 from config import cg_tcp_addr, cg_wsocket_addr, cg_public_ip_port, cg_node_name
 
 
-# route_tree.create_node('node',cg_public_ip_port, data={Deposit:xx,Fee:xx,IP:xx,Publickey:xx,SpvList:[]})  # root node
+# route_tree.create_node('node',cg_public_ip_port, data={Deposit:xx,Fee:xx,Balance:4 IP:xx,Publickey:xx,SpvList:[]})  # root node
 node_list = set()
 node = {
     "wallet_info": None,
@@ -259,6 +259,10 @@ class Gateway():
                 self._send_tcp_msg(data["Receiver"], data)
             elif msg_type in ["Rsmc","FounderSign","Founder","RsmcSign","FounderFail"]:
                 self.handle_transaction_message(data)
+
+        elif method == "SyncChannel":
+            pass
+
 
 
     def handle_web_first_connect(self, websocket):
