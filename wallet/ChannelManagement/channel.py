@@ -170,7 +170,7 @@ class Channel(object):
                "Founder":self.founder,
                "Parterner":self.partner,
                "State":self.state,
-               "Deposit":self.deposit,
+               "Deposit":self.get_deposit(),
                "Balance":self.get_balance()}
 
 
