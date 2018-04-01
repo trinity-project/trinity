@@ -29,6 +29,7 @@ from sserver.model.address_model import APIWalletAddress
 from sserver.model.channel_model import APIChannel
 from sserver.model.base_enum import EnumChainType,EnumChannelState
 from wallet.TransactionManagement import message as mg
+from wallet.TransactionManagement import transaction as trans
 from wallet.utils import pubkey_to_address
 
 def get_gateway_ip():
@@ -59,11 +60,14 @@ class Channel(object):
     def get_channel(address1, address2):
 
         try:
-            channel = APIChannel.batch_query_channel(filters={"src_addr": address1, "dest_adr": address2})
+            print(address1, address2)
+            channel = APIChannel.batch_query_channel(filters={"src_addr": address1, "dest_addr": address2})
+            print("debug1 ",channel)
             return channel["content"][0].channel
         except:
             try:
-                channel= APIChannel.batch_query_channel(filters={"src_addr":address2, "dest_adr":address1})
+                channel= APIChannel.batch_query_channel(filters={"src_addr":address2, "dest_addr":address1})
+                print("debug2 ", channel)
                 return channel["content"][0].channel
             except:
                 return None
@@ -103,8 +107,10 @@ class Channel(object):
             message={"MessageType":"RegisterChannel",
                  "Sender": self.founder,
                  "Receiver": self.partner,
-                 "MessageBody":{"ChannelName":self.channel_name,
-                                "Depoist":self.deposit,
+                 "ChannelName": self.channel_name,
+                 "MessageBody":{
+                                "AssetType":asset_type,
+                                "Deposit":deposit
                                 }
             }
             return mg.Message.send(message)
@@ -140,6 +146,7 @@ class Channel(object):
     def _get_channel(self):
         try:
             channel = APIChannel.query_channel(self.channel_name)
+            print(channel)
             return channel["content"][0]
         except Exception as e:
             print(e)
@@ -164,10 +171,20 @@ def create_channel(founder, partner, asset_type, depoist:int, cli=True):
 
 def get_channel_name_via_address(address1, address2):
     channel = Channel.get_channel(address1, address2)
-    return channel.channel
+    return channel
+
+def close_channel(channel_name, wallet):
+    tx = trans.TrinityTransaction(channel_name, wallet)
+
 
 
 if __name__ == "__main__":
-    md5s = hashlib.md5("AM3wPXYSPDuDxXfbPdrDeioDhiNU5oeAP8".encode())
-    md5s.update("Aetwx1BNtXD78f25v47kLTrBaXQr1moZEs".encode())
-    print(md5s.hexdigest().upper())
+    result  = APIChannel.query_channel(channel="1BE0FCD56A27AD46C22B8EEDC4E835EA")
+    print(result)
+    print(dir(result["content"][0]))
+    print(result["content"][0].dest_addr)
+    print(result["content"][0].src_addr)
+
+    result  = APIChannel.batch_query_channel(filters={"dest_addr": "022a38720c1e4537332cd6e89548eedb0afbb93c1fdbade42c1299601eaec897f4",
+                                            "src_addr":"02cebf1fbde4786f031d6aa0eaca2f5acd9627f54ff1c0510a18839946397d3633"})
+    print(result)

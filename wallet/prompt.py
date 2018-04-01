@@ -78,8 +78,8 @@ class UserPromptInterface(PromptInterface):
 
 
     def run(self):
-        dbloop = task.LoopingCall(Blockchain.Default().PersistBlocks)
-        dbloop.start(.1)
+        #dbloop = task.LoopingCall(Blockchain.Default().PersistBlocks)
+        #dbloop.start(.1)
 
         tokens = [(Token.Neo, 'NEO'), (Token.Default, ' cli. Type '),
                   (Token.Command, '\'help\' '), (Token.Default, 'to get started')]
@@ -197,6 +197,7 @@ class UserPromptInterface(PromptInterface):
                 try:
                     self.Wallet = UserWallet.Open(path, password_key)
 
+
                     self._walletdb_loop = task.LoopingCall(self.Wallet.ProcessBlocks)
                     self._walletdb_loop.start(1)
 
@@ -219,7 +220,7 @@ class UserPromptInterface(PromptInterface):
         if not self.Wallet:
             print("Please open a wallet")
             return
-        self.Wallet.address, self.Wallet.pubkey = self.get_address()
+
         command = get_arg(arguments)
         print(command)
         if command == 'create':
@@ -235,9 +236,11 @@ class UserPromptInterface(PromptInterface):
         elif command == "open":
             walletHeight = self.Wallet.LoadStoredData("Height")
             blockHeight = Blockchain.Default().HeaderHeight
+            self.Wallet.address, self.Wallet.pubkey = self.get_address()
             # For Debug
             result = gate_way.join_gateway(self.Wallet.pubkey).get("result")
             if result:
+                self.Wallet.address, self.Wallet.pubkey = self.get_address()
                 self.Wallet.url = json.loads(result).get("MessageBody").get("Url")
                 self.Channel = True
             else:
@@ -322,14 +325,16 @@ class UserPromptInterface(PromptInterface):
             if MessageList:
                 message = MessageList.pop()
                 #try:
-                self._handlemessage(message)
+                self._handlemessage(message[0])
                 #except Exception as e:
                     #print(e)
             time.sleep(0.3)
 
     def _handlemessage(self,message):
-        message = json.dumps(message)
-        print("Receive Message： ",message)
+        print("Get Message: <----", message)
+        if isinstance(message,str):
+            message = json.loads(message)
+        print("Receive Message： ",type(message))
         try:
             message_type = message.get("MessageType")
         except AttributeError:
@@ -342,7 +347,7 @@ class UserPromptInterface(PromptInterface):
             m_instance = mg.HtlcMessage(message, self.Wallet)
         elif message_type == "Rsmc":
             m_instance = mg.RsmcMessage(message, self.Wallet)
-        elif message_type == "AddChannel":
+        elif message_type == "RegisterChannel":
             m_instance = mg.RegisterMessage(message, self.Wallet)
         elif message_type == "CreateTranscation":
             m_instance = mg.CreateTranscation(message, self.Wallet)
@@ -425,7 +430,7 @@ def main():
     reactor.suggestThreadPoolSize(15)
     reactor.callInThread(UserPrompt.run)
     reactor.callInThread(UserPrompt.handlemaessage)
-    reactor.callInThread(monitorblock)
+    #reactor.callInThread(monitorblock)
     NodeLeader.Instance().Start()
     reactor.run()
 

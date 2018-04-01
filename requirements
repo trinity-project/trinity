@@ -1,3 +1,4 @@
+# for wallet
 asn1crypto==0.24.0
 attrs==17.4.0
 Automat==0.6.0
@@ -40,7 +41,6 @@ neocore==0.3.10
 numpy==1.14.1
 pbr==3.1.1
 peewee==2.10.2
-pkg-resources==0.0.0
 pluggy==0.6.0
 plyvel==1.0.4
 prompt-toolkit==1.0.15
@@ -67,6 +67,7 @@ virtualenv==15.1.0
 wcwidth==0.1.7
 Werkzeug==0.14.1
 zope.interface==4.4.3
+# for gateway
 aiohttp==3.1.1
 async-timeout==2.0.1
 attrs==17.4.0

@@ -57,6 +57,7 @@ def get_router_info(message):
 
 
 def send_message(message):
+    print("GateWay Send Message: ", message)
     request= {
             "jsonrpc": "2.0",
             "method": "TransactionMessage",
