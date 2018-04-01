@@ -123,7 +123,9 @@ class Gateway():
             self.handle_transaction_message(data)
 
         elif msg_type == "SyncChannelState":
-            self.sync_channel_route_to_peer()
+            # update self tree
+            node["route_tree"].sync_tree(RouteTree.to_tree(data["MessageBody"]))
+            # self.sync_channel_route_to_peer()
         
 
     def handle_wsocket_request(self, websocket, strdata):
@@ -259,10 +261,26 @@ class Gateway():
                 self._send_tcp_msg(data["Receiver"], data)
             elif msg_type in ["Rsmc","FounderSign","Founder","RsmcSign","FounderFail"]:
                 self.handle_transaction_message(data)
-
-        elif method == "SyncChannel":
+        elif method = "SyncBlock":
+            # push the data to spvs
             pass
-
+        elif method == "SyncChannel":
+            self_url = node["wallet_info"]["url"]
+            channel_founder = data["MessageBody"]["Founder"]
+            channel_receiver = data["MessageBody"]["Receiver"]
+            channel_peer = channel_receiver if channel_founder == self_url else channel_founder
+            if msg_type == "AddChannel":
+                # send self tree to peer
+                self._send_tcp_msg(channel_peer, node["route_tree"].to_dict(with_data=True))
+            elif msg_type == "UpdateChannel":
+                #update balance and send self tree to peers
+                self_node = node["route_tree"].get_node(utils.get_public_key(self_url))
+                self_node.balance = data["Message"]["Balance"]
+                self.sync_channel_route_to_peer()
+            elif msg_type == "DeleteChannel":
+                # remove channel_peer and notification peers
+                node["route_tree"].remove_node(utils.get_public_key(channel_peer))
+                self.sync_channel_route_to_peer()
 
 
     def handle_web_first_connect(self, websocket):

@@ -27,6 +27,11 @@ async def SyncChannel(params):
     return gateway_singleton.handle_jsonrpc_request('SyncChannel', params)
 
 @methods.add
+async def SyncBlock(params):
+    from gateway import gateway_singleton
+    return gateway_singleton.handle_jsonrpc_request('SyncBlock', params)
+
+@methods.add
 async def TransactionMessage(params):
     from gateway import gateway_singleton
     return gateway_singleton.handle_jsonrpc_request('TransactionMessage', params)
