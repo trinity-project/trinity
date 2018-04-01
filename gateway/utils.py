@@ -165,9 +165,6 @@ def generate_node_list_msg(node):
                 "SpvList": [] if not node["spv_table"].find(ip_port) else node["spv_table"].find(ip_port)
             }
         )
-        # pitch_dic = route_tree.to_dict(with_data=True)
-        # pitch_dic["node"]["children"] = []
-        # return json.dumps(pitch_dic)
         node_data = route_tree.to_dict(with_data=True)
     else:
         node_data = route_tree.to_dict(with_data=True)

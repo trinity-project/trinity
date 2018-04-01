@@ -115,6 +115,11 @@ class TrinityTransaction(object):
                 continue
         return max(nonce)
 
+    def get_transaction_state(self):
+        tx = self.read_transaction()
+        return tx.get("State")
+
+
 
 
 
