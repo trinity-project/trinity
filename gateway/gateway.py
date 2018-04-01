@@ -261,7 +261,7 @@ class Gateway():
                 self._send_tcp_msg(data["Receiver"], data)
             elif msg_type in ["Rsmc","FounderSign","Founder","RsmcSign","FounderFail"]:
                 self.handle_transaction_message(data)
-        elif method = "SyncBlock":
+        elif method == "SyncBlock":
             # push the data to spvs
             pass
         elif method == "SyncChannel":
