@@ -24,7 +24,7 @@ SOFTWARE."""
 Configure = {
     "alias":"TrinityNode",# you can rename your node
     "GatewayURL":"http://localhost:8077",
-    "Fee": 0,
+    "Fee": 0.01,
     "Channel":{
         "CommitMinDeposit": 0, # the min commit deposit
         "AutoCreate": True, # if the wallet accept the create channel request automatically

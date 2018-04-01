@@ -161,17 +161,20 @@ class Channel(object):
             return None
 
     def get_deposit(self):
-        channel = APIChannel.query_channel(self.channel_name)
-        deposit = channel.deposit
-        return deposit
+        ch = self._get_channel()
+        if ch:
+            return ch.deposit
+        else:
+            return None
 
     def toJson(self):
         jsn = {"ChannelName":self.channel_name,
                "Founder":self.founder,
                "Parterner":self.partner,
                "State":self.state,
-               "Deposit":self.deposit,
+               "Deposit":self.get_deposit(),
                "Balance":self.get_balance()}
+        return jsn
 
 
 def create_channel(founder, partner, asset_type, depoist:int, cli=True):
@@ -187,9 +190,9 @@ def close_channel(channel_name, wallet):
     tx = trans.TrinityTransaction(channel_name, wallet)
 
 
-def sync_channel_info_to_gateway(channel_name):
+def sync_channel_info_to_gateway(channel_name, type):
     ch = Channel.channel(channel_name)
-    sync_channel(ch.toJson())
+    return sync_channel(type, ch.channel_name,ch.founder,ch.partner,ch.get_balance())
 
 
 if __name__ == "__main__":
@@ -199,6 +202,6 @@ if __name__ == "__main__":
     print(result["content"][0].dest_addr)
     print(result["content"][0].src_addr)
 
-    result  = APIChannel.batch_query_channel(filters={"dest_addr": "022a38720c1e4537332cd6e89548eedb0afbb93c1fdbade42c1299601eaec897f4",
+    result = APIChannel.batch_query_channel(filters={"dest_addr": "022a38720c1e4537332cd6e89548eedb0afbb93c1fdbade42c1299601eaec897f4",
                                             "src_addr":"02cebf1fbde4786f031d6aa0eaca2f5acd9627f54ff1c0510a18839946397d3633"})
     print(result)

@@ -21,11 +21,10 @@
 ```
 git clone https://github.com/trinity-project/trinity.git
 ```
-apt-get install python3.6 python3.6-dev python3.6-venv python3-pip libleveldb-dev libssl-dev g++
 
 通过以下命令部署Trinity 的依赖环境：
 ```
-apt-get install python3.6 python3.6-dev python3.6-venv python3-pip libleveldb-dev libssl-dev g++
+sudo apt-get install python3.6 python3.6-dev python3.6-venv python3-pip libleveldb-dev libssl-dev g++
 ```
 
 进入Trinity目录，通过以下命令安装Trinity 的依赖包：
@@ -38,6 +37,16 @@ pip3.6 install -r requirements
 
 ```
 export PYTHONPATH=$PWD
+```
+安装mongodb数据库
+
+```
+sudo apt-get install -y mongodb-org
+```
+启动mondodb数据库
+
+```
+sudo service mongod start
 ```
 
 ## Trinity 网络节点部署
