@@ -16,30 +16,16 @@ class WsocketService:
         """
         for con in cons:
             try:
-                # msg = {
-                #     "type": "sync_state",
-                #     "body": {
-                #         "content": "This is a push message triggered by peer state changed",
-                #         "state": "other spv disconnectioned"
-                #     }
-                # }
                 await con.send(json.dumps(msg))
             except Exception:
                 pass
     
     @staticmethod 
-    async def push_by_timer(cons, second):
+    async def push_by_timer(cons, second, msg):
         while True:
             await sleep(second)
             for con in cons:
                 try:
-                    msg = {
-                        "type": "block_info",
-                        "body": {
-                            "content": "This is a push message triggered by timer",
-                            "blance": random.randint(1000, 9000)
-                        }
-                    }
                     await con.send(json.dumps(msg))
                 except Exception:
                     pass
@@ -50,16 +36,16 @@ class WsocketService:
         """
         处理所有来自客户端的websocket请求
         """
+        # every client first connected the server
+        from gateway import gateway_singleton
+        print('client {} conected'.format(con.remote_address))
+        gateway_singleton.handle_web_first_connect(con)
         while True:
-            from gateway import gateway_singleton
             try:
-                # every client first connected the server
-                print('client {} conected'.format(con.remote_address[1]))
-                # todo 数据包完是否整检测
                 message = await con.recv()
                 gateway_singleton.handle_wsocket_request(con, message)
             except websockets.exceptions.ConnectionClosed:
-                print('client {} disconected'.format(con.remote_address[1]))
+                print('client {} disconected'.format(con.remote_address))
                 gateway_singleton.handle_wsocket_disconnection(con)
                 break
 
