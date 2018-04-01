@@ -87,7 +87,7 @@ class Gateway():
 
     def handle_tcp_request(self, transport, bdata):
         data = utils.decode_bytes(bdata)
-        sender = node["wallet_info"]["url"]
+        # sender = node["wallet_info"]["url"]
         # first save the node_pk and websocket connection map
         node_pk = utils.get_public_key(data["Sender"])
         self.tcp_pk_dict[node_pk] = transport
