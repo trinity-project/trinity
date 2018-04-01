@@ -25,17 +25,13 @@ SOFTWARE."""
 #from wallet.ChannelManagement.channel import Channel
 #from neo.Wallets.Wallet import Wallet
 
-import binascii
 from neo.Core.TX.Transaction import Transaction
 from neocore.Cryptography.Crypto import Crypto
-from neocore.UInt160 import UInt160
-from neocore.UInt256 import UInt256
-from neo.Core.Helper import Helper
 from neo.Network.NodeLeader import NodeLeader
-import json
 import os
 import pickle
 from TX.interface import *
+from wallet.utils import sign
 
 BlockHightRegister=[]
 TxIDRegister= []
@@ -105,8 +101,8 @@ class TrinityTransaction(object):
         tx = self.read_transaction()
         return tx.get(tx_nonce)
 
-    def get_latest_nonceid(self):
-        tx = self.read_transaction()
+    def get_latest_nonceid(self, tx=None):
+        tx = tx if tx else self.read_transaction()
         nonce = []
         for i in tx.keys():
             try:
@@ -119,8 +115,20 @@ class TrinityTransaction(object):
         tx = self.read_transaction()
         return tx.get("State")
 
-
-
+    def realse_transaction(self):
+        tx = self.read_transaction()
+        tx_state = tx.get("State")
+        if tx_state !="confirm":
+            return False, "transaction state not be confirmed"
+        latest_nonce =self.get_latest_nonceid(tx)
+        latest_tx = tx.get(str(latest_nonce))
+        latest_ctx = latest_tx.get("Commitment")
+        ctx_txData = latest_ctx.get("orginalData").get("txData")
+        ctx_witness = latest_ctx.get("orginalData").get("witness")
+        ctx_txData_other = latest_ctx.get("txDataSing")
+        ctx_txData_sign = sign(ctx_txData, self.wallet)
+        raw_data = ctx_txData+ctx_witness.format(signSelf=ctx_txData_sign,signOther = ctx_txData_other)
+        TrinityTransaction.sendrawtransaction(raw_data)
 
 
 def dic2btye(file_handler, **kwargs):

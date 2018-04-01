@@ -25,15 +25,11 @@ from wallet.TransactionManagement.transaction import TrinityTransaction
 from wallet.utils import pubkey_to_address
 from TX.interface import *
 from wallet.ChannelManagement import channel as ch
-from sserver.model.channel_model import APIChannel
 from sserver.model.base_enum import EnumChannelState
-import os
-from wallet.BlockChain.monior import register_monitor,register_block
-from wallet.configure import Configure
 from wallet.Interface.gate_way import send_message
 from wallet.utils import sign
-GateWayIP = Configure["GatewayIP"]
-
+from TX.utils import blockheight_to_script
+from wallet.BlockChain.monior import register_block
 
 
 class Message(object):
@@ -92,7 +88,7 @@ class TestMessage(Message):
         self.wallet= wallet
 
     def handle_message(self):
-        founder = "{}@{}".format(self.wallet.pubkey, GateWayIP)
+        founder = "{}@{}".format(self.wallet.url)
         ch.create_channel(founder, "292929929292929292@10.10.12.1:20332", "TNC", 10)
 
 
@@ -196,7 +192,7 @@ class FounderMessage(TransactionMessage):
             self.send_responses(error = error)
 
     @staticmethod
-    def create(channel_name, self_pubkey, partner_pubkey,asset_type, deposit, partner_ip):
+    def create(channel_name, self_pubkey, partner_pubkey,asset_type, deposit, partner_ip, gateway_ip):
         walletfounder = {
             "pubkey":self_pubkey,
             "deposit":deposit
@@ -217,7 +213,7 @@ class FounderMessage(TransactionMessage):
                                        commitment.get("scriptRSMC"))
 
         message = { "MessageType":"Founder",
-                    "Sender": "{}@{}".format(self_pubkey, GateWayIP),
+                    "Sender": "{}@{}".format(self_pubkey, gateway_ip),
                     "Receiver":"{}@{}".format(partner_pubkey, partner_ip),
                     "TxNonce": 0,
                     "ChannelName":channel_name,
@@ -372,7 +368,7 @@ class RsmcMessage(TransactionMessage):
             self.send_responses(error = error)
 
     @staticmethod
-    def create(channel_name, wallet, sender_pubkey, receiver_pubkey, value, partner_ip, tx_nonce, asset_type="TNC",
+    def create(channel_name, wallet, sender_pubkey, receiver_pubkey, value, partner_ip,gateway_ip ,tx_nonce, asset_type="TNC",
                breachremedy=False,cli =False,
                router = None, next_router=None):
         transaction = TrinityTransaction(channel_name, wallet)
@@ -401,7 +397,7 @@ class RsmcMessage(TransactionMessage):
 
         if not breachremedy:
             message = { "MessageType":"Founder",
-                    "Sender": "{}@{}".format(sender_pubkey, GateWayIP),
+                    "Sender": "{}@{}".format(sender_pubkey, gateway_ip),
                     "Receiver":"{}@{}".format(receiver_pubkey, partner_ip),
                     "TxNonce": tx_nonce,
                     "ChannelName":channel_name,
@@ -421,7 +417,7 @@ class RsmcMessage(TransactionMessage):
                                       commitment["scriptRSMC"])
             breachremedy_sign = sign(wallet, breachremedy.get("txData"))
             message = {"MessageType": "Founder",
-                       "Sender": "{}@{}".format(sender_pubkey, GateWayIP),
+                       "Sender": "{}@{}".format(sender_pubkey, gateway_ip),
                        "Receiver": "{}@{}".format(receiver_pubkey, partner_ip),
                        "TxNonce": tx_nonce,
                        "ChannelName": channel_name,
@@ -584,7 +580,7 @@ class HtlcMessage(TransactionMessage):
         #hedtx = createHEDTX(hctx["addressHTLC"], receiver_address, HTLCvalue, hctx["HTLCscript"])
         #httx = createHTTX(hctx["addressHTLC"], sender_address, HTLCvalue, hctx["HTLCscript"])
         #message = {"MessageType": "Founder",
-        #           "Sender": "{}@{}".format(senderpubkey, GateWayIP),
+        #           "Sender": "{}@{}".format(senderpubkey, gateway_ip),
         #           "Receiver": "{}@{}".format(receiverpubkey, partner_ip),
         #           "TxNonce":tx_nonce ,
         #          "ChannelName": channel_name,
@@ -677,4 +673,6 @@ def monitor_height(height, txdata, signother, signself):
     register_block(str(int(height)+1000),send_rsmcr_transaction,height,txdata,signother, signself)
 
 def send_rsmcr_transaction(height,txdata,signother, signself):
-    pass
+    height_script = blockheight_to_script(height)
+    rawdata = txdata.format(blockheight_script=height_script,signOther=signother,signSelf=signself)
+    TrinityTransaction.sendrawtransaction(rawdata)

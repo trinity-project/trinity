@@ -29,6 +29,7 @@ from sserver.model.address_model import APIWalletAddress
 from sserver.model.channel_model import APIChannel
 from sserver.model.base_enum import EnumChainType,EnumChannelState
 from wallet.TransactionManagement import message as mg
+from wallet.TransactionManagement import transaction as trans
 from wallet.utils import pubkey_to_address
 
 def get_gateway_ip():
@@ -165,6 +166,10 @@ def create_channel(founder, partner, asset_type, depoist:int, cli=True):
 def get_channel_name_via_address(address1, address2):
     channel = Channel.get_channel(address1, address2)
     return channel.channel
+
+def close_channel(channel_name, wallet):
+    tx = trans.TrinityTransaction(channel_name, wallet)
+
 
 
 if __name__ == "__main__":
