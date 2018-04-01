@@ -27,18 +27,29 @@ from wallet.configure import Configure
 import json
 
 
-def sync_channel(**channel_info):
-    message = {"MessageType":"SyncChannel",
-               "MessageBody":channel_info}
+
+def sync_channel(message_type, channel_name,founder, receiver, balance):
+    message = {"MessageType": message_type,
+               "MessageBody": {
+                   "ChannelName": channel_name,
+                   "Founder": founder,
+                   "Receiver": receiver,
+                   "Balance": balance
+               ## deposit is like format : {${address_1}: {${asset_type}: amount}, ${address_2}: {${asset_type}: amount}}
+                   ##${address_1} ${address_2} -- the node address of the channel bi-direction's owner
+                   ##${asset_type} -- current just support "NEO", "TNC"
+                  }
+               }
+
     request = request = {
         "jsonrpc": "2.0",
         "method": "SyncChannel",
         "params": [message],
         "id": 1
     }
-    #result = requests.post(Configure["GatewayURL"], json=request)
-    #return result.json()
-    return None
+    result = requests.post(Configure["GatewayURL"], json=request)
+    return result.json()
+
 
 
 def join_gateway(publickey):
