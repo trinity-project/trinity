@@ -161,9 +161,11 @@ class Channel(object):
             return None
 
     def get_deposit(self):
-        channel = APIChannel.query_channel(self.channel_name)
-        deposit = channel.deposit
-        return deposit
+        ch = self._get_channel()
+        if ch:
+            return ch.deposit
+        else:
+            return None
 
     def toJson(self):
         jsn = {"ChannelName":self.channel_name,
