@@ -191,7 +191,7 @@ def close_channel(channel_name, wallet):
 
 def sync_channel_info_to_gateway(channel_name):
     ch = Channel.channel(channel_name)
-    sync_channel(ch.toJson())
+    sync_channel(**ch.toJson())
 
 
 if __name__ == "__main__":
