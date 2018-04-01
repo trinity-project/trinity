@@ -60,36 +60,31 @@ class ClientProtocol(Protocol):
         self.state = "resumed"
 
 
-def create_connection(addr):
+def find_connection(url):
     """
-    如果server已经与地址为addr的host保持连接\n
-    则直接使用server的连接通信\n
-    否则创建一个client连接\n
-    该函数返回一个server_transport或者一个coro object
+    has connected the host of the addr
+    then communicate with the exist connection
+    or create a new connection
     """
     from gateway import gateway_singleton
-    find_server_transport = False
-    server_transport = None
-    for transport in gateway_singleton.tcpserver.transports:
-        peername = transport.get_extra_info('peername', default=None)
-        peer_host = peername[0] if peername else None
-        if addr[0] == peer_host:
-            find_server_transport = True
-            server_transport = transport
-            break
-        else:
-            continue
-    if not find_server_transport:
-        loop = get_event_loop()
-        return loop.create_connection(ClientProtocol, addr[0], addr[1])
+    from utils import get_public_key
+    pk = get_public_key(url)
+    exist_transport = gateway_singleton.tcp_pk_dict[pk]
+    if exist_transport in (gateway_singleton.tcpserver.transports | gateway_singleton.client.transports):
+        return exist_transport
+    # disconnected
     else:
-        return server_transport
+        return None
 
-async def send_tcp_msg(addr, msg):
-    transport = create_connection(addr)
-    if iscoroutine(transport):
-        con = await result
-        con.send(msg)
-    else:
-        transport.send(msg)
+async def send_tcp_msg_coro(url, bdata):
+    """
+    :param bdata: bytes type
+    """
+    from gateway import gateway_singleton
+    from utils import get_addr, get_public_key
+    addr = get_addr(url)
+    pk = get_public_key(url)
+    con = await get_event_loop().create_connection(ClientProtocol, addr[0], addr[1])
+    gateway_singleton.tcp_pk_dict[pk] = con
+    con.send(bdata)
 

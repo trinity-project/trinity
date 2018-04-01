@@ -75,6 +75,10 @@ def find_transport(transports, url):
 def get_public_key(url):
     return url.split("@")[0]
 
+def get_addr(url):
+    ip_port = (url.split("@")[1]).split(":")
+    return (ip_port[0], ip_port[1])
+
 def parse_url(url):
     return url.split("@")
 
@@ -105,7 +109,7 @@ def generate_join_net_msg():
     message = {
         "MessageType": "JoinNet"
     }
-    return encode_bytes(message)
+    return message
 
 def generate_ack_show_node_list(node_list):
     message = {
@@ -172,4 +176,4 @@ def generate_node_list_msg(node):
         "MessageType": "NodeList",
         "Nodes": node_data
     }
-    return json.dumps(message)
+    return message

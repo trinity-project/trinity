@@ -6,7 +6,7 @@ from routertree import RouteTree, SPVHashTable
 from tcpservice import TcpService
 from wsocket import WsocketService
 from jsonrpc import AsyncJsonRpc
-from asyclient import send_tcp_msg
+from asyclient import send_tcp_msg_coro, climanage_singleton, find_connection
 from asyncio import get_event_loop, gather, Task, sleep, ensure_future, iscoroutine
 from config import cg_tcp_addr, cg_wsocket_addr, cg_public_ip_port, cg_node_name
 
@@ -29,7 +29,7 @@ class Gateway():
         self.websocket = None
         self.tcpserver = None
         self.loop = None
-        self.clients = set()
+        self.client = climanage_singleton
         self.tcp_pk_dict = {}
         self.ws_pk_dict = {}
     def _create_service_coros(self):
@@ -46,11 +46,6 @@ class Gateway():
         self.tcpserver, self.websocket = services
         self.loop = loop
 
-    # def create_client(self):
-    #     """创建网关client 多个实例"""
-    #     client = Client()
-    #     self.clients.add(client)
-    #     return client
     
     def start(self):
         """ 启动gateway"""
@@ -93,6 +88,9 @@ class Gateway():
     def handle_tcp_request(self, transport, bdata):
         data = utils.decode_bytes(bdata)
         sender = node["wallet_info"]["url"]
+        # first save the node_pk and websocket connection map
+        node_pk = utils.get_public_key(data["Sender"])
+        self.tcp_pk_dict[node_pk] = transport
         msg_type = data.get("MessageType")
         if msg_type == "JoinNet":
             # join net sync node_list
@@ -105,6 +103,9 @@ class Gateway():
         elif msg_type == "AckJoin":
             node_list.add(data["Receiver"])
             node_list = node_list | data["NodeList"]
+        elif msg_type == "RegisterChannel":
+            self._send_jsonrpc_msg("TransactionMessage", data)
+        
         elif msg_type == "AddChannel":
             # basic check
             # request wallet to handle 
@@ -127,16 +128,16 @@ class Gateway():
 
     def handle_wsocket_request(self, websocket, strdata):
         """
-        处理websocket请求
+        handle the websocket request
         """
+        # first save the spv_pk and websocket connection map 
+        spv_k = utils.get_public_key(data["Sender"])
+        self.ws_pk_dict[spv_pk] = websocket
         # data = utils.json_to_dict(strdata)
         data = {}
         msg_type = data.get("MessageType")
         # build map bettween spv pk_key with websocket connection
         if msg_type == "AddChannel":
-            # first save the spv_pk and websocket connection map 
-            spv_pk = utils.get_public_key(data["Sender"])
-            self.ws_pk_dict[spv_pk] = websocket
             # pass the message to wallet to handle
             self._send_jsonrpc_msg("method", strdata)
         elif msg_type == "CombinationTransaction":
@@ -167,25 +168,43 @@ class Gateway():
                         "FullPath": full_path,
                         "Next": next_jump
                     }
-            message = json.dumps(utils.generate_ack_router_info_msg(router))
+            message = utils.generate_ack_router_info_msg(router)
             self._send_wsocket_msg(websocket, message)
         print(strdata)
 
-    def _send_wsocket_msg(self, con, msg):
-        ensure_future(WsocketService.send_msg(con, msg))
+    def _send_wsocket_msg(self, con, data):
+        """
+        :param data: dict type
+        """
+        ensure_future(WsocketService.send_msg(con, json.dumps(data)))
 
-    def _send_jsonrpc_msg(self, method, msg):
-        ensure_future(AsyncJsonRpc.jsonrpc_request(get_event_loop(), method, msg))
+    def _send_jsonrpc_msg(self, method, data):
+        """
+        :param data: dict type
+        """
+        ensure_future(
+            AsyncJsonRpc.jsonrpc_request(get_event_loop(), method, json.dumps(data))
+        )
 
-    def _send_tcp_msg(self, addr, msg):
-        ensure_future(send_tcp_msg(addr, msg))
+    def _send_tcp_msg(self, receiver ,data):
+        """
+        :param receiver: str type: xxxx@ip:port \n
+        :param data: dict type
+        """
+        bdata = utils.encode_bytes(data)
+        # addr = utils.get_addr(sender)
+        connection = find_connection(receiver)
+        if connection:
+            connection.send(bdata)
+        else:
+            ensure_future(send_tcp_msg_coro(receiver, bdata))
 
     def handle_jsonrpc_response(self, method, response):
         
         print(response)
 
     def handle_jsonrpc_request(self, method, params):
-        print(params)
+        # print(params)
         print(type(params))
         if type(params) == str:
             data = json.loads(params)
@@ -196,12 +215,15 @@ class Gateway():
             return utils.generate_ack_show_node_list(node_list)
         if method == "JoinNet":
             if data.get("ip"):
-                addr = (data.get("ip"), data.get("port"))
-                self._send_tcp_msg(utils.generate_join_net_msg())
+                self._send_tcp_msg(
+                    data["Receiver"],
+                    utils.generate_join_net_msg()
+                )
             else:
                 pass
             return "{'JoinNet': 'OK'}"
         elif method == "SyncWalletData":
+            print("Get the wallet sync data\n", data)
             body = data.get("MessageBody")
             node["wallet_info"] = {
                 "url": body["Publickey"] + "@" + cg_public_ip_port,
@@ -234,7 +256,10 @@ class Gateway():
                 return json.dumps(utils.generate_ack_router_info_msg(router))
         elif method == "TransactionMessage":
             if msg_type == "RegisterChannel":
-                return "{}"
+                self._send_tcp_msg(data["Receiver"], data)
+            elif msg_type in ["Rsmc","FounderSign","Founder","RsmcSign","FounderFail"]:
+                self.handle_transaction_message(data)
+
 
     def handle_web_first_connect(self, websocket):
         if not node.get("wallet_info"):
@@ -251,14 +276,6 @@ class Gateway():
         #self._add_event_push_web_task()
 
     def _add_event_push_web_task(self):
-        utils.mock_node_list_data(node["route_tree"])
-        message = {
-            "MessageType": "RouterInfo",
-            "RouterInfo": node["route_tree"].to_dict(with_data=True)
-        }
-
-        print(message)
-        node["route_tree"].show(line_type='ascii')
         ensure_future(WsocketService.push_by_event(self.websocket.websockets, message))
 
     def _add_timer_push_web_task(self):
@@ -269,11 +286,14 @@ class Gateway():
         self_tree = node["route_tree"]
         for child in self_tree.is_branch(self_tree.root):
             node_object = self_tree.get_node(child)
-            pk = node_object.tag
-            self.tcp_pk_dict.get(pk).send(utils.encode_bytes(self_tree.to_json()))
-            
+            ip_port = node_object.data["Ip"].split(":")
+            receiver = node_object.data["Pblickey"] + "@" + node_object.data["Ip"]
+            self._send_tcp_msg(receiver, self_tree.to_dict(with_data=True))            
 
     def handle_transaction_message(self, data):
+        """
+        :param data: bytes type
+        """
         receiver_pk, receiver_ip_port = utils.parse_url(data["Receiver"])
         self_pk, self_ip_port = utils.parse_url(node["wallet_info"]["url"])
         # include router info situation
@@ -301,7 +321,7 @@ class Gateway():
                             node["wallet_info"]["url"],
                             data["MessageBody"]["Value"] - node["wallet_info"]["fee"]
                         )
-                        self._send_jsonrpc_msg("TransactionMessage", json.dumps(message))
+                        self._send_jsonrpc_msg("TransactionMessage", message)
                     # xx--node--node--..--xx siuation
                     else:
                         # to self's spv
@@ -329,7 +349,7 @@ class Gateway():
                             new_next_jump,
                             data["MessageBody"]["Value"]
                         )
-                        self._send_jsonrpc_msg("TransactionMessage", json.dumps(message))
+                        self._send_jsonrpc_msg("TransactionMessage", message)
                     # pxxx---node----exxx for node
                     else:
                         # pxxx is spv
@@ -346,8 +366,8 @@ class Gateway():
                                 new_next_jump,
                                 data["MessageBody"]["Value"] - node["wallet_info"]["fee"]
                             )
-                            self._send_jsonrpc_msg("TransactionMessage", json.dumps(left_message))
-                            self._send_jsonrpc_msg("TransactionMessage", json.dumps(right_message))
+                            self._send_jsonrpc_msg("TransactionMessage", left_message)
+                            self._send_jsonrpc_msg("TransactionMessage", right_message)
                         # pxxx is node
                         else:
                             message = utils.generate_trigger_transaction_msg(
@@ -355,9 +375,9 @@ class Gateway():
                                 new_next_jump,
                                 data["MessageBody"]["Value"] - node["wallet_info"]["fee"]
                             )
-                            self._send_jsonrpc_msg("TransactionMessage", json.dumps(message))
-                    pk = utils.parse_url(new_next_jump)[0]
-                    self.tcp_pk_dict.get(pk).send(utils.encode_bytes(data))
+                            self._send_jsonrpc_msg("TransactionMessage", message)
+                    # addr = utils.get_addr(new_next_jump)
+                    self._send_tcp_msg(new_next_jump, data)
             # invalid msg
             else:
                 pass
@@ -367,13 +387,14 @@ class Gateway():
             if receiver_ip_port == self_ip_port:
                 # to self's spv
                 if receiver_pk != self_pk:
-                    self._send_wsocket_msg(self.ws_pk_dict[receiver_pk], json.dumps(data))
+                    self._send_wsocket_msg(self.ws_pk_dict[receiver_pk], data)
                 # to self's wallet
                 else:
-                    self._send_jsonrpc_msg("TransactionMessage", json.loads(data))
+                    self._send_jsonrpc_msg("TransactionMessage", data)
             # to self's peer
             else:
-                self.tcp_pk_dict[receiver_pk].send(utils.encode_bytes(data))
+                # addr = utils.get_addr(data["Receiver"])
+                self._send_tcp_msg(data["Receiver"], data)
 
 gateway_singleton = Gateway()
 
