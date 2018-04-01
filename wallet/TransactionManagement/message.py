@@ -83,7 +83,7 @@ class RegisterMessage(Message):
         partner_address = pubkey_to_address(partner_pubkey)
         APIChannel.add_channel(self.channel_name, founder_pubkey, partner_pubkey,
                                EnumChannelState.INIT.name, 0, self.deposit, 0)
-        ch.sync_channel_info_to_gateway(self.channel_name)
+        ch.sync_channel_info_to_gateway(self.channel_name,"AddChannel") # Just For Test
 
         FounderMessage.create(self.channel_name,partner_pubkey,founder_pubkey,
                               self.asset_type,self.deposit,founder_ip,partner_ip)
@@ -122,6 +122,7 @@ class CreateTranscation(Message):
         tx_nonce = TrinityTransaction(self.channel_name, self.wallet).get_latest_nonceid()
         RsmcMessage.create(self.channel_name, self.wallet, self.wallet.pubkey,
                            self.receiver_pubkey, self.value, self.receiver_ip, str(tx_nonce))
+
 
 class TransactionMessage(Message):
     """
@@ -191,7 +192,6 @@ class FounderMessage(TransactionMessage):
             if self.transaction.get_tx_nonce("0"):
                 txid = self.founder.get("txId")
                 ch.Channel.channel(self.channel_name).update_channel(state=EnumChannelState.OPENING.name)
-                ch.sync_channel_info_to_gateway(self.channel_name)
                 register_monitor(txid, monitor_founding, self.channel_name, EnumChannelState.OPENED.name)
             if ch.Channel.channel(self.channel_name).src_addr == self.wallet.address:
                 deposit = ch.Channel.channel(self.channel_name).get_deposit().get()
@@ -327,7 +327,6 @@ class FounderResponsesMessage(TransactionMessage):
                                                                                signSelf=signdata_self)
                 TrinityTransaction.sendrawtransaction(TrinityTransaction.genarate_raw_data(txdata, witnes))
                 ch.Channel.channel(self.channel_name).update_channel(state=EnumChannelState.OPENING.name)
-                ch.sync_channel_info_to_gateway(self.channel_name)
                 sender_pubkey, sender_ip = self.sender.split("@")
                 receiver_pubkey, receiver_ip = self.receiver.split("@")
                 balance = {}.setdefault(sender_pubkey, {}.setdefault(self.asset_type, self.deposit))
@@ -474,7 +473,7 @@ class RsmcMessage(TransactionMessage):
                     balance = self.transaction.get_balance()
                     self.transaction.update_transaction(State="confirm")
                     ch.Channel.channel(self.channel_name).update_channel(balance=balance)
-                    ch.sync_channel_info_to_gateway(self.channel_name)
+                    ch.sync_channel_info_to_gateway(self.channel_name, "UpdateChannel")
 
                     #Todo monitor B transaction
                     #monitor_ctxid = self.transaction.get_tx_nonce(str(int(self.tx_nonce)-1)).get("MonitorTxId")
@@ -686,7 +685,7 @@ def monitor_founding(height, channel_name, state):
     channel = ch.Channel.channel(channel_name)
     deposit = ch.Channel.get_deposit()
     channel.update_channel(state=state, balance = deposit)
-    ch.sync_channel_info_to_gateway(channel_name)
+    ch.sync_channel_info_to_gateway(channel_name,"AddChannel")
 
 
 def monitor_height(height, txdata, signother, signself):
