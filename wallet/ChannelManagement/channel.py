@@ -31,6 +31,7 @@ from sserver.model.base_enum import EnumChainType,EnumChannelState
 from wallet.TransactionManagement import message as mg
 from wallet.TransactionManagement import transaction as trans
 from wallet.utils import pubkey_to_address
+from wallet.Interface.gate_way import sync_channel
 
 def get_gateway_ip():
     return "127.0.0.1:20554"
@@ -164,6 +165,13 @@ class Channel(object):
         deposit = channel.deposit
         return deposit
 
+    def toJson(self):
+        jsn = {"ChannelName":self.channel_name,
+               "Founder":self.founder,
+               "Parterner":self.partner,
+               "State":self.state,
+               "Balance":self.get_balance()}
+
 
 def create_channel(founder, partner, asset_type, depoist:int, cli=True):
     return Channel(founder, partner).create(asset_type, depoist, cli)
@@ -173,9 +181,14 @@ def get_channel_name_via_address(address1, address2):
     channel = Channel.get_channel(address1, address2)
     return channel
 
+
 def close_channel(channel_name, wallet):
     tx = trans.TrinityTransaction(channel_name, wallet)
 
+
+def sync_channel_info_to_gateway(channel_name):
+    ch = Channel.channel(channel_name)
+    sync_channel(ch.toJson())
 
 
 if __name__ == "__main__":

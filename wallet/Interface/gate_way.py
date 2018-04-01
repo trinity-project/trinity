@@ -27,12 +27,26 @@ from wallet.configure import Configure
 import json
 
 
+def sync_channel(**channel_info):
+    message = {"MessageType":"SyncChannel",
+               "MessageBody":channel_info}
+    request = request = {
+        "jsonrpc": "2.0",
+        "method": "SyncChannel",
+        "params": [message],
+        "id": 1
+    }
+    result = requests.post(Configure["GatewayURL"], json=request)
+    return result.json()
+
+
 def join_gateway(publickey):
     message = {"MessageType":"SyncWallet",
                "MessageBody":{
                    "Publickey":publickey,
                    "CommitMinDeposit":Configure["Channel"]["CommitMinDeposit"],
-                   "Fee":Configure["Fee"]
+                   "Fee":Configure["Fee"],
+                   "alias":Configure["alias"]
                    }
                }
     request = {

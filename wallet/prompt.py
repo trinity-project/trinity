@@ -240,7 +240,6 @@ class UserPromptInterface(PromptInterface):
             # For Debug
             result = gate_way.join_gateway(self.Wallet.pubkey).get("result")
             if result:
-                self.Wallet.address, self.Wallet.pubkey = self.get_address()
                 self.Wallet.url = json.loads(result).get("MessageBody").get("Url")
                 self.Channel = True
             else:
