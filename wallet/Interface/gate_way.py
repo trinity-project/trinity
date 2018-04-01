@@ -27,8 +27,8 @@ from wallet.configure import Configure
 import json
 
 
-def sync_channel(message_type,**channel_info):
-    message = {"MessageType":message_type,
+def sync_channel(**channel_info):
+    message = {"MessageType":"SyncChannel",
                "MessageBody":channel_info}
     request = request = {
         "jsonrpc": "2.0",
@@ -36,8 +36,9 @@ def sync_channel(message_type,**channel_info):
         "params": [message],
         "id": 1
     }
-    result = requests.post(Configure["GatewayURL"], json=request)
-    return result.json()
+    #result = requests.post(Configure["GatewayURL"], json=request)
+    #return result.json()
+    return None
 
 
 def join_gateway(publickey):

@@ -85,7 +85,7 @@ class RegisterMessage(Message):
                                EnumChannelState.INIT.name, 0, self.deposit, 0)
         ch.sync_channel_info_to_gateway(self.channel_name)
 
-        FounderMessage.create(self.channel_name,founder_pubkey,partner_pubkey,
+        FounderMessage.create(self.channel_name,partner_pubkey,founder_pubkey,
                               self.asset_type,self.deposit, partner_ip,founder_ip)
 
 class TestMessage(Message):
