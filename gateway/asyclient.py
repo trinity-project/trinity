@@ -84,7 +84,7 @@ async def send_tcp_msg_coro(url, bdata):
     from utils import get_addr, get_public_key
     addr = get_addr(url)
     pk = get_public_key(url)
-    con = await get_event_loop().create_connection(ClientProtocol, addr[0], addr[1])
-    gateway_singleton.tcp_pk_dict[pk] = con
-    con.send(bdata)
+    result = await get_event_loop().create_connection(ClientProtocol, addr[0], addr[1])
+    gateway_singleton.tcp_pk_dict[pk] = result[0]
+    result[0].write(bdata)
 

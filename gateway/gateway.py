@@ -195,7 +195,7 @@ class Gateway():
         # addr = utils.get_addr(sender)
         connection = find_connection(receiver)
         if connection:
-            connection.send(bdata)
+            connection.write(bdata)
         else:
             ensure_future(send_tcp_msg_coro(receiver, bdata))
 
