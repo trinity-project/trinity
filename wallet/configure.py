@@ -24,7 +24,6 @@ SOFTWARE."""
 Configure = {
     "alias":"TrinityNode",# you can rename your node
     "GatewayURL":"http://localhost:8077",
-    "GatewayIP":"10.10.10.10:8089",
     "Fee": 0,
     "Channel":{
         "CommitMinDeposit": 0, # the min commit deposit
@@ -36,7 +35,5 @@ Configure = {
         "NeoProtocol":"/home/will/neocli/protocol.json",
     },
     "DataBase":{"url": "http://localhost:20554"
-
     }
-
 }
