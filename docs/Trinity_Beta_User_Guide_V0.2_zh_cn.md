@@ -9,7 +9,7 @@
 6. Channel交互
 
 注意：
-1. Trinity 网络基于python3的库进行开发，对python3有依赖，部署trinity的python环境要求不低于python3.6版本。
+1. Trinity v0.2版本对python3.6有依赖，要求部署环境的python版本不低于python3.6。
 
 2. 随着Trinity项目的不断演进，本指引有可能不适用未来发布的Trinity版本；本指引使用Ubuntu16.04桌面版进行测试验证。
 
@@ -21,7 +21,14 @@
 ```
 git clone https://github.com/trinity-project/trinity.git
 ```
-进入Trinity目录，通过以下命令进行Trinity 的python依赖包安装：
+apt-get install python3.6 python3.6-dev python3.6-venv python3-pip libleveldb-dev libssl-dev g++
+
+通过以下命令部署Trinity 的依赖环境：
+```
+apt-get install python3.6 python3.6-dev python3.6-venv python3-pip libleveldb-dev libssl-dev g++
+```
+
+进入Trinity目录，通过以下命令安装Trinity 的依赖包：
 
 ```
 pip3.6 install -r requirements
