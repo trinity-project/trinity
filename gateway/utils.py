@@ -148,9 +148,9 @@ def generate_ack_TransactionMessage():
     }
     return message
 
-def generate_node_list_data(node):
+def generate_node_list_msg(node):
     route_tree = node["route_tree"]
-    if route_tree:
+    if not route_tree.root:
         spv_table = node["spv_table"]
         pk, ip_port = node["wallet_info"]["url"].split("@")
         route_tree.create_node(
@@ -165,10 +165,14 @@ def generate_node_list_data(node):
                 "SpvList": [] if not node["spv_table"].find(ip_port) else node["spv_table"].find(ip_port)
             }
         )
-        pitch_dic = route_tree.to_dict(with_data=True)
-        pitch_dic["node"]["children"] = []
-        return json.dumps(pitch_dic)
-        #return route_tree.to_json(with_data=True)
+        # pitch_dic = route_tree.to_dict(with_data=True)
+        # pitch_dic["node"]["children"] = []
+        # return json.dumps(pitch_dic)
+        node_data = route_tree.to_dict(with_data=True)
     else:
-        return route_tree.to_json(with_data=True)
-    
+        node_data = route_tree.to_dict(with_data=True)
+    message = {
+        "MessageType": "NodeList",
+        "Nodes": node_data
+    }
+    return json.dumps(message)

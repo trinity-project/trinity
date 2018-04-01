@@ -180,10 +180,6 @@ class Gateway():
     def _send_tcp_msg(self, addr, msg):
         ensure_future(send_tcp_msg(addr, msg))
 
-    def handle_wsocket_disconnection(self, websocket):
-        pass
-        #self._add_event_push_web_task()
-
     def handle_jsonrpc_response(self, method, response):
         
         print(response)
@@ -247,8 +243,12 @@ class Gateway():
                 "fee": 1,
                 "url": "03a6fcaac0e13dfbd1dd48a964f92b8450c0c81c28ce508107bc47ddc511d60e75@" + cg_public_ip_port
             }
-        message = utils.generate_node_list_data(node)
+        message = utils.generate_node_list_msg(node)
         self._send_wsocket_msg(websocket, message)
+
+    def handle_wsocket_disconnection(self, websocket):
+        pass
+        #self._add_event_push_web_task()
 
     def _add_event_push_web_task(self):
         utils.mock_node_list_data(node["route_tree"])
