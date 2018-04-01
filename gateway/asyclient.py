@@ -69,7 +69,7 @@ def find_connection(url):
     from gateway import gateway_singleton
     from utils import get_public_key
     pk = get_public_key(url)
-    exist_transport = gateway_singleton.tcp_pk_dict[pk]
+    exist_transport = gateway_singleton.tcp_pk_dict.get(pk)
     if exist_transport in (gateway_singleton.tcpserver.transports | gateway_singleton.client.transports):
         return exist_transport
     # disconnected
