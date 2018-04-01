@@ -92,8 +92,8 @@ class Channel(object):
         return md5s.hexdigest().upper()
 
     def create(self, asset_type, deposit, cli=True):
-        if Channel.get_channel(self.founder, self.partner):
-            raise ChannelExist
+        #if Channel.get_channel(self.founder_pubkey, self.partner_pubkey):
+            #raise ChannelExist
         self.start_time = time.time()
         self.asset_type = asset_type
         self.deposit = {}
@@ -170,6 +170,7 @@ class Channel(object):
                "Founder":self.founder,
                "Parterner":self.partner,
                "State":self.state,
+               "Deposit":self.deposit,
                "Balance":self.get_balance()}
 
 
@@ -192,7 +193,7 @@ def sync_channel_info_to_gateway(channel_name):
 
 
 if __name__ == "__main__":
-    result  = APIChannel.query_channel(channel="1BE0FCD56A27AD46C22B8EEDC4E835EA")
+    result = APIChannel.query_channel(channel="1BE0FCD56A27AD46C22B8EEDC4E835EA")
     print(result)
     print(dir(result["content"][0]))
     print(result["content"][0].dest_addr)
