@@ -86,7 +86,7 @@ class RegisterMessage(Message):
         ch.sync_channel_info_to_gateway(self.channel_name)
 
         FounderMessage.create(self.channel_name,partner_pubkey,founder_pubkey,
-                              self.asset_type,self.deposit, partner_ip,founder_ip)
+                              self.asset_type,self.deposit,founder_ip,partner_ip)
 
 class TestMessage(Message):
 
