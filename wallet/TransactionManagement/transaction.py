@@ -52,8 +52,9 @@ class TrinityTransaction(object):
     def signature(self, rawdata):
         return self.wallet.Sign(rawdata)
 
-    def create_tx_file(self):
-        os.mknod(os.path.join(TxDataDir, self.tx_file))
+    def create_tx_file(self,channel_name):
+        os.mknod(os.path.join(TxDataDir, channel_name+".data"))
+        self.tx_file = self.get_transaction_file()
 
     def get_transaction_file(self):
          return self.wallet.LoadStoredData(self.channel)
@@ -65,6 +66,7 @@ class TrinityTransaction(object):
 
     def read_transaction(self):
         with open(self.tx_file, "rb") as f:
+            print(uncryto_channel(f))
             return uncryto_channel(f)
 
     def update_transaction(self, tx_nonce, **kwargs):
@@ -75,7 +77,8 @@ class TrinityTransaction(object):
             subitem = subitem if subitem else {}
             for key, value in kwargs.items():
                 subitem[key] = value
-            message[tx_nonce] = subitem
+            message[str(tx_nonce)] = subitem
+            print(message)
             crypto_channel(f, **message)
 
     @staticmethod
@@ -99,7 +102,7 @@ class TrinityTransaction(object):
 
     def get_tx_nonce(self, tx_nonce):
         tx = self.read_transaction()
-        return tx.get(tx_nonce)
+        return tx.get(tx_nonce) if tx else None
 
     def get_latest_nonceid(self, tx=None):
         tx = tx if tx else self.read_transaction()
@@ -174,7 +177,7 @@ def pickle_load(file):
         try:
             pickles.append(pickle.load(file))
         except EOFError:
-            return pickles
+            return pickles[0] if pickles else None
 
 def scriptToAddress(script):
     scriptHash=Crypto.ToScriptHash(script)
