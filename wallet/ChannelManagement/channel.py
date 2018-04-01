@@ -174,6 +174,7 @@ class Channel(object):
                "State":self.state,
                "Deposit":self.get_deposit(),
                "Balance":self.get_balance()}
+        return jsn
 
 
 def create_channel(founder, partner, asset_type, depoist:int, cli=True):
