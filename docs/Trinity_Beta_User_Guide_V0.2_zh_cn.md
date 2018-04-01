@@ -24,7 +24,7 @@ git clone https://github.com/trinity-project/trinity.git
 进入Trinity目录，通过以下命令进行Trinity 的python依赖包安装：
 
 ```
-pip3 install -r requirements
+pip3.6 install -r requirements
 ```
 
 进入Trinity目录,通过以下命令配置python环境变量:
@@ -40,7 +40,7 @@ export PYTHONPATH=$PWD
 进入trinity/gateway目录，执行如下命令启动trinity 网络节点：
 
 ```
-python3 start.py -->null &
+python3.6 start.py -->null &
 ```
 ## Trinity CLI 钱包部署
 
@@ -49,7 +49,7 @@ python3 start.py -->null &
 进入trinity/wallet目录，执行如下命令启动trinity CLI钱包：
 
 ```
-python3 prompt.py 
+python3.6 prompt.py 
 ```
 
 等待trinity CLI钱包进行区块同步，区块同步完成之后再继续进行后续操作。
