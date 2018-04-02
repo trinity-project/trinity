@@ -389,6 +389,9 @@ class RsmcMessage(TransactionMessage):
     def create(channel_name, wallet, sender_pubkey, receiver_pubkey, value, partner_ip,gateway_ip ,tx_nonce, asset_type="TNC",
                breachremedy=False,cli =False,
                router = None, next_router=None):
+        print("Handle Create Rsmc ",channel_name, wallet, sender_pubkey, receiver_pubkey, value, partner_ip,gateway_ip ,tx_nonce, asset_type,
+               breachremedy,cli,
+               router, next_router)
         transaction = TrinityTransaction(channel_name, wallet)
         founder = transaction.get_founder()
         tx_state = transaction.get_transaction_state()
