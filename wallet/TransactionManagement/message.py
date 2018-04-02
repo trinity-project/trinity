@@ -245,12 +245,12 @@ class FounderMessage(TransactionMessage):
     def send_responses(self, error = None):
 
 
-        founder_sig = {"txDataSing": self.sign_message(self.founder.get("txData")),
-                        "orginalData": self.founder}
-        commitment_sig = {"txDataSing": self.sign_message(self.commitment.get("txData")),
-                       "orginalData": self.commitment}
-        rd_sig = {"txDataSing": self.sign_message(self.revocable_delivery.get("txData")),
-                       "orginalData": self.revocable_delivery}
+        founder_sig = {"txDataSign": self.sign_message(self.founder.get("txData")),
+                        "originalData": self.founder}
+        commitment_sig = {"txDataSign": self.sign_message(self.commitment.get("txData")),
+                       "originalData": self.commitment}
+        rd_sig = {"txDataSign": self.sign_message(self.revocable_delivery.get("txData")),
+                       "originalData": self.revocable_delivery}
         if error:
             message_response = { "MessageType":"FounderFail",
                                 "Sender": self.receiver,
@@ -320,11 +320,11 @@ class FounderResponsesMessage(TransactionMessage):
             self.transaction.update_transaction("0", Founder=self.founder, Commitment=self.commitment,
                                                 RD = self.revocable_delivery)
             if ch.Channel.channel(self.channel_name).src_addr == self.wallet.pubkey:
-                signdata = self.founder.get("txDataSing")
-                txdata = self.founder.get("orginalData").get("txData")
-                txid = self.founder.get("orginalData").get("txId")
+                signdata = self.founder.get("txDataSign")
+                txdata = self.founder.get("originalData").get("txData")
+                txid = self.founder.get("originalData").get("txId")
                 signdata_self = self.sign_message(txdata)
-                witnes = self.founder.get("orginalData").get("witness").format(signOther=signdata_self,
+                witnes = self.founder.get("originalData").get("witness").format(signOther=signdata_self,
                                                                                signSelf=signdata)
                 TrinityTransaction.sendrawtransaction(TrinityTransaction.genarate_raw_data(txdata, witnes))
                 ch.Channel.channel(self.channel_name).update_channel(state=EnumChannelState.OPENING.name)
@@ -393,7 +393,7 @@ class RsmcMessage(TransactionMessage):
                breachremedy,cli,
                router, next_router)
         transaction = TrinityTransaction(channel_name, wallet)
-        founder = transaction.get_founder()
+        founder = ch.Channel.channel(channel_name).src_addr
         tx_state = transaction.get_transaction_state()
         sender_balance = transaction.get_balance().get(sender_pubkey)
         receiver_balance = transaction.get_balance().get(receiver_pubkey)
@@ -476,11 +476,11 @@ class RsmcMessage(TransactionMessage):
                                        self.value,self.sender_ip, breachremedy=True)
                     ctx = self.transaction.update_transaction(self.tx_nonce)
                     monitor_ctxid = ctx.get("MonitorTxId")
-                    txData = ctx.get("RevocableDelivery").get("orginalData").get("txData")
+                    txData = ctx.get("RevocableDelivery").get("originalData").get("txData")
                     txDataself = self.sign_message(txData)
-                    txDataother = self.sign_message(ctx.get("RevocableDelivery").get("txDataSing")),
-                    witness = ctx.get("RevocableDelivery").get("orginalData").get("witness_part1")+\
-                              ctx.get("RevocableDelivery").get("orginalData").get("witness_part2")
+                    txDataother = self.sign_message(ctx.get("RevocableDelivery").get("txDataSign")),
+                    witness = ctx.get("RevocableDelivery").get("originalData").get("witness_part1")+\
+                              ctx.get("RevocableDelivery").get("originalData").get("witness_part2")
                     register_monitor(monitor_ctxid,monitor_height,txData+witness, txDataother, txDataself)
                     balance = self.transaction.get_balance()
                     self.transaction.update_transaction(State="confirm")
@@ -489,15 +489,15 @@ class RsmcMessage(TransactionMessage):
 
                     #Todo monitor B transaction
                     #monitor_ctxid = self.transaction.get_tx_nonce(str(int(self.tx_nonce)-1)).get("MonitorTxId")
-                    #breach_remedy_sign = self.sign_message(self.breach_remedy.get("txDataSing"))
+                    #breach_remedy_sign = self.sign_message(self.breach_remedy.get("txDataSign"))
                     #rawdata =
                     #register_monitor(monitor_ctxid,  record_block, )
 
             elif self.commitment and self.revocable_delivery:
-                commitment_sig = {"txDataSing": self.sign_message(self.commitment.get("txData")),
-                              "orginalData": self.commitment}
-                rd_sig = {"txDataSing": self.sign_message(self.revocable_delivery.get("txData")),
-                      "orginalData": self.revocable_delivery}
+                commitment_sig = {"txDataSign": self.sign_message(self.commitment.get("txData")),
+                              "originalData": self.commitment}
+                rd_sig = {"txDataSign": self.sign_message(self.revocable_delivery.get("txData")),
+                      "originalData": self.revocable_delivery}
                 message_response = { "MessageType":"RsmcSign",
                                 "Sender": self.receiver,
                                 "Receiver":self.sender,
@@ -626,12 +626,12 @@ class HtlcMessage(TransactionMessage):
 
     def send_responses(self, error = None):
         if not error:
-            hctx_sig = {"txDataSing": self.sign_message(self.hctx.get("txData")),
-                                "orginalData": self.hctx}
-            hedtx_sig = {"txDataSing": self.sign_message(self.hedtx.get("txData")),
-                              "orginalData": self.hedtx}
-            httx_sig = {"txDataSing": self.sign_message(self.httx.get("txData")),
-                      "orginalData": self.httx}
+            hctx_sig = {"txDataSign": self.sign_message(self.hctx.get("txData")),
+                                "originalData": self.hctx}
+            hedtx_sig = {"txDataSign": self.sign_message(self.hedtx.get("txData")),
+                              "originalData": self.hedtx}
+            httx_sig = {"txDataSign": self.sign_message(self.httx.get("txData")),
+                      "originalData": self.httx}
 
             message_response = { "MessageType":"HtlcSign",
                                 "Sender": self.receiver,

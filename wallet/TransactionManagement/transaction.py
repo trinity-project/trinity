@@ -97,11 +97,14 @@ class TrinityTransaction(object):
 
     def get_founder(self):
         tx = self.read_transaction()
-        return tx["0"]["Founder"]["orginalData"]
+        return tx["0"]["Founder"]["originalData"]
 
     def get_balance(self):
         tx = self.read_transaction()
-        return tx["Blance"]
+        try:
+            return tx["Balance"]
+        except KeyError:
+            return 0
 
     def get_tx_nonce(self, tx_nonce):
         tx = self.read_transaction()
@@ -131,8 +134,8 @@ class TrinityTransaction(object):
         latest_nonce =self.get_latest_nonceid(tx)
         latest_tx = tx.get(str(latest_nonce))
         latest_ctx = latest_tx.get("Commitment")
-        ctx_txData = latest_ctx.get("orginalData").get("txData")
-        ctx_witness = latest_ctx.get("orginalData").get("witness")
+        ctx_txData = latest_ctx.get("originalData").get("txData")
+        ctx_witness = latest_ctx.get("originalData").get("witness")
         ctx_txData_other = latest_ctx.get("txDataSing")
         ctx_txData_sign = sign(ctx_txData, self.wallet)
         raw_data = ctx_txData+ctx_witness.format(signSelf=ctx_txData_sign,signOther = ctx_txData_other)
