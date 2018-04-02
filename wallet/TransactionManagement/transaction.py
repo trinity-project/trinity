@@ -62,29 +62,29 @@ class TrinityTransaction(object):
 
     def store_transaction(self, tx_message):
         with open(self.tx_file, "wb+") as f:
-            f.seek(0)
             crypto_channel(f, **tx_message)
         return None
 
     def read_transaction(self):
+        print(self.tx_file)
         with open(self.tx_file, "rb") as f:
-            f.seek(0)
-            return uncryto_channel(f)
+            try:
+               return uncryto_channel(f)
+            except:
+                return None
 
     def update_transaction(self, tx_nonce, **kwargs):
-        with open(self.tx_file, "rb") as f:
-            f.seek(0)
-            message = uncryto_channel(f)
-            message = message if message else {}
-            subitem = message.get(tx_nonce)
-            subitem = subitem if subitem else {}
-            for key, value in kwargs.items():
-                subitem[key] = value
-            message[str(tx_nonce)] = subitem
-            print(message)
-        with open(self.tx_file, "wb+") as f:
-            f.seek(0)
-            crypto_channel(f, **message)
+        tx_infos = self.read_transaction()
+        if tx_infos:
+            info = tx_infos.get(tx_nonce)
+            if not info:
+                tx_infos[tx_nonce] = kwargs
+            else:
+                dictMerged = dict(info, **kwargs)
+                tx_infos[tx_nonce] = dictMerged
+        else:
+            tx_infos=dict([(tx_nonce, kwargs)])
+        self.store_transaction(tx_infos)
 
     @staticmethod
     def sendrawtransaction(raw_data):
@@ -163,7 +163,7 @@ def crypto_channel(file_handler, **kwargs):
     :param kwargs:
     :return:
     """
-    return dic2btye(file_handler, **kwargs)
+    return pickle.dump(kwargs, file_handler)
 
 def uncryto_channel(file_handler):
     """
@@ -171,7 +171,7 @@ def uncryto_channel(file_handler):
     :param file_handler:
     :return:
     """
-    return byte2dic(file_handler)
+    return pickle.load(file_handler)
 
 def byte2dic(file_hander):
     """
@@ -249,14 +249,17 @@ def construt_update_channel_transction(params):
     return {"BR_tx": BR_tx, "C_TX": C_tx, "R_TX": RD_tx}
 
 if __name__== "__main__":
-    print(TxDataDir)
-    tx_message = {"0":1}
-    with open("test.data","wb+")as f:
-        crypto_channel(f, **tx_message)
-        print(uncryto_channel(f))
-        tx_message = {"1":1,"2":2}
-        crypto_channel(f, **tx_message)
-        print(uncryto_channel(f))
+    tx = TrinityTransaction("Mytest","walle")
+    TrinityTransaction("Mytest","wallt")
+    m = {"test1":1}
+    m1 = {"test2":2}
+    tx.update_transaction("0",test1=1)
+    tx.update_transaction("0",test2=2)
+    print(tx.read_transaction())
+    tx.update_transaction("1",H=1,x="tt")
+    print(tx.read_transaction())
+
+
 
 
 

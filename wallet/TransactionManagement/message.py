@@ -393,7 +393,7 @@ class RsmcMessage(TransactionMessage):
                breachremedy,cli,
                router, next_router)
         transaction = TrinityTransaction(channel_name, wallet)
-        founder = ch.Channel.channel(channel_name).src_addr
+        founder = transaction.get_founder()
         tx_state = transaction.get_transaction_state()
         balance = transaction.get_balance()
         if balance:
