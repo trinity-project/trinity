@@ -78,8 +78,9 @@ class UserPromptInterface(PromptInterface):
 
 
     def run(self):
-        dbloop = task.LoopingCall(Blockchain.Default().PersistBlocks)
-        dbloop.start(.1)
+        #dbloop = task.LoopingCall(Blockchain.Default().PersistBlocks)
+        #dbloop.start(.1)
+        #Blockchain.Default().PersistBlocks()
 
         tokens = [(Token.Neo, 'NEO'), (Token.Default, ' cli. Type '),
                   (Token.Command, '\'help\' '), (Token.Default, 'to get started')]
@@ -214,7 +215,7 @@ class UserPromptInterface(PromptInterface):
         print('Shutting down. This may take a bit...')
         self.go_on = False
         self.do_close_wallet()
-        reactor.crash()
+        reactor.stop()
 
     def do_channel(self,arguments):
         if not self.Wallet:
