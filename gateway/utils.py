@@ -32,9 +32,9 @@ def decode_bytes(bdata, target="dict"):
     如果传入的target为"str" 则返回字符串
     """
     data = bdata.decode("utf-8")
-    print(data)
+    print("########",data,"*******")
     if target == "dict":
-        data = _remove_end_mark(data)
+        # data = _remove_end_mark(data)
         data = json.loads(data)
     return data
 
@@ -46,7 +46,7 @@ def encode_bytes(data):
     """
     if type(data) != str:
         data = json.dumps(data)
-    data = _add_end_mark(data)
+    # data = _add_end_mark(data)
     return data.encode("utf-8")
 
 def json_to_dict(str_json):
@@ -77,6 +77,9 @@ def find_transport(transports, url):
 
 def get_public_key(url):
     return url.split("@")[0]
+
+def get_ip_port(url):
+    return url.split("@")[1]
 
 def get_addr(url):
     ip_port = (url.split("@")[1]).split(":")
@@ -178,5 +181,13 @@ def generate_node_list_msg(node):
     message = {
         "MessageType": "NodeList",
         "Nodes": node_data
+    }
+    return message
+
+def generate_sync_tree_msg(route_tree, sender):
+    message = {
+        "MessageType": "SyncChannelState",
+        "Sender": sender,
+        "MessageBody": route_tree.to_dict(with_data=True)
     }
     return message

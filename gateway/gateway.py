@@ -123,9 +123,12 @@ class Gateway():
             self.handle_transaction_message(data)
 
         elif msg_type == "SyncChannelState":
-            # update self tree
+            # node receive the syncchannel msg
+            # first update self tree
+            # then sync to self's peers except the peer which send the syncchannel msg
             node["route_tree"].sync_tree(RouteTree.to_tree(data["MessageBody"]))
-            # self.sync_channel_route_to_peer()
+            except_peer = data["Sender"]
+            self.sync_channel_route_to_peer(except_peer)
         
 
     def handle_wsocket_request(self, websocket, strdata):
@@ -159,7 +162,7 @@ class Gateway():
                 full_path = []
                 for nid in nids:
                     node_object = node["route_tree"].get_node(nid)
-                    url = node_object.tag + node_object.identifier
+                    url = node_object.data["Pblickkey"] + "@" + node_object.identifier
                     fee = node_object.data["fee"]
                     full_path.append((url, fee))
                 if not len(full_path):
@@ -243,7 +246,7 @@ class Gateway():
             full_path = []
             for nid in nids:
                 node_object = node["route_tree"].get_node(nid)
-                url = node_object.tag + node_object.identifier
+                url = node_object.data["Pblickkey"] + "@" + node_object.identifier
                 fee = node_object.data["fee"]
                 full_path.append((url, fee))
             next_jump = full_path[0][0]
@@ -271,15 +274,16 @@ class Gateway():
             channel_peer = channel_receiver if channel_founder == self_url else channel_founder
             if msg_type == "AddChannel":
                 # send self tree to peer
-                self._send_tcp_msg(channel_peer, node["route_tree"].to_dict(with_data=True))
+                message = utils.generate_sync_tree_msg(node["route_tree"], self_url)
+                self._send_tcp_msg(channel_peer, message)
             elif msg_type == "UpdateChannel":
                 #update balance and send self tree to peers
-                self_node = node["route_tree"].get_node(utils.get_public_key(self_url))
-                self_node.balance = data["Message"]["Balance"]
+                self_node = node["route_tree"].get_node(utils.get_ip_port(self_url))
+                self_node.data.balance = data["MessageBody"]["Balance"]
                 self.sync_channel_route_to_peer()
             elif msg_type == "DeleteChannel":
                 # remove channel_peer and notification peers
-                node["route_tree"].remove_node(utils.get_public_key(channel_peer))
+                node["route_tree"].remove_node(utils.get_ip_port(channel_peer))
                 self.sync_channel_route_to_peer()
 
 
@@ -304,13 +308,37 @@ class Gateway():
         message = {}
         ensure_future(WsocketService.push_by_timer(self.websocket.websockets, 15, message))
     
-    def sync_channel_route_to_peer(self):
+    def _init_self_tree(self):
+        tag = "node"
+        nid = utils.get_ip_port(node["wallet_info"]["url"]),
+        pk = utils.get_public_key(node["wallet_info"]["url"])
+        spv_list = node["spv_table"].find(pk)
+        node["route_tree"].create_node(
+            tag="node",
+            data = {
+                "Ip": nid,
+                "Pblickkey": pk,
+                "Name": node["name"],
+                "Deposit": node["wallet_info"]["deposit"],
+                "Fee": node["wallet_info"]["fee"],
+                "Balance": node["wallet_info"]["balance"],
+                "SpvList": [] if not spv_list else spv_list
+            }
+        )
+
+    def sync_channel_route_to_peer(self, except_peer=None):
+        """
+        :param except_peer: str type (except peer url)
+        """
         self_tree = node["route_tree"]
+        except_nid = None if not except_peer else utils.get_ip_port(except_peer)
+        message = utils.generate_sync_tree_msg(self_tree, node["wallet_info"]["url"])
         for child in self_tree.is_branch(self_tree.root):
-            node_object = self_tree.get_node(child)
-            ip_port = node_object.data["Ip"].split(":")
-            receiver = node_object.data["Pblickey"] + "@" + node_object.data["Ip"]
-            self._send_tcp_msg(receiver, self_tree.to_dict(with_data=True))            
+            if child != except_nid:
+                node_object = self_tree.get_node(child)
+                ip_port = node_object.data["Ip"].split(":")
+                receiver = node_object.data["Pblickey"] + "@" + child
+                self._send_tcp_msg(receiver, message)           
 
     def handle_transaction_message(self, data):
         """
