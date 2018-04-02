@@ -1,5 +1,6 @@
 # coding: utf-8
 import json
+import time
 import asyncio
 from aiohttp import web, ClientSession
 from jsonrpcserver.aio import methods
@@ -64,7 +65,10 @@ class AsyncJsonRpc():
             endpoint = 'http://' + cg_remote_jsonrpc_addr[0] + ":" + str(cg_remote_jsonrpc_addr[1])
             # endpoint = 'http://106.15.91.150:20556'
             client = aiohttpClient(session, endpoint)
+            start_time = time.time()
             response = await client.request(method, params)
+            ttl = time.time() - start_time
+            print("++++++++gateway<----->wallet spend time{}+++++++++".format(ttl))
             from gateway import gateway_singleton
             gateway_singleton.handle_jsonrpc_response(method, response)
 

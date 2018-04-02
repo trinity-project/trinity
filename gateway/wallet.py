@@ -23,7 +23,7 @@ class Wallet:
         root_node.data.balance = balance
 
     def add_spv(self, spv_pk):
-        self.spv_table.add(self.pk)
+        self.spv_table.add(self.pk, spv_pk)
         root_node = self.channel_tree.get_node(cg_public_ip_port)
         root_node.data["SpvList"].append(spv_pk)
 
