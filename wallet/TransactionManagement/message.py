@@ -251,8 +251,8 @@ class FounderMessage(TransactionMessage):
                        "orginalData": self.commitment}
         rd_sig = {"txDataSing": self.sign_message(self.revocable_delivery.get("txData")),
                        "orginalData": self.revocable_delivery}
-        if not error:
-            message_response = { "MessageType":"FounderSign",
+        if error:
+            message_response = { "MessageType":"FounderFail",
                                 "Sender": self.receiver,
                                 "Receiver":self.sender,
                                  "ChannelName":self.channel_name,
@@ -266,7 +266,7 @@ class FounderMessage(TransactionMessage):
                                  "Error":error
                                 }
         else:
-            message_response = { "MessageType":"FounderFail",
+            message_response = { "MessageType":"FounderSign",
                                 "Sender": self.receiver,
                                 "Receiver":self.sender,
                                  "ChannelName":self.channel_name,
