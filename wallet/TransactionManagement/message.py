@@ -194,7 +194,6 @@ class FounderMessage(TransactionMessage):
                 ch.Channel.channel(self.channel_name).update_channel(state=EnumChannelState.OPENING.name)
                 register_monitor(txid, monitor_founding, self.channel_name, EnumChannelState.OPENED.name)
             if ch.Channel.channel(self.channel_name).src_addr == self.wallet.pubkey:
-                deposit = ch.Channel.channel(self.channel_name).get_deposit().get()
                 FounderMessage.create(self.channel_name, self.receiver_pubkey,
                                       self.sender_pubkey,self.asset_type, self.deposit, self.receiver_ip)
         else:
@@ -683,6 +682,7 @@ class HtlcResponsesMessage(TransactionMessage):
 
 
 def monitor_founding(height, channel_name, state):
+    print("Debug Monitor Founding", channel_name, state)
     channel = ch.Channel.channel(channel_name)
     deposit = ch.Channel.get_deposit()
     channel.update_channel(state=state, balance = deposit)

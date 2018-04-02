@@ -96,6 +96,7 @@ def handle_message(height,jsn):
     match_list =[]
     for index, value in enumerate(TxIDRegister):
         txid = value[0]
+        print("Debug Handle Message:",txid)
         if txid in block_txids:
             value[1](value[0],*value[1:])
             match_list.append(value)
@@ -103,6 +104,7 @@ def handle_message(height,jsn):
         TxIDRegister.remove(i)
 
 def register_monitor(*args):
+    print("Debug Register ", args)
     TxIDRegister.append(args)
 
 def register_block(*args):
