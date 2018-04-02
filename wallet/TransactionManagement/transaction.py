@@ -83,9 +83,11 @@ class TrinityTransaction(object):
 
     @staticmethod
     def sendrawtransaction(raw_data):
+        print("Debug SendRawTransaction:    ", raw_data)
         tx_script = binascii.unhexlify(raw_data.encode('utf-8'))
         transaction = Transaction.DeserializeFromBufer(tx_script)
         result = NodeLeader.Instance().Relay(transaction)
+        print("Debug SendRawTransaction Result:    ", result)
         return result
 
     @staticmethod
