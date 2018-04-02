@@ -109,6 +109,8 @@ class TrinityTransaction(object):
 
     def get_latest_nonceid(self, tx=None):
         tx = tx if tx else self.read_transaction()
+        if tx is None:
+            return 0
         nonce = []
         for i in tx.keys():
             try:
