@@ -83,7 +83,7 @@ def monitorblock():
             #if hash:
                 #jsn['nextblockhash'] = '0x%s' % hash.decode('utf-8')
             #send_message_to_gateway(block)
-                #handle_message(Blockchain.Default().Height,jsn)
+            handle_message(int(blockHeight)-1,block)
             logger.info("Block %s / %s", str(block), blockHeight)
             blockHeight +=1
         except Exception as e:
