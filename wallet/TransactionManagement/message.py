@@ -323,7 +323,7 @@ class FounderResponsesMessage(TransactionMessage):
                 signdata = self.founder.get("txDataSing")
                 txdata = self.founder.get("orginalData").get("txData")
                 txid = self.founder.get("orginalData").get("txId")
-                signdata_self = self.sign_message(signdata)
+                signdata_self = self.sign_message(txdata)
                 witnes = self.founder.get("orginalData").get("witness").format(signOther=signdata_self,
                                                                                signSelf=signdata)
                 TrinityTransaction.sendrawtransaction(TrinityTransaction.genarate_raw_data(txdata, witnes))
