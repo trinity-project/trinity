@@ -57,7 +57,7 @@ class TrinityTransaction(object):
         self.tx_file = self.get_transaction_file()
 
     def get_transaction_file(self):
-         return self.wallet.LoadStoredData(self.channel)
+         return os.join(TxDataDir,self.wallet.LoadStoredData(self.channel))
 
     def store_transaction(self, tx_message):
         with open(self.tx_file, "wb+") as f:
@@ -66,11 +66,10 @@ class TrinityTransaction(object):
 
     def read_transaction(self):
         with open(self.tx_file, "rb") as f:
-            print(uncryto_channel(f))
             return uncryto_channel(f)
 
     def update_transaction(self, tx_nonce, **kwargs):
-        with open(self.tx_file, "wb+") as f:
+        with open(self.tx_file, "rb+") as f:
             message = uncryto_channel(f)
             message = message if message else {}
             subitem = message.get(tx_nonce)
@@ -79,6 +78,7 @@ class TrinityTransaction(object):
                 subitem[key] = value
             message[str(tx_nonce)] = subitem
             print(message)
+        with open(self.tx_file, "rb+") as f
             crypto_channel(f, **message)
 
     @staticmethod
@@ -234,5 +234,13 @@ def construt_update_channel_transction(params):
 
 if __name__== "__main__":
     print(TxDataDir)
+    tx_message = {"0":1}
+    with open("test.data","wb+")as f:
+        crypto_channel(f, **tx_message)
+        print(uncryto_channel(f))
+        tx_message = {"1":1,"2":2}
+        crypto_channel(f, **tx_message)
+        print(uncryto_channel(f))
+
 
 
