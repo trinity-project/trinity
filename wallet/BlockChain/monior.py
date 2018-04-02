@@ -73,7 +73,7 @@ def monitorblock():
             #hash = Blockchain.Default().GetNextBlockHash(block.Hash)
             #if hash:
                 #jsn['nextblockhash'] = '0x%s' % hash.decode('utf-8')
-            send_message_to_gateway(block)
+            #send_message_to_gateway(block)
                 #handle_message(Blockchain.Default().Height,jsn)
             logger.info("Block %s / %s", str(block), blockHeight)
             blockHeight +=1
