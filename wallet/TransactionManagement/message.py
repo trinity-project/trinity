@@ -193,10 +193,9 @@ class FounderMessage(TransactionMessage):
                 txid = self.founder.get("txId")
                 ch.Channel.channel(self.channel_name).update_channel(state=EnumChannelState.OPENING.name)
                 register_monitor(txid, monitor_founding, self.channel_name, EnumChannelState.OPENED.name)
-            if ch.Channel.channel(self.channel_name).src_addr == self.wallet.address:
-                deposit = ch.Channel.channel(self.channel_name).get_deposit().get()
+            if ch.Channel.channel(self.channel_name).src_addr == self.wallet.pubkey:
                 FounderMessage.create(self.channel_name, self.receiver_pubkey,
-                                      self.sender_pubkey,self.asset_type, self.deposit, self.receiver_ip)
+                                      self.sender_pubkey,self.asset_type, self.deposit, self.sender_ip,self.receiver_ip)
         else:
             self.send_responses(error = error)
 
@@ -244,13 +243,14 @@ class FounderMessage(TransactionMessage):
 
     def send_responses(self, error = None):
 
+
         founder_sig = {"txDataSing": self.sign_message(self.founder.get("txData")),
                         "orginalData": self.founder}
         commitment_sig = {"txDataSing": self.sign_message(self.commitment.get("txData")),
                        "orginalData": self.commitment}
         rd_sig = {"txDataSing": self.sign_message(self.revocable_delivery.get("txData")),
                        "orginalData": self.revocable_delivery}
-        if error:
+        if not error:
             message_response = { "MessageType":"FounderSign",
                                 "Sender": self.receiver,
                                 "Receiver":self.sender,
@@ -682,6 +682,7 @@ class HtlcResponsesMessage(TransactionMessage):
 
 
 def monitor_founding(height, channel_name, state):
+    print("Debug Monitor Founding", channel_name, state)
     channel = ch.Channel.channel(channel_name)
     deposit = ch.Channel.get_deposit()
     channel.update_channel(state=state, balance = deposit)

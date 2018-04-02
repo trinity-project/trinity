@@ -24,29 +24,59 @@ SOFTWARE."""
 
 
 from logzero import logger
-from neo.Core.Blockchain import Blockchain
+#from neo.Core.Blockchain import Blockchain
 import time
 from wallet.TransactionManagement.transaction import BlockHightRegister, TxIDRegister,TxDataDir, crypto_channel
 import os
 from wallet.Interface.gate_way import send_message
 import json
+import requests
+
 
 BlockHeightRecord = os.path.join(TxDataDir,"block.data")
 
-def monitorblock():
 
+TestNetUrl = "http://47.88.35.235:20332"
+def get_block_count():
+    request = {
+  "jsonrpc": "2.0",
+  "method": "getblockcount",
+  "params": [],
+  "id": 1
+}
+
+    result = requests.post(url = TestNetUrl, json = request)
+    return result.json()["result"]
+
+
+
+def get_bolck(index):
+    request = {
+  "jsonrpc": "2.0",
+  "method": "getblock",
+  "params": [int(index), 1],
+  "id": 1
+}
+    result = requests.post(url=TestNetUrl, json=request)
+    return result.json()["result"]
+
+def monitorblock():
+    blockHeight = get_block_count()
     while True:
-        block = Blockchain.Default().GetBlock(str(Blockchain.Default().Height))
+        #block = Blockchain.Default().GetBlock(str(Blockchain.Default().Height))
         try:
-            block.LoadTransactions()
-            jsn = block.ToJson()
-            jsn['confirmations'] = Blockchain.Default().Height - block.Index + 1
-            hash = Blockchain.Default().GetNextBlockHash(block.Hash)
-            if hash:
-                jsn['nextblockhash'] = '0x%s' % hash.decode('utf-8')
-                send_message_to_gateway(jsn)
-                handle_message(Blockchain.Default().Height,jsn)
-                logger.info("Block %s / %s", str(jsn), str(Blockchain.Default().HeaderHeight))
+
+            block = get_bolck(int(blockHeight)-1)
+            #block.LoadTransactions()
+            #jsn = block.ToJson()
+            #jsn['confirmations'] = Blockchain.Default().Height - block.Index + 1
+            #hash = Blockchain.Default().GetNextBlockHash(block.Hash)
+            #if hash:
+                #jsn['nextblockhash'] = '0x%s' % hash.decode('utf-8')
+            send_message_to_gateway(block)
+                #handle_message(Blockchain.Default().Height,jsn)
+            logger.info("Block %s / %s", str(block), blockHeight)
+            blockHeight +=1
         except Exception as e:
             logger.error("GetBlockError", e)
         time.sleep(15)
@@ -66,6 +96,7 @@ def handle_message(height,jsn):
     match_list =[]
     for index, value in enumerate(TxIDRegister):
         txid = value[0]
+        print("Debug Handle Message:",txid)
         if txid in block_txids:
             value[1](value[0],*value[1:])
             match_list.append(value)
@@ -73,6 +104,7 @@ def handle_message(height,jsn):
         TxIDRegister.remove(i)
 
 def register_monitor(*args):
+    print("Debug Register ", args)
     TxIDRegister.append(args)
 
 def register_block(*args):
@@ -82,6 +114,12 @@ def record_block(txid, block_height):
     with open(BlockHeightRecord, "wb+") as f:
         info = {}.setdefault(txid, block_height)
         crypto_channel(f,**info)
+
+
+
+if __name__  == "__main__":
+   blockcount = get_block_count()
+   print(get_bolck(int(blockcount)-1))
 
 
 

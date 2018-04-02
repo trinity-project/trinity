@@ -78,8 +78,9 @@ class UserPromptInterface(PromptInterface):
 
 
     def run(self):
-        dbloop = task.LoopingCall(Blockchain.Default().PersistBlocks)
-        dbloop.start(.1)
+        #dbloop = task.LoopingCall(Blockchain.Default().PersistBlocks)
+        #dbloop.start(.1)
+        #Blockchain.Default().PersistBlocks()
 
         tokens = [(Token.Neo, 'NEO'), (Token.Default, ' cli. Type '),
                   (Token.Command, '\'help\' '), (Token.Default, 'to get started')]
@@ -172,8 +173,8 @@ class UserPromptInterface(PromptInterface):
             except Exception as e:
 
                 print("Could not execute command: %s" % e)
-                traceback.print_stack()
-                traceback.print_exc()
+#                traceback.print_stack()
+#               traceback.print_exc()
 
     def do_open(self, arguments):
         if self.Wallet:
@@ -214,7 +215,7 @@ class UserPromptInterface(PromptInterface):
         print('Shutting down. This may take a bit...')
         self.go_on = False
         self.do_close_wallet()
-        reactor.crash()
+        reactor.stop()
 
     def do_channel(self,arguments):
         if not self.Wallet:
@@ -235,7 +236,7 @@ class UserPromptInterface(PromptInterface):
             create_channel(self.Wallet.url, partner,asset_type, deposit)
         elif command == "open":
             walletHeight = self.Wallet.LoadStoredData("Height")
-            blockHeight = Blockchain.Default().HeaderHeight
+            ##blockHeight = Blockchain.Default().HeaderHeight
             self.Wallet.address, self.Wallet.pubkey = self.get_address()
             # For Debug
             result = gate_way.join_gateway(self.Wallet.pubkey).get("result")
