@@ -32,9 +32,10 @@ def pubkey_to_address(publickey: str):
 
 
 def sign(wallet, context):
-    keypair = wallet.LoadKeyPairs().values()
-    keypair = [i for i in keypair][0]
+    keypairs = wallet.LoadKeyPairs().values()
+    keypair = [i for i in keypairs][0]
     res = binascii.hexlify(Crypto.Sign(message=context, private_key=bytes(keypair.PrivateKey))).decode()
+    return res
 
 
 if __name__ == "__main__":

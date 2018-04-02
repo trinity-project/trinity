@@ -189,6 +189,7 @@ class FounderMessage(TransactionMessage):
                 self.transaction.create_tx_file(self.channel_name)
             self.send_responses()
             self.transaction.update_transaction(self.tx_nonce, MonitorTxId=rdtxid)
+            print("Debug Gex_tx_NOCE",self.transaction.get_tx_nonce("0"))
             if self.transaction.get_tx_nonce("0"):
                 txid = self.founder.get("txId")
                 ch.Channel.channel(self.channel_name).update_channel(state=EnumChannelState.OPENING.name)
@@ -250,8 +251,8 @@ class FounderMessage(TransactionMessage):
                        "orginalData": self.commitment}
         rd_sig = {"txDataSing": self.sign_message(self.revocable_delivery.get("txData")),
                        "orginalData": self.revocable_delivery}
-        if not error:
-            message_response = { "MessageType":"FounderSign",
+        if error:
+            message_response = { "MessageType":"FounderFail",
                                 "Sender": self.receiver,
                                 "Receiver":self.sender,
                                  "ChannelName":self.channel_name,
@@ -265,7 +266,7 @@ class FounderMessage(TransactionMessage):
                                  "Error":error
                                 }
         else:
-            message_response = { "MessageType":"FounderFail",
+            message_response = { "MessageType":"FounderSign",
                                 "Sender": self.receiver,
                                 "Receiver":self.sender,
                                  "ChannelName":self.channel_name,
@@ -318,7 +319,7 @@ class FounderResponsesMessage(TransactionMessage):
                 self.transaction.create_tx_file(self.channel_name)
             self.transaction.update_transaction("0", Founder=self.founder, Commitment=self.commitment,
                                                 RD = self.revocable_delivery)
-            if ch.Channel.channel(self.channel_name).src_addr == self.wallet.address:
+            if ch.Channel.channel(self.channel_name).src_addr == self.wallet.pubkey:
                 signdata = self.founder.get("txDataSing")
                 txdata = self.founder.get("orginalData").get("txData")
                 txid = self.founder.get("orginalData").get("txId")
@@ -329,9 +330,12 @@ class FounderResponsesMessage(TransactionMessage):
                 ch.Channel.channel(self.channel_name).update_channel(state=EnumChannelState.OPENING.name)
                 sender_pubkey, sender_ip = self.sender.split("@")
                 receiver_pubkey, receiver_ip = self.receiver.split("@")
-                balance = {}.setdefault(sender_pubkey, {}.setdefault(self.asset_type, self.deposit))
-                balance.setdefault(receiver_pubkey, {}.setdefault(self.asset_type, self.deposit))
-                self.transaction.update_transaction(Balance = balance , State="confirm")
+                subitem = {}
+                subitem.setdefault(self.asset_type, self.deposit)
+                balance ={}
+                balance.setdefault(sender_pubkey, subitem)
+                balance.setdefault(receiver_pubkey, subitem)
+                self.transaction.update_transaction(self.tx_nonce,Balance = balance , State="confirm")
                 register_monitor(txid, monitor_founding, self.channel_name)
         return None
 
@@ -444,8 +448,13 @@ class RsmcMessage(TransactionMessage):
             if not transaction.get_tx_nonce(tx_nonce).get("BR"):
                 transaction.update_transaction(tx_nonce, BR="waiting")
         RsmcMessage.send(message)
-        balance = {}.setdefault(sender_pubkey,{}.setdefault(asset_type, sender_balance))
-        balance.setdefault(receiver_pubkey,{}.setdefault(asset_type,receiver_balance))
+        balance = {}
+        subitem = {}
+        subitem.setdefault(asset_type, sender_balance)
+        balance.setdefault(sender_pubkey,subitem)
+        subitem = {}
+        subitem.setdefault(asset_type, receiver_balance)
+        balance.setdefault(receiver_pubkey,subitem)
         transaction.update_transaction(tx_nonce, Balance=balance, State="pending")
 
 
