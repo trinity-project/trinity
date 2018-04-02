@@ -78,7 +78,7 @@ class TrinityTransaction(object):
                 subitem[key] = value
             message[str(tx_nonce)] = subitem
             print(message)
-        with open(self.tx_file, "rb+") as f
+        with open(self.tx_file, "rb+") as f:
             crypto_channel(f, **message)
 
     @staticmethod
