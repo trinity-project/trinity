@@ -195,7 +195,7 @@ class FounderMessage(TransactionMessage):
                 register_monitor(txid, monitor_founding, self.channel_name, EnumChannelState.OPENED.name)
             if ch.Channel.channel(self.channel_name).src_addr == self.wallet.pubkey:
                 FounderMessage.create(self.channel_name, self.receiver_pubkey,
-                                      self.sender_pubkey,self.asset_type, self.deposit, self.receiver_ip)
+                                      self.sender_pubkey,self.asset_type, self.deposit, self.receiver_ip, self.sender_ip)
         else:
             self.send_responses(error = error)
 
