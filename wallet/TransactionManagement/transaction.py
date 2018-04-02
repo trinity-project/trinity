@@ -53,11 +53,13 @@ class TrinityTransaction(object):
         return self.wallet.Sign(rawdata)
 
     def create_tx_file(self,channel_name):
-        os.mknod(os.path.join(TxDataDir, channel_name+".data"))
+
         self.tx_file = self.get_transaction_file()
 
     def get_transaction_file(self):
-         return os.path.join(TxDataDir,self.wallet.LoadStoredData(self.channel))
+         #file_name = self.wallet.LoadStoredData(self.channel)
+         file_name= os.path.join(TxDataDir, self.channel + ".data")
+         return file_name
 
     def store_transaction(self, tx_message):
         with open(self.tx_file, "wb+") as f:
