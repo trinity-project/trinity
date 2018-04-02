@@ -259,7 +259,7 @@ class UserPromptInterface(PromptInterface):
 
             receiverpubkey , receiverip= receiver.split("@")
             channel_name = get_channel_name_via_address(self.Wallet.pubkey,receiverpubkey )
-            gate_way_ip = self.Wallet.url.splint("@")[1].strip()
+            gate_way_ip = self.Wallet.url.split("@")[1].strip()
 
             if channel_name:
                 tx_nonce = trinitytx.TrinityTransaction(channel_name, self.Wallet).get_latest_nonceid()
