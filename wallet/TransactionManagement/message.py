@@ -335,7 +335,7 @@ class FounderResponsesMessage(TransactionMessage):
                 balance ={}
                 balance.setdefault(sender_pubkey, subitem)
                 balance.setdefault(receiver_pubkey, subitem)
-                self.transaction.update_transaction(Balance = balance , State="confirm")
+                self.transaction.update_transaction(self.tx_nonce,Balance = balance , State="confirm")
                 register_monitor(txid, monitor_founding, self.channel_name)
         return None
 
