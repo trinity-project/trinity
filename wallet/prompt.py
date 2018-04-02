@@ -259,11 +259,12 @@ class UserPromptInterface(PromptInterface):
 
             receiverpubkey , receiverip= receiver.split("@")
             channel_name = get_channel_name_via_address(self.Wallet.pubkey,receiverpubkey )
+            gate_way_ip = self.Wallet.url.splint("@")[1].strip()
 
             if channel_name:
                 tx_nonce = trinitytx.TrinityTransaction(channel_name, self.Wallet).get_latest_nonceid()
                 mg.RsmcMessage.create(channel_name,self.Wallet,self.Wallet.pubkey,
-                                      receiverpubkey, int(count), receiverip, str(tx_nonce+1), asset_type="TNC")
+                                      receiverpubkey, int(count), receiverip, gate_way_ip, str(tx_nonce+1), asset_type="TNC")
             else:
                 message = {"MessageType":"QueryRouter",
                            "Sender":self.Wallet.url,
@@ -282,7 +283,7 @@ class UserPromptInterface(PromptInterface):
                     if answer.upper() == "YES":
                         tx_nonce = trinitytx.TrinityTransaction(channel_name, self.Wallet).get_latest_nonceid()
                         mg.RsmcMessage.create(channel_name, self.Wallet, self.Wallet.pubkey,
-                                              receiverpubkey, int(count), receiverip, str(tx_nonce + 1),
+                                              receiverpubkey, int(count), receiverip, gate_way_ip, str(tx_nonce + 1),
                                               asset_type="TNC",router= r, next_router=n)
                     else:
                         return None
