@@ -330,8 +330,11 @@ class FounderResponsesMessage(TransactionMessage):
                 ch.Channel.channel(self.channel_name).update_channel(state=EnumChannelState.OPENING.name)
                 sender_pubkey, sender_ip = self.sender.split("@")
                 receiver_pubkey, receiver_ip = self.receiver.split("@")
-                balance = {}.setdefault(sender_pubkey, {}.setdefault(self.asset_type, self.deposit))
-                balance.setdefault(receiver_pubkey, {}.setdefault(self.asset_type, self.deposit))
+                subitem = {}
+                subitem.setdefault(self.asset_type, self.deposit)
+                balance ={}
+                balance.setdefault(sender_pubkey, subitem)
+                balance.setdefault(receiver_pubkey, subitem)
                 self.transaction.update_transaction(Balance = balance , State="confirm")
                 register_monitor(txid, monitor_founding, self.channel_name)
         return None
@@ -445,8 +448,13 @@ class RsmcMessage(TransactionMessage):
             if not transaction.get_tx_nonce(tx_nonce).get("BR"):
                 transaction.update_transaction(tx_nonce, BR="waiting")
         RsmcMessage.send(message)
-        balance = {}.setdefault(sender_pubkey,{}.setdefault(asset_type, sender_balance))
-        balance.setdefault(receiver_pubkey,{}.setdefault(asset_type,receiver_balance))
+        balance = {}
+        subitem = {}
+        subitem.setdefault(asset_type, sender_balance)
+        balance.setdefault(sender_pubkey,subitem)
+        subitem = {}
+        subitem.setdefault(asset_type, receiver_balance)
+        balance.setdefault(receiver_pubkey,subitem)
         transaction.update_transaction(tx_nonce, Balance=balance, State="pending")
 
 

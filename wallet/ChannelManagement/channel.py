@@ -97,8 +97,10 @@ class Channel(object):
         self.start_time = time.time()
         self.asset_type = asset_type
         self.deposit = {}
-        self.deposit[self.founder_pubkey] = {}.setdefault(asset_type, deposit)
-        self.deposit[self.partner_pubkey] = {}.setdefault(asset_type, deposit)
+        subitem = {}
+        subitem.setdefault(asset_type, deposit)
+        self.deposit[self.founder_pubkey] = subitem
+        self.deposit[self.partner_pubkey] = subitem
         self.channel_name = self._init_channle_name()
         print(self.channel_name)
 

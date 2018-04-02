@@ -112,7 +112,8 @@ def register_block(*args):
 
 def record_block(txid, block_height):
     with open(BlockHeightRecord, "wb+") as f:
-        info = {}.setdefault(txid, block_height)
+        info = {}
+        info.setdefault(txid, block_height)
         crypto_channel(f,**info)
 
 
