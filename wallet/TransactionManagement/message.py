@@ -324,8 +324,8 @@ class FounderResponsesMessage(TransactionMessage):
                 txdata = self.founder.get("orginalData").get("txData")
                 txid = self.founder.get("orginalData").get("txId")
                 signdata_self = self.sign_message(signdata)
-                witnes = self.founder.get("orginalData").get("witness").format(signOther=signdata,
-                                                                               signSelf=signdata_self)
+                witnes = self.founder.get("orginalData").get("witness").format(signOther=signdata_self,
+                                                                               signSelf=signdata)
                 TrinityTransaction.sendrawtransaction(TrinityTransaction.genarate_raw_data(txdata, witnes))
                 ch.Channel.channel(self.channel_name).update_channel(state=EnumChannelState.OPENING.name)
                 sender_pubkey, sender_ip = self.sender.split("@")
