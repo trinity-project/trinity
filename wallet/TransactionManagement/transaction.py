@@ -62,15 +62,18 @@ class TrinityTransaction(object):
 
     def store_transaction(self, tx_message):
         with open(self.tx_file, "wb+") as f:
+            f.seek(0)
             crypto_channel(f, **tx_message)
         return None
 
     def read_transaction(self):
         with open(self.tx_file, "rb") as f:
+            f.seek(0)
             return uncryto_channel(f)
 
     def update_transaction(self, tx_nonce, **kwargs):
-        with open(self.tx_file, "rb+") as f:
+        with open(self.tx_file, "rb") as f:
+            f.seek(0)
             message = uncryto_channel(f)
             message = message if message else {}
             subitem = message.get(tx_nonce)
@@ -79,7 +82,8 @@ class TrinityTransaction(object):
                 subitem[key] = value
             message[str(tx_nonce)] = subitem
             print(message)
-        with open(self.tx_file, "rb+") as f:
+        with open(self.tx_file, "wb+") as f:
+            f.seek(0)
             crypto_channel(f, **message)
 
     @staticmethod
@@ -104,7 +108,7 @@ class TrinityTransaction(object):
         try:
             return tx["Balance"]
         except KeyError:
-            return 0
+            return None
 
     def get_tx_nonce(self, tx_nonce):
         tx = self.read_transaction()
@@ -124,7 +128,10 @@ class TrinityTransaction(object):
 
     def get_transaction_state(self):
         tx = self.read_transaction()
-        return tx.get("State")
+        if tx:
+            return tx.get("State")
+        else:
+            return None
 
     def realse_transaction(self):
         tx = self.read_transaction()
@@ -172,7 +179,10 @@ def byte2dic(file_hander):
     :param file_hander:
     :return:
     """
-    return pickle_load(file_hander)
+    try:
+        pickle.load(file_hander)
+    except:
+        return None
 
 def pickle_load(file):
     """

@@ -395,9 +395,14 @@ class RsmcMessage(TransactionMessage):
         transaction = TrinityTransaction(channel_name, wallet)
         founder = ch.Channel.channel(channel_name).src_addr
         tx_state = transaction.get_transaction_state()
-        sender_balance = transaction.get_balance().get(sender_pubkey)
-        receiver_balance = transaction.get_balance().get(receiver_pubkey)
-        balance_value = sender_balance.get(asset_type)
+        balance = transaction.get_balance()
+        if balance:
+            sender_balance = balance.get(sender_pubkey)
+            receiver_balance = balance.get(receiver_pubkey)
+            balance_value = sender_balance.get(asset_type)
+            print("RSMC Balance", balance_value)
+        else:
+            balance_value = 0
         if balance_value < value and tx_state == "pending":
             if cli:
                 return False, "No Balance"
@@ -407,6 +412,8 @@ class RsmcMessage(TransactionMessage):
     "ChannelName":channel_name,
     "Error": "No Balance"
     }
+                Message.send(message)
+        print("RSMC test")
         sender_balance = float(balance_value.get(sender_pubkey)) - float(value)
         receiver_balance = float(balance_value.get(receiver_pubkey)) + float(value)
         commitment = createCTX(founder["addressFunding"], sender_balance, receiver_balance,
@@ -532,7 +539,7 @@ class RsmcMessage(TransactionMessage):
 
 class RsmcResponsesMessage(TransactionMessage):
     """
-    { "MessageType":"RsmcSign",
+    { "MessageType":"RsmcSi gn",
       "Sender": self.receiver,
       "Receiver":self.sender,
       "TxNonce": 0,
