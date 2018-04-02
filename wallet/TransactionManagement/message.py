@@ -189,6 +189,7 @@ class FounderMessage(TransactionMessage):
                 self.transaction.create_tx_file(self.channel_name)
             self.send_responses()
             self.transaction.update_transaction(self.tx_nonce, MonitorTxId=rdtxid)
+            print("Debug Gex_tx_NOCE",self.transaction.get_tx_nonce("0"))
             if self.transaction.get_tx_nonce("0"):
                 txid = self.founder.get("txId")
                 ch.Channel.channel(self.channel_name).update_channel(state=EnumChannelState.OPENING.name)
@@ -318,7 +319,7 @@ class FounderResponsesMessage(TransactionMessage):
                 self.transaction.create_tx_file(self.channel_name)
             self.transaction.update_transaction("0", Founder=self.founder, Commitment=self.commitment,
                                                 RD = self.revocable_delivery)
-            if ch.Channel.channel(self.channel_name).src_addr == self.wallet.address:
+            if ch.Channel.channel(self.channel_name).src_addr == self.wallet.pubkey:
                 signdata = self.founder.get("txDataSing")
                 txdata = self.founder.get("orginalData").get("txData")
                 txid = self.founder.get("orginalData").get("txId")
