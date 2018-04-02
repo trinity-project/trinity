@@ -188,7 +188,7 @@ class FounderMessage(TransactionMessage):
                 self.wallet.SaveStoredData(self.channel_name, "{}.data".format(self.channel_name))
                 self.transaction.create_tx_file(self.channel_name)
             self.send_responses()
-            self.transaction.update_transaction(self.tx_nonce, MonitorTxId=rdtxid)
+            self.transaction.update_transaction(str(self.tx_nonce), MonitorTxId=rdtxid)
             print("Debug Gex_tx_NOCE",self.transaction.get_tx_nonce("0"))
             if self.transaction.get_tx_nonce("0"):
                 txid = self.founder.get("txId")
@@ -335,7 +335,7 @@ class FounderResponsesMessage(TransactionMessage):
                 balance ={}
                 balance.setdefault(sender_pubkey, subitem)
                 balance.setdefault(receiver_pubkey, subitem)
-                self.transaction.update_transaction(self.tx_nonce,Balance = balance , State="confirm")
+                self.transaction.update_transaction(str(self.tx_nonce),Balance = balance , State="confirm")
                 register_monitor(txid, monitor_founding, self.channel_name)
         return None
 
@@ -381,7 +381,7 @@ class RsmcMessage(TransactionMessage):
             self.send_responses()
             if self.transaction.get_tx_nonce(self.tx_nonce):
                 ctxid = self.commitment.get("txID")
-                self.transaction.update_transaction(self.tx_nonce, MonitorTxId=ctxid)
+                self.transaction.update_transaction(str(self.tx_nonce), MonitorTxId=ctxid)
         else:
             self.send_responses(error = error)
 
@@ -455,8 +455,8 @@ class RsmcMessage(TransactionMessage):
                            "Value": value
                            }
                        }
-            if not transaction.get_tx_nonce(tx_nonce).get("BR"):
-                transaction.update_transaction(tx_nonce, BR="waiting")
+            if not transaction.get_tx_nonce(str(tx_nonce)).get("BR"):
+                transaction.update_transaction(str(tx_nonce), BR="waiting")
         RsmcMessage.send(message)
         balance = {}
         subitem = {}
@@ -465,7 +465,7 @@ class RsmcMessage(TransactionMessage):
         subitem = {}
         subitem.setdefault(asset_type, receiver_balance)
         balance.setdefault(receiver_pubkey,subitem)
-        transaction.update_transaction(tx_nonce, Balance=balance, State="pending")
+        transaction.update_transaction(str(tx_nonce), Balance=balance, State="pending")
 
 
     def verify(self):
@@ -474,14 +474,14 @@ class RsmcMessage(TransactionMessage):
     def send_responses(self, error = None):
         if not error:
             if self.breach_remedy:
-                tx = self.transaction.get_tx_nonce(self.tx_nonce)
+                tx = self.transaction.get_tx_nonce(str(self.tx_nonce))
                 if tx.get("BR") == "waiting":
-                    self.transaction.update_transaction(self.tx_nonce, BR=self.breach_remedy)
+                    self.transaction.update_transaction(str(self.tx_nonce), BR=self.breach_remedy)
                 else:
-                    self.transaction.update_transaction(self.tx_nonce, BR=self.breach_remedy)
+                    self.transaction.update_transaction(str(self.tx_nonce), BR=self.breach_remedy)
                     RsmcMessage.create(self.channel_name,self.wallet,self.receiver_pubkey,self.sender_pubkey,
                                        self.value,self.sender_ip, breachremedy=True)
-                    ctx = self.transaction.update_transaction(self.tx_nonce)
+                    ctx = self.transaction.get_tx_nonce(str(self.tx_nonce))
                     monitor_ctxid = ctx.get("MonitorTxId")
                     txData = ctx.get("RevocableDelivery").get("originalData").get("txData")
                     txDataself = self.sign_message(txData)
@@ -490,7 +490,7 @@ class RsmcMessage(TransactionMessage):
                               ctx.get("RevocableDelivery").get("originalData").get("witness_part2")
                     register_monitor(monitor_ctxid,monitor_height,txData+witness, txDataother, txDataself)
                     balance = self.transaction.get_balance()
-                    self.transaction.update_transaction(State="confirm")
+                    self.transaction.update_transaction(str(self.tx_nonce),State="confirm")
                     ch.Channel.channel(self.channel_name).update_channel(balance=balance)
                     ch.sync_channel_info_to_gateway(self.channel_name, "UpdateChannel")
 
@@ -565,7 +565,7 @@ class RsmcResponsesMessage(TransactionMessage):
             return "{} message error"
         verify, error = self.verify()
         if verify:
-            self.transaction.update_transaction(self.tx_nonce, Commitment=self.commitment,
+            self.transaction.update_transaction(str(self.tx_nonce), Commitment=self.commitment,
                                                 RD=self.revocable_delivery, BR = self.breach_remedy)
 
     def verify(self):
@@ -694,7 +694,7 @@ class HtlcResponsesMessage(TransactionMessage):
             return "{} message error"
         verify, error = self.verify()
         if verify:
-            self.transaction.update_transaction(self.tx_nonce, HCTX = self.hctx, HEDTX=self.hedtx, HTTX= self.httx)
+            self.transaction.update_transaction(str(self.tx_nonce), HCTX = self.hctx, HEDTX=self.hedtx, HTTX= self.httx)
 
     def verify(self):
         return True, None
