@@ -58,7 +58,7 @@ class TrinityTransaction(object):
 
     def get_transaction_file(self):
 
-         return os.path.join(TxDataDir, self.channel_name+".data")
+         return os.path.join(TxDataDir, self.channel+".data")
 
     def store_transaction(self, tx_message):
         with open(self.tx_file, "wb+") as f:
