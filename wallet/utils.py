@@ -34,8 +34,8 @@ def pubkey_to_address(publickey: str):
 def sign(wallet, context):
     keypairs = wallet.LoadKeyPairs().values()
     keypair = [i for i in keypairs][0]
-    print("Debug Keypair",keypair, keypairs, keypair.PrivateKey)
     res = binascii.hexlify(Crypto.Sign(message=context, private_key=bytes(keypair.PrivateKey))).decode()
+    return res
 
 
 if __name__ == "__main__":
