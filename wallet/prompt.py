@@ -173,8 +173,8 @@ class UserPromptInterface(PromptInterface):
             except Exception as e:
 
                 print("Could not execute command: %s" % e)
-                traceback.print_stack()
-                traceback.print_exc()
+#                traceback.print_stack()
+#               traceback.print_exc()
 
     def do_open(self, arguments):
         if self.Wallet:
@@ -236,7 +236,7 @@ class UserPromptInterface(PromptInterface):
             create_channel(self.Wallet.url, partner,asset_type, deposit)
         elif command == "open":
             walletHeight = self.Wallet.LoadStoredData("Height")
-            blockHeight = Blockchain.Default().HeaderHeight
+            ##blockHeight = Blockchain.Default().HeaderHeight
             self.Wallet.address, self.Wallet.pubkey = self.get_address()
             # For Debug
             result = gate_way.join_gateway(self.Wallet.pubkey).get("result")

@@ -244,13 +244,14 @@ class FounderMessage(TransactionMessage):
 
     def send_responses(self, error = None):
 
+
         founder_sig = {"txDataSing": self.sign_message(self.founder.get("txData")),
                         "orginalData": self.founder}
         commitment_sig = {"txDataSing": self.sign_message(self.commitment.get("txData")),
                        "orginalData": self.commitment}
         rd_sig = {"txDataSing": self.sign_message(self.revocable_delivery.get("txData")),
                        "orginalData": self.revocable_delivery}
-        if error:
+        if not error:
             message_response = { "MessageType":"FounderSign",
                                 "Sender": self.receiver,
                                 "Receiver":self.sender,
