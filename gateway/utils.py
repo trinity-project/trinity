@@ -34,7 +34,7 @@ def decode_bytes(bdata, target="dict"):
     data = bdata.decode("utf-8")
     print("########",data,"*******")
     if target == "dict":
-        # data = _remove_end_mark(data)
+        data = _remove_end_mark(data)
         data = json.loads(data)
     return data
 
@@ -46,7 +46,7 @@ def encode_bytes(data):
     """
     if type(data) != str:
         data = json.dumps(data)
-    # data = _add_end_mark(data)
+    data = _add_end_mark(data)
     return data.encode("utf-8")
 
 def json_to_dict(str_json):

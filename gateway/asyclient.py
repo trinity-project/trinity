@@ -33,17 +33,18 @@ class ClientProtocol(Protocol):
         print('Connection from {}'.format(peername))
 
     def data_received(self, data):
-        # self.received.append(data)
+        self.received.append(data)
         #检测数据包是否完整 结尾是否包含eof标识
-        # if b"eof" in data:
-        #     complete_bdata = b"".join(self.received)
-        #     # handle message
-        #     from gateway import gateway_singleton
-        #     gateway_singleton.handle_tcp_request(self._transport, complete_bdata)
-        # else:
-        #     print("数据还没有接收完毕")
-        from gateway import gateway_singleton
-        gateway_singleton.handle_tcp_request(self._transport, data)
+        if b"eof" in data:
+            complete_bdata = b"".join(self.received)
+            # handle message
+            print("++++++",len(complete_bdata),"+++++++++")
+            from gateway import gateway_singleton
+            gateway_singleton.handle_tcp_request(self._transport, complete_bdata)
+        else:
+            print("数据还没有接收完毕")
+        # from gateway import gateway_singleton
+        # gateway_singleton.handle_tcp_request(self._transport, data)
 
     def connection_lost(self, exc):
         self.state = "closed"
@@ -51,6 +52,7 @@ class ClientProtocol(Protocol):
         self._transport.close()
         print("Connection lost", exc)
         # todo 一些清理的工作
+        # remove transport from tcp_pk_map
         del self
 
     def pause_writing(self):
