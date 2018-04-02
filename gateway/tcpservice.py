@@ -46,7 +46,7 @@ class TcpProtocol(Protocol):
             # handle message
             from gateway import gateway_singleton
             gateway_singleton.handle_tcp_request(self._transport, complete_bdata)
-            # self.received = []
+            self.received = []
         else:
             print("数据还没有接收完毕")
         # from gateway import gateway_singleton
