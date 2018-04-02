@@ -103,8 +103,8 @@ class TrinityTransaction(object):
         tx = self.read_transaction()
         return tx["0"]["Founder"]["originalData"]
 
-    def get_balance(self):
-        tx = self.read_transaction()
+    def get_balance(self, tx_nonce):
+        tx = self.get_tx_nonce(tx_nonce)
         try:
             return tx["Balance"]
         except KeyError:

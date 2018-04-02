@@ -86,7 +86,7 @@ class RegisterMessage(Message):
         ch.sync_channel_info_to_gateway(self.channel_name,"AddChannel") # Just For Test
 
         FounderMessage.create(self.channel_name,partner_pubkey,founder_pubkey,
-                              self.asset_type,self.deposit,founder_ip,partner_ip)
+                              self.asset_type.upper(),self.deposit,founder_ip,partner_ip)
 
 class TestMessage(Message):
 
@@ -196,7 +196,7 @@ class FounderMessage(TransactionMessage):
                 register_monitor(txid, monitor_founding, self.channel_name, EnumChannelState.OPENED.name)
             if ch.Channel.channel(self.channel_name).src_addr == self.wallet.pubkey:
                 FounderMessage.create(self.channel_name, self.receiver_pubkey,
-                                      self.sender_pubkey,self.asset_type, self.deposit, self.sender_ip,self.receiver_ip)
+                                      self.sender_pubkey,self.asset_type.upper(), self.deposit, self.sender_ip,self.receiver_ip)
         else:
             self.send_responses(error = error)
 
@@ -231,7 +231,7 @@ class FounderMessage(TransactionMessage):
                                       "Founder": founder,
                                       "Commitment":commitment,
                                        "RevocableDelivery":revocabledelivery,
-                                       "AssetType":asset_type,
+                                       "AssetType":asset_type.upper(),
                                        "Deposit": deposit
                                       }
                  }
@@ -243,8 +243,6 @@ class FounderMessage(TransactionMessage):
         return True, None
 
     def send_responses(self, error = None):
-
-
         founder_sig = {"txDataSign": self.sign_message(self.founder.get("txData")),
                         "originalData": self.founder}
         commitment_sig = {"txDataSign": self.sign_message(self.commitment.get("txData")),
@@ -260,7 +258,7 @@ class FounderMessage(TransactionMessage):
                                 "MessageBody": {"Founder": self.founder,
                                                   "Commitment":self.commitment,
                                                   "RevocableDelivery":self.revocable_delivery,
-                                                "AssetType":self.asset_type,
+                                                "AssetType":self.asset_type.upper(),
                                                 "Deposit":self.deposit
                                                 },
                                  "Error":error
@@ -274,7 +272,7 @@ class FounderMessage(TransactionMessage):
                                 "MessageBody": {"Founder": founder_sig,
                                                   "Commitment":commitment_sig,
                                                   "RevocableDelivery":rd_sig,
-                                                "AssetType": self.asset_type,
+                                                "AssetType": self.asset_type.upper(),
                                                 "Deposit": self.deposit
                                                 },
                                 }
@@ -331,7 +329,7 @@ class FounderResponsesMessage(TransactionMessage):
                 sender_pubkey, sender_ip = self.sender.split("@")
                 receiver_pubkey, receiver_ip = self.receiver.split("@")
                 subitem = {}
-                subitem.setdefault(self.asset_type, self.deposit)
+                subitem.setdefault(self.asset_type.upper(), self.deposit)
                 balance ={}
                 balance.setdefault(sender_pubkey, subitem)
                 balance.setdefault(receiver_pubkey, subitem)
@@ -395,15 +393,17 @@ class RsmcMessage(TransactionMessage):
         transaction = TrinityTransaction(channel_name, wallet)
         founder = transaction.get_founder()
         tx_state = transaction.get_transaction_state()
-        balance = transaction.get_balance()
+        balance = transaction.get_balance(str(int(tx_nonce)-1))
+        print(balance)
         if balance:
             sender_balance = balance.get(sender_pubkey)
             receiver_balance = balance.get(receiver_pubkey)
-            balance_value = sender_balance.get(asset_type)
+            balance_value = sender_balance.get(asset_type.upper())
+            receiver_balance_value = receiver_balance.get(asset_type.upper())
             print("RSMC Balance", balance_value)
         else:
             balance_value = 0
-        if balance_value < value and tx_state == "pending":
+        if float(balance_value) < value and tx_state == "pending":
             if cli:
                 return False, "No Balance"
             else:
@@ -413,18 +413,20 @@ class RsmcMessage(TransactionMessage):
     "Error": "No Balance"
     }
                 Message.send(message)
+                return
         print("RSMC test")
-        sender_balance = float(balance_value.get(sender_pubkey)) - float(value)
-        receiver_balance = float(balance_value.get(receiver_pubkey)) + float(value)
+        sender_balance = float(balance_value) - float(value)
+        receiver_balance = float(receiver_balance_value) + float(value)
+        print(founder)
         commitment = createCTX(founder["addressFunding"], sender_balance, receiver_balance,
-                               sender_pubkey, receiver_pubkey, founder["scriptRSMC"])
+                               sender_pubkey, receiver_pubkey, founder["scriptFunding"])
 
         revocabledelivery = createRDTX(commitment.get("addressRSMC"), pubkey_to_address(sender_pubkey), sender_balance,
                                        commitment.get("txId"),
                                        commitment.get("scriptRSMC"))
 
         if not breachremedy:
-            message = { "MessageType":"Founder",
+            message = { "MessageType":"Rsmc",
                     "Sender": "{}@{}".format(sender_pubkey, gateway_ip),
                     "Receiver":"{}@{}".format(receiver_pubkey, partner_ip),
                     "TxNonce": tx_nonce,
@@ -432,7 +434,7 @@ class RsmcMessage(TransactionMessage):
                     "MessageBody": {
                                       "Commitment":commitment,
                                        "RevocableDelivery":revocabledelivery,
-                                       "AssetType":asset_type,
+                                       "AssetType":asset_type.upper(),
                                        "Value": value
                                       }
                  }
@@ -444,14 +446,14 @@ class RsmcMessage(TransactionMessage):
             breachremedy = createBRTX(founder["addressFunding"], pubkey_to_address(receiver_pubkey), sender_balance,
                                       commitment["scriptRSMC"])
             breachremedy_sign = sign(wallet, breachremedy.get("txData"))
-            message = {"MessageType": "Founder",
+            message = {"MessageType": "Rsmc",
                        "Sender": "{}@{}".format(sender_pubkey, gateway_ip),
                        "Receiver": "{}@{}".format(receiver_pubkey, partner_ip),
                        "TxNonce": tx_nonce,
                        "ChannelName": channel_name,
                        "MessageBody": {
                            "BreachRemedy": breachremedy_sign,
-                           "AssetType": asset_type,
+                           "AssetType": asset_type.upper(),
                            "Value": value
                            }
                        }
@@ -460,10 +462,10 @@ class RsmcMessage(TransactionMessage):
         RsmcMessage.send(message)
         balance = {}
         subitem = {}
-        subitem.setdefault(asset_type, sender_balance)
+        subitem.setdefault(asset_type.upper(), sender_balance)
         balance.setdefault(sender_pubkey,subitem)
         subitem = {}
-        subitem.setdefault(asset_type, receiver_balance)
+        subitem.setdefault(asset_type.upper(), receiver_balance)
         balance.setdefault(receiver_pubkey,subitem)
         transaction.update_transaction(str(tx_nonce), Balance=balance, State="pending")
 
@@ -489,7 +491,7 @@ class RsmcMessage(TransactionMessage):
                     witness = ctx.get("RevocableDelivery").get("originalData").get("witness_part1")+\
                               ctx.get("RevocableDelivery").get("originalData").get("witness_part2")
                     register_monitor(monitor_ctxid,monitor_height,txData+witness, txDataother, txDataself)
-                    balance = self.transaction.get_balance()
+                    balance = self.transaction.get_balance(str(self.tx_nonce))
                     self.transaction.update_transaction(str(self.tx_nonce),State="confirm")
                     ch.Channel.channel(self.channel_name).update_channel(balance=balance)
                     ch.sync_channel_info_to_gateway(self.channel_name, "UpdateChannel")
@@ -517,7 +519,7 @@ class RsmcMessage(TransactionMessage):
                 self.send(message_response)
                 print("Send RsmcMessage Response  ",message_response)
         else:
-            message_response = { "MessageType":"FounderFail",
+            message_response = { "MessageType":"RsmcFail",
                                 "Sender": self.receiver,
                                 "Receiver":self.sender,
                                 "TxNonce": self.tx_nonce,
@@ -571,7 +573,7 @@ class RsmcResponsesMessage(TransactionMessage):
     def verify(self):
         return True, None
 
-class HtlcMessage(TransactionMessage):
+class HtlcMessage(TransactionMessage): 
     """
     { "MessageType":"Htlc",
     "Sender": "9090909090909090909090909@127.0.0.1:20553",
