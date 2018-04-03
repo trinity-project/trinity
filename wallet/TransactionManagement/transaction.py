@@ -32,7 +32,7 @@ import os
 import pickle
 from TX.interface import *
 from wallet.utils import sign
-from wallet.BlockChain.monior import send_raw
+from wallet.BlockChain import monior as mon
 
 BlockHightRegister=[]
 TxIDRegister= []
@@ -90,7 +90,7 @@ class TrinityTransaction(object):
     @staticmethod
     def sendrawtransaction(raw_data):
         print("Debug SendRawTransaction:    ", raw_data)
-        result = send_raw(raw_data)
+        result = mon.send_raw(raw_data)
         print("Debug SendRawTransaction Result:    ", result)
         return result
 
