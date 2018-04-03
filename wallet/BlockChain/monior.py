@@ -106,6 +106,7 @@ def handle_message(height,jsn):
     for index, value in enumerate(TxIDRegister):
         txid = value[0]
         print("Debug Handle Message:",txid)
+        print("Block Height: ", str(jsn))
         if txid in block_txids:
             value[1](value[0],*value[1:])
             match_list.append(value)

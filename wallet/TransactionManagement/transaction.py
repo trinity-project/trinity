@@ -142,14 +142,16 @@ class TrinityTransaction(object):
         latest_tx = tx.get(str(latest_nonce))
         latest_ctx = latest_tx.get("Commitment")
         ctx_txData = latest_ctx.get("originalData").get("txData")
+        tx_id = latest_ctx.get("originalData").get("txId")
         ctx_witness = latest_ctx.get("originalData").get("witness")
         ctx_txData_other = latest_ctx.get("txDataSing")
         ctx_txData_sign = sign(ctx_txData, self.wallet)
-        raw_data = ctx_txData+ctx_witness.format(signSelf=ctx_txData_sign,signOther = ctx_txData_other)
+        raw_data = ctx_txData+ctx_witness.format(signSelf=ctx_txData_other, signOther = ctx_txData_sign)
         TrinityTransaction.sendrawtransaction(raw_data)
+        print("Commitment Tx TO Chain    ", tx_id)
 
 
-def dic2btye(file_handler, **kwargs):
+def dic2byte(file_handler, **kwargs):
     """
 
     :param kwargs:
