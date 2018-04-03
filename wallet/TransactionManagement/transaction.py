@@ -32,6 +32,7 @@ import os
 import pickle
 from TX.interface import *
 from wallet.utils import sign
+from wallet.BlockChain.monior import send_raw
 
 BlockHightRegister=[]
 TxIDRegister= []
@@ -89,9 +90,7 @@ class TrinityTransaction(object):
     @staticmethod
     def sendrawtransaction(raw_data):
         print("Debug SendRawTransaction:    ", raw_data)
-        tx_script = binascii.unhexlify(raw_data.encode('utf-8'))
-        transaction = Transaction.DeserializeFromBufer(tx_script)
-        result = NodeLeader.Instance().Relay(transaction)
+        result = send_raw(raw_data)
         print("Debug SendRawTransaction Result:    ", result)
         return result
 
