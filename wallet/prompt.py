@@ -221,12 +221,11 @@ class UserPromptInterface(PromptInterface):
         if not self.Wallet:
             print("Please open a wallet")
             return
-        if not self.Channel:
-            self._channel_noopen()
-
         command = get_arg(arguments)
-        print(command)
+        
         if command == 'create':
+            if not self.Channel:
+                self._channel_noopen()
             assert len(arguments) == 4
             if not self.Wallet:
                 raise Exception("Please Open The Wallet First")
@@ -234,6 +233,7 @@ class UserPromptInterface(PromptInterface):
             asset_type = get_arg(arguments, 2)
             deposit = int(get_arg(arguments, 3).strip())
             create_channel(self.Wallet.url, partner,asset_type, deposit)
+
         elif command == "open":
             walletHeight = self.Wallet.LoadStoredData("Height")
             ##blockHeight = Blockchain.Default().HeaderHeight
@@ -243,6 +243,7 @@ class UserPromptInterface(PromptInterface):
             if result:
                 self.Wallet.url = json.loads(result).get("MessageBody").get("Url")
                 self.Channel = True
+                print("Channel Funtion Opend")
             else:
                 self._channel_noopen()
 
@@ -252,7 +253,10 @@ class UserPromptInterface(PromptInterface):
                     self.Channel = True
             else:
                 self._channel_noopen()"""
+
         elif command == "tx":
+            if not self.Channel:
+                self._channel_noopen()
             receiver = get_arg(arguments,1)
             asset_type = get_arg(arguments,2)
             count = get_arg(arguments,3)
@@ -291,6 +295,8 @@ class UserPromptInterface(PromptInterface):
                     return
 
         elif command =="close":
+            if not self.Channel:
+                self._channel_noopen()
             peer = get_arg(arguments, 1)
             peerpubkey, peerip = peer.split("@")
             channel_name = get_channel_name_via_address(self.Wallet.pubkey, peerpubkey)
@@ -298,7 +304,10 @@ class UserPromptInterface(PromptInterface):
                 trinitytx.TrinityTransaction(channel_name, self.Wallet).realse_transaction()
             else:
                 print("No Channel Create")
+
         elif command == "peer":
+            if not self.Channel:
+                self._channel_noopen()
             get_channel_via_address()
             return
 
