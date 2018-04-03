@@ -540,7 +540,7 @@ class RsmcMessage(TransactionMessage):
 
         if not self.transaction.get_tx_nonce(self.tx_nonce):
             RsmcMessage.create(self.channel_name,self.wallet,
-                               self.receiver_pubkey,self.sender_address,
+                               self.receiver_pubkey,self.sender_pubkey,
                                self.value,self.sender_ip,self.receiver_ip,self.tx_nonce)
 
 
