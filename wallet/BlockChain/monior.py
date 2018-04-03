@@ -86,9 +86,10 @@ def monitorblock():
             handle_message(int(blockHeight)-1,block)
             logger.info("Block %s / %s", str(block), blockHeight)
             blockHeight +=1
+            print(blockHeight)
         except Exception as e:
             logger.error("GetBlockError", e)
-        time.sleep(15)
+        time.sleep(5)
 
 def send_message_to_gateway(message):
     send_message(message)
@@ -112,6 +113,7 @@ def handle_message(height,jsn):
             match_list.append(value)
     for i in match_list:
         TxIDRegister.remove(i)
+    return
 
 def register_monitor(*args):
     print("Debug Register ", args)
