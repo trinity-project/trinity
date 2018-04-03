@@ -535,7 +535,7 @@ class RsmcMessage(TransactionMessage):
         if not self.transaction.get_tx_nonce(self.tx_nonce):
             RsmcMessage.create(self.channel_name,self.wallet,
                                self.receiver_pubkey,self.sender_address,
-                               self.value,self.tx_nonce,self.sender_ip)
+                               self.value,self.receiver_ip,self.tx_nonce,self.sender_ip)
 
 
 
@@ -573,7 +573,7 @@ class RsmcResponsesMessage(TransactionMessage):
     def verify(self):
         return True, None
 
-class HtlcMessage(TransactionMessage): 
+class HtlcMessage(TransactionMessage):
     """
     { "MessageType":"Htlc",
     "Sender": "9090909090909090909090909@127.0.0.1:20553",
