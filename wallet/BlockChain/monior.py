@@ -31,6 +31,7 @@ import os
 from wallet.Interface.gate_way import send_message
 import json
 import requests
+import copy
 
 
 BlockHeightRecord = os.path.join(TxDataDir,"block.data")
@@ -97,14 +98,16 @@ def send_message_to_gateway(message):
 def handle_message(height,jsn):
     match_list=[]
     block_txids = [i.get("txid") for i in jsn.get("tx")]
-    for index,value in enumerate(BlockHightRegister):
+    blockheight = copy.deepcopy(BlockHeightRecord)
+    for index,value in enumerate(blockheight):
         if value[0] == height:
             value[1](*value[1:])
             match_list.append(value)
     for i in match_list:
         BlockHightRegister.remove(i)
     match_list =[]
-    for index, value in enumerate(TxIDRegister):
+    txids = copy.deepcopy(TxIDRegister)
+    for index, value in enumerate(txids):
         txid = value[0]
         print("Debug Handle Message:",txid)
         print("Block Height: ", str(jsn))
