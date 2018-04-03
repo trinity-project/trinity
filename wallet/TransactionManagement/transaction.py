@@ -32,6 +32,7 @@ import os
 import pickle
 from TX.interface import *
 from wallet.utils import sign
+from wallet.BlockChain import monior as mon
 
 BlockHightRegister=[]
 TxIDRegister= []
@@ -57,7 +58,8 @@ class TrinityTransaction(object):
         self.tx_file = self.get_transaction_file()
 
     def get_transaction_file(self):
-         return self.wallet.LoadStoredData(self.channel)
+
+         return os.path.join(TxDataDir, self.channel+".data")
 
     def store_transaction(self, tx_message):
         with open(self.tx_file, "wb+") as f:
@@ -65,27 +67,31 @@ class TrinityTransaction(object):
         return None
 
     def read_transaction(self):
+        print(self.tx_file)
         with open(self.tx_file, "rb") as f:
-            print(uncryto_channel(f))
-            return uncryto_channel(f)
+            try:
+               return uncryto_channel(f)
+            except:
+                return None
 
     def update_transaction(self, tx_nonce, **kwargs):
-        with open(self.tx_file, "wb+") as f:
-            message = uncryto_channel(f)
-            message = message if message else {}
-            subitem = message.get(tx_nonce)
-            subitem = subitem if subitem else {}
-            for key, value in kwargs.items():
-                subitem[key] = value
-            message[str(tx_nonce)] = subitem
-            print(message)
-            crypto_channel(f, **message)
+        tx_infos = self.read_transaction()
+        if tx_infos:
+            info = tx_infos.get(tx_nonce)
+            if not info:
+                tx_infos[tx_nonce] = kwargs
+            else:
+                dictMerged = dict(info, **kwargs)
+                tx_infos[tx_nonce] = dictMerged
+        else:
+            tx_infos=dict([(tx_nonce, kwargs)])
+        self.store_transaction(tx_infos)
 
     @staticmethod
     def sendrawtransaction(raw_data):
-        tx_script = binascii.unhexlify(raw_data.encode('utf-8'))
-        transaction = Transaction.DeserializeFromBufer(tx_script)
-        result = NodeLeader.Instance().Relay(transaction)
+        print("Debug SendRawTransaction:    ", raw_data)
+        result = mon.send_raw(raw_data)
+        print("Debug SendRawTransaction Result:    ", result)
         return result
 
     @staticmethod
@@ -94,11 +100,14 @@ class TrinityTransaction(object):
 
     def get_founder(self):
         tx = self.read_transaction()
-        return tx["0"]["Founder"]["orginalData"]
+        return tx["0"]["Founder"]["originalData"]
 
-    def get_balance(self):
-        tx = self.read_transaction()
-        return tx["Blance"]
+    def get_balance(self, tx_nonce):
+        tx = self.get_tx_nonce(tx_nonce)
+        try:
+            return tx["Balance"]
+        except KeyError:
+            return None
 
     def get_tx_nonce(self, tx_nonce):
         tx = self.read_transaction()
@@ -106,6 +115,8 @@ class TrinityTransaction(object):
 
     def get_latest_nonceid(self, tx=None):
         tx = tx if tx else self.read_transaction()
+        if tx is None:
+            return 0
         nonce = []
         for i in tx.keys():
             try:
@@ -116,7 +127,10 @@ class TrinityTransaction(object):
 
     def get_transaction_state(self):
         tx = self.read_transaction()
-        return tx.get("State")
+        if tx:
+            return tx.get("State")
+        else:
+            return None
 
     def realse_transaction(self):
         tx = self.read_transaction()
@@ -126,15 +140,17 @@ class TrinityTransaction(object):
         latest_nonce =self.get_latest_nonceid(tx)
         latest_tx = tx.get(str(latest_nonce))
         latest_ctx = latest_tx.get("Commitment")
-        ctx_txData = latest_ctx.get("orginalData").get("txData")
-        ctx_witness = latest_ctx.get("orginalData").get("witness")
+        ctx_txData = latest_ctx.get("originalData").get("txData")
+        tx_id = latest_ctx.get("originalData").get("txId")
+        ctx_witness = latest_ctx.get("originalData").get("witness")
         ctx_txData_other = latest_ctx.get("txDataSing")
         ctx_txData_sign = sign(ctx_txData, self.wallet)
-        raw_data = ctx_txData+ctx_witness.format(signSelf=ctx_txData_sign,signOther = ctx_txData_other)
+        raw_data = ctx_txData+ctx_witness.format(signSelf=ctx_txData_other, signOther = ctx_txData_sign)
         TrinityTransaction.sendrawtransaction(raw_data)
+        print("Commitment Tx TO Chain    ", tx_id)
 
 
-def dic2btye(file_handler, **kwargs):
+def dic2byte(file_handler, **kwargs):
     """
 
     :param kwargs:
@@ -148,7 +164,7 @@ def crypto_channel(file_handler, **kwargs):
     :param kwargs:
     :return:
     """
-    return dic2btye(file_handler, **kwargs)
+    return pickle.dump(kwargs, file_handler)
 
 def uncryto_channel(file_handler):
     """
@@ -156,7 +172,7 @@ def uncryto_channel(file_handler):
     :param file_handler:
     :return:
     """
-    return byte2dic(file_handler)
+    return pickle.load(file_handler)
 
 def byte2dic(file_hander):
     """
@@ -164,7 +180,10 @@ def byte2dic(file_hander):
     :param file_hander:
     :return:
     """
-    return pickle_load(file_hander)
+    try:
+        pickle.load(file_hander)
+    except:
+        return None
 
 def pickle_load(file):
     """
@@ -231,6 +250,17 @@ def construt_update_channel_transction(params):
     return {"BR_tx": BR_tx, "C_TX": C_tx, "R_TX": RD_tx}
 
 if __name__== "__main__":
-    print(TxDataDir)
+    tx = TrinityTransaction("Mytest","walle")
+    TrinityTransaction("Mytest","wallt")
+    m = {"test1":1}
+    m1 = {"test2":2}
+    tx.update_transaction("0",test1=1)
+    tx.update_transaction("0",test2=2)
+    print(tx.read_transaction())
+    tx.update_transaction("1",H=1,x="tt")
+    print(tx.read_transaction())
+
+
+
 
 

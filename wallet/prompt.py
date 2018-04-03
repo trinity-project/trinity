@@ -32,7 +32,7 @@ from neo.Prompt.Utils import get_arg
 from wallet.Interface.rpc_interface import RpcInteraceApi
 from twisted.web.server import Site
 from neo.bin.prompt import PromptInterface
-from wallet.ChannelManagement.channel import create_channel, get_channel_name_via_address
+from wallet.ChannelManagement.channel import create_channel, get_channel_name_via_address,get_channel_via_address
 from wallet.TransactionManagement import message as mg
 from wallet.TransactionManagement import transaction as trinitytx
 from wallet.Interface.rpc_interface import MessageList
@@ -64,8 +64,8 @@ class UserPromptInterface(PromptInterface):
         super().__init__()
         user_commands = ["channel open","channel create {partner} {asset_type} {deposit}",
                          "channel tx {receiver} {asset_type} {count}",
-                         "channel close {channel_name},"
-                         "channel show {channel_name}"]
+                         "channel close {peer},"
+                         "channel peer"]
         self.commands.extend(user_commands)
 
     def get_address(self):
@@ -221,9 +221,8 @@ class UserPromptInterface(PromptInterface):
         if not self.Wallet:
             print("Please open a wallet")
             return
-
         command = get_arg(arguments)
-        print(command)
+
         if command == 'create':
             if not self.Channel:
                 self._channel_noopen()
@@ -234,6 +233,7 @@ class UserPromptInterface(PromptInterface):
             asset_type = get_arg(arguments, 2)
             deposit = int(get_arg(arguments, 3).strip())
             create_channel(self.Wallet.url, partner,asset_type, deposit)
+
         elif command == "open":
             walletHeight = self.Wallet.LoadStoredData("Height")
             ##blockHeight = Blockchain.Default().HeaderHeight
@@ -243,6 +243,7 @@ class UserPromptInterface(PromptInterface):
             if result:
                 self.Wallet.url = json.loads(result).get("MessageBody").get("Url")
                 self.Channel = True
+                print("Channel Funtion Opend")
             else:
                 self._channel_noopen()
 
@@ -252,18 +253,22 @@ class UserPromptInterface(PromptInterface):
                     self.Channel = True
             else:
                 self._channel_noopen()"""
+
         elif command == "tx":
+            if not self.Channel:
+                self._channel_noopen()
             receiver = get_arg(arguments,1)
             asset_type = get_arg(arguments,2)
             count = get_arg(arguments,3)
 
             receiverpubkey , receiverip= receiver.split("@")
             channel_name = get_channel_name_via_address(self.Wallet.pubkey,receiverpubkey )
+            gate_way_ip = self.Wallet.url.split("@")[1].strip()
 
             if channel_name:
                 tx_nonce = trinitytx.TrinityTransaction(channel_name, self.Wallet).get_latest_nonceid()
                 mg.RsmcMessage.create(channel_name,self.Wallet,self.Wallet.pubkey,
-                                      receiverpubkey, int(count), receiverip, str(tx_nonce+1), asset_type="TNC")
+                                      receiverpubkey, int(count), receiverip, gate_way_ip, str(tx_nonce+1), asset_type="TNC")
             else:
                 message = {"MessageType":"QueryRouter",
                            "Sender":self.Wallet.url,
@@ -282,16 +287,35 @@ class UserPromptInterface(PromptInterface):
                     if answer.upper() == "YES":
                         tx_nonce = trinitytx.TrinityTransaction(channel_name, self.Wallet).get_latest_nonceid()
                         mg.RsmcMessage.create(channel_name, self.Wallet, self.Wallet.pubkey,
-                                              receiverpubkey, int(count), receiverip, str(tx_nonce + 1),
+                                              receiverpubkey, int(count), receiverip, gate_way_ip, str(tx_nonce + 1),
                                               asset_type="TNC",router= r, next_router=n)
                     else:
                         return None
                 else:
                     return
 
+        elif command =="close":
+            if not self.Channel:
+                self._channel_noopen()
+            peer = get_arg(arguments, 1)
+            peerpubkey, peerip = peer.split("@")
+            channel_name = get_channel_name_via_address(self.Wallet.pubkey, peerpubkey)
+            if channel_name:
+                trinitytx.TrinityTransaction(channel_name, self.Wallet).realse_transaction()
+            else:
+                print("No Channel Create")
+
+        elif command == "peer":
+            if not self.Channel:
+                self._channel_noopen()
+            get_channel_via_address(self.Wallet.pubkey)
+            return
+
+
     def _channel_noopen(self):
         print("Please waite the block sync")
         return
+
 
     def get_completer(self):
 
@@ -341,12 +365,14 @@ class UserPromptInterface(PromptInterface):
             return "Error Message"
         if message_type == "Founder":
             m_instance = mg.FounderMessage(message, self.Wallet)
-        elif message_type == "FounderSign":
+        elif message_type == "FounderSign" or message_type == "FounderFail":
             m_instance = mg.FounderResponsesMessage(message, self.Wallet)
         elif message_type == "Htlc":
             m_instance = mg.HtlcMessage(message, self.Wallet)
         elif message_type == "Rsmc":
             m_instance = mg.RsmcMessage(message, self.Wallet)
+        elif message_type == "RsmcSign" or message_type == "RsmcFail":
+            m_instance = mg.RsmcResponsesMessage(message, self.Wallet)
         elif message_type == "RegisterChannel":
             m_instance = mg.RegisterMessage(message, self.Wallet)
         elif message_type == "CreateTranscation":
