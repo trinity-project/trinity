@@ -15,13 +15,14 @@ if __name__ == "__main__":
     # c.send(addr, (str_tree + "eof").encode("utf-8"))
     # while(True):
     #     pass
+    msbody = {
+        "Publickey":"publickey",
+        "CommitMinDeposit": 3,
+        "Fee": 5
+    }
     message = {
         "MessageType":"SyncWallet",
-        "MessageBody":{
-            "Publickey":"publickey",
-            "CommitMinDeposit": 3,
-            "Fee": 5
-        }
+        "MessageBody": msbody
     }
     s = "eeeooodfeof"
     import re
@@ -37,10 +38,19 @@ if __name__ == "__main__":
     # f = open('./tree.json', 'w')
     # f.write(json.dumps(message))
     # f.read()
-    print(time.time())
-    tree = None
-    with open('../tree.json', 'r') as fs:
-        tree = json.loads(fs.read())
+    # print(time.time())
+    # tree = None
+    # with open('../tree.json', 'r') as fs:
+    #     tree = json.loads(fs.read())
 
-    print(type(tree), tree)
-    print(time.time())
+    # print(type(tree), tree)
+    # print(time.time())
+    def del_dict_item_by_value(dic, value):
+        values = list(dic.values())
+        if value in values:
+            keys = list(dic.keys())
+            del_index = values.index(value)
+            del dic[keys[del_index]]
+
+    del_dict_item_by_value(message, msbody)
+    print(message)

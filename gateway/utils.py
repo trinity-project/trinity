@@ -6,18 +6,25 @@ import json
 import time
 import re
 import copy
-from config import cg_end_mark
+from config import cg_end_mark, cg_bytes_encoding
 
 common_msg_dict = {
     "MessageType": "",
     "Sender": "",
     "Receiver": ""
 }
+tcp_msg_types = [
+    "RegisterChannel",
+    "SyncChannelState"
+    "Rsmc",
+    "FounderSign",
+    "Founder","RsmcSign",
+    "FounderFail"
+]
 
 def _remove_end_mark(text):
     patter = re.compile(cg_end_mark + "$")
     text = re.sub(patter, "", text)
-    # text = text.replace(cg_end_mark, "")
     return text
 
 def _add_end_mark(text):
@@ -31,7 +38,7 @@ def decode_bytes(bdata, target="dict"):
     一般情况直接返回相应的 python obj\n
     如果传入的target为"str" 则返回字符串
     """
-    data = bdata.decode("utf-8")
+    data = bdata.decode(cg_bytes_encoding)
     print("########",data,"*******")
     if target == "dict":
         data = _remove_end_mark(data)
@@ -41,13 +48,13 @@ def decode_bytes(bdata, target="dict"):
 def encode_bytes(data):
     """
     编码成字节包\n
-    python obj 序列化json字符\n
-    并加入消息结束标识符 eof\n
+    python obj 序列化json字符 \n
+    并加入消息结束标识符 /eof/ \n
     """
     if type(data) != str:
         data = json.dumps(data)
     data = _add_end_mark(data)
-    return data.encode("utf-8")
+    return data.encode(cg_bytes_encoding)
 
 def json_to_dict(str_json):
     return json.loads(str_json)
@@ -191,3 +198,22 @@ def generate_sync_tree_msg(route_tree, sender):
         "MessageBody": route_tree.to_dict(with_data=True)
     }
     return message
+
+def del_dict_item_by_value(dic, value):
+    values = list(dic.values())
+    if value in values:
+        keys = list(dic.keys())
+        del_index = values.index(value)
+        del dic[keys[del_index]]
+
+def check_tcp_message_valid(data):
+    if type(data) != dict:
+        return False
+    elif not (data.get("MessageType") or data.get("MessageBody")):
+        return False
+    elif data.get("MessageType") not in tcp_msg_types:
+        return False
+    elif not (data.get("Sender") or data["Receiver"]):
+        return False
+    else:
+        return True

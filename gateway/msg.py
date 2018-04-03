@@ -86,3 +86,15 @@ message = {
         "Fee":Configure["Fee"]
     }
 }
+
+SyncChannel = {
+    "MessageType":"SyncChannel",
+    "Self": "url"
+    "Peers": {
+        "Url": "url",
+        "CommitMinDeposit",
+        "Name": 
+        "Fee"
+    }
+    "Action": "add/remove"
+}

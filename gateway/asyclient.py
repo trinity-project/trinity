@@ -1,5 +1,6 @@
 # coding: utf-8
 from asyncio import Protocol, get_event_loop, iscoroutine
+from config import cg_end_mark, cg_bytes_encoding
 
 class ClientManage():
     def __init__(self):
@@ -34,26 +35,24 @@ class ClientProtocol(Protocol):
 
     def data_received(self, data):
         self.received.append(data)
-        #检测数据包是否完整 结尾是否包含eof标识
-        if b"eof" in data:
+        last_index = len(cg_end_mark)
+        if cg_end_mark.encode(cg_bytes_encoding) == data[-last_index:]:
             complete_bdata = b"".join(self.received)
-            # handle message
             print("++++++",len(complete_bdata),"+++++++++")
             from gateway import gateway_singleton
             gateway_singleton.handle_tcp_request(self._transport, complete_bdata)
             self.received = []
         else:
-            print("数据还没有接收完毕")
-        # from gateway import gateway_singleton
-        # gateway_singleton.handle_tcp_request(self._transport, data)
+            print("tcp data transport by blocking")
 
     def connection_lost(self, exc):
+        from gateway import gateway_singleton
+        from utils import del_dict_item_by_value
         self.state = "closed"
         climanage_singleton.unregister(self._transport)
         self._transport.close()
         print("Connection lost", exc)
-        # todo 一些清理的工作
-        # remove transport from tcp_pk_map
+        del_dict_item_by_value(gateway_singleton.tcp_pk_dict, self._transport)
         del self
 
     def pause_writing(self):

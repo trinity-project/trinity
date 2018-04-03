@@ -2,6 +2,8 @@
 import pprint
 import json
 import utils
+import time
+import datetime
 from routertree import RouteTree, SPVHashTable
 from tcpservice import TcpService
 from wsocket import WsocketService
@@ -9,7 +11,7 @@ from jsonrpc import AsyncJsonRpc
 from asyclient import send_tcp_msg_coro, climanage_singleton, find_connection
 from asyncio import get_event_loop, gather, Task, sleep, ensure_future, iscoroutine
 from config import cg_tcp_addr, cg_wsocket_addr, cg_public_ip_port, cg_node_name
-
+from statistics import Statistics, get_timestamp
 
 # route_tree.create_node('node',cg_public_ip_port, data={Deposit:xx,Fee:xx,Balance:4 IP:xx,Publickey:xx,SpvList:[]})  # root node
 node_list = set()
@@ -20,6 +22,7 @@ node = {
     # configurable
     "name": cg_node_name
 }
+global_statistics = Statistics()
 class Gateway():
     """
     gateway 类 定义了所有直接相关的行为与属性
@@ -86,49 +89,66 @@ class Gateway():
         self.loop.stop()
 
     def handle_tcp_request(self, transport, bdata):
-        data = utils.decode_bytes(bdata)
-        # sender = node["wallet_info"]["url"]
-        # first save the node_pk and websocket connection map
-        node_pk = utils.get_public_key(data["Sender"])
-        self.tcp_pk_dict[node_pk] = transport
-        msg_type = data.get("MessageType")
-        if msg_type == "JoinNet":
-            # join net sync node_list
-            transport.send(
-                utils.generate_ack_node_join_msg(
-                    sender, data["Receiver"], node_list
-                    )
-            )
-            node_list.add(data["sender"])
-        elif msg_type == "AckJoin":
-            node_list.add(data["Receiver"])
-            node_list = node_list | data["NodeList"]
-        elif msg_type == "RegisterChannel":
-            self._send_jsonrpc_msg("TransactionMessage", data)
-        
-        elif msg_type == "AddChannel":
-            # basic check
-            # request wallet to handle 
-            if not utils.check_wallet_url_correct(data["Receiver"], local_url):
-                # not self's wallet address
-                transport.send(utils.generate_error_msg(local_url, data["Sender"], "Invalid wallet address"))
+        try:
+            data = utils.decode_bytes(bdata)
+        except UnicodeDecodeError:
+            global_statistics.stati_tcp.rev_invalid_times += 1
+            print("{0}:TCP receive a invalid message: {1}". \
+                format(get_timestamp(with_strf=True), bdata[:60]))
+            return
+        else:
+            if not utils.check_tcp_message_valid():
+                global_statistics.stati_tcp.rev_invalid_times += 1
+                print("{0}:TCP receive a unknow type message: {1}". \
+                    format(get_timestamp(with_strf=True), bdata[:60]))
+                return
             else:
-                self._send_jsonrpc_msg("CreateChannle", json.dumps(data))
-        elif  msg_type == "AckAddChannel":
-            # build map with peeer node public key and current transport
-            peer_pk = utils.get_public_key(data["Sender"])
-            self.tcp_pk_dict[peer_pk] = transport
-
-        elif msg_type in ["Rsmc","FounderSign","Founder","RsmcSign","FounderFail"]:
-            self.handle_transaction_message(data)
-
-        elif msg_type == "SyncChannelState":
-            # node receive the syncchannel msg
-            # first update self tree
-            # then sync to self's peers except the peer which send the syncchannel msg
-            node["route_tree"].sync_tree(RouteTree.to_tree(data["MessageBody"]))
-            except_peer = data["Sender"]
-            self.sync_channel_route_to_peer(except_peer)
+                # first save the node_pk and websocket connection map
+                node_pk = utils.get_public_key(data["Sender"])
+                self.tcp_pk_dict[node_pk] = transport
+                msg_type = data.get("MessageType")
+                if msg_type == "JoinNet":
+                    # join net sync node_list
+                    transport.send(
+                        utils.generate_ack_node_join_msg(
+                            sender, data["Receiver"], node_list
+                            )
+                    )
+                    node_list.add(data["sender"])
+                elif msg_type == "AckJoin":
+                    node_list.add(data["Receiver"])
+                    node_list = node_list | data["NodeList"]
+                elif msg_type == "RegisterChannel":
+                    self._send_jsonrpc_msg("TransactionMessage", data)
+                elif msg_type == "AddChannel":
+                    # basic check
+                    # request wallet to handle 
+                    if not utils.check_wallet_url_correct(data["Receiver"], local_url):
+                        # not self's wallet address
+                        transport.send(utils.generate_error_msg(local_url, data["Sender"], "Invalid wallet address"))
+                    else:
+                        self._send_jsonrpc_msg("CreateChannle", json.dumps(data))
+                elif msg_type in ["Rsmc","FounderSign","Founder","RsmcSign","FounderFail"]:
+                    self.handle_transaction_message(data)
+                elif msg_type == "SyncChannelState":
+                    # node receive the syncchannel msg
+                    # first update self tree
+                    # then sync to self's peers except the peer which send the syncchannel msg
+                    data_body = data["MessageBody"]
+                    if type(data_body) != dict:
+                        global_statistics.stati_tcp.rev_invalid_times += 1
+                        print("{0}:TCP receive a invalid SyncChannelState message: {1}". \
+                            format(get_timestamp(with_strf=True), bdata[:60]))
+                        return
+                    try:
+                        node["route_tree"].sync_tree(RouteTree.to_tree(data["MessageBody"]))
+                    except Exception:
+                        global_statistics.stati_tcp.rev_invalid_times += 1
+                        print("{0}:TCP receive a invalid SyncChannelState message: {1}". \
+                            format(get_timestamp(with_strf=True), bdata[:60]))
+                    else:
+                        except_peer = data["Sender"]
+                        self.sync_channel_route_to_peer(except_peer)
         
 
     def handle_wsocket_request(self, websocket, strdata):
@@ -203,6 +223,8 @@ class Gateway():
             connection.write(bdata)
         else:
             ensure_future(send_tcp_msg_coro(receiver, bdata))
+        # add tcp statistics
+        global_statistics.stati_tcp.send_times += 1
 
     def handle_jsonrpc_response(self, method, response):
         
