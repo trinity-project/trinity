@@ -51,7 +51,6 @@ class Channel(object):
         self.founder = founder
         self.partner = partner
         self.founder_pubkey = self.founder.split("@")[0]
-        print(self.founder_pubkey)
         self.founder_address = pubkey_to_address(self.founder_pubkey)
         self.partner_pubkey = self.partner.split("@")[0]
         self.partner_address = pubkey_to_address(self.partner_pubkey)
@@ -162,7 +161,6 @@ class Channel(object):
     def _get_channel(self):
         try:
             channel = APIChannel.query_channel(self.channel_name)
-            print(channel)
             return channel["content"][0]
         except Exception as e:
             print(e)
@@ -209,6 +207,7 @@ def close_channel(channel_name, wallet):
 
 
 def sync_channel_info_to_gateway(channel_name, type):
+    print("Debug sync_channel_info_to_gateway")
     ch = Channel.channel(channel_name)
     return sync_channel(type, ch.channel_name,ch.founder,ch.partner,ch.get_balance())
 

@@ -90,7 +90,7 @@ def monitorblock():
             print(blockHeight)
         except Exception as e:
             logger.error("GetBlockError", e)
-        time.sleep(5)
+        time.sleep(15)
 
 def send_message_to_gateway(message):
     send_message(message)
@@ -107,19 +107,20 @@ def handle_message(height,jsn):
         BlockHightRegister.remove(i)
     match_list =[]
     txids = copy.deepcopy(TxIDRegister)
-    for index, value in enumerate(txids):
+    for value in txids:
         txid = value[0]
-        print("Debug Handle Message:",txid)
-        print("Block Height: ", str(jsn))
+        logger.info("Debug Handle Message:",txid)
         if txid in block_txids:
-            value[1](value[0],*value[1:])
+            print(value)
+            value[1](value[0],*value[2:])
             match_list.append(value)
+        else:
+            continue
     for i in match_list:
         TxIDRegister.remove(i)
     return
 
 def register_monitor(*args):
-    print("Debug Register ", args)
     TxIDRegister.append(args)
 
 def register_block(*args):

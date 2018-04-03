@@ -340,7 +340,7 @@ class FounderResponsesMessage(TransactionMessage):
                 balance.setdefault(sender_pubkey, subitem)
                 balance.setdefault(receiver_pubkey, subitem)
                 self.transaction.update_transaction(str(self.tx_nonce),Balance = balance , State="confirm")
-                register_monitor(txid, monitor_founding, self.channel_name)
+                register_monitor(txid, monitor_founding, self.channel_name, EnumChannelState.OPENED.name)
         return None
 
     def verify(self):
@@ -576,6 +576,8 @@ class RsmcResponsesMessage(TransactionMessage):
             # Todo Breach Remedy  Transaction
             self.transaction.update_transaction(str(self.tx_nonce), Commitment=self.commitment,
                                                 RD=self.revocable_delivery, BR = self.breach_remedy)
+            ctx = self.commitment.get("originalData").get("txId")
+            register_monitor(ctx, monitor_founding,self.channel_name, EnumChannelState.CLOSED.name)
 
     def verify(self):
         return True, None
@@ -710,11 +712,11 @@ class HtlcResponsesMessage(TransactionMessage):
 
 
 def monitor_founding(height, channel_name, state):
-    print("Debug Monitor Founding", channel_name, state)
     channel = ch.Channel.channel(channel_name)
-    deposit = ch.Channel.get_deposit()
+    deposit = channel.get_deposit()
     channel.update_channel(state=state, balance = deposit)
     ch.sync_channel_info_to_gateway(channel_name,"AddChannel")
+    return None
 
 
 def monitor_height(height, txdata, signother, signself):
