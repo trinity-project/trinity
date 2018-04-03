@@ -194,6 +194,12 @@ class FounderMessage(TransactionMessage):
                 txid = self.founder.get("txId")
                 ch.Channel.channel(self.channel_name).update_channel(state=EnumChannelState.OPENING.name)
                 register_monitor(txid, monitor_founding, self.channel_name, EnumChannelState.OPENED.name)
+                subitem = {}
+                subitem.setdefault(self.asset_type.upper(), self.deposit)
+                balance ={}
+                balance.setdefault(self.sender_pubkey, subitem)
+                balance.setdefault(self.receiver_pubkey, subitem)
+                self.transaction.update_transaction(str(self.tx_nonce), Balance=balance, State="confirm")
             if ch.Channel.channel(self.channel_name).src_addr == self.wallet.pubkey:
                 FounderMessage.create(self.channel_name, self.receiver_pubkey,
                                       self.sender_pubkey,self.asset_type.upper(), self.deposit, self.sender_ip,self.receiver_ip)
