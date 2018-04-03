@@ -473,7 +473,7 @@ class RsmcMessage(TransactionMessage):
         subitem = {}
         subitem.setdefault(asset_type.upper(), receiver_balance)
         balance.setdefault(receiver_pubkey,subitem)
-        transaction.update_transaction(str(tx_nonce), Balance=balance, State="pending")
+        transaction.update_transaction(str(tx_nonce), Balance=balance, State="confirm")
 
 
     def verify(self):
@@ -573,6 +573,7 @@ class RsmcResponsesMessage(TransactionMessage):
             return "{} message error"
         verify, error = self.verify()
         if verify:
+            # Todo Breach Remedy  Transaction
             self.transaction.update_transaction(str(self.tx_nonce), Commitment=self.commitment,
                                                 RD=self.revocable_delivery, BR = self.breach_remedy)
 

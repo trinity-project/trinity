@@ -73,6 +73,19 @@ class Channel(object):
             except:
                 return None
 
+    @staticmethod
+    def query_channel(address):
+        print("Get Channels with Address %s" %address)
+        channels = APIChannel.batch_query_channel(filters={"src_addr":address})
+        channeld = APIChannel.batch_query_channel(filters={"dest_addr":address})
+        for ch in channels["content"]:
+            print("ChannelName:    ", ch.channel, "    State:    ", ch.state)
+            print(" "*10+"Peer:", ch.dest_addr)
+        for ch in channeld["content"]:
+            print("ChannelName:", ch.channel, "    State:    ", ch.state)
+            print(" "*10+"Peer:", ch.src_addr)
+
+
     @classmethod
     def channel(cls,channelname):
         try:
@@ -187,6 +200,9 @@ def get_channel_name_via_address(address1, address2):
     channel = Channel.get_channel(address1, address2)
     return channel
 
+def get_channel_via_address(address):
+    Channel.query_channel(address)
+    return
 
 def close_channel(channel_name, wallet):
     tx = trans.TrinityTransaction(channel_name, wallet)

@@ -32,7 +32,7 @@ from neo.Prompt.Utils import get_arg
 from wallet.Interface.rpc_interface import RpcInteraceApi
 from twisted.web.server import Site
 from neo.bin.prompt import PromptInterface
-from wallet.ChannelManagement.channel import create_channel, get_channel_name_via_address
+from wallet.ChannelManagement.channel import create_channel, get_channel_name_via_address,get_channel_via_address
 from wallet.TransactionManagement import message as mg
 from wallet.TransactionManagement import transaction as trinitytx
 from wallet.Interface.rpc_interface import MessageList
@@ -64,8 +64,8 @@ class UserPromptInterface(PromptInterface):
         super().__init__()
         user_commands = ["channel open","channel create {partner} {asset_type} {deposit}",
                          "channel tx {receiver} {asset_type} {count}",
-                         "channel close {channel_name},"
-                         "channel show {channel_name}"]
+                         "channel close {peer},"
+                         "channel peer"]
         self.commands.extend(user_commands)
 
     def get_address(self):
@@ -221,12 +221,12 @@ class UserPromptInterface(PromptInterface):
         if not self.Wallet:
             print("Please open a wallet")
             return
+        if not self.Channel:
+            self._channel_noopen()
 
         command = get_arg(arguments)
         print(command)
         if command == 'create':
-            if not self.Channel:
-                self._channel_noopen()
             assert len(arguments) == 4
             if not self.Wallet:
                 raise Exception("Please Open The Wallet First")
@@ -290,9 +290,23 @@ class UserPromptInterface(PromptInterface):
                 else:
                     return
 
+        elif command =="close":
+            peer = get_arg(arguments, 1)
+            peerpubkey, peerip = peer.split("@")
+            channel_name = get_channel_name_via_address(self.Wallet.pubkey, peerpubkey)
+            if channel_name:
+                trinitytx.TrinityTransaction(channel_name, self.Wallet).realse_transaction()
+            else:
+                print("No Channel Create")
+        elif command == "peer":
+            get_channel_via_address()
+            return
+
+
     def _channel_noopen(self):
         print("Please waite the block sync")
         return
+
 
     def get_completer(self):
 
