@@ -222,7 +222,7 @@ class UserPromptInterface(PromptInterface):
             print("Please open a wallet")
             return
         command = get_arg(arguments)
-        
+
         if command == 'create':
             if not self.Channel:
                 self._channel_noopen()
@@ -308,7 +308,7 @@ class UserPromptInterface(PromptInterface):
         elif command == "peer":
             if not self.Channel:
                 self._channel_noopen()
-            get_channel_via_address()
+            get_channel_via_address(self.Wallet.pubkey)
             return
 
 
