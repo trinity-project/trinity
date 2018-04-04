@@ -97,7 +97,7 @@ class Gateway():
                 format(get_timestamp(with_strf=True), bdata[:60]))
             return
         else:
-            if not utils.check_tcp_message_valid():
+            if not utils.check_tcp_message_valid(data):
                 global_statistics.stati_tcp.rev_invalid_times += 1
                 print("{0}:TCP receive a unknow type message: {1}". \
                     format(get_timestamp(with_strf=True), bdata[:60]))
