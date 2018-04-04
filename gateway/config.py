@@ -21,4 +21,4 @@ cg_node_name = "trinity1"
 ###### Gateway ######
 
 # only for debug control
-cg_debug = False
+cg_debug = True

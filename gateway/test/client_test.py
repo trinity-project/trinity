@@ -30,11 +30,11 @@ if __name__ == "__main__":
     # message = "{'ok': 3}"
     # jsonrpcclient.request('http://localhost:8077/', 'SyncWalletData', json.dumps(message))
     c = Client()
-    # addr = ("106.15.91.150", 8089)
-    # c.send(addr, (str_tree + "eof").encode("utf-8"))
+    addr = ("localhost", 8089)
+    c.send(addr, (str_tree + "/eof/").encode("utf-8"))
 
-    # while(True):
-    #     pass
+    while(True):
+        pass
     # f = open('./tree.json', 'w')
     # f.write(json.dumps(message))
     # f.read()
@@ -45,12 +45,12 @@ if __name__ == "__main__":
 
     # print(type(tree), tree)
     # print(time.time())
-    def del_dict_item_by_value(dic, value):
-        values = list(dic.values())
-        if value in values:
-            keys = list(dic.keys())
-            del_index = values.index(value)
-            del dic[keys[del_index]]
+    # def del_dict_item_by_value(dic, value):
+    #     values = list(dic.values())
+    #     if value in values:
+    #         keys = list(dic.keys())
+    #         del_index = values.index(value)
+    #         del dic[keys[del_index]]
 
-    del_dict_item_by_value(message, msbody)
-    print(message)
+    # del_dict_item_by_value(message, msbody)
+    # print(message)

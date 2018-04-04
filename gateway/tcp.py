@@ -1,6 +1,8 @@
 # coding: utf-8
 from asyncio import Protocol, get_event_loop
 from config import cg_end_mark, cg_bytes_encoding
+from utils import request_handle_result
+from glog import tcp_logger
 
 class ProtocolManage():
     """
@@ -12,6 +14,7 @@ class ProtocolManage():
         self.exc_close_times = 0
         self.rev_split_data_totals = []
         self.rev_data_split_times = 0
+        self.rev_invalid_times = 0
 
     def register(self, protocol):
         self.protocols.add(protocol)
@@ -43,7 +46,7 @@ class TProtocol(Protocol):
         self.transport = transport
         peername = transport.get_extra_info('peername')
         print(type(peername))
-        print('connection from {}'.format(peername))
+        tcp_logger.info("the connection %s was made", peername)
         tcp_manager.register(self)
 
     def data_received(self, data):
@@ -51,25 +54,34 @@ class TProtocol(Protocol):
         last_index = len(cg_end_mark)
         if cg_end_mark.encode(cg_bytes_encoding) == data[-last_index:]:
             complete_bdata = b"".join(self.received)
-            print("++++++++",len(complete_bdata),"+++++++")
+            tcp_logger.debug("receive %d bytes data from %s", len(complete_bdata), self.get_peername())
             from gateway import gateway_singleton
-            gateway_singleton.handle_tcp_request(self, complete_bdata)
-            self.rev_totals += len(complete_bdata)
-            # split data 
-            if len(self.received) > 1:
-                tcp_manager.rev_data_split_times += 1
-                tcp_manager.rev_split_data_totals.append(len(complete_bdata))
+            result = gateway_singleton.handle_tcp_request(self, complete_bdata)
+            # statistics based on request handled correct or not
+            if result == request_handle_result["correct"]:
+                self.rev_totals += len(complete_bdata)
+                # split data
+                if len(self.received) > 1:
+                    tcp_manager.rev_data_split_times += 1
+                    tcp_manager.rev_split_data_totals.append(len(complete_bdata))
+                    tcp_logger.info("split TCP data--[%d]", len(self.received))
+            else:
+                tcp_manager.rev_invalid_times += 1
+                tcp_logger.info("split TCP data--[%d]", len(self.received))
             self.received = []
         else:
-            print("split TCP data")
+            tcp_logger.info("split TCP data--[%d]", len(self.received))
 
     def connection_lost(self, exc):
+        peername = self.transport.get_extra_info('peername')
         if exc:
             tcp_manager.exc_close_times += 1
             self.state = "exc_closed"
+            tcp_logger.info("the connection %s was broken", peername)
         else:
             tcp_manager.close_times += 1
             self.state = "closed"
+            tcp_logger.info("the connection %s was closed", peername)
         from gateway import gateway_singleton
         from utils import del_dict_item_by_value
         tcp_manager.unregister(self)
@@ -84,6 +96,9 @@ class TProtocol(Protocol):
     def resume_writing(self):
         print(self.transport.get_write_buffer_size())
         self.state = "resumed"
+
+    def get_peername(self):
+        return self.transport.get_extra_info("peername")
 
 def find_connection(url):
     """
@@ -119,7 +134,7 @@ async def create_server_coro(addr):
     return an coro object
     """
     loop = get_event_loop()
-    server = await loop.create_server(TcpProtocol, addr[0], addr[1])
+    server = await loop.create_server(TProtocol, addr[0], addr[1])
     tcp_manager.wrap(server)
+    tcp_logger.debug("TCP server is serving on %s", addr)
     return tcp_manager
-    

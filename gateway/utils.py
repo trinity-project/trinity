@@ -15,12 +15,17 @@ common_msg_dict = {
 }
 tcp_msg_types = [
     "RegisterChannel",
-    "SyncChannelState"
+    "SyncChannelState",
     "Rsmc",
     "FounderSign",
     "Founder","RsmcSign",
     "FounderFail"
 ]
+
+request_handle_result = {
+    "invalid": 0,
+    "correct": 1
+}
 
 def _remove_end_mark(text):
     patter = re.compile(cg_end_mark + "$")
