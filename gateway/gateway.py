@@ -92,13 +92,13 @@ class Gateway():
         try:
             data = utils.decode_bytes(bdata)
         except UnicodeDecodeError:
-            global_statistics.stati_tcp.rev_invalid_times += 1
+            # global_statistics.stati_tcp.rev_invalid_times += 1
             print("{0}:TCP receive a invalid message: {1}". \
                 format(get_timestamp(with_strf=True), bdata[:60]))
             return
         else:
             if not utils.check_tcp_message_valid(data):
-                global_statistics.stati_tcp.rev_invalid_times += 1
+                # global_statistics.stati_tcp.rev_invalid_times += 1
                 print("{0}:TCP receive a unknow type message: {1}". \
                     format(get_timestamp(with_strf=True), bdata[:60]))
                 return
@@ -136,14 +136,14 @@ class Gateway():
                     # then sync to self's peers except the peer which send the syncchannel msg
                     data_body = data["MessageBody"]
                     if type(data_body) != dict:
-                        global_statistics.stati_tcp.rev_invalid_times += 1
+                        # global_statistics.stati_tcp.rev_invalid_times += 1
                         print("{0}:TCP receive a invalid SyncChannelState message: {1}". \
                             format(get_timestamp(with_strf=True), bdata[:60]))
                         return
                     try:
                         node["route_tree"].sync_tree(RouteTree.to_tree(data["MessageBody"]))
                     except Exception:
-                        global_statistics.stati_tcp.rev_invalid_times += 1
+                        # global_statistics.stati_tcp.rev_invalid_times += 1
                         print("{0}:TCP receive a invalid SyncChannelState message: {1}". \
                             format(get_timestamp(with_strf=True), bdata[:60]))
                     else:
@@ -224,7 +224,7 @@ class Gateway():
         else:
             ensure_future(send_tcp_msg_coro(receiver, bdata))
         # add tcp statistics
-        global_statistics.stati_tcp.send_times += 1
+        # global_statistics.stati_tcp.send_times += 1
 
     def handle_jsonrpc_response(self, method, response):
         
