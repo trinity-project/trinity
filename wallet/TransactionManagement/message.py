@@ -81,9 +81,14 @@ class RegisterMessage(Message):
         partner_pubkey, partner_ip = self.receiver.split("@")
         founder_address = pubkey_to_address(founder_pubkey)
         partner_address = pubkey_to_address(partner_pubkey)
-        APIChannel.add_channel(self.channel_name, founder_pubkey, partner_pubkey,
-                               EnumChannelState.INIT.name, 0, self.deposit, 0)
-        ch.sync_channel_info_to_gateway(self.channel_name,"AddChannel") # Just For Test
+        deposit = {}
+        subitem = {}
+        subitem.setdefault(self.asset_type, self.deposit)
+        deposit[founder_pubkey] = subitem
+        deposit[partner_pubkey] = subitem
+        APIChannel.add_channel(self.channel_name, self.sender.strip(), self.receiver.strip(),
+                               EnumChannelState.INIT.name, 0, deposit)
+        #ch.sync_channel_info_to_gateway(self.channel_name,"AddChannel") # Just For Test
 
         FounderMessage.create(self.channel_name,partner_pubkey,founder_pubkey,
                               self.asset_type.upper(),self.deposit,founder_ip,partner_ip)
@@ -200,7 +205,7 @@ class FounderMessage(TransactionMessage):
                 balance.setdefault(self.sender_pubkey, subitem)
                 balance.setdefault(self.receiver_pubkey, subitem)
                 self.transaction.update_transaction(str(self.tx_nonce), Balance=balance, State="confirm")
-            if ch.Channel.channel(self.channel_name).src_addr == self.wallet.pubkey:
+            if ch.Channel.channel(self.channel_name).src_addr.strip() == self.wallet.url.strip():
                 FounderMessage.create(self.channel_name, self.receiver_pubkey,
                                       self.sender_pubkey,self.asset_type.upper(), self.deposit, self.sender_ip,self.receiver_ip)
         else:
@@ -323,7 +328,7 @@ class FounderResponsesMessage(TransactionMessage):
                 self.transaction.create_tx_file(self.channel_name)
             self.transaction.update_transaction("0", Founder=self.founder, Commitment=self.commitment,
                                                 RD = self.revocable_delivery)
-            if ch.Channel.channel(self.channel_name).src_addr == self.wallet.pubkey:
+            if ch.Channel.channel(self.channel_name).src_addr.strip() == self.wallet.url.strip():
                 signdata = self.founder.get("txDataSign")
                 txdata = self.founder.get("originalData").get("txData")
                 txid = self.founder.get("originalData").get("txId")

@@ -116,8 +116,8 @@ class Channel(object):
         self.channel_name = self._init_channle_name()
         print(self.channel_name)
 
-        result = APIChannel.add_channel(self.channel_name,self.founder_pubkey, self.partner_pubkey,
-                     EnumChannelState.INIT.name, 0, self.deposit, 0)
+        result = APIChannel.add_channel(self.channel_name,self.founder, self.partner,
+                     EnumChannelState.INIT.name, 0, self.deposit)
         if cli:
             message={"MessageType":"RegisterChannel",
                  "Sender": self.founder,
@@ -209,7 +209,15 @@ def close_channel(channel_name, wallet):
 def sync_channel_info_to_gateway(channel_name, type):
     print("Debug sync_channel_info_to_gateway")
     ch = Channel.channel(channel_name)
-    return sync_channel(type, ch.channel_name,ch.founder,ch.partner,ch.get_balance())
+    balance  = ch.get_balance()
+    nb = {}
+    for item, value in balance.items():
+        if item in ch.founder:
+            nb[ch.founder] = value
+        else:
+            nb[ch.partner] = value
+
+    return sync_channel(type, ch.channel_name,ch.founder,ch.partner,nb)
 
 
 if __name__ == "__main__":
