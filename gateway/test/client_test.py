@@ -23,6 +23,16 @@ if __name__ == "__main__":
             "Balance": 10
         }
     }
+
+    message2 = {
+            "MessageBody": {
+            "Publickey": "publickey1",
+            "CommitMinDeposit": 2,
+            "Fee": 3,
+            "Balance": 20
+        }
+    }
+
     message1 = {
         "MessageType":"AddChannel",
         "MessageBody": {
@@ -39,6 +49,7 @@ if __name__ == "__main__":
     re.sub(r'eof$', "", s)
     # message = "{'ok': 3}"
     # jsonrpcclient.request('http://localhost:8077/', 'SyncWalletData', json.dumps(message))
+    # jsonrpcclient.request('http://118.89.44.106:8077/', 'SyncWalletData', json.dumps(message2))
     jsonrpcclient.request('http://localhost:8077/', 'SyncChannel', json.dumps(message1))
 
     # c = Client()

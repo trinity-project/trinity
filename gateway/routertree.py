@@ -82,7 +82,7 @@ class RouteTree(Tree):
     def expand_branch(self, tr_json, father= None):
         tr = json.loads(tr_json)
         tag = list(tr.keys())[0]
-        nid = tr["data"]["Ip"]
+        nid = tr[tag]["data"]["Ip"]
         try:
             self.create_node(tag=tag, identifier=nid, parent=father)
         except DuplicatedNodeIdError:
