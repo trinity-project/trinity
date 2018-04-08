@@ -33,6 +33,7 @@ import pickle
 from TX.interface import *
 from wallet.utils import sign
 from wallet.BlockChain import monior as mon
+from log import LOG
 
 BlockHightRegister=[]
 TxIDRegister= []
@@ -89,9 +90,9 @@ class TrinityTransaction(object):
 
     @staticmethod
     def sendrawtransaction(raw_data):
-        print("Debug SendRawTransaction:    ", raw_data)
+        LOG.info("Debug SendRawTransaction:    ", raw_data)
         result = mon.send_raw(raw_data)
-        print("Debug SendRawTransaction Result:    ", result)
+        LOG.info("Debug SendRawTransaction Result:    ", result)
         return result
 
     @staticmethod
@@ -100,7 +101,7 @@ class TrinityTransaction(object):
 
     def get_founder(self):
         tx = self.read_transaction()
-        return tx["0"]["Founder"]["originalData"]
+        return tx["0"]["Founder"]
 
     def get_balance(self, tx_nonce):
         tx = self.get_tx_nonce(tx_nonce)

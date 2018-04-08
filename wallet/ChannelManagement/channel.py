@@ -138,6 +138,9 @@ class Channel(object):
     def update_channel(self, **kwargs):
         return APIChannel.update_channel(self.channel_name, **kwargs)
 
+    def delete_channel(self):
+        return APIChannel.delete_channel(self.channel_name)
+
     @property
     def state(self):
         return None

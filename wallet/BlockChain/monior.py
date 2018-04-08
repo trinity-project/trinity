@@ -87,7 +87,6 @@ def monitorblock():
             handle_message(int(blockHeight)-1,block)
             logger.info("Block %s / %s", str(block), blockHeight)
             blockHeight +=1
-            print(blockHeight)
         except Exception as e:
             logger.error("GetBlockError", e)
         time.sleep(15)
