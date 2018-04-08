@@ -111,7 +111,8 @@ class RouteTree(Tree):
             copy_peer_tree.remove_node(self.root)
         if self.contains(peer_tree.root):
             self.remove_node(peer_tree.root)
-        self.paste(self.root, copy_peer_tree)
+        print(peer_tree.to_dict(with_data=True))
+        self.paste(self.root, copy_peer_tree, deepcopy=True)
             
             
 
