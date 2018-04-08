@@ -44,7 +44,6 @@ def decode_bytes(bdata, target="dict"):
     如果传入的target为"str" 则返回字符串
     """
     data = bdata.decode(cg_bytes_encoding)
-    print("########",data,"*******")
     if target == "dict":
         data = _remove_end_mark(data)
         data = json.loads(data)

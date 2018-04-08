@@ -15,26 +15,38 @@ if __name__ == "__main__":
     # c.send(addr, (str_tree + "eof").encode("utf-8"))
     # while(True):
     #     pass
-    msbody = {
-        "Publickey":"publickey",
-        "CommitMinDeposit": 3,
-        "Fee": 5
-    }
     message = {
-        "MessageType":"SyncWallet",
-        "MessageBody": msbody
+            "MessageBody": {
+            "Publickey": "publickey",
+            "CommitMinDeposit": 3,
+            "Fee": 5,
+            "Balance": 10
+        }
     }
+    message1 = {
+        "MessageType":"AddChannel",
+        "MessageBody": {
+            "Founder": "publickey@106.15.91.150:8089",
+            "Receiver": "publickey1@118.89.44.106:8089"
+        }
+    }
+    # message = {
+    #     "MessageType":"SyncWallet",
+    #     "MessageBody": msbody
+    # }
     s = "eeeooodfeof"
     import re
     re.sub(r'eof$', "", s)
     # message = "{'ok': 3}"
     # jsonrpcclient.request('http://localhost:8077/', 'SyncWalletData', json.dumps(message))
-    c = Client()
-    addr = ("localhost", 8089)
-    c.send(addr, (str_tree + "/eof/").encode("utf-8"))
+    jsonrpcclient.request('http://localhost:8077/', 'SyncChannel', json.dumps(message1))
 
-    while(True):
-        pass
+    # c = Client()
+    # addr = ("localhost", 8089)
+    # c.send(addr, (str_tree + "/eof/").encode("utf-8"))
+
+    # while(True):
+    #     pass
     # f = open('./tree.json', 'w')
     # f.write(json.dumps(message))
     # f.read()

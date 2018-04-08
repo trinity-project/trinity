@@ -11,6 +11,7 @@ from jsonrpc import AsyncJsonRpc
 from asyncio import get_event_loop, gather, Task, sleep, ensure_future, iscoroutine
 from config import cg_tcp_addr, cg_wsocket_addr, cg_public_ip_port, cg_node_name
 from statistics import Statistics, get_timestamp
+from glog import tcp_logger
 
 # route_tree.create_node('node',cg_public_ip_port, data={Deposit:xx,Fee:xx,Balance:4 IP:xx,Publickey:xx,SpvList:[]})  # root node
 node_list = set()
@@ -90,15 +91,9 @@ class Gateway():
         try:
             data = utils.decode_bytes(bdata)
         except UnicodeDecodeError:
-            # global_statistics.stati_tcp.rev_invalid_times += 1
-            print("{0}:TCP receive a invalid message: {1}". \
-                format(get_timestamp(with_strf=True), bdata[:60]))
             return utils.request_handle_result.get("invalid")
         else:
             if not utils.check_tcp_message_valid(data):
-                # global_statistics.stati_tcp.rev_invalid_times += 1
-                print("{0}:TCP receive a unknow type message: {1}". \
-                    format(get_timestamp(with_strf=True), bdata[:60]))
                 return utils.request_handle_result.get("invalid")
             else:
                 # first save the node_pk and websocket connection map
@@ -128,22 +123,18 @@ class Gateway():
                         self._send_jsonrpc_msg("CreateChannle", json.dumps(data))
                 elif msg_type in ["Rsmc","FounderSign","Founder","RsmcSign","FounderFail"]:
                     self.handle_transaction_message(data)
+                    return utils.request_handle_result("correct")
                 elif msg_type == "SyncChannelState":
                     # node receive the syncchannel msg
                     # first update self tree
                     # then sync to self's peers except the peer which send the syncchannel msg
                     data_body = data["MessageBody"]
                     if type(data_body) != dict:
-                        # global_statistics.stati_tcp.rev_invalid_times += 1
-                        print("{0}:TCP receive a invalid SyncChannelState message: {1}". \
-                            format(get_timestamp(with_strf=True), bdata[:60]))
                         return utils.request_handle_result.get("invalid")
                     try:
                         node["route_tree"].sync_tree(RouteTree.to_tree(data["MessageBody"]))
                     except Exception:
-                        # global_statistics.stati_tcp.rev_invalid_times += 1
-                        print("{0}:TCP receive a invalid SyncChannelState message: {1}". \
-                            format(get_timestamp(with_strf=True), bdata[:60]))
+                        tcp_logger.exception("sync tree from peer raise an exception")
                         return utils.request_handle_result.get("invalid")
                     else:
                         except_peer = data["Sender"]
@@ -332,7 +323,7 @@ class Gateway():
     
     def _init_self_tree(self):
         tag = "node"
-        nid = utils.get_ip_port(node["wallet_info"]["url"]),
+        nid = utils.get_ip_port(node["wallet_info"]["url"])
         pk = utils.get_public_key(node["wallet_info"]["url"])
         spv_list = node["spv_table"].find(pk)
         node["route_tree"].create_node(

@@ -141,7 +141,7 @@ class Gateway():
                             format(get_timestamp(with_strf=True), bdata[:60]))
                         return
                     try:
-                        node["route_tree"].sync_tree(RouteTree.to_tree(data["MessageBody"]))
+                        node["route_tree"].sync_tree(RouteTree.to_tree(json.dumps(data["MessageBody"])))
                     except Exception:
                         # global_statistics.stati_tcp.rev_invalid_times += 1
                         print("{0}:TCP receive a invalid SyncChannelState message: {1}". \
@@ -255,8 +255,11 @@ class Gateway():
             node["wallet_info"] = {
                 "url": body["Publickey"] + "@" + cg_public_ip_port,
                 "deposit": body["CommitMinDeposit"],
-                "fee": body["Fee"]
+                "fee": body["Fee"],
+                "balance": body["Balance"]
             }
+            # todo init self tree from local file or db
+            self._init_self_tree()
             return json.dumps(utils.generate_ack_sync_wallet_msg(node["wallet_info"]["url"]))
         # search chanenl router return the path
         elif method == "GetRouterInfo":
@@ -332,7 +335,7 @@ class Gateway():
     
     def _init_self_tree(self):
         tag = "node"
-        nid = utils.get_ip_port(node["wallet_info"]["url"]),
+        nid = utils.get_ip_port(node["wallet_info"]["url"])
         pk = utils.get_public_key(node["wallet_info"]["url"])
         spv_list = node["spv_table"].find(pk)
         node["route_tree"].create_node(

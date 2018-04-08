@@ -35,6 +35,6 @@ class Count_Http:
 
 def get_timestamp(with_strf=None):
     if not with_strf:
-        return time.time("%Y-%m-%d %H:%M:%S")
+        return time.time()
     else:
-        return datetime.now().strftime
+        return datetime.now().strftime("%Y-%m-%d %H:%M:%S")
