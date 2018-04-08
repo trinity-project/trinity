@@ -132,14 +132,15 @@ class Gateway():
                     if type(data_body) != dict:
                         return utils.request_handle_result.get("invalid")
                     try:
-                        node["route_tree"].sync_tree(RouteTree.to_tree(data["MessageBody"]))
+                        node["route_tree"].sync_tree(RouteTree.to_tree(json.dumps(data["MessageBody"])))
                     except Exception:
                         tcp_logger.exception("sync tree from peer raise an exception")
                         return utils.request_handle_result.get("invalid")
                     else:
+                        tcp_logger.debug("sync tree from peer successful")
                         except_peer = data["Sender"]
                         self.sync_channel_route_to_peer(except_peer)
-                    return utils.request_handle_result("correct")
+                        return utils.request_handle_result("correct")
         
 
     def handle_wsocket_request(self, websocket, strdata):
@@ -246,8 +247,11 @@ class Gateway():
             node["wallet_info"] = {
                 "url": body["Publickey"] + "@" + cg_public_ip_port,
                 "deposit": body["CommitMinDeposit"],
-                "fee": body["Fee"]
+                "fee": body["Fee"],
+                "balance": body["Balance"]
             }
+            # todo init self tree from local file or db
+            self._init_self_tree()
             return json.dumps(utils.generate_ack_sync_wallet_msg(node["wallet_info"]["url"]))
         # search chanenl router return the path
         elif method == "GetRouterInfo":
