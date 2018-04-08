@@ -123,7 +123,7 @@ class Gateway():
                         self._send_jsonrpc_msg("CreateChannle", json.dumps(data))
                 elif msg_type in ["Rsmc","FounderSign","Founder","RsmcSign","FounderFail"]:
                     self.handle_transaction_message(data)
-                    return utils.request_handle_result("correct")
+                    return utils.request_handle_result.get("correct")
                 elif msg_type == "SyncChannelState":
                     # node receive the syncchannel msg
                     # first update self tree
@@ -138,9 +138,10 @@ class Gateway():
                         return utils.request_handle_result.get("invalid")
                     else:
                         tcp_logger.debug("sync tree from peer successful")
+                        tcp_logger.debug("new tree is {}".format(node["route_tree"]))
                         except_peer = data["Sender"]
                         self.sync_channel_route_to_peer(except_peer)
-                        return utils.request_handle_result("correct")
+                        return utils.request_handle_result.get("correct")
         
 
     def handle_wsocket_request(self, websocket, strdata):
