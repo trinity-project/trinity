@@ -138,7 +138,7 @@ class Gateway():
                         return utils.request_handle_result.get("invalid")
                     else:
                         tcp_logger.debug("sync tree from peer successful")
-                        tcp_logger.debug("new tree is {}".format(node["route_tree"]))
+                        tcp_logger.debug("new tree is {}".format(node["route_tree"].to_dict(with_data=True)))
                         except_peer = data["Sender"]
                         self.sync_channel_route_to_peer(except_peer)
                         return utils.request_handle_result.get("correct")
