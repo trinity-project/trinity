@@ -84,7 +84,7 @@ class RouteTree(Tree):
         tag = list(tr.keys())[0]
         nid = tr[tag]["data"]["Ip"]
         try:
-            self.create_node(tag=tag, identifier=nid, parent=father)
+            self.create_node(tag=tag, identifier=nid, parent=father, data=tr[tag]["data"])
         except DuplicatedNodeIdError:
             pass
         # print(tr.values())
@@ -112,7 +112,7 @@ class RouteTree(Tree):
         if self.contains(peer_tree.root):
             self.remove_node(peer_tree.root)
         print(peer_tree.to_dict(with_data=True))
-        self.paste(self.root, copy_peer_tree, deepcopy=True)
+        self.paste(self.root, copy_peer_tree)
             
             
 
