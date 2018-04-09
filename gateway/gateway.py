@@ -138,6 +138,8 @@ class Gateway():
                         return utils.request_handle_result.get("invalid")
                     else:
                         tcp_logger.debug("sync tree from peer successful")
+                        node["route_tree"].show(idhidden=False)
+                        # tcp_logger.debug(node["route_tree"].show("ascii"))
                         tcp_logger.debug("new tree is {}".format(node["route_tree"].to_dict(with_data=True)))
                         except_peer = data["Sender"]
                         self.sync_channel_route_to_peer(except_peer)
@@ -332,7 +334,8 @@ class Gateway():
         pk = utils.get_public_key(node["wallet_info"]["url"])
         spv_list = node["spv_table"].find(pk)
         node["route_tree"].create_node(
-            tag="node",
+            tag=tag,
+            identifier=nid,
             data = {
                 "Ip": nid,
                 "Pblickkey": pk,
@@ -343,6 +346,7 @@ class Gateway():
                 "SpvList": [] if not spv_list else spv_list
             }
         )
+        node["route_tree"].show(idhidden=False)
 
     def sync_channel_route_to_peer(self, except_peer=None):
         """
@@ -355,8 +359,8 @@ class Gateway():
             if child != except_nid:
                 node_object = self_tree.get_node(child)
                 ip_port = node_object.data["Ip"].split(":")
-                receiver = node_object.data["Pblickey"] + "@" + child
-                self._send_tcp_msg(receiver, message)           
+                receiver = node_object.data["Pblickkey"] + "@" + child
+                self._send_tcp_msg(receiver, message)
 
     def handle_transaction_message(self, data):
         """
@@ -372,7 +376,7 @@ class Gateway():
             # valid msg
             if next_jump == node["wallet_info"]["url"]:
                 # arrive end
-                if full_path(len(full_path)-1)[0] == next_jump:
+                if full_path[len(full_path)-1][0] == next_jump:
                     # spv---node---spv siuation
                     if len(full_path) == 1:
                         # right active
@@ -408,7 +412,7 @@ class Gateway():
                             pass
                 # go on pass msg
                 else:
-                    new_next_jump = full_path(full_path.index((next_jump, node["wallet_info"]["fee"])) + 1)[0]
+                    new_next_jump = full_path[full_path.index([next_jump, node["wallet_info"]["fee"]]) + 1][0]
                     data["RouterInfo"]["Next"] = new_next_jump
                     # node1--node2--xxx this for node1 siuation
                     if data["Sender"] == node["wallet_info"]["url"]:

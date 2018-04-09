@@ -31,7 +31,7 @@ else:
 
     # set log handler record level and filter
     error_file_handler.setLevel(logging.ERROR)
-    access_file_handler.setLevel(logging.DEBUG)
+    access_file_handler.setLevel(logging.INFO)
     access_file_handler.addFilter(_NoErrorFilter())
 
     # set log handler format

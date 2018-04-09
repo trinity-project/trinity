@@ -54,24 +54,25 @@ class TProtocol(Protocol):
         last_index = len(cg_end_mark)
         if cg_end_mark.encode(cg_bytes_encoding) == data[-last_index:]:
             complete_bdata = b"".join(self.received)
+            tcp_logger.info("receive %d bytes message from %s", len(complete_bdata), self.get_peername())
+            tcp_logger.debug(">>>> %s <<<<", complete_bdata)
             from gateway import gateway_singleton
             result = gateway_singleton.handle_tcp_request(self, complete_bdata)
             # statistics based on request handled correct or not
             if result == request_handle_result["correct"]:
                 self.rev_totals += len(complete_bdata)
-                tcp_logger.info("receive %d bytes valid message from %s", len(complete_bdata), self.get_peername())
+                # tcp_logger.info("receive %d bytes valid message from %s", len(complete_bdata), self.get_peername())
                 # split data statistics
                 if len(self.received) > 1:
                     tcp_manager.rev_data_split_times += 1
                     tcp_manager.rev_split_data_totals.append(len(complete_bdata))
                     tcp_logger.info("split TCP data--[%d]", len(self.received))
             else:
-                tcp_logger.info("receive a invalid message from %s", self.get_peername())
+                # tcp_logger.info("receive a invalid message from %s", self.get_peername())
                 tcp_manager.rev_invalid_times += 1
                 if len(self.received) > 1:
                     tcp_logger.info("split TCP data--[%d]", len(self.received))
             self.received = []
-            tcp_logger.debug(">>>> %s <<<<", complete_bdata)
         else:
             tcp_logger.info("split TCP data--[%d]", len(self.received))
 
@@ -113,7 +114,7 @@ def find_connection(url):
     from utils import get_public_key
     pk = get_public_key(url)
     exist_protocol = gateway_singleton.tcp_pk_dict.get(pk)
-    if exist_protocol and exist_protocol.transport.state == "connected":
+    if exist_protocol and exist_protocol.state == "connected":
         return exist_protocol.transport
     # disconnected
     else:
