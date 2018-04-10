@@ -57,7 +57,7 @@ class TProtocol(Protocol):
             tcp_logger.info("receive %d bytes message from %s", len(complete_bdata), self.get_peername())
             tcp_logger.debug(">>>> %s <<<<", complete_bdata)
             from gateway import gateway_singleton
-            result = gateway_singleton.handle_tcp_request(self, complete_bdata)
+            result = gateway_singleton.handle_tcp_request(self.transport, complete_bdata)
             # statistics based on request handled correct or not
             if result == request_handle_result["correct"]:
                 self.rev_totals += len(complete_bdata)

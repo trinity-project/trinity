@@ -97,8 +97,13 @@ class Gateway():
                 return utils.request_handle_result.get("invalid")
             else:
                 # first save the node_pk and websocket connection map
-                node_pk = utils.get_public_key(data["Sender"])
-                self.tcp_pk_dict[node_pk] = transport
+                peername = transport.get_extra_info('peername')
+                peer_ip_port = "{}:{}".format(peername[0], peername[1])
+                # check sender is peer or not
+                # because 'tx message pass on siuatinon' sender may not peer
+                if peer_ip_port == utils.get_ip_port(data["Sender"]):
+                    node_pk = utils.get_public_key(data["Sender"])
+                    self.tcp_pk_dict[node_pk] = transport
                 msg_type = data.get("MessageType")
                 if msg_type == "JoinNet":
                     # join net sync node_list
@@ -267,7 +272,7 @@ class Gateway():
             for nid in nids:
                 node_object = node["route_tree"].get_node(nid)
                 url = node_object.data["Pblickkey"] + "@" + node_object.identifier
-                fee = node_object.data["fee"]
+                fee = node_object.data["Fee"]
                 full_path.append((url, fee))
             next_jump = full_path[0][0]
 
