@@ -78,9 +78,9 @@ class UserPromptInterface(PromptInterface):
 
 
     def run(self):
-        dbloop = task.LoopingCall(Blockchain.Default().PersistBlocks)
-        dbloop.start(.1)
-        Blockchain.Default().PersistBlocks()
+        #dbloop = task.LoopingCall(Blockchain.Default().PersistBlocks)
+        #dbloop.start(.1)
+        #Blockchain.Default().PersistBlocks()
 
         tokens = [(Token.Neo, 'NEO'), (Token.Default, ' cli. Type '),
                   (Token.Command, '\'help\' '), (Token.Default, 'to get started')]

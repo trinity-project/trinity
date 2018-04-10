@@ -286,7 +286,7 @@ class FounderMessage(TransactionMessage):
                                        "RevocableDelivery":revocabledelivery,
                                        "AssetType":asset_type.upper(),
                                        "Deposit": deposit,
-                                       "Role":role_index
+                                       "RoleIndex":role_index
                                       }
                  }
         FounderMessage.send(message)
@@ -314,7 +314,7 @@ class FounderMessage(TransactionMessage):
                                                   "RevocableDelivery":self.revocable_delivery,
                                                 "AssetType":self.asset_type.upper(),
                                                 "Deposit":self.deposit,
-                                                "Role": role_index
+                                                "RoleIndex": role_index
                                                 },
                                  "Error":error
                                 }
@@ -369,6 +369,7 @@ class FounderResponsesMessage(TransactionMessage):
     def _check_transaction_file(self):
         if not self.wallet.LoadStoredData(self.channel_name):
             self.wallet.SaveStoredData(self.channel_name, "{}.data".format(self.channel_name))
+        if not self.transaction.transaction_exist():
             self.transaction.create_tx_file(self.channel_name)
 
     def _handle_0_message(self):
@@ -417,7 +418,6 @@ class FounderResponsesMessage(TransactionMessage):
         verify, error = self.verify()
         if verify:
             self._check_transaction_file()
-
             if self.role_index == 0:
                 self._handle_0_message()
             elif self.role_index == 1:
