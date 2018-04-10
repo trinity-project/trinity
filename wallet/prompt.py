@@ -78,9 +78,9 @@ class UserPromptInterface(PromptInterface):
 
 
     def run(self):
-        #dbloop = task.LoopingCall(Blockchain.Default().PersistBlocks)
-        #dbloop.start(.1)
-        #Blockchain.Default().PersistBlocks()
+        dbloop = task.LoopingCall(Blockchain.Default().PersistBlocks)
+        dbloop.start(.1)
+        Blockchain.Default().PersistBlocks()
 
         tokens = [(Token.Neo, 'NEO'), (Token.Default, ' cli. Type '),
                   (Token.Command, '\'help\' '), (Token.Default, 'to get started')]
@@ -240,10 +240,11 @@ class UserPromptInterface(PromptInterface):
             self.Wallet.address, self.Wallet.pubkey = self.get_address()
             # For Debug
             result = gate_way.join_gateway(self.Wallet.pubkey).get("result")
+            print(result)
             if result:
                 self.Wallet.url = json.loads(result).get("MessageBody").get("Url")
                 self.Channel = True
-                print("Channel Funtion Opend")
+                print("Channel Opened")
             else:
                 self._channel_noopen()
 
