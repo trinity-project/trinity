@@ -567,7 +567,6 @@ class RsmcMessage(TransactionMessage):
 
         elif role_index == 2 or role_index == 3:
             tx = transaction.get_tx_nonce(tx_nonce=str(int(tx_nonce)-1))
-            founder = tx.get("Founder")
             commitment = tx.get("Commitment").get("originalData")
             breachremedy = createBRTX(founder["originalData"]["addressFunding"], pubkey_to_address(receiver_pubkey), sender_balance,
                                       commitment["scriptRSMC"])
@@ -651,10 +650,8 @@ class RsmcMessage(TransactionMessage):
         txData = ctx.get("RD").get("originalData").get("txData")
         txDataself = self.sign_message(txData)
         txDataother = self.sign_message(ctx.get("RD").get("txDataSign")),
-        witness = ctx.get("RD").get("originalData").get("witness_part1") + \
-                  ctx.get("RD").get("originalData").get("witness_part2")
+        witness = ctx.get("RD").get("originalData").get("witness")
         register_monitor(monitor_ctxid, monitor_height, txData + witness, txDataother, txDataself)
-
         balance = self.transaction.get_balance(str(self.tx_nonce))
         self.transaction.update_transaction(str(self.tx_nonce), State="confirm")
         ch.Channel.channel(self.channel_name).update_channel(balance=balance)
