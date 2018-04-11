@@ -14,6 +14,7 @@ from prompt_toolkit.contrib.completers import WordCompleter
 from prompt_toolkit.shortcuts import print_tokens
 from prompt_toolkit.token import Token
 from twisted.internet import reactor, task, endpoints
+from log import LOG
 import gevent
 from gevent import monkey
 #monkey.patch_all()
@@ -239,6 +240,7 @@ class UserPromptInterface(PromptInterface):
             blockHeight = Blockchain.Default().HeaderHeight
             self.Wallet.address, self.Wallet.pubkey = self.get_address()
             # For Debug
+
             if int(walletHeight) >= int(blockHeight) - 10:
                 result = gate_way.join_gateway(self.Wallet.pubkey).get("result")
                 if result:
@@ -263,7 +265,7 @@ class UserPromptInterface(PromptInterface):
             count = get_arg(arguments,3)
 
             receiverpubkey , receiverip= receiver.split("@")
-            channel_name = get_channel_name_via_address(self.Wallet.pubkey,receiverpubkey )
+            channel_name = get_channel_name_via_address(self.Wallet.url,receiver )
             gate_way_ip = self.Wallet.url.split("@")[1].strip()
 
             if channel_name:
@@ -309,9 +311,8 @@ class UserPromptInterface(PromptInterface):
         elif command == "peer":
             if not self.Channel:
                 self._channel_noopen()
-            get_channel_via_address(self.Wallet.pubkey)
+            get_channel_via_address(self.Wallet.url)
             return
-
 
     def _channel_noopen(self):
         print("Please waite the block sync")
@@ -348,7 +349,7 @@ class UserPromptInterface(PromptInterface):
     def handlemaessage(self):
         while True:
             if MessageList:
-                message = MessageList.pop()
+                message = MessageList.pop(0)
                 #try:
                 self._handlemessage(message[0])
                 #except Exception as e:
@@ -356,10 +357,9 @@ class UserPromptInterface(PromptInterface):
             time.sleep(0.3)
 
     def _handlemessage(self,message):
-        print("Get Message: <----", message)
+        LOG.info("Handle Message: <---- {}".format(json.dumps(message)))
         if isinstance(message,str):
             message = json.loads(message)
-        print("Receive Message： ",type(message))
         try:
             message_type = message.get("MessageType")
         except AttributeError:

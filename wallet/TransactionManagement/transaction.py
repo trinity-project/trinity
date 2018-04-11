@@ -32,7 +32,8 @@ import os
 import pickle
 from TX.interface import *
 from wallet.utils import sign
-from wallet.BlockChain import monior as mon
+from wallet.BlockChain import interface as Binterface
+from log import LOG
 
 BlockHightRegister=[]
 TxIDRegister= []
@@ -49,6 +50,9 @@ class TrinityTransaction(object):
         self.channel = channel
         self.wallet = wallet
         self.tx_file = self.get_transaction_file()
+
+    def transaction_exist(self):
+        return os.path.isfile(self.tx_file)
 
     def signature(self, rawdata):
         return self.wallet.Sign(rawdata)
@@ -67,7 +71,6 @@ class TrinityTransaction(object):
         return None
 
     def read_transaction(self):
-        print(self.tx_file)
         with open(self.tx_file, "rb") as f:
             try:
                return uncryto_channel(f)
@@ -89,9 +92,9 @@ class TrinityTransaction(object):
 
     @staticmethod
     def sendrawtransaction(raw_data):
-        print("Debug SendRawTransaction:    ", raw_data)
-        result = mon.send_raw(raw_data)
-        print("Debug SendRawTransaction Result:    ", result)
+        LOG.info("SendRawTransaction: {}".format(raw_data))
+        result = Binterface.send_raw(raw_data)
+        LOG.info("SendRawTransaction Result: {}".format(result))
         return result
 
     @staticmethod
@@ -100,7 +103,7 @@ class TrinityTransaction(object):
 
     def get_founder(self):
         tx = self.read_transaction()
-        return tx["0"]["Founder"]["originalData"]
+        return tx["0"]["Founder"]
 
     def get_balance(self, tx_nonce):
         tx = self.get_tx_nonce(tx_nonce)

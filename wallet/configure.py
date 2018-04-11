@@ -25,10 +25,11 @@ Configure = {
     "alias":"TrinityNode",# you can rename your node
     "GatewayURL":"http://localhost:8077",
     "Fee": 0.01,
-    "Channel":{
-        "CommitMinDeposit": 0, # the min commit deposit
-        "AutoCreate": True, # if the wallet accept the create channel request automatically
-        "MaxChannel":100,  # the max number to create channel, if 0 , no limited
+     "AutoCreate": True, # if the wallet accept the create channel request automatically
+    "CommitMinDeposit": 0,  # the min commit deposit
+     "MaxChannel":100,# the max number to create channel, if 0 , no limited
+    "AssetType":{
+        "TNC": "0x849d095d07950b9e56d0c895ec48ec5100cfdff1"
     },
     "BlockChain":{
         "RPCClient":"http://localhost:20332", # neocli client json-rpc

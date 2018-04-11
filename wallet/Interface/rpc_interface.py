@@ -28,6 +28,7 @@ from klein import Klein
 from neo.api.utils import json_response, cors_header
 from wallet.ChannelManagement import channel
 from wallet.TransactionManagement import transaction
+from log import LOG
 
 MessageList = []
 
