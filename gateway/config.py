@@ -16,9 +16,9 @@ cg_tcp_addr = ("0.0.0.0", 8089)
 cg_wsocket_addr = ("0.0.0.0", 8766)
 cg_local_jsonrpc_addr = ("0.0.0.0", 8077)
 cg_remote_jsonrpc_addr = ("0.0.0.0", 20556)
-cg_public_ip_port = "106.15.91.150:8089"
+cg_public_ip_port = "localhost:8089"
 cg_node_name = "trinity1"
 ###### Gateway ######
 
 # only for debug control
-cg_debug = False
+cg_debug = True

@@ -81,9 +81,10 @@ class RouteTree(Tree):
 
     def expand_branch(self, tr_json, father= None):
         tr = json.loads(tr_json)
-        root = list(tr.keys())[0]
+        tag = list(tr.keys())[0]
+        nid = tr[tag]["data"]["Ip"]
         try:
-            self.create_node(tag=root, identifier=root, parent=father)
+            self.create_node(tag=tag, identifier=nid, parent=father, data=tr[tag]["data"])
         except DuplicatedNodeIdError:
             pass
         # print(tr.values())
@@ -91,7 +92,7 @@ class RouteTree(Tree):
         # print(child)
         if child:
             for item in child:
-                self.expand_branch(json.dumps(item), father=root)
+                self.expand_branch(json.dumps(item), father=nid)
         else:
             pass
 
@@ -110,8 +111,8 @@ class RouteTree(Tree):
             copy_peer_tree.remove_node(self.root)
         if self.contains(peer_tree.root):
             self.remove_node(peer_tree.root)
-        self.paste(self.root, copy_peer_tree)
-            
+        # print(peer_tree.to_dict(with_data=True))
+        self.paste(self.root, copy_peer_tree)            
             
 
 

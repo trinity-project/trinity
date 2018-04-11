@@ -4,53 +4,78 @@ import os
 import json
 # import asyncio
 from client import Client
+from pprint import pprint
 import jsonrpcclient
 
-if __name__ == "__main__":
-    str_tree = '{"Harry": {"data": null, "children": [{"Bill": {"data": null}}, {"Jane": {"data": null, "children": [{"Diane": {"data": null}}, {"Mark": {"data": null}}]}}, {"Mary": {"data": null}}]}}'
+str_tree = '{"Harry": {"data": null, "children": [{"Bill": {"data": null}}, {"Jane": {"data": null, "children": [{"Diane": {"data": null}}, {"Mark": {"data": null}}]}}, {"Mary": {"data": null}}]}}'
+def sync_wallet_data(n):
+    for x in range(1, n+1):
+        message = {
+            "MessageBody": {
+                "Publickey": "pk{}".format(x),
+                "CommitMinDeposit": 1,
+                "Fee": 1,
+                "Balance": 10
+            }
+        }
+        req_url = "http://localhost:{}/".format(8077 + x - 1)
+        # pprint(message)
+        jsonrpcclient.request(req_url, 'SyncWalletData', json.dumps(message))
 
-
-    # c = Client()
-    # addr = ("106.15.91.150", 8089)
-    # c.send(addr, (str_tree + "eof").encode("utf-8"))
-    # while(True):
-    #     pass
-    msbody = {
-        "Publickey":"publickey",
-        "CommitMinDeposit": 3,
-        "Fee": 5
-    }
+def sync_channel(founder, receiver):
+    start_req_port = 8077
     message = {
-        "MessageType":"SyncWallet",
-        "MessageBody": msbody
+        "MessageType":"AddChannel",
+        "MessageBody": {
+            "Founder": founder,
+            "Receiver": receiver
+        }
     }
-    s = "eeeooodfeof"
-    import re
-    re.sub(r'eof$', "", s)
-    # message = "{'ok': 3}"
-    # jsonrpcclient.request('http://localhost:8077/', 'SyncWalletData', json.dumps(message))
-    c = Client()
-    # addr = ("106.15.91.150", 8089)
-    # c.send(addr, (str_tree + "eof").encode("utf-8"))
+    f_pk_id = int(founder[2])
+    r_pk_id = int(receiver[2])
+    jsonrpcclient.request("http://localhost:{}".format(start_req_port + f_pk_id - 1), 'SyncChannel', json.dumps(message))
+    jsonrpcclient.request("http://localhost:{}".format(start_req_port + r_pk_id - 1), 'SyncChannel', json.dumps(message))
 
-    # while(True):
-    #     pass
-    # f = open('./tree.json', 'w')
-    # f.write(json.dumps(message))
-    # f.read()
-    # print(time.time())
-    # tree = None
-    # with open('../tree.json', 'r') as fs:
-    #     tree = json.loads(fs.read())
+def triggle_tx(origin, distination):
+    start_req_port = 8077
+    origin_port = int((origin.split("@")[1])[-4:])
+    distination_port = int((distination.split("@")[1])[-4:])
+    origin_pk_id = int(origin[2])
+    distination_pk_id = int(distination[2])
+    message = {
+        "Receiver": distination
+    }
+    route = jsonrpcclient.request("http://localhost:{}".format(start_req_port + origin_pk_id - 1),"GetRouterInfo",json.dumps(message))
+    pprint(route)
+    message = {
+        "MessageType": "Rsmc",
+        "MessageBody": {
+            "Value": 30
+        },
+        "Receiver": distination,
+        "Sender": origin,
+        "RouterInfo": json.loads(route)["RouterInfo"]
+    }
+    # return message, start_req_port + origin_pk_id - 1
+    jsonrpcclient.request("http://localhost:{}".format(start_req_port + origin_pk_id - 1), 'TransactionMessage', json.dumps(message))
 
-    # print(type(tree), tree)
-    # print(time.time())
-    def del_dict_item_by_value(dic, value):
-        values = list(dic.values())
-        if value in values:
-            keys = list(dic.keys())
-            del_index = values.index(value)
-            del dic[keys[del_index]]
-
-    del_dict_item_by_value(message, msbody)
-    print(message)
+if __name__ == "__main__":
+    # sync_wallet_data(5)
+    # time.sleep(5)
+    # sync_channel("pk1@localhost:8089", "pk3@localhost:8091")
+    # time.sleep(5)
+    # sync_channel("pk4@localhost:8092", "pk3@localhost:8091")
+    # time.sleep(5)
+    # sync_channel("pk3@localhost:8091", "pk5@localhost:8093")
+    # time.sleep(5)
+    # sync_channel("pk1@localhost:8089", "pk2@localhost:8090")
+    # time.sleep(5)
+    # triggle_tx("pk2@localhost:8090", "pk5@localhost:8093")
+    #triggle_tx("pk2@localhost:8090", "pk4@localhost:8092")
+    #triggle_tx("pk5@localhost:8093", "pk4@localhost:8092")
+    #triggle_tx("pk3@localhost:8091", "pk2@localhost:8090")
+    # triggle_tx("pk1@localhost:8089", "pk5@localhost:8093")
+    for x in range(1000):
+        triggle_tx("pk2@localhost:8090", "pk4@localhost:8092")
+        print(x)
+        time.sleep(0.04)
