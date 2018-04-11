@@ -87,12 +87,11 @@ def get_balance(pubkey, asset_type):
         "id": 3
     }
     result = requests.post(url=TestNetUrl, json=request)
-    print(result.json())
     if result.json().get("result"):
         value = result.json().get("result").get("stack")[0].get("value")
-        return hex2interger(value)
-    else:
-        return 0
+        if value:
+            return hex2interger(value)
+    return 0
 
 
 

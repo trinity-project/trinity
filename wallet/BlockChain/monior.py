@@ -75,9 +75,8 @@ def handle_message(height,jsn):
     txids = copy.deepcopy(TxIDRegister)
     for value in txids:
         txid = value[0]
-        logger.info("Debug Handle Message:",txid)
+        logger.info("Handle Txid: {}".format(txid))
         if txid in block_txids:
-            print(value)
             value[1](value[0],*value[2:])
             match_list.append(value)
         else:

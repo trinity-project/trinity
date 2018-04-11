@@ -32,6 +32,7 @@ from wallet.TransactionManagement import message as mg
 from wallet.TransactionManagement import transaction as trans
 from wallet.utils import pubkey_to_address
 from wallet.Interface.gate_way import sync_channel
+from log import LOG
 
 def get_gateway_ip():
     return "127.0.0.1:20554"
@@ -60,9 +61,7 @@ class Channel(object):
     def get_channel(address1, address2):
 
         try:
-            print(address1, address2)
             channel = APIChannel.batch_query_channel(filters={"src_addr": address1, "dest_addr": address2})
-            print("debug1 ",channel)
             return channel["content"][0].channel
         except:
             try:
@@ -77,12 +76,13 @@ class Channel(object):
         print("Get Channels with Address %s" %address)
         channels = APIChannel.batch_query_channel(filters={"src_addr":address})
         channeld = APIChannel.batch_query_channel(filters={"dest_addr":address})
-        for ch in channels["content"]:
-            print("ChannelName:    ", ch.channel, "    State:    ", ch.state)
-            print(" "*10+"Peer:", ch.dest_addr)
-        for ch in channeld["content"]:
-            print("ChannelName:", ch.channel, "    State:    ", ch.state)
-            print(" "*10+"Peer:", ch.src_addr)
+        try:
+            for ch in channels["content"]:
+                print("ChannelName:", ch.channel, "\nState:", ch.state, "\nPeer:", ch.dest_addr)
+            for ch in channeld["content"]:
+                print("ChannelName:", ch.channel, "\nState:", ch.state, "\nPeer:", ch.src_addr)
+        except KeyError:
+            pass
 
 
     @classmethod
@@ -166,7 +166,7 @@ class Channel(object):
             channel = APIChannel.query_channel(self.channel_name)
             return channel["content"][0]
         except Exception as e:
-            print(e)
+            LOG.error(e)
             return None
 
     def get_balance(self):

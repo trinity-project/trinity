@@ -33,7 +33,7 @@ from wallet.BlockChain.monior import register_block, register_monitor
 from sserver.model import APIChannel
 from log import LOG
 import json
-
+import time
 
 class Message(object):
     """
@@ -202,7 +202,6 @@ class FounderMessage(TransactionMessage):
             self.transaction.create_tx_file(self.channel_name)
 
     def _handle_0_message(self):
-        self._check_transaction_file()
         self.send_responses(role_index=self.role_index)
         self.transaction.update_transaction(str(self.tx_nonce), Founder = self.founder ,MonitorTxId=self.rdtxid)
         role_index = int(self.role_index) + 1
@@ -212,6 +211,7 @@ class FounderMessage(TransactionMessage):
 
     def _handle_1_message(self):
         txid = self.founder.get("txId")
+        self.send_responses(role_index=self.role_index)
         ch.Channel.channel(self.channel_name).update_channel(state=EnumChannelState.OPENING.name)
         register_monitor(txid, monitor_founding, self.channel_name, EnumChannelState.OPENED.name)
         subitem = {}
@@ -225,6 +225,7 @@ class FounderMessage(TransactionMessage):
         LOG.info("Handle FounderMessage: {}".format(str(self.message)))
         verify, error = self.verify()
         if verify:
+            self._check_transaction_file()
             if self.role_index == 0:
                 return self._handle_0_message()
             elif self.role_index == 1:
@@ -380,7 +381,7 @@ class FounderResponsesMessage(TransactionMessage):
         self.transaction.update_transaction("0", Founder=self.founder, Commitment=self.commitment,
                                             RD=self.revocable_delivery)
         result = self.send_founder_raw_transaction()
-        if result.upper() == "TRUE":
+        if result is True:
             ch.Channel.channel(self.channel_name).update_channel(state=EnumChannelState.OPENING.name)
             txid = self.founder.get("originalData").get("txId")
             register_monitor(txid, monitor_founding, self.channel_name, EnumChannelState.OPENED.name)
@@ -393,8 +394,8 @@ class FounderResponsesMessage(TransactionMessage):
         txdata = self.founder.get("originalData").get("txData")
 
         signdata_self = self.sign_message(txdata)
-        witnes = self.founder.get("originalData").get("witness").format(signOther=signdata_self,
-                                                                        signSelf=signdata)
+        witnes = self.founder.get("originalData").get("witness").format(signOther=signdata,
+                                                                        signSelf=signdata_self)
         return TrinityTransaction.sendrawtransaction(TrinityTransaction.genarate_raw_data(txdata, witnes))
 
 
@@ -469,9 +470,9 @@ class RsmcMessage(TransactionMessage):
         LOG.info("Handle RsmcMessage : {}".format(str(self.message)))
         verify, error = self.verify()
         if verify:
-            if self.role_index == 0 :
+            if self.role_index == 0:
                 return self._handle_0_message()
-            elif self.role_index ==  1:
+            elif self.role_index == 1:
                 return self._handle_1_message()
             elif self.role_index == 2:
                 return self._handle_2_message()
@@ -508,8 +509,11 @@ class RsmcMessage(TransactionMessage):
 
         transaction = TrinityTransaction(channel_name, wallet)
         founder = transaction.get_founder()
+        LOG.debug("Rsmc Create  founder {}".format(json.dumps(founder)))
         tx_state = transaction.get_transaction_state()
-        balance = transaction.get_balance(str(int(tx_nonce)-1))
+        channle = ch.Channel.channel(channel_name)
+        balance = channle.get_balance()
+        #balance = transaction.get_balance(str(int(tx_nonce)-1))
         LOG.debug("Rsmc Create get balance {}".format(str(balance)))
 
         if balance:
@@ -522,7 +526,7 @@ class RsmcMessage(TransactionMessage):
             balance_value = 0
             receiver_balance_value = 0
 
-        if float(balance_value) < value and tx_state == "pending":
+        if float(balance_value) < value or tx_state == "pending":
             if cli:
                 print("No Balance")
             else:
@@ -538,8 +542,8 @@ class RsmcMessage(TransactionMessage):
         receiver_balance = float(receiver_balance_value) + float(value)
         message = {}
         if role_index == 0 or role_index == 1:
-            commitment = createCTX(founder["addressFunding"], sender_balance, receiver_balance,
-                               sender_pubkey, receiver_pubkey, founder["scriptFunding"])
+            commitment = createCTX(founder["originalData"]["addressFunding"], sender_balance, receiver_balance,
+                               sender_pubkey, receiver_pubkey, founder["originalData"]["scriptFunding"])
 
             revocabledelivery = createRDTX(commitment.get("addressRSMC"), pubkey_to_address(sender_pubkey), sender_balance,
                                        commitment.get("txId"),
@@ -564,8 +568,8 @@ class RsmcMessage(TransactionMessage):
         elif role_index == 2 or role_index == 3:
             tx = transaction.get_tx_nonce(tx_nonce=str(int(tx_nonce)-1))
             founder = tx.get("Founder")
-            commitment = tx.get("Commitment").get("orignalData")
-            breachremedy = createBRTX(founder["addressFunding"], pubkey_to_address(receiver_pubkey), sender_balance,
+            commitment = tx.get("Commitment").get("originalData")
+            breachremedy = createBRTX(founder["originalData"]["addressFunding"], pubkey_to_address(receiver_pubkey), sender_balance,
                                       commitment["scriptRSMC"])
             breachremedy_sign = sign(wallet, breachremedy.get("txData"))
             breachremedy_info = {"txDataSign": breachremedy_sign,
@@ -644,11 +648,11 @@ class RsmcMessage(TransactionMessage):
     def confirm_transaction(self):
         ctx = self.transaction.get_tx_nonce(str(self.tx_nonce))
         monitor_ctxid = ctx.get("MonitorTxId")
-        txData = ctx.get("RevocableDelivery").get("originalData").get("txData")
+        txData = ctx.get("RD").get("originalData").get("txData")
         txDataself = self.sign_message(txData)
-        txDataother = self.sign_message(ctx.get("RevocableDelivery").get("txDataSign")),
-        witness = ctx.get("RevocableDelivery").get("originalData").get("witness_part1") + \
-                  ctx.get("RevocableDelivery").get("originalData").get("witness_part2")
+        txDataother = self.sign_message(ctx.get("RD").get("txDataSign")),
+        witness = ctx.get("RD").get("originalData").get("witness_part1") + \
+                  ctx.get("RD").get("originalData").get("witness_part2")
         register_monitor(monitor_ctxid, monitor_height, txData + witness, txDataother, txDataself)
 
         balance = self.transaction.get_balance(str(self.tx_nonce))
@@ -658,10 +662,10 @@ class RsmcMessage(TransactionMessage):
 
         last_tx = self.transaction.get_tx_nonce(str(int(self.tx_nonce) - 1))
         monitor_ctxid = last_tx.get("MonitorTxId")
-        btxDataself = ctx.get("BreachRemedy").get("originalData").get("txData")
+        btxDataself = ctx.get("BR").get("originalData").get("txData")
         btxsignself = self.sign_message(btxDataself)
-        btxsignother =  ctx.get("BreachRemedy").get("txDataSign")
-        bwitness = ctx.get("BreachRemedy").get("originalData").get("witness")
+        btxsignother =  ctx.get("BR").get("txDataSign")
+        bwitness = ctx.get("BR").get("originalData").get("witness")
 
         register_monitor(monitor_ctxid, monitor_height, btxDataself + bwitness, btxsignother, btxsignself)
 

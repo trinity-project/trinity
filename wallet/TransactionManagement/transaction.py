@@ -71,7 +71,6 @@ class TrinityTransaction(object):
         return None
 
     def read_transaction(self):
-        print(self.tx_file)
         with open(self.tx_file, "rb") as f:
             try:
                return uncryto_channel(f)
