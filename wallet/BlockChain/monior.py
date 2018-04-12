@@ -29,46 +29,11 @@ import time
 from wallet.TransactionManagement.transaction import BlockHightRegister, TxIDRegister,TxDataDir, crypto_channel
 import os
 from wallet.Interface.gate_way import send_message
-import json
-import requests
 import copy
-
+from .interface import get_block_count, get_bolck, send_raw
 
 BlockHeightRecord = os.path.join(TxDataDir,"block.data")
 
-
-TestNetUrl = "http://47.88.35.235:20332"
-
-
-def get_block_count():
-    request = {
-  "jsonrpc": "2.0",
-  "method": "getblockcount",
-  "params": [],
-  "id": 1
-}
-
-    result = requests.post(url = TestNetUrl, json = request)
-    return result.json()["result"]
-
-def send_raw(raw):
-    request =  { "jsonrpc": "2.0",
-  "method": "sendrawtransaction",
-  "params": [raw],
-  "id": 1}
-
-    result = requests.post(url=TestNetUrl, json=request)
-    return result.json()["result"]
-
-def get_bolck(index):
-    request = {
-  "jsonrpc": "2.0",
-  "method": "getblock",
-  "params": [int(index), 1],
-  "id": 1
-}
-    result = requests.post(url=TestNetUrl, json=request)
-    return result.json()["result"]
 
 def monitorblock():
     blockHeight = get_block_count()
@@ -91,8 +56,10 @@ def monitorblock():
             logger.error("GetBlockError", e)
         time.sleep(15)
 
+
 def send_message_to_gateway(message):
     send_message(message)
+
 
 def handle_message(height,jsn):
     match_list=[]
@@ -108,9 +75,8 @@ def handle_message(height,jsn):
     txids = copy.deepcopy(TxIDRegister)
     for value in txids:
         txid = value[0]
-        logger.info("Debug Handle Message:",txid)
+        logger.info("Handle Txid: {}".format(txid))
         if txid in block_txids:
-            print(value)
             value[1](value[0],*value[2:])
             match_list.append(value)
         else:
@@ -119,11 +85,14 @@ def handle_message(height,jsn):
         TxIDRegister.remove(i)
     return
 
+
 def register_monitor(*args):
     TxIDRegister.append(args)
 
+
 def register_block(*args):
     BlockHightRegister.append(args)
+
 
 def record_block(txid, block_height):
     with open(BlockHeightRecord, "wb+") as f:

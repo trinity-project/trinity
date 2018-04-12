@@ -24,6 +24,8 @@ SOFTWARE."""
 
 import requests
 from wallet.configure import Configure
+from wallet.BlockChain.interface import get_balance
+from log import LOG
 import json
 
 
@@ -53,12 +55,19 @@ def sync_channel(message_type, channel_name,founder, receiver, balance):
 
 
 def join_gateway(publickey):
+    balance = {}
+    for i in Configure["AssetType"].keys():
+        b = get_balance(publickey, i.upper())
+        balance[i] = b
     message = {"MessageType":"SyncWallet",
                "MessageBody":{
                    "Publickey":publickey,
-                   "CommitMinDeposit":Configure["Channel"]["CommitMinDeposit"],
+                   "CommitMinDeposit":Configure["CommitMinDeposit"],
                    "Fee":Configure["Fee"],
-                   "alias":Configure["alias"]
+                   "alias":Configure["alias"],
+                   "AutoCreate":Configure["AutoCreate"],
+                   "MaxChannel":Configure["MaxChannel"],
+                   "Balance":balance
                    }
                }
     request = {
@@ -83,7 +92,7 @@ def get_router_info(message):
 
 
 def send_message(message):
-    print("GateWay Send Message: ", message)
+    LOG.info("GateWay Send Message: {}".format(json.dumps(message)))
     request= {
             "jsonrpc": "2.0",
             "method": "TransactionMessage",
