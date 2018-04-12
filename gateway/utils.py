@@ -7,6 +7,7 @@ import time
 import re
 import copy
 from config import cg_end_mark, cg_bytes_encoding
+from sserver.model.channel_model import APIChannel
 
 common_msg_dict = {
     "MessageType": "",
@@ -16,6 +17,7 @@ common_msg_dict = {
 tcp_msg_types = [
     "RegisterChannel",
     "SyncChannelState",
+    "ResumeChannel",
     "Rsmc",
     "FounderSign",
     "Founder","RsmcSign",
@@ -196,7 +198,15 @@ def generate_sync_tree_msg(route_tree, sender):
     message = {
         "MessageType": "SyncChannelState",
         "Sender": sender,
+        "Broadcast": True,
         "MessageBody": route_tree.to_dict(with_data=True)
+    }
+    return message
+
+def generate_resume_channel_msg(sender):
+    message = {
+        "MessageType": "ResumeChannel",
+        "Sender": sender
     }
     return message
 
@@ -210,11 +220,19 @@ def del_dict_item_by_value(dic, value):
 def check_tcp_message_valid(data):
     if type(data) != dict:
         return False
-    elif not (data.get("MessageType") or data.get("MessageBody")):
+    elif not data.get("MessageType"):
         return False
     elif data.get("MessageType") not in tcp_msg_types:
         return False
-    elif not (data.get("Sender") or data["Receiver"]):
+    elif not data.get("Sender"):
         return False
     else:
         return True
+
+def get_peers_form_db(address):
+    condition = {
+        "$or": [{"src_addr": address}, {"dest_addr": address}]
+    }
+    channels = APIChannel.batch_query_channel(filters=condition)
+    channels = APIChannel.batch_query_channel(filters={"src_addr":address})
+    channeld = APIChannel.batch_query_channel(filters={"dest_addr":address})

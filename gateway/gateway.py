@@ -1,5 +1,6 @@
 # coding: utf-8
 import pprint
+import os
 import json
 import utils
 import time
@@ -56,8 +57,9 @@ class Gateway():
         loop.run_until_complete(services_future)
         self._save(services_future.result(), loop)
         # self._add_timer_push_web_task()
-        print("Gateway tcp service on: {}".format(cg_tcp_addr))
         print("Gateway websocket service on: {}".format(cg_wsocket_addr))
+        if os.getenv("resume"):
+            self.resume_channel_from_db()
         AsyncJsonRpc.start_jsonrpc_serv()
         # loop.run_forever()
 
@@ -87,7 +89,7 @@ class Gateway():
         await sleep(0.25)
         self.loop.stop()
 
-    def handle_tcp_request(self, transport, bdata):
+    def handle_tcp_request(self, protocol, bdata):
         try:
             data = utils.decode_bytes(bdata)
         except UnicodeDecodeError:
@@ -97,17 +99,18 @@ class Gateway():
                 return utils.request_handle_result.get("invalid")
             else:
                 # first save the node_pk and websocket connection map
-                peername = transport.get_extra_info('peername')
-                peer_ip_port = "{}:{}".format(peername[0], peername[1])
+                peername = protocol.transport.get_extra_info('peername')
+                peer_ip = "{}".format(peername[0])
                 # check sender is peer or not
                 # because 'tx message pass on siuatinon' sender may not peer
-                if peer_ip_port == utils.get_ip_port(data["Sender"]):
+                if peer_ip == utils.get_ip_port(data["Sender"]).split(":")[0]:
                     node_pk = utils.get_public_key(data["Sender"])
-                    self.tcp_pk_dict[node_pk] = transport
+                    self.tcp_pk_dict[node_pk] = protocol
+                pprint.pprint(self.tcp_pk_dict)
                 msg_type = data.get("MessageType")
                 if msg_type == "JoinNet":
                     # join net sync node_list
-                    transport.send(
+                    protocol.transport.send(
                         utils.generate_ack_node_join_msg(
                             sender, data["Receiver"], node_list
                             )
@@ -123,11 +126,18 @@ class Gateway():
                     # request wallet to handle 
                     if not utils.check_wallet_url_correct(data["Receiver"], local_url):
                         # not self's wallet address
-                        transport.send(utils.generate_error_msg(local_url, data["Sender"], "Invalid wallet address"))
+                        protocol.transport.send(utils.generate_error_msg(local_url, data["Sender"], "Invalid wallet address"))
                     else:
                         self._send_jsonrpc_msg("CreateChannle", json.dumps(data))
                 elif msg_type in ["Rsmc","FounderSign","Founder","RsmcSign","FounderFail"]:
                     self.handle_transaction_message(data)
+                    return utils.request_handle_result.get("correct")
+                elif msg_type == "ResumeChannel":
+                    message = utils.generate_sync_tree_msg(node["route_tree"], node["wallet_info"]["url"])
+                    # when node accept the restart peer resume the channel request
+                    # then flag the sync message as no need to broadcast to peer's peer
+                    message["Broadcast"] = False
+                    self._send_tcp_msg(data["Sender"], message)
                     return utils.request_handle_result.get("correct")
                 elif msg_type == "SyncChannelState":
                     # node receive the syncchannel msg
@@ -146,9 +156,10 @@ class Gateway():
                         node["route_tree"].show(idhidden=False)
                         # tcp_logger.debug(node["route_tree"].show("ascii"))
                         tcp_logger.debug("new tree is {}".format(node["route_tree"].to_dict(with_data=True)))
-                        except_peer = data["Sender"]
-                        self.sync_channel_route_to_peer(except_peer)
-                        return utils.request_handle_result.get("correct")
+                        if data["Broadcast"]:
+                            except_peer = data["Sender"]
+                            self.sync_channel_route_to_peer(except_peer)
+                            return utils.request_handle_result.get("correct")
         
 
     def handle_wsocket_request(self, websocket, strdata):
@@ -208,7 +219,9 @@ class Gateway():
         :param data: dict type
         """
         def send_jsonrpc_callback(futrue):
-            print(futrue.exception())
+            ex = futrue.exception()
+            if ex:
+                print(futrue.exception())
         future = ensure_future(
             AsyncJsonRpc.jsonrpc_request(get_event_loop(), method, json.dumps(data))
         )
@@ -223,10 +236,13 @@ class Gateway():
         # addr = utils.get_addr(sender)
         connection = find_connection(receiver)
         if connection:
+            tcp_logger.info("find the exist connection")
             connection.write(bdata)
         else:
             def send_tcp_callback(futrue):
-                tcp_logger.error("send tcp task raise an exception: {}".format(futrue.exception()))
+                ex = futrue.exception()
+                if ex:
+                    tcp_logger.error("send tcp task raise an exception: {}".format(futrue.exception()))
                 # print(type(futrue.exception()), futrue.exception())
             future = ensure_future(send_tcp_msg_coro(receiver, bdata))
             future.add_done_callback(send_tcp_callback)
@@ -266,7 +282,7 @@ class Gateway():
                 "balance": body["Balance"]
             }
             # todo init self tree from local file or db
-            self._init_self_tree()
+            self._init_or_update_self_tree()
             return json.dumps(utils.generate_ack_sync_wallet_msg(node["wallet_info"]["url"]))
         # search chanenl router return the path
         elif method == "GetRouterInfo":
@@ -286,7 +302,7 @@ class Gateway():
                 fee = node_object.data["Fee"]
                 full_path.append((url, fee))
             next_jump = full_path[0][0]
-
+            
             if not len(full_path):
                 return json.dumps(utils.generate_ack_router_info_msg(None))
             else:
@@ -344,24 +360,25 @@ class Gateway():
         message = {}
         ensure_future(WsocketService.push_by_timer(self.websocket.websockets, 15, message))
     
-    def _init_self_tree(self):
+    def _init_or_update_self_tree(self):
         tag = "node"
         nid = utils.get_ip_port(node["wallet_info"]["url"])
         pk = utils.get_public_key(node["wallet_info"]["url"])
         spv_list = node["spv_table"].find(pk)
-        node["route_tree"].create_node(
-            tag=tag,
-            identifier=nid,
-            data = {
-                "Ip": nid,
-                "Pblickkey": pk,
-                "Name": node["name"],
-                "Deposit": node["wallet_info"]["deposit"],
-                "Fee": node["wallet_info"]["fee"],
-                "Balance": node["wallet_info"]["balance"],
-                "SpvList": [] if not spv_list else spv_list
-            }
-        )
+        self_root =  node["route_tree"].root
+        data = {
+            "Ip": nid,
+            "Pblickkey": pk,
+            "Name": node["name"],
+            "Deposit": node["wallet_info"]["deposit"],
+            "Fee": node["wallet_info"]["fee"],
+            "Balance": node["wallet_info"]["balance"],
+            "SpvList": [] if not spv_list else spv_list
+        }
+        if not self_root:
+            node["route_tree"].create_node(tag=tag, identifier=nid, data=data)
+        else:
+            node["route_tree"].get_node(self_root).data.update(data)
         node["route_tree"].show(idhidden=False)
 
     def sync_channel_route_to_peer(self, except_peer=None):
@@ -483,6 +500,20 @@ class Gateway():
             else:
                 # addr = utils.get_addr(data["Receiver"])
                 self._send_tcp_msg(data["Receiver"], data)
+
+    def resume_channel_from_db(self):
+        node["wallet_info"] = {
+            "url": "pk1@localhost:8089",
+            "deposit": 1,
+            "fee": 1,
+            "balance": 10
+        }
+        self._init_or_update_self_tree()
+        peer_list = ["pk2@localhost:8090","pk3@localhost:8091"]
+        generate_resume_channel_msg = utils.generate_resume_channel_msg
+        for peer in peer_list:
+            self._send_tcp_msg(peer, generate_resume_channel_msg(node["wallet_info"]["url"]))
+
 
 gateway_singleton = Gateway()
 

@@ -45,7 +45,6 @@ class TProtocol(Protocol):
         self.state = "connected"
         self.transport = transport
         peername = transport.get_extra_info('peername')
-        print(type(peername))
         tcp_logger.info("the connection %s was established", peername)
         tcp_manager.register(self)
 
@@ -57,7 +56,7 @@ class TProtocol(Protocol):
             tcp_logger.info("receive %d bytes message from %s", len(complete_bdata), self.get_peername())
             tcp_logger.debug(">>>> %s <<<<", complete_bdata)
             from gateway import gateway_singleton
-            result = gateway_singleton.handle_tcp_request(self.transport, complete_bdata)
+            result = gateway_singleton.handle_tcp_request(self, complete_bdata)
             # statistics based on request handled correct or not
             if result == request_handle_result["correct"]:
                 self.rev_totals += len(complete_bdata)
@@ -132,6 +131,8 @@ async def send_tcp_msg_coro(url, bdata):
     gateway_singleton.tcp_pk_dict[pk] = result[1]
     result[0].write(bdata)
     result[1].send_totals += len(bdata)
+    import pprint
+    pprint.pprint(gateway_singleton.tcp_pk_dict)
 
 async def create_server_coro(addr):
     """
