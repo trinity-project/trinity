@@ -175,3 +175,7 @@ def blockheight_to_script(input):
     len_all=str(83+int(revese_hex_len))
     output="".join([len_all,revese_hex_len, revese_hex])
     return output
+
+if __name__=="__main__":
+    print (blockheight_to_script(1319028))
+    print (createTxid("d101a00400ca9a3b140069ec6703aa90a51280ab74eb92cb09cca0549514dfee2d95daf8b67b960aaf997900ab94abc3fd1b53c1087472616e7366657267f1dfcf0051ec48ec95c8d0569e0b95075d099d84f10400ca9a3b140069ec6703aa90a51280ab74eb92cb09cca05495142099925aaeee225009fc51b599c71fee77bd30ca53c1087472616e7366657267f1dfcf0051ec48ec95c8d0569e0b95075d099d84f100000000000000000320dfee2d95daf8b67b960aaf997900ab94abc3fd1b202099925aaeee225009fc51b599c71fee77bd30caf0045ac46e4b0000"))

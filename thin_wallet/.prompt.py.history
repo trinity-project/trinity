@@ -1,0 +1,111 @@
+
+# 2018-04-12 16:14:31.061485
++help
+
+# 2018-04-12 16:22:15.356503
++create wallet test1.json
+
+# 2018-04-12 16:27:38.181481
++exit
+
+# 2018-04-12 16:27:46.837963
++create wallet test2.json
+
+# 2018-04-12 16:29:59.907183
++exit
+
+# 2018-04-12 16:30:10.011089
++create wallet test.json
+
+# 2018-04-12 16:31:30.401370
++exit
+
+# 2018-04-12 16:31:38.417758
++create wallet test.json
+
+# 2018-04-12 16:31:45.136891
++exit
+
+# 2018-04-12 16:34:19.247736
++open wallet test.json
+
+# 2018-04-12 16:39:58.962049
++exit
+
+# 2018-04-12 16:40:11.753785
++open wallet test.json
+
+# 2018-04-12 16:40:19.273165
++wallet
+
+# 2018-04-12 16:40:54.536744
++close
+
+# 2018-04-12 16:40:58.768883
++wallet
+
+# 2018-04-12 16:41:05.273786
++open wallet test.json
+
+# 2018-04-12 16:41:18.170000
++export wif 
+
+# 2018-04-12 16:41:28.713156
++export wif ALukP49kjXVFARdqCPSWj9B3BtxJfKCHoS
+
+# 2018-04-12 16:43:42.503477
++export nep2 ALukP49kjXVFARdqCPSWj9B3BtxJfKCHoS
+
+# 2018-04-12 16:44:13.515365
++exit
+
+# 2018-04-12 16:44:40.533333
++open wallet test.json
+
+# 2018-04-12 16:46:30.807000
++export wif ALukP49kjXVFARdqCPSWj9B3BtxJfKCHoS
+
+# 2018-04-12 16:46:57.186306
++import wif L5EGNkuEm6J3N33gKu1bBySYi1QS3HB8a8qByaCvqMkzTuorCjg3
+
+# 2018-04-12 16:47:10.978087
++exit
+
+# 2018-04-12 17:07:14.840791
++help
+
+# 2018-04-12 17:15:59.733398
++exit
+
+# 2018-04-12 17:16:03.166249
++help
+
+# 2018-04-12 17:29:52.164982
++exit
+
+# 2018-04-12 17:30:51.965660
++open wallet test.json
+
+# 2018-04-12 17:30:58.084772
++wallet
+
+# 2018-04-12 17:36:07.029472
++send tnc AbZNDqwCSZj4XJSGHmbQTSoHofE2PRMurT 1
+
+# 2018-04-12 17:38:28.332520
++send neo AbZNDqwCSZj4XJSGHmbQTSoHofE2PRMurT 1
+
+# 2018-04-12 17:40:08.027603
++exit
+
+# 2018-04-12 17:40:13.694265
++open wallet test.json
+
+# 2018-04-12 17:40:23.732059
++send gas AbZNDqwCSZj4XJSGHmbQTSoHofE2PRMurT 1
+
+# 2018-04-12 17:40:32.427520
++wallet
+
+# 2018-04-12 17:41:12.044902
++help

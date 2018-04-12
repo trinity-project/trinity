@@ -10,32 +10,28 @@ from TX.interface import createFundingTx, createCTX, createRDTX, createBRTX
 from TX.utils import hex_reverse, ToAddresstHash, int_to_hex, createTxid, pubkeyToAddress
 
 walletSelf= {
-    "pubkey":"03ed45d1fdf6dbd5a6e5567b50d2b36b8ae5c1cd0123f26aba000fd3a72d6fbd28",
-    "deposit":5
+    "pubkey":"0374c8ad50206d6fc8de8125fca58c528eb8999680b8f56b3b3632ca5c0e5ec526",
+    "deposit":10
 }
 walletOther= {
-    "pubkey":"03d8f667ff2068751e117cd6dbe3ebe286dbbc7fbb7b1ef0fbf5eb068e8b783a94",
-    "deposit":5
+    "pubkey":"02c0fb94ad85caefaef00a65a67a3fcaca3fcf9bb0a6c0fb67a732178c98811313",
+    "deposit":10
 }
 
 
 
-# funding_tx = createFundingTx(walletSelf=walletSelf, walletOther=walletOther)
-#
-# self_C_tx = createCTX(addressFunding=funding_tx["addressFunding"], balanceSelf=walletSelf["deposit"],
-#                       balanceOther=walletOther["deposit"], pubkeySelf=walletSelf["pubkey"],
-#                       pubkeyOther=walletOther["pubkey"], fundingScript=funding_tx["scriptFunding"])
-#
-# self_RD_tx = createRDTX(addressRSMC=self_C_tx["addressRSMC"], addressSelf=pubkeyToAddress(walletSelf["pubkey"]),
-#                         balanceSelf=walletSelf["deposit"], CTxId=self_C_tx["txId"],
-#                         RSMCScript=self_C_tx["scriptRSMC"])
+funding_tx = createFundingTx(walletSelf=walletSelf, walletOther=walletOther)
 
-# self_BR_tx = createBRTX(addressRSMC=other_C_tx["addressRSMC"], addressOther=pubkeyToAddress(walletSelf["pubkey"]),
-#                         balanceSelf=walletSelf["deposit"], RSMCScript=other_C_tx["scriptRSMC"])
+self_C_tx = createCTX(addressFunding=funding_tx["addressFunding"], balanceSelf=walletSelf["deposit"],
+                      balanceOther=walletOther["deposit"], pubkeySelf=walletSelf["pubkey"],
+                      pubkeyOther=walletOther["pubkey"], fundingScript=funding_tx["scriptFunding"])
 
+self_RD_tx = createRDTX(addressRSMC=self_C_tx["addressRSMC"], addressSelf=pubkeyToAddress(walletSelf["pubkey"]),
+                        balanceSelf=walletSelf["deposit"], CTxId=self_C_tx["txId"],
+                        RSMCScript=self_C_tx["scriptRSMC"])
 
-# self_BR_tx = createBRTX(addressRSMC="AeLBqqZom1EQpcuPSJn4wLtzJCVZ7azjgF", addressOther=pubkeyToAddress(walletOther["pubkey"]),
-#                         balanceSelf=walletSelf["deposit"], RSMCScript="5dc56b6c766b00527ac46c766b51527ac46c766b52527ac46111313532323333313837352e3835373539376c766b53527ac461682953797374656d2e457865637574696f6e456e67696e652e476574536372697074436f6e7461696e65726c766b54527ac46c766b54c361681d4e656f2e5472616e73616374696f6e2e476574417474726962757465736c766b55527ac4616c766b55c36c766b56527ac4006c766b57527ac46258016c766b56c36c766b57c3c36c766b58527ac4616c766b58c36168154e656f2e4174747269627574652e4765744461746161141a3db733023a855ac2077926c60e4c1fb4d5af009c6c766b59527ac46c766b59c3646700616c766b00c3612103ed45d1fdf6dbd5a6e5567b50d2b36b8ae5c1cd0123f26aba000fd3a72d6fbd28ac642f006c766b51c3612103d8f667ff2068751e117cd6dbe3ebe286dbbc7fbb7b1ef0fbf5eb068e8b783a94ac620400006c766b5a527ac462b8006c766b58c36168154e656f2e4174747269627574652e4765744461746161147880ddceb5101a29e05ea09da1ad310539dc8e699c6c766b5b527ac46c766b5bc3644c00616c766b52c36c766b54c3617c653e016c766b5c527ac46c766b5cc36422006c766b52c36c766b00c36c766b51c3615272654a006c766b5a527ac4623700006c766b5a527ac4622c00616c766b57c351936c766b57527ac46c766b57c36c766b56c3c09f639ffe006c766b5a527ac46203006c766b5ac3616c756656c56b6c766b00527ac46c766b51527ac46c766b52527ac4616168184e656f2e426c6f636b636861696e2e4765744865696768746c766b53527ac46c766b00c302e803936c766b53c39f6c766b54527ac46c766b54c36466006c766b51c3612103ed45d1fdf6dbd5a6e5567b50d2b36b8ae5c1cd0123f26aba000fd3a72d6fbd28ac642f006c766b52c3612103d8f667ff2068751e117cd6dbe3ebe286dbbc7fbb7b1ef0fbf5eb068e8b783a94ac620400006c766b55527ac4620e00006c766b55527ac46203006c766b55c3616c75665ec56b6c766b00527ac46c766b51527ac4616c766b00c36168174e656f2e426c6f636b636861696e2e476574426c6f636b6c766b52527ac46c766b52c36168194e656f2e426c6f636b2e4765745472616e73616374696f6e736c766b53527ac46c766b51c361681d4e656f2e5472616e73616374696f6e2e476574417474726962757465736c766b54527ac4616c766b54c36c766b55527ac4006c766b56527ac462d1006c766b55c36c766b56c3c36c766b57527ac4616c766b57c36168154e656f2e4174747269627574652e476574446174616c766b58527ac4616c766b53c36c766b59527ac4006c766b5a527ac46264006c766b59c36c766b5ac3c36c766b5b527ac4616c766b5bc36168174e656f2e5472616e73616374696f6e2e476574486173686c766b58c39c6c766b5c527ac46c766b5cc3640e00516c766b5d527ac4624a00616c766b5ac351936c766b5a527ac46c766b5ac36c766b59c3c09f6393ff616c766b56c351936c766b56527ac46c766b56c36c766b55c3c09f6326ff006c766b5d527ac46203006c766b5dc3616c7566")
+other_BR_tx = createBRTX(addressRSMC=self_C_tx["addressRSMC"], addressOther=pubkeyToAddress(walletSelf["pubkey"]),
+                        balanceSelf=walletSelf["deposit"], RSMCScript=self_C_tx["scriptRSMC"])
 
 
 
