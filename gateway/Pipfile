@@ -18,6 +18,7 @@ requests = "*"
 [dev-packages]
 
 pylint = "*"
+psutil = "*"
 
 
 [requires]

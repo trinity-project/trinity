@@ -2,6 +2,7 @@
 import time
 import os
 import json
+import psutil
 # import asyncio
 from client import Client
 from pprint import pprint
@@ -59,6 +60,14 @@ def triggle_tx(origin, distination):
     # return message, start_req_port + origin_pk_id - 1
     jsonrpcclient.request("http://localhost:{}".format(start_req_port + origin_pk_id - 1), 'TransactionMessage', json.dumps(message))
 
+# process = psutil.Process(449)
+def log_process_memory_cpu_used(process, pids):
+    rss = process.memory_info().rss/1024/1024
+    cpu_percent = process.cpu_percent()
+    pid_index = pids.index(process.pid)
+    with open("test/pk{}_cpu_memory.txt".format(pid_index + 1), "a") as fs:
+        fs.write("cpu used: {}%    memory used: {}MB\n".format(cpu_percent, rss))
+
 if __name__ == "__main__":
     # sync_wallet_data(5)
     # time.sleep(5)
@@ -75,7 +84,25 @@ if __name__ == "__main__":
     #triggle_tx("pk5@localhost:8093", "pk4@localhost:8092")
     #triggle_tx("pk3@localhost:8091", "pk2@localhost:8090")
     # triggle_tx("pk1@localhost:8089", "pk5@localhost:8093")
-    for x in range(1000):
-        triggle_tx("pk2@localhost:8090", "pk4@localhost:8092")
-        print(x)
+    # for x in range(1000):
+    #     triggle_tx("pk2@localhost:8090", "pk4@localhost:8092")
+    #     print(x)
+    #     time.sleep(0.04)
+    # sync_wallet_data(1)
+    # triggle_tx("pk1@localhost:8089", "pk5@localhost:8093")
+    #print(os.getpid())
+    # log_process_memory_cpu_used(449)
+    # print(psutil.cpu_count())
+    # print(psutil.cpu_count(logical=False))
+    pids = [22711,23180,23671,24080,24491]
+    processs = [psutil.Process(pid) for pid in pids]
+    for x in range(900000):
+        time_start
+        triggle_tx("pk2@localhost:8090", "pk5@localhost:8093")
         time.sleep(0.04)
+        if x%7500 == 0:
+            for process in processs:
+                log_process_memory_cpu_used(process,pids)
+
+        
+   

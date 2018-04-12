@@ -207,9 +207,12 @@ class Gateway():
         """
         :param data: dict type
         """
-        ensure_future(
+        def send_jsonrpc_callback(futrue):
+            print(futrue.exception())
+        future = ensure_future(
             AsyncJsonRpc.jsonrpc_request(get_event_loop(), method, json.dumps(data))
         )
+        future.add_done_callback(send_jsonrpc_callback)
 
     def _send_tcp_msg(self, receiver ,data):
         """
@@ -222,7 +225,11 @@ class Gateway():
         if connection:
             connection.write(bdata)
         else:
-            ensure_future(send_tcp_msg_coro(receiver, bdata))
+            def send_tcp_callback(futrue):
+                tcp_logger.error("send tcp task raise an exception: {}".format(futrue.exception()))
+                # print(type(futrue.exception()), futrue.exception())
+            future = ensure_future(send_tcp_msg_coro(receiver, bdata))
+            future.add_done_callback(send_tcp_callback)
         # add tcp statistics
         # global_statistics.stati_tcp.send_times += 1
 
@@ -265,8 +272,12 @@ class Gateway():
         elif method == "GetRouterInfo":
             receiver = data.get("Receiver")
             receiver_ip_port = utils.parse_url(receiver)[1]
-            # search tree through ip_port(node identifier in the tree)
-            nids = node["route_tree"].find_router(receiver_ip_port)
+            try:
+                # search tree through ip_port(node identifier in the tree)
+                nids = node["route_tree"].find_router(receiver_ip_port)
+            # receiver not in the tree
+            except Exception:
+                return json.dumps(utils.generate_ack_router_info_msg(None))
             # next_jump = nids.index()
             full_path = []
             for nid in nids:
