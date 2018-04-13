@@ -28,23 +28,26 @@ from neo.Network.NodeLeader import NodeLeader
 
 from neo.Settings import settings, PrivnetConnectionError, PATH_USER_DATA
 from neo.UserPreferences import preferences
-from wallet.BlockChain.monior import monitorblock
+from wallet.BlockChain.monior import monitorblock,Monitor
 from neo.Prompt.Utils import get_arg
 from wallet.Interface.rpc_interface import RpcInteraceApi
 from twisted.web.server import Site
 from neo.bin.prompt import PromptInterface
-from wallet.ChannelManagement.channel import create_channel, get_channel_name_via_address,get_channel_via_address
+from wallet.ChannelManagement.channel import create_channel, filter_channel_via_address,\
+    get_channel_via_address,chose_channel,close_channel
 from wallet.TransactionManagement import message as mg
 from wallet.TransactionManagement import transaction as trinitytx
 from wallet.Interface.rpc_interface import MessageList
 import time
 from neo.Implementations.Wallets.peewee.UserWallet import UserWallet
+from sserver.model.base_enum import EnumChannelState
 
 from neo.Wallets.utils import to_aes_key
 from wallet.Interface import gate_way
 from wallet.configure import Configure
 GateWayIP = Configure.get("GatewayIP")
 from functools import reduce
+from subprocess import run as GateWayRun
 
 
 # Logfile settings & setup
@@ -79,9 +82,9 @@ class UserPromptInterface(PromptInterface):
 
 
     def run(self):
-        dbloop = task.LoopingCall(Blockchain.Default().PersistBlocks)
-        dbloop.start(.1)
-        Blockchain.Default().PersistBlocks()
+        #dbloop = task.LoopingCall(Blockchain.Default().PersistBlocks)
+        #dbloop.start(.1)
+        #Blockchain.Default().PersistBlocks()
 
         tokens = [(Token.Neo, 'NEO'), (Token.Default, ' cli. Type '),
                   (Token.Command, '\'help\' '), (Token.Default, 'to get started')]
@@ -103,8 +106,9 @@ class UserPromptInterface(PromptInterface):
                 # Control-D pressed: quit
                 return self.quit()
             except KeyboardInterrupt:
+                return self.quit()
                 # Control-C pressed: do nothing
-                continue
+
 
             try:
                 command, arguments = self.input_parser.parse_input(result)
@@ -198,8 +202,6 @@ class UserPromptInterface(PromptInterface):
 
                 try:
                     self.Wallet = UserWallet.Open(path, password_key)
-
-
                     self._walletdb_loop = task.LoopingCall(self.Wallet.ProcessBlocks)
                     self._walletdb_loop.start(1)
 
@@ -213,8 +215,9 @@ class UserPromptInterface(PromptInterface):
             print("Please specify something to open")
 
     def quit(self):
-        print('Shutting down. This may take a bit...')
+        print('Shutting down. This may take about 15 sec to sync the block info')
         self.go_on = False
+        Monitor.stop_monitor()
         self.do_close_wallet()
         reactor.stop()
 
@@ -240,15 +243,22 @@ class UserPromptInterface(PromptInterface):
             blockHeight = Blockchain.Default().HeaderHeight
             self.Wallet.address, self.Wallet.pubkey = self.get_address()
             # For Debug
+            result = gate_way.join_gateway(self.Wallet.pubkey).get("result")
+            if result:
+                self.Wallet.url = json.loads(result).get("MessageBody").get("Url")
+                self.Channel = True
+                print("Channel Funtion Opend")
+            else:
+                self._channel_noopen()
 
-            if int(walletHeight) >= int(blockHeight) - 10:
+            """if int(walletHeight) >= int(blockHeight) - 10:
                 result = gate_way.join_gateway(self.Wallet.pubkey).get("result")
                 if result:
                     self.Wallet.url = json.loads(result).get("MessageBody").get("Url")
                     self.Channel = True
                     print("Channel Funtion Opend")
             else:
-                self._channel_noopen()
+                self._channel_noopen()"""
 
             """
             if int(walletHeight) >= int(blockHeight)-10:
@@ -264,8 +274,10 @@ class UserPromptInterface(PromptInterface):
             asset_type = get_arg(arguments,2)
             count = get_arg(arguments,3)
 
-            receiverpubkey , receiverip= receiver.split("@")
-            channel_name = get_channel_name_via_address(self.Wallet.url,receiver )
+            receiverpubkey,receiverip= receiver.split("@")
+            channels = filter_channel_via_address(self.Wallet.url,receiver, EnumChannelState.OPENED.name)
+            ch = chose_channel(channels,self.Wallet.url.split("@")[0].strip(), count, asset_type)
+            channel_name = ch.channel
             gate_way_ip = self.Wallet.url.split("@")[1].strip()
 
             if channel_name:
@@ -297,14 +309,15 @@ class UserPromptInterface(PromptInterface):
                 else:
                     return
 
-        elif command =="close":
+        elif command == "close":
             if not self.Channel:
                 self._channel_noopen()
-            peer = get_arg(arguments, 1)
-            peerpubkey, peerip = peer.split("@")
-            channel_name = get_channel_name_via_address(self.Wallet.pubkey, peerpubkey)
+            channel_name = get_arg(arguments, 1)
+            print("Closing channel {}".format(channel_name))
             if channel_name:
-                trinitytx.TrinityTransaction(channel_name, self.Wallet).realse_transaction()
+                result = trinitytx.TrinityTransaction(channel_name, self.Wallet).realse_transaction()
+                if result:
+                    close_channel(channel_name)
             else:
                 print("No Channel Create")
 
@@ -347,7 +360,7 @@ class UserPromptInterface(PromptInterface):
         return completer
 
     def handlemaessage(self):
-        while True:
+        while self.go_on:
             if MessageList:
                 message = MessageList.pop(0)
                 #try:
@@ -384,6 +397,7 @@ class UserPromptInterface(PromptInterface):
             return "No Message Type Fould"
 
         return m_instance.handle_message()
+
 
 def main():
     parser = argparse.ArgumentParser()
@@ -453,6 +467,7 @@ def main():
     api_server_rpc = RpcInteraceApi("20556")
     endpoint_rpc = "tcp:port={0}:interface={1}".format("20556", "0.0.0.0")
     endpoints.serverFromString(reactor, endpoint_rpc).listen(Site(api_server_rpc.app.resource()))
+
 
     reactor.suggestThreadPoolSize(15)
     reactor.callInThread(UserPrompt.run)
