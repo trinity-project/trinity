@@ -178,6 +178,24 @@ def send_raw_tx(rawTx):
         return True
     return False
 
+
+
+def show_tx(tx_id):
+
+    data = {
+        "jsonrpc": "2.0",
+        "method": "getRawTransaction",
+        "params": [tx_id],
+        "id": 1
+    }
+    res = requests.post(NODEURL, headers=headers, json=data).json()
+
+    return res["result"]
+
+
+
+
+
 def privtkey_sign(txData,privteKey):
     return binascii.hexlify(Crypto.Sign(message=txData, private_key=privteKey)).decode()
 

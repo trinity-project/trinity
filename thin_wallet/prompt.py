@@ -1,8 +1,5 @@
 #!/usr/bin/env python
-
-
-
-
+import pprint
 import traceback
 from prompt_toolkit import prompt
 from prompt_toolkit.history import FileHistory
@@ -11,7 +8,9 @@ from prompt_toolkit.token import Token
 from neocore.KeyPair import KeyPair
 from Settings import  *
 from Nep6Wallet import Nep6Wallet
-from Utils import get_arg, get_asset_id
+from Utils import get_arg, get_asset_id,show_tx
+
+
 
 FILENAME_PROMPT_HISTORY = os.path.join(DIR_CURRENT, '.prompt.py.history')
 
@@ -26,6 +25,7 @@ class PromptInterface(object):
                 'send {asset} {address} {amount}',
                 'export wif {address}',
                 'export nep2 {address}',
+                'tx  {txid}',
                 ]
     go_on = True
     Wallet=None
@@ -269,6 +269,17 @@ class PromptInterface(object):
         print(res)
         return res
 
+
+    def show_tx(self, args):
+        item = get_arg(args)
+        if item is not None:
+            try:
+                pprint.pprint (show_tx(item))
+            except Exception as e:
+                print("Could not find transaction with id %s " % item)
+        else:
+            print("please specify a tx hash")
+
     def parse_result(self, result):
         if len(result):
             commandParts = [s for s in result.split()]
@@ -314,6 +325,8 @@ class PromptInterface(object):
                         self.show_wallet(arguments)
                     elif command == 'send':
                         self.do_send(arguments)
+                    elif command == 'tx':
+                        self.show_tx(arguments)
 
                     else:
                         print("command %s not found" % command)
