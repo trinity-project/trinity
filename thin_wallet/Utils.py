@@ -7,7 +7,8 @@ from neocore.Fixed8 import Fixed8
 from neocore.KeyPair import KeyPair
 from neocore.UInt160 import UInt160
 
-from Settings import *
+
+from Settings import settings
 
 
 def get_asset_attachments(params):
@@ -41,11 +42,11 @@ def get_asset_id(asset_str):
 
     assetId =None
     if asset_str.lower() == 'neo':
-        assetId = NEO
+        assetId = settings.NEO
     elif asset_str.lower() == 'gas':
-        assetId = GAS
+        assetId = settings.GAS
     elif asset_str.lower() == 'tnc':
-        assetId = TNC
+        assetId = settings.TNC
 
     return assetId
 
@@ -69,7 +70,7 @@ def addrStrToScriptHash(address):
     data = b58decode(address)
     if len(data) != 25:
         raise ValueError('Not correct Address, wrong length.')
-    if data[0] != ADDRESS_VERSION:
+    if data[0] != settings.ADDRESS_VERSION:
         raise ValueError('Not correct Coin Version')
 
     checksum = Crypto.Default().Hash256(data[:21])[:4]
@@ -151,7 +152,7 @@ def get_balance(address):
         "params": [address],
         "id": 1
     }
-    res = requests.post(NODEURL, headers=headers, json=data).json()
+    res = requests.post(settings.NODEURL, headers=headers, json=data).json()
     return res
 
 def construct_tx(addressFrom,addressTo,amount,assetId):
@@ -162,7 +163,7 @@ def construct_tx(addressFrom,addressTo,amount,assetId):
         "params": [addressFrom,addressTo,float(amount),assetId],
         "id": 1
     }
-    res = requests.post(NODEURL, headers=headers, json=data).json()
+    res = requests.post(settings.NODEURL, headers=settings.headers, json=data).json()
     return res
 
 def send_raw_tx(rawTx):
@@ -173,7 +174,7 @@ def send_raw_tx(rawTx):
         "params": [rawTx],
         "id": 1
     }
-    res = requests.post(NODEURL, headers=headers, json=data).json()
+    res = requests.post(settings.NODEURL, headers=settings.headers, json=data).json()
     if res["result"]:
         return True
     return False
@@ -188,11 +189,23 @@ def show_tx(tx_id):
         "params": [tx_id],
         "id": 1
     }
-    res = requests.post(NODEURL, headers=headers, json=data).json()
+    print(settings.NODEURL)
+    res = requests.post(settings.NODEURL, headers=settings.headers, json=data).json()
 
     return res["result"]
 
 
+def get_block_height():
+
+    data = {
+        "jsonrpc": "2.0",
+        "method": "getBlockHeight",
+        "params": [],
+        "id": 1
+    }
+    res = requests.post(settings.NODEURL, headers=settings.headers, json=data).json()
+    # print(res["result"])
+    return res["result"]
 
 
 

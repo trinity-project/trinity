@@ -208,9 +208,10 @@ class Nep6Wallet(object):
 
     def send(self,addressFrom,addressTo,amount,assetId):
         res = construct_tx(addressFrom,addressTo,amount,assetId)
+        print(res)
         raw_txdata=self.Sign(res["result"]["txData"])
         send_raw_tx(raw_txdata)
-        print("txid: "+res["result"]["txId"])
+        print("txid: "+res["result"]["txid"])
         return True
 
     def ToJson(self, verbose=False):
