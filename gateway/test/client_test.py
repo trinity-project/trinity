@@ -69,16 +69,33 @@ def log_process_memory_cpu_used(process, pids):
         fs.write("cpu used: {}%    memory used: {}MB\n".format(cpu_percent, rss))
 
 if __name__ == "__main__":
-    sync_wallet_data(5)
-    time.sleep(5)
-    sync_channel("pk1@localhost:8089", "pk3@localhost:8091")
-    time.sleep(5)
-    sync_channel("pk4@localhost:8092", "pk3@localhost:8091")
-    time.sleep(5)
-    sync_channel("pk3@localhost:8091", "pk5@localhost:8093")
-    time.sleep(5)
-    sync_channel("pk1@localhost:8089", "pk2@localhost:8090")
-    time.sleep(5)
+    # sync_wallet_data(6)
+    ############ 4、5、6 ############
+    # sync_channel("pk4@localhost:8092", "pk5@localhost:8093")
+    # time.sleep(5)
+    # sync_channel("pk4@localhost:8092", "pk6@localhost:8094")
+    # time.sleep(5)
+    # sync_channel("pk5@localhost:8093", "pk6@localhost:8094")
+    ############ 1、2、3 ############
+    # time.sleep(5)
+    # sync_channel("pk1@localhost:8089", "pk3@localhost:8091")
+    # time.sleep(5)
+    # sync_channel("pk1@localhost:8089", "pk2@localhost:8090")
+    # sync_channel("pk3@localhost:8091", "pk2@localhost:8090")
+    ############3、4 ############
+    # sync_channel("pk3@localhost:8091", "pk4@localhost:8092")
+    ############1、5 ############
+    sync_channel("pk1@localhost:8089", "pk5@localhost:8093")
+    # sync_wallet_data(5)
+    # time.sleep(5)
+    # sync_channel("pk1@localhost:8089", "pk3@localhost:8091")
+    # time.sleep(5)
+    # sync_channel("pk4@localhost:8092", "pk3@localhost:8091")
+    # time.sleep(5)
+    # sync_channel("pk3@localhost:8091", "pk5@localhost:8093")
+    # time.sleep(5)
+    # sync_channel("pk1@localhost:8089", "pk2@localhost:8090")
+    # time.sleep(5)
     # triggle_tx("pk2@localhost:8090", "pk5@localhost:8093")
     #triggle_tx("pk2@localhost:8090", "pk4@localhost:8092")
     #triggle_tx("pk5@localhost:8093", "pk4@localhost:8092")
@@ -94,15 +111,15 @@ if __name__ == "__main__":
     # log_process_memory_cpu_used(449)
     # print(psutil.cpu_count())
     # print(psutil.cpu_count(logical=False))
-    pids = [22711,23180,23671,24080,24491]
-    processs = [psutil.Process(pid) for pid in pids]
-    for x in range(900000):
-        time_start
-        triggle_tx("pk2@localhost:8090", "pk5@localhost:8093")
-        time.sleep(0.04)
-        if x%7500 == 0:
-            for process in processs:
-                log_process_memory_cpu_used(process,pids)
+    # pids = [22711,23180,23671,24080,24491]
+    # processs = [psutil.Process(pid) for pid in pids]
+    # for x in range(900000):
+    #     time_start
+    #     triggle_tx("pk2@localhost:8090", "pk5@localhost:8093")
+    #     time.sleep(0.04)
+    #     if x%7500 == 0:
+    #         for process in processs:
+    #             log_process_memory_cpu_used(process,pids)
 
         
    

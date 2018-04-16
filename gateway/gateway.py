@@ -148,6 +148,7 @@ class Gateway():
                         return utils.request_handle_result.get("invalid")
                     try:
                         node["route_tree"].sync_tree(RouteTree.to_tree(json.dumps(data["MessageBody"])))
+                        data["Path"].append(utils.get_ip_port(node["wallet_info"]["url"]))
                     except Exception:
                         tcp_logger.exception("sync tree from peer raise an exception")
                         return utils.request_handle_result.get("invalid")
@@ -158,7 +159,7 @@ class Gateway():
                         tcp_logger.debug("new tree is {}".format(node["route_tree"].to_dict(with_data=True)))
                         if data["Broadcast"]:
                             except_peer = data["Sender"]
-                            self.sync_channel_route_to_peer(except_peer)
+                            self.sync_channel_route_to_peer(data["Path"], except_peer)
                             return utils.request_handle_result.get("correct")
         
 
@@ -327,6 +328,7 @@ class Gateway():
             if msg_type == "AddChannel":
                 # send self tree to peer
                 message = utils.generate_sync_tree_msg(node["route_tree"], self_url)
+                message["Path"] = [utils.get_ip_port(self_url)]
                 self._send_tcp_msg(channel_peer, message)
             elif msg_type == "UpdateChannel":
                 #update balance and send self tree to peers
@@ -381,15 +383,17 @@ class Gateway():
             node["route_tree"].get_node(self_root).data.update(data)
         node["route_tree"].show(idhidden=False)
 
-    def sync_channel_route_to_peer(self, except_peer=None):
+    def sync_channel_route_to_peer(self, path, except_peer=None):
         """
         :param except_peer: str type (except peer url)
         """
         self_tree = node["route_tree"]
         except_nid = None if not except_peer else utils.get_ip_port(except_peer)
         message = utils.generate_sync_tree_msg(self_tree, node["wallet_info"]["url"])
+        message["Path"] = path
+        print(">>>>>{}<<<<<<".format(path))
         for child in self_tree.is_branch(self_tree.root):
-            if child != except_nid:
+            if child != except_nid and child not in path:
                 node_object = self_tree.get_node(child)
                 ip_port = node_object.data["Ip"].split(":")
                 receiver = node_object.data["Pblickkey"] + "@" + child

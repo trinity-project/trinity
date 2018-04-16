@@ -7,7 +7,12 @@ import time
 import re
 import copy
 from config import cg_end_mark, cg_bytes_encoding
-from sserver.model.channel_model import APIChannel
+import os
+import sys
+path = os.getcwd().replace("/gateway", "")
+sys.path.append(path)
+print(path)
+# from sserver.model.channel_model import APIChannel
 
 common_msg_dict = {
     "MessageType": "",

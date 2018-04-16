@@ -107,8 +107,9 @@ class RouteTree(Tree):
         """
         copy_peer_tree = copy.deepcopy(peer_tree)
         # if contains each other
-        if peer_tree.contains(self.root):
-            copy_peer_tree.remove_node(self.root)
+        for self_nid in self.nodes.keys():
+            if copy_peer_tree.contains(self_nid) and self_nid != peer_tree.root:
+                copy_peer_tree.remove_node(self_nid)
         if self.contains(peer_tree.root):
             self.remove_node(peer_tree.root)
         # print(peer_tree.to_dict(with_data=True))

@@ -13,12 +13,14 @@ aiohttp = "*"
 jsonrpcserver = "*"
 jsonrpcclient = {extras = ["aiohttp"]}
 requests = "*"
+networkx = "*"
 
 
 [dev-packages]
 
 pylint = "*"
 psutil = "*"
+matplotlib = "*"
 
 
 [requires]
