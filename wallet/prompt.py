@@ -15,9 +15,7 @@ from prompt_toolkit.shortcuts import print_tokens
 from prompt_toolkit.token import Token
 from twisted.internet import reactor, task, endpoints
 from log import LOG
-import gevent
-from gevent import monkey
-#monkey.patch_all()
+from lightwallet.Settings import settings
 
 from wallet.utils import get_arg,to_aes_key
 from wallet.Interface.rpc_interface import RpcInteraceApi
@@ -261,7 +259,21 @@ def main():
     # Show the  version
     parser.add_argument("--version", action="version",
                         version=Version)
+    parser.add_argument("-m", "--mainnet", action="store_true", default=False,
+                        help="Use MainNet instead of the default TestNet")
+    parser.add_argument("-p", "--privnet", action="store_true", default=False,
+                        help="Use PrivNet instead of the default TestNet")
+
     args = parser.parse_args()
+
+    if args.mainnet:
+        settings.setup_mainnet()
+    elif args.privnet:
+        settings.setup_privnet()
+    else:
+        settings.setup_testnet()
+
+
     UserPrompt = UserPromptInterface()
     api_server_rpc = RpcInteraceApi("20556")
     endpoint_rpc = "tcp:port={0}:interface={1}".format("20556", "0.0.0.0")
