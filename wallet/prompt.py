@@ -59,7 +59,8 @@ class UserPromptInterface(PromptInterface):
         """
         wallet = self.Wallet.ToJson()
         try:
-            return wallet["address"], wallet["pubkey"]
+            account =  wallet.get("accounts")[0]
+            return account["address"], account["pubkey"]
         except AttributeError:
             return None,None
 
@@ -160,7 +161,7 @@ class UserPromptInterface(PromptInterface):
             if result:
                 self.Wallet.url = json.loads(result).get("MessageBody").get("Url")
                 self.Channel = True
-                print("Channel Funtion Opend")
+                print("Channel Function Enabled")
             else:
                 self._channel_noopen()
 
