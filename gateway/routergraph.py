@@ -57,6 +57,18 @@ MessageBody = {
     "SpvList": []
 }
 """
+def timethis(func):
+    @wraps(func)
+    def wrapper(*args, **kwargs):
+        start = time.process_time()
+        # start = time.time()
+        r = func(*args, **kwargs)
+        end = time.process_time()
+        # end = time.time()
+        print('{}.{} spend : {}ms'.format(func.__module__, func.__name__, (end - start)*1000))
+        return r
+    return wrapper
+
 class RouterGraph():
     def __init__(self, node):
         self._graph = nx.Graph()
@@ -122,16 +134,17 @@ class RouterGraph():
         for edge in self._graph.edges:
             if nid in edge:
                 self._graph.edges[edge[0],edge[1]]["weight"] += diff
-
+                
+    @timethis
     def find_shortest_path_decide_by_fee(self, source, target):
         """
         :param source: start uri\n
         :param target: end uri\n
         :return type list ["A","B","C"]
         """
-        sid = utils.get_ip_port(source)
-        tid = utils.get_ip_port(target)
-        return nx.shortest_path(self._graph, sid, tid, weight='weight')
+        # sid = utils.get_ip_port(source)
+        # tid = utils.get_ip_port(target)
+        return nx.shortest_path(self._graph, source, target, weight='weight')
 
     def to_json(self):
         """

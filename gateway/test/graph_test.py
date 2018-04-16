@@ -170,23 +170,42 @@ if __name__ == "__main__":
         "Balance": 5,
         "SpvList": []
     }
+    node4 = {
+        "Nid": "p4",
+        "Ip": "n2",
+        "Pblickkey": "pk2",
+        "Name": "test1",
+        "Deposit": "1",
+        "Fee": 4,
+        "Balance": 5,
+        "SpvList": []
+    }
     G = RouterGraph(node1)
     G.add_edge("p1","p2",node2)
     # G._graph.add_node("p3", **node3)
     G.add_edge("p2","p3",node3)
-    G.add_edge("p1","p3",node3)
+    G.add_edge("p1","p4",node4)
+    G.add_edge("p3","p4",node4)
     # G.remove_edge("p3","p2")
+    print("更新前")
+    print(nx.convert.to_edgelist(G._graph))
+    for k in G._graph.nodes:
+        print(k,G._graph.nodes[k])
+    print("最短路径")
+    print(G.find_shortest_path_decide_by_fee("p2", "p4"))
     data = {
         "Nid": "p3",
         "Ip": "n2",
         "Pblickkey": "pk2",
         "Name": "test1",
         "Deposit": "1",
-        "Fee": 1,
+        "Fee": 0,
         "Balance": 6,
         "SpvList": []
     }
     G.update_data(data)
+    print("最短路径")
+    print(G.find_shortest_path_decide_by_fee("p2", "p4"))
     # print(G._graph.edges["p1","p2"])
     # G1 = nx.Graph()
     # G2 = nx.Graph()
@@ -213,6 +232,7 @@ if __name__ == "__main__":
     #     print(e)
     # except StopIteration:
     #     print("isolad")
+    print("更新后")
     print(nx.convert.to_edgelist(G._graph))
     for k in G._graph.nodes:
         print(k,G._graph.nodes[k])
