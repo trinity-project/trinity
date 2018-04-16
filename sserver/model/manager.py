@@ -25,7 +25,7 @@ SOFTWARE."""
 import pymongo
 from pymongo.errors import DuplicateKeyError
 from datetime import datetime
-from jsonrpc import dispatcher
+#from jsonrpc import dispatcher
 
 from .base_enum import EnumStatusCode
 from trinity import DATABASE_CONFIG as cfg
@@ -45,10 +45,12 @@ def connection_singleton(callback):
 def rpc_response(name):
     def handler(f):
         def rpc_call_register(f, name):
-            try:
-                dispatcher.add_method(f, name)
-            except Exception as exp_info:
-                LOG.error("Failed to register RPC call<name: {}>.".format(name))
+            pass
+            #TODO
+            #try:
+                #dispatcher.add_method(f, name)
+            #except Exception as exp_info:
+                #LOG.error("Failed to register RPC call<name: {}>.".format(name))
 
         def wrapper(*args, **kwargs):
             result = f(*args, **kwargs)
