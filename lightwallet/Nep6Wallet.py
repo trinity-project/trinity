@@ -11,7 +11,7 @@ from neocore.Cryptography.Helper import *
 from neocore.Cryptography.Crypto import Crypto
 from neocore.KeyPair import KeyPair
 from neocore.UInt160 import UInt160
-from Utils import get_from_addr, get_arg, get_asset_id, get_balance, construct_tx, privtkey_sign, \
+from lightwallet.Utils import get_from_addr, get_arg, get_asset_id, get_balance, construct_tx, privtkey_sign, \
     privtKey_to_publicKey, send_raw_tx
 
 

@@ -25,9 +25,7 @@ SOFTWARE."""
 #from wallet.ChannelManagement.channel import Channel
 #from neo.Wallets.Wallet import Wallet
 
-from neo.Core.TX.Transaction import Transaction
 from neocore.Cryptography.Crypto import Crypto
-from neo.Network.NodeLeader import NodeLeader
 import os
 import pickle
 from TX.interface import *
