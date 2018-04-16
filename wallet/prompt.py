@@ -22,7 +22,7 @@ from gevent import monkey
 from wallet.utils import get_arg,to_aes_key
 from wallet.Interface.rpc_interface import RpcInteraceApi
 from twisted.web.server import Site
-from thin_wallet.prompt import PromptInterface
+from lightwallet.prompt import PromptInterface
 from wallet.ChannelManagement.channel import create_channel, filter_channel_via_address,\
     get_channel_via_address,chose_channel,close_channel
 from wallet.TransactionManagement import message as mg
