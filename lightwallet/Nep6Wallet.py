@@ -190,6 +190,11 @@ class Nep6Wallet(object):
         return [item["account"] for item in self._accounts]
 
     def Sign(self,tx_data):
+        """
+
+        :param tx_data:
+        :return:
+        """
         privtKey=binascii.hexlify(self._accounts[0]["account"].PrivateKey).decode()
         signature = privtkey_sign(tx_data, privtKey)
         publicKey = privtKey_to_publicKey(privtKey)
@@ -197,7 +202,12 @@ class Nep6Wallet(object):
         return rawData
 
 
-    def Sign1(self,tx_data):
+    def SignContent(self,tx_data):
+        """
+
+        :param tx_data:
+        :return:
+        """
         privtKey=binascii.hexlify(self._accounts[0]["account"].PrivateKey).decode()
         signature = privtkey_sign(tx_data, privtKey)
         return signature
@@ -259,6 +269,16 @@ class Nep6Wallet(object):
         return None
 
     def fromJsonFile(self,path):
-        with open (path,"rb") as f:
+        with open(path,"rb") as f:
             content=json.loads(f.read().decode())
         return content
+
+    def LoadStoredData(self, key):
+        wallet = self.fromJsonFile(self._path)
+        return wallet.get("extra").get(key)
+
+    def SaveStoredData(self, key, value):
+        wallet_info  = self.fromJsonFile(self._path)
+        wallet_info["extra"][key] = value
+        with open(self._path) as f:
+            f.write(json.dumps(wallet_info).encode())
