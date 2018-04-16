@@ -11,7 +11,7 @@ from neocore.Cryptography.Helper import *
 from neocore.Cryptography.Crypto import Crypto
 from neocore.KeyPair import KeyPair
 from neocore.UInt160 import UInt160
-from Utils import get_from_addr, get_arg, get_asset_id, get_balance, construct_tx, privtkey_sign, \
+from lightwallet.Utils import get_from_addr, get_arg, get_asset_id, get_balance, construct_tx, privtkey_sign, \
     privtKey_to_publicKey, send_raw_tx
 
 
@@ -196,56 +196,22 @@ class Nep6Wallet(object):
         rawData = tx_data + "014140" +signature + "2321" + publicKey + "ac"
         return rawData
 
-    def construct_and_send(self,wallet,arguments, prompt_password=True):
-        try:
-            if not wallet:
-                print("please open a wallet")
-                return False
-            if len(arguments) < 3:
-                print("Not enough arguments")
-                return False
 
-            arguments, from_address = get_from_addr(arguments)
+    def Sign1(self,tx_data):
+        privtKey=binascii.hexlify(self._accounts[0]["account"].PrivateKey).decode()
+        signature = privtkey_sign(tx_data, privtKey)
+        return signature
 
-            to_send = get_arg(arguments)
-            address_to = get_arg(arguments, 1)
-            amount = get_arg(arguments, 2)
-
-            assetId = get_asset_id(to_send)
-
-            if assetId is None:
-                print("Asset id not found")
-                return False
-
-
-            if from_address is None:
-                from_address = self.get_default_address()
-
-
-            if prompt_password:
-                passwd = prompt("[Password]> ", is_password=True)
-
-                if not wallet.ValidatePassword(passwd):
-                    print("incorrect password")
-                    return False
-
-
-
-        except Exception as e:
-            print("could not send: %s " % e)
-            traceback.print_stack()
-            traceback.print_exc()
-
-        return False
 
     def get_default_address(self):
         return self._accounts[0]["account"].GetAddress()
 
     def send(self,addressFrom,addressTo,amount,assetId):
         res = construct_tx(addressFrom,addressTo,amount,assetId)
+        print(res)
         raw_txdata=self.Sign(res["result"]["txData"])
         send_raw_tx(raw_txdata)
-        print("txid: "+res["result"]["txId"])
+        print("txid: "+res["result"]["txid"])
         return True
 
     def ToJson(self, verbose=False):

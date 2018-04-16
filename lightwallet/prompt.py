@@ -1,19 +1,24 @@
 #!/usr/bin/env python
-
-
-
-
+import argparse
+import json
+import pprint
 import traceback
+
+import os
 from prompt_toolkit import prompt
 from prompt_toolkit.history import FileHistory
 from prompt_toolkit.shortcuts import print_tokens
+from prompt_toolkit.styles import style_from_dict
 from prompt_toolkit.token import Token
 from neocore.KeyPair import KeyPair
-from Settings import  *
-from Nep6Wallet import Nep6Wallet
-from Utils import get_arg, get_asset_id
+from lightwallet.Nep6Wallet import Nep6Wallet
+from lightwallet.Utils import get_arg, get_asset_id,show_tx,get_block_height
 
-FILENAME_PROMPT_HISTORY = os.path.join(DIR_CURRENT, '.prompt.py.history')
+from lightwallet.Settings import settings
+
+from lightwallet.UserPreferences import preferences
+
+FILENAME_PROMPT_HISTORY = os.path.join(settings.DIR_CURRENT, '.prompt.py.history')
 
 class PromptInterface(object):
     commands = [
@@ -26,13 +31,31 @@ class PromptInterface(object):
                 'send {asset} {address} {amount}',
                 'export wif {address}',
                 'export nep2 {address}',
+                'tx  {txid}',
                 ]
     go_on = True
     Wallet=None
     history = FileHistory(FILENAME_PROMPT_HISTORY)
 
     def __init__(self):
-        pass
+        self.token_style = style_from_dict({
+            Token.Command: preferences.token_style['Command'],
+            Token.Neo: preferences.token_style['Neo'],
+            Token.Default: preferences.token_style['Default'],
+            Token.Number: preferences.token_style['Number'],
+        })
+
+    def get_bottom_toolbar(self, cli=None):
+        out = []
+        try:
+            out = [
+                (Token.Command, '[%s]' % settings.NET_NAME),
+
+            ]
+        except Exception as e:
+            pass
+
+        return out
 
     def quit(self):
         self.go_on = False
@@ -266,8 +289,18 @@ class PromptInterface(object):
         address_from=self.Wallet._accounts[0]["account"].GetAddress()
 
         res = self.Wallet.send(addressFrom=address_from,addressTo=address_to,amount=amount,assetId=assetId)
-        print(res)
         return res
+
+
+    def show_tx(self, args):
+        item = get_arg(args)
+        if item is not None:
+            try:
+                pprint.pprint (show_tx(item))
+            except Exception as e:
+                print("Could not find transaction with id %s " % item)
+        else:
+            print("please specify a tx hash")
 
     def parse_result(self, result):
         if len(result):
@@ -276,11 +309,19 @@ class PromptInterface(object):
         return None, None
 
     def run(self):
+        tokens = [(Token.Neo, 'TRINITY'), (Token.Default, ' cli. Type '),
+                  (Token.Command, "'help' "), (Token.Default, 'to get started')]
+
+        print_tokens(tokens,self.token_style)
+        print("\n")
 
         while self.go_on:
             try:
-                result = prompt("trinity> ",
+                result = prompt("trinity>",
                                 history=self.history,
+                                get_bottom_toolbar_tokens=self.get_bottom_toolbar,
+                                style=self.token_style,
+                                # refresh_interval=15
                                 )
             except EOFError:
                 return self.quit()
@@ -314,6 +355,8 @@ class PromptInterface(object):
                         self.show_wallet(arguments)
                     elif command == 'send':
                         self.do_send(arguments)
+                    elif command == 'tx':
+                        self.show_tx(arguments)
 
                     else:
                         print("command %s not found" % command)
@@ -326,6 +369,21 @@ class PromptInterface(object):
 
 
 def main():
+    parser = argparse.ArgumentParser()
+    parser.add_argument("-m", "--mainnet", action="store_true", default=False,
+                        help="Use MainNet instead of the default TestNet")
+    parser.add_argument("-p", "--privnet", action="store_true", default=False,
+                        help="Use PrivNet instead of the default TestNet")
+
+    args = parser.parse_args()
+
+    if args.mainnet:
+        settings.setup_mainnet()
+    elif args.privnet:
+        settings.setup_privnet()
+    else:
+        settings.setup_testnet()
+
     cli = PromptInterface()
     cli.run()
 

@@ -35,9 +35,17 @@ from .interface import get_block_count, get_bolck, send_raw
 BlockHeightRecord = os.path.join(TxDataDir,"block.data")
 
 
+class Monitor(object):
+    GoOn = True
+    @classmethod
+    def stop_monitor(cls):
+        cls.GoOn = False
+
+
 def monitorblock():
     blockHeight = get_block_count()
-    while True:
+
+    while Monitor.GoOn:
         #block = Blockchain.Default().GetBlock(str(Blockchain.Default().Height))
         try:
 

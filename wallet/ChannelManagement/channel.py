@@ -33,6 +33,7 @@ from wallet.TransactionManagement import transaction as trans
 from wallet.utils import pubkey_to_address
 from wallet.Interface.gate_way import sync_channel
 from log import LOG
+import json
 
 def get_gateway_ip():
     return "127.0.0.1:20554"
@@ -58,31 +59,31 @@ class Channel(object):
 
 
     @staticmethod
-    def get_channel(address1, address2):
+    def get_channel(address1, address2, state):
+        channels = []
+        channel = APIChannel.batch_query_channel(filters={"src_addr": address1, "dest_addr": address2,"state":state })
+        if channel.get("content"):
+            channels.extend(channel["content"])
 
-        try:
-            channel = APIChannel.batch_query_channel(filters={"src_addr": address1, "dest_addr": address2})
-            return channel["content"][0].channel
-        except:
-            try:
-                channel= APIChannel.batch_query_channel(filters={"src_addr":address2, "dest_addr":address1})
-                print("debug2 ", channel)
-                return channel["content"][0].channel
-            except:
-                return None
+        channel= APIChannel.batch_query_channel(filters={"src_addr":address2, "dest_addr":address1, "state":state})
+        if channel.get("content"):
+            channels.extend(channel["content"])
+
+        return channels
 
     @staticmethod
     def query_channel(address):
         print("Get Channels with Address %s" %address)
         channels = APIChannel.batch_query_channel(filters={"src_addr":address})
-        channeld = APIChannel.batch_query_channel(filters={"dest_addr":address})
-        try:
+        if channels.get("content"):
             for ch in channels["content"]:
-                print("ChannelName:", ch.channel, "\nState:", ch.state, "\nPeer:", ch.dest_addr)
+                print("=="*10,"\nChannelName:", ch.channel, "\nState:", ch.state, "\nPeer:", ch.dest_addr,
+                      "\nBalance:", json.dumps(ch.balance, indent=1))
+        channeld = APIChannel.batch_query_channel(filters={"dest_addr":address})
+        if channeld.get("content"):
             for ch in channeld["content"]:
-                print("ChannelName:", ch.channel, "\nState:", ch.state, "\nPeer:", ch.src_addr)
-        except KeyError:
-            pass
+                print("=="*10,"\nChannelName:", ch.channel, "\nState:", ch.state, "\nPeer:", ch.src_addr,
+                      "\nBalance:", json.dumps(ch.balance, indent=1))
 
 
     @classmethod
@@ -197,20 +198,37 @@ def create_channel(founder, partner, asset_type, depoist:int, cli=True):
     return Channel(founder, partner).create(asset_type, depoist, cli)
 
 
-def get_channel_name_via_address(address1, address2):
-    channel = Channel.get_channel(address1, address2)
+def filter_channel_via_address(address1, address2, state=None):
+    channel = Channel.get_channel(address1, address2, state)
     return channel
+
 
 def get_channel_via_address(address):
     Channel.query_channel(address)
     return
 
-def close_channel(channel_name, wallet):
-    tx = trans.TrinityTransaction(channel_name, wallet)
 
+def chose_channel(channels, publick_key, tx_count, asset_type):
+    for ch in channels:
+        balance = ch.balance
+        if balance:
+            try:
+                balance_value = balance.get(publick_key).get(asset_type.upper())
+            except:
+                continue
+            if float(balance_value) > float(tx_count):
+                return ch
+            else:
+                continue
+
+def close_channel(channel_name):
+    ch = Channel.channel(channel_name)
+    ch.update_channel(state=EnumChannelState.CLOSING.name)
+    time.sleep(15)
+    ch.delete_channel()
 
 def sync_channel_info_to_gateway(channel_name, type):
-    print("Debug sync_channel_info_to_gateway")
+    LOG.info("Debug sync_channel_info_to_gateway  channelname {} type {}".format(channel_name, type))
     ch = Channel.channel(channel_name)
     balance  = ch.get_balance()
     nb = {}

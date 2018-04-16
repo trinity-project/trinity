@@ -25,15 +25,14 @@ SOFTWARE."""
 #from wallet.ChannelManagement.channel import Channel
 #from neo.Wallets.Wallet import Wallet
 
-from neo.Core.TX.Transaction import Transaction
 from neocore.Cryptography.Crypto import Crypto
-from neo.Network.NodeLeader import NodeLeader
 import os
 import pickle
 from TX.interface import *
 from wallet.utils import sign
 from wallet.BlockChain import interface as Binterface
 from log import LOG
+import json
 
 BlockHightRegister=[]
 TxIDRegister= []
@@ -136,12 +135,14 @@ class TrinityTransaction(object):
             return None
 
     def realse_transaction(self):
+        LOG.debug("realse_transaction {}".format(self.channel))
         tx = self.read_transaction()
         tx_state = tx.get("State")
         if tx_state !="confirm":
             return False, "transaction state not be confirmed"
         latest_nonce =self.get_latest_nonceid(tx)
         latest_tx = tx.get(str(latest_nonce))
+        LOG.debug("Latest Tx {}".format(json.dumps(latest_tx, indent=1)))
         latest_ctx = latest_tx.get("Commitment")
         ctx_txData = latest_ctx.get("originalData").get("txData")
         tx_id = latest_ctx.get("originalData").get("txId")
@@ -149,8 +150,10 @@ class TrinityTransaction(object):
         ctx_txData_other = latest_ctx.get("txDataSing")
         ctx_txData_sign = sign(ctx_txData, self.wallet)
         raw_data = ctx_txData+ctx_witness.format(signSelf=ctx_txData_other, signOther = ctx_txData_sign)
-        TrinityTransaction.sendrawtransaction(raw_data)
-        print("Commitment Tx TO Chain    ", tx_id)
+        result = TrinityTransaction.sendrawtransaction(raw_data)
+
+        print("Commitment Tx to Chain    ", tx_id)
+        return result
 
 
 def dic2byte(file_handler, **kwargs):

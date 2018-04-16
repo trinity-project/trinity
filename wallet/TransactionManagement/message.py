@@ -96,7 +96,10 @@ class RegisterMessage(Message):
                               self.asset_type.upper(),self.deposit,founder_ip,partner_ip)
 
     def verify(self):
-
+        if self.sender == self.receiver:
+            return False, "Not Support Sender is Receiver"
+        if self.receiver != self.wallet.url:
+            return False, "The Endpoint is Not Me"
         return True, None
 
 class TestMessage(Message):
@@ -292,9 +295,12 @@ class FounderMessage(TransactionMessage):
                  }
         FounderMessage.send(message)
 
-
     def verify(self):
-        #Todo verify public key if self
+        if self.sender == self.receiver:
+            return False, "Not Support Sender is Receiver"
+        if self.receiver != self.wallet.url:
+            return False, "The Endpoint is Not Me"
+
         return True, None
 
     def send_responses(self, role_index, error = None):
@@ -333,7 +339,6 @@ class FounderMessage(TransactionMessage):
                                                 "RoleIndex": role_index
                                                 },
                                 }
-
         FounderMessage.send(message_response)
         LOG.info("Send FounderMessage Response:  {}".format(json.dumps(message_response )))
         return None
@@ -386,8 +391,18 @@ class FounderResponsesMessage(TransactionMessage):
             txid = self.founder.get("originalData").get("txId")
             register_monitor(txid, monitor_founding, self.channel_name, EnumChannelState.OPENED.name)
         else:
+            message_response = {"MessageType": "FounderFail",
+                                "Sender": self.receiver,
+                                "Receiver": self.sender,
+                                "ChannelName": self.channel_name,
+                                "TxNonce": 0,
+                                "Error": "SendFounderRawTransactionFail"
+                                }
+            Message.send(message_response)
             ch.Channel.channel(self.channel_name).delete_channel()
 
+    def _handle_error_message(self):
+        return ch.Channel.channel(self.channel_name).delete_channel()
 
     def send_founder_raw_transaction(self):
         signdata = self.founder.get("txDataSign")
@@ -397,7 +412,6 @@ class FounderResponsesMessage(TransactionMessage):
         witnes = self.founder.get("originalData").get("witness").format(signOther=signdata,
                                                                         signSelf=signdata_self)
         return TrinityTransaction.sendrawtransaction(TrinityTransaction.genarate_raw_data(txdata, witnes))
-
 
     def update_transaction(self):
         sender_pubkey, sender_ip = self.sender.split("@")
@@ -409,13 +423,11 @@ class FounderResponsesMessage(TransactionMessage):
         balance.setdefault(receiver_pubkey, subitem)
         self.transaction.update_transaction(str(self.tx_nonce), Balance=balance, State="confirm")
 
-
-
     def handle_message(self):
         LOG.info("Handle FounderResponsesMessage: {}".format(str(self.message)))
         if self.error:
             LOG.error("FounderResponsesMessage Error: {}" .format(str(self.message)))
-            return None
+            return self._handle_error_message()
         verify, error = self.verify()
         if verify:
             self._check_transaction_file()
@@ -429,6 +441,10 @@ class FounderResponsesMessage(TransactionMessage):
         return None
 
     def verify(self):
+        if self.sender == self.receiver:
+            return False, "Not Support Sender is Receiver"
+        if self.receiver != self.wallet.url:
+            return False, "The Endpoint is Not Me"
         return True, None
 
 

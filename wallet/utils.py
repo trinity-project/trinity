@@ -21,10 +21,31 @@ AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
 LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE."""
+
+
 from neocore.Cryptography.Crypto import Crypto
 import binascii
 
+import hashlib
+
+
+def to_aes_key(password):
+    """
+
+    :param password:
+    :return:
+    """
+
+    password_hash = hashlib.sha256(password.encode('utf-8')).digest()
+    return hashlib.sha256(password_hash).digest()
+
+
 def pubkey_to_address(publickey: str):
+    """
+
+    :param publickey:
+    :return:
+    """
     script = b'21' + publickey.encode() + b'ac'
     script_hash = Crypto.ToScriptHash(script)
     address = Crypto.ToAddress(script_hash)
@@ -32,10 +53,38 @@ def pubkey_to_address(publickey: str):
 
 
 def sign(wallet, context):
+    """
+
+    :param wallet:
+    :param context:
+    :return:
+    """
+
     keypairs = wallet.LoadKeyPairs().values()
     keypair = [i for i in keypairs][0]
     res = binascii.hexlify(Crypto.Sign(message=context, private_key=bytes(keypair.PrivateKey))).decode()
     return res
+
+def get_arg(arguments, index=0, convert_to_int=False, do_parse=False):
+    """
+
+    :param arguments:
+    :param index:
+    :param convert_to_int:
+    :param do_parse:
+    :return:
+    """
+
+    try:
+        arg = arguments[index]
+        if convert_to_int:
+            return int(arg)
+        if do_parse:
+            return parse_param(arg)
+        return arg
+    except Exception as e:
+        pass
+    return None
 
 
 if __name__ == "__main__":
