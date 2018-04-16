@@ -89,7 +89,7 @@ class UserPromptInterface(PromptInterface):
             except KeyboardInterrupt:
                 self.quit()
                 continue
-                
+
             try:
                 command, arguments = self.parse_result(result)
 
