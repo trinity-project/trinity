@@ -75,18 +75,21 @@ class UserPromptInterface(PromptInterface):
         print_tokens(tokens,self.token_style)
         print("\n")
 
-        
+
         while self.go_on:
             try:
-                result = prompt("trinity> ",
+                result = prompt("trinity>",
                                 history=self.history,
+                                get_bottom_toolbar_tokens=self.get_bottom_toolbar,
+                                style=self.token_style,
+                                # refresh_interval=15
                                 )
             except EOFError:
                 return self.quit()
             except KeyboardInterrupt:
                 self.quit()
                 continue
-
+                
             try:
                 command, arguments = self.parse_result(result)
 
