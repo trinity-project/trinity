@@ -112,7 +112,7 @@ def show_edges(g):
             print(n, nbr, eattr["weight"])
 
 if __name__ == "__main__":
-    G = nx.Graph()
+    # G = nx.Graph()
     # G.add_edge('A', 'B', weight=1)
     # G.add_edge('B', 'D', weight=2)
     # G.add_edge('A', 'C', weight=3)
@@ -139,44 +139,89 @@ if __name__ == "__main__":
     r_path = os.getcwd()
     print(r_path)
     sys.path.append(r_path)
-    from graph_operation import ChannelGraph
-    node = {
-        "tag": "n1",
-        "Ip": "n1",
-        "Pblickkey": "pk",
-        "Name": "test1",
-        "Deposit": "1",
-        "Fee": 1,
-        "Balance": 5,
-        "SpvList": []
-    }
+    from routergraph import RouterGraph
     node1 = {
-        "tag": "n1",
-        "Ip": "n2",
-        "Pblickkey": "pk",
+        "Nid": "p1",
+        "Ip": "n1",
+        "Pblickkey": "pk1",
         "Name": "test1",
         "Deposit": "1",
         "Fee": 1,
         "Balance": 5,
         "SpvList": []
     }
-    G = G = nx.Graph()
-    G.add_edge('n1', 'n2')
-    G.add_edge('n1', 'n3')
-    print(G.nodes)
+    node2 = {
+        "Nid": "p2",
+        "Ip": "n2",
+        "Pblickkey": "pk2",
+        "Name": "test1",
+        "Deposit": "1",
+        "Fee": 2,
+        "Balance": 5,
+        "SpvList": []
+    }
+    node3 = {
+        "Nid": "p3",
+        "Ip": "n2",
+        "Pblickkey": "pk2",
+        "Name": "test1",
+        "Deposit": "1",
+        "Fee": 3,
+        "Balance": 5,
+        "SpvList": []
+    }
+    G = RouterGraph(node1)
+    G.add_edge("p1","p2",node2)
+    # G._graph.add_node("p3", **node3)
+    G.add_edge("p2","p3",node3)
+    G.add_edge("p1","p3",node3)
+    # G.remove_edge("p3","p2")
+    data = {
+        "Nid": "p3",
+        "Ip": "n2",
+        "Pblickkey": "pk2",
+        "Name": "test1",
+        "Deposit": "1",
+        "Fee": 1,
+        "Balance": 6,
+        "SpvList": []
+    }
+    G.update_data(data)
+    # print(G._graph.edges["p1","p2"])
+    # G1 = nx.Graph()
+    # G2 = nx.Graph()
+    # G1.add_edge('n1', 'n2', weight=1)
+    # G1.add_edge('n1', 'n3', weight=2)
+    
+    # G2.add_edge('n1', 'n4', weight=3)
+    # G2.add_node('n5')
+    # G3 = nx.algorithms.operators.binary.compose(G1,G2)
+    # # G1.add_edge('n1', 'n4', weight=1)
+    # print(G3.nodes)
+    # del G1
+    # del G2
+    # print(G2.nodes)
     # print(type(G.nodes))
     # print(G.nodes["n1"])
     # print(G.nodes["n2"])
-    for edge in G.edges:
-        print(edge,type(edge))
-    G.remove_edge("n2","n1")
-    print(G.edges)
+    # for edge in G3.edges:
+    #     print(edge,type(edge))
+    # G.remove_nodes_from(["n2","n3"])
+    # print(G3.edges)
+    # try:
+    #     e = next(G3.neighbors("n5"))
+    #     print(e)
+    # except StopIteration:
+    #     print("isolad")
+    print(nx.convert.to_edgelist(G._graph))
+    for k in G._graph.nodes:
+        print(k,G._graph.nodes[k])
     # print([edge for edge in G.edges])
     # print(G.has_edge("n2","n1"))
     # print(G.adj)
     # print(list(nx.generate_adjlist(G,delimiter=':')))
     # from networkx.readwrite import json_graph
-    # data1 = json_graph.node_link_data(G)
-    # print(type(data1))
+    # data1 = json_graph.node_link_data(G._graph)
+    # print(data1)
     # print(list(G.adjacency()))
-    show_graph(G)
+    show_graph(G._graph)
