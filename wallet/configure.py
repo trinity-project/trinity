@@ -36,5 +36,6 @@ Configure = {
         "NeoProtocol":"/home/will/neocli/protocol.json",
     },
     "DataBase":{"url": "http://localhost:20554"
-    }
+    },
+    "Version":"v0.2.1"
 }

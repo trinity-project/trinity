@@ -8,7 +8,7 @@ from neocore.KeyPair import KeyPair
 from neocore.UInt160 import UInt160
 
 
-from Settings import settings
+from lightwallet.Settings import settings
 
 
 def get_asset_attachments(params):

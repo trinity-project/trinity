@@ -11,12 +11,12 @@ from prompt_toolkit.shortcuts import print_tokens
 from prompt_toolkit.styles import style_from_dict
 from prompt_toolkit.token import Token
 from neocore.KeyPair import KeyPair
-from Nep6Wallet import Nep6Wallet
-from Utils import get_arg, get_asset_id,show_tx,get_block_height
+from lightwallet.Nep6Wallet import Nep6Wallet
+from lightwallet.Utils import get_arg, get_asset_id,show_tx,get_block_height
 
-from Settings import settings
+from lightwallet.Settings import settings
 
-from UserPreferences import preferences
+from lightwallet.UserPreferences import preferences
 
 FILENAME_PROMPT_HISTORY = os.path.join(settings.DIR_CURRENT, '.prompt.py.history')
 
