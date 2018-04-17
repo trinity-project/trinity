@@ -176,7 +176,12 @@ class Channel(object):
             return None
 
     def get_peer(self, url):
-        return self.partner if self.founder == url else self.founder
+        if self.founder == url:
+            return self.partner
+        elif self.partner == url:
+            return self.founder
+        else:
+            return None
 
     def get_deposit(self):
         ch = self._get_channel()
