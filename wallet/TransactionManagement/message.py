@@ -396,6 +396,7 @@ class FounderResponsesMessage(TransactionMessage):
                                 "Receiver": self.sender,
                                 "ChannelName": self.channel_name,
                                 "TxNonce": 0,
+                                "MessageBody":self.message_body,
                                 "Error": "SendFounderRawTransactionFail"
                                 }
             Message.send(message_response)

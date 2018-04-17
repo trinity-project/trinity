@@ -218,7 +218,7 @@ def chose_channel(channels, publick_key, tx_count, asset_type):
                 balance_value = balance.get(publick_key).get(asset_type.upper())
             except:
                 continue
-            if float(balance_value) > float(tx_count):
+            if float(balance_value) >= float(tx_count):
                 return ch
             else:
                 continue
