@@ -17,6 +17,7 @@ from lightwallet.Utils import get_arg, get_asset_id,show_tx,get_block_height
 from lightwallet.Settings import settings
 
 from lightwallet.UserPreferences import preferences
+from lightwallet.model import TX_RECORD
 
 FILENAME_PROMPT_HISTORY = os.path.join(settings.DIR_CURRENT, '.prompt.py.history')
 
@@ -31,7 +32,7 @@ class PromptInterface(object):
                 'send {asset} {address} {amount}',
                 'export wif {address}',
                 'export nep2 {address}',
-                'tx  {txid}',
+                'tx {txid}',
                 ]
     go_on = True
     Wallet=None
@@ -88,7 +89,6 @@ class PromptInterface(object):
 
                 try:
                     self.Wallet = Nep6Wallet.Create(path=path, password=passwd1)
-                    print(1111)
                     print("Wallet %s " % json.dumps(self.Wallet.ToJson(), indent=4))
                 except Exception as e:
                     print("Exception creating wallet: %s " % e)
@@ -289,7 +289,9 @@ class PromptInterface(object):
         address_from=self.Wallet._accounts[0]["account"].GetAddress()
 
         res = self.Wallet.send(addressFrom=address_from,addressTo=address_to,amount=amount,assetId=assetId)
-        return res
+        TX_RECORD.save(tx_id=res[1],asset_type=assetId,address_from=address_from,
+                       address_to=address_to,value=amount,state=res[0])
+        return
 
 
     def show_tx(self, args):
@@ -300,7 +302,9 @@ class PromptInterface(object):
             except Exception as e:
                 print("Could not find transaction with id %s " % item)
         else:
-            print("please specify a tx hash")
+            tx_records=TX_RECORD.query(self.Wallet._accounts[0]["account"].GetAddress())
+            for item in tx_records:
+                print(item.to_json())
 
     def parse_result(self, result):
         if len(result):
