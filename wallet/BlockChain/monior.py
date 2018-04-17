@@ -23,7 +23,7 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE."""
 
 
-from logzero import logger
+from log import LOG
 #from neo.Core.Blockchain import Blockchain
 import time
 from wallet.TransactionManagement.transaction import BlockHightRegister, TxIDRegister,TxDataDir, crypto_channel
@@ -61,7 +61,7 @@ def monitorblock():
             #logger.info("Block %s / %s", str(block), blockHeight)
             blockHeight +=1
         except Exception as e:
-            logger.error("GetBlockError", e)
+            LOG.debug("GetBlockError {}".format(e))
         time.sleep(15)
 
 
