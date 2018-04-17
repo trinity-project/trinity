@@ -68,6 +68,7 @@ class PromptInterface(object):
         print_tokens(tokens)
 
     def do_create(self, arguments):
+        self.do_close_wallet()
         item = get_arg(arguments)
         if self.Wallet:
             self.do_close_wallet()
@@ -106,7 +107,7 @@ class PromptInterface(object):
                 print("Please specify a path")
 
     def do_open(self, arguments):
-
+        self.do_close_wallet()
         if self.Wallet:
             self.do_close_wallet()
 
