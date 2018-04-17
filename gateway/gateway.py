@@ -28,6 +28,19 @@ class Gateway():
     """
     gateway 类 定义了所有直接相关的行为与属性
     """
+    TransMessageType=["Rsmc",
+                      "FounderSign",
+                      "Founder",
+                      "RsmcSign",
+                      "FounderFail",
+                      "Settle",
+                      "SettleSign",
+                      "SettleFail",
+                      "RsmcFail",
+                      "Htlc",
+                      "HtlcSign",
+                      "HtlcFail"]
+
     def __init__(self):
         """Counstruct"""
         self.websocket = None
@@ -129,7 +142,8 @@ class Gateway():
                         protocol.transport.send(utils.generate_error_msg(local_url, data["Sender"], "Invalid wallet address"))
                     else:
                         self._send_jsonrpc_msg("CreateChannle", json.dumps(data))
-                elif msg_type in ["Rsmc","FounderSign","Founder","RsmcSign","FounderFail"]:
+
+                elif msg_type in Gateway.TransMessageType:
                     self.handle_transaction_message(data)
                     return utils.request_handle_result.get("correct")
                 elif msg_type == "ResumeChannel":
@@ -315,7 +329,7 @@ class Gateway():
         elif method == "TransactionMessage":
             if msg_type == "RegisterChannel":
                 self._send_tcp_msg(data["Receiver"], data)
-            elif msg_type in ["Rsmc","FounderSign","Founder","RsmcSign","FounderFail"]:
+            elif msg_type in Gateway.TransMessageType:
                 self.handle_transaction_message(data)
         elif method == "SyncBlock":
             # push the data to spvs

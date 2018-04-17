@@ -132,6 +132,16 @@ class UserPromptInterface(PromptInterface):
                 traceback.print_stack()
                 traceback.print_exc()
 
+    def do_open(self, arguments):
+        super().do_open(arguments)
+        for i in range(100):
+            enable = self.enable_channel()
+            if enable:
+                break
+            else:
+                time.sleep(0.5)
+        else:
+            self._channel_noopen()
 
     def quit(self):
         print('Shutting down. This may take about 15 sec to sync the block info')
@@ -139,6 +149,17 @@ class UserPromptInterface(PromptInterface):
         Monitor.stop_monitor()
         self.do_close_wallet()
         reactor.stop()
+
+    def enable_channel(self):
+        self.Wallet.address, self.Wallet.pubkey = self.get_address()
+        result = gate_way.join_gateway(self.Wallet.pubkey).get("result")
+        if result:
+            self.Wallet.url = json.loads(result).get("MessageBody").get("Url")
+            self.Channel = True
+            print("Channel Function Enabled")
+            return True
+        else:
+            return False
 
     def do_channel(self,arguments):
         if not self.Wallet:
@@ -158,13 +179,7 @@ class UserPromptInterface(PromptInterface):
             create_channel(self.Wallet.url, partner,asset_type, deposit)
 
         elif command == "enable":
-            self.Wallet.address, self.Wallet.pubkey = self.get_address()
-            result = gate_way.join_gateway(self.Wallet.pubkey).get("result")
-            if result:
-                self.Wallet.url = json.loads(result).get("MessageBody").get("Url")
-                self.Channel = True
-                print("Channel Function Enabled")
-            else:
+            if not self.enable_channel():
                 self._channel_noopen()
 
         elif command == "tx":
@@ -215,9 +230,7 @@ class UserPromptInterface(PromptInterface):
             channel_name = get_arg(arguments, 1)
             print("Closing channel {}".format(channel_name))
             if channel_name:
-                result = trinitytx.TrinityTransaction(channel_name, self.Wallet).realse_transaction()
-                if result:
-                    close_channel(channel_name)
+                close_channel(channel_name, self.Wallet)
             else:
                 print("No Channel Create")
 
@@ -228,7 +241,7 @@ class UserPromptInterface(PromptInterface):
             return
 
     def _channel_noopen(self):
-        print("Channel Function Can Not be Opened at Present")
+        print("Channel Function Can Not be Opened at Present, You can try again via channel enable")
         return
 
     def handlemaessage(self):
@@ -248,14 +261,18 @@ class UserPromptInterface(PromptInterface):
             return "Error Message"
         if message_type == "Founder":
             m_instance = mg.FounderMessage(message, self.Wallet)
-        elif message_type == "FounderSign" or message_type == "FounderFail":
+        elif message_type in [ "FounderSign" ,"FounderFail"]:
             m_instance = mg.FounderResponsesMessage(message, self.Wallet)
         elif message_type == "Htlc":
             m_instance = mg.HtlcMessage(message, self.Wallet)
         elif message_type == "Rsmc":
             m_instance = mg.RsmcMessage(message, self.Wallet)
-        elif message_type == "RsmcSign" or message_type == "RsmcFail":
+        elif message_type in ["RsmcSign", "RsmcFail"]:
             m_instance = mg.RsmcResponsesMessage(message, self.Wallet)
+        elif message_type == "Settle":
+            m_instance = mg.SettleMessage(message, self.Wallet)
+        elif message_type in ["SettleSign","SettleFail"]:
+            m_instance = mg.SettleResponseMessage(message, self.Wallet)
         elif message_type == "RegisterChannel":
             m_instance = mg.RegisterMessage(message, self.Wallet)
         elif message_type == "CreateTranscation":

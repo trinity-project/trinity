@@ -69,6 +69,8 @@ class PromptInterface(object):
 
     def do_create(self, arguments):
         item = get_arg(arguments)
+        if self.Wallet:
+            self.do_close_wallet()
 
         if item and item == 'wallet':
 
