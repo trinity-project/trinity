@@ -4,7 +4,6 @@ import time
 import json
 import networkx as nx
 from networkx.readwrite import json_graph
-import matplotlib.pyplot as plt
 from config import cg_public_ip_port
 import utils
 
@@ -70,9 +69,13 @@ def timethis(func):
     return wrapper
 
 class RouterGraph():
-    def __init__(self, node):
+    def __init__(self):
+        self.nid = None
+        self.node = None
         self._graph = nx.Graph()
-        self._graph.add_node(node["Nid"], **node)
+
+    def add_self_node(self, data):
+        self._graph.add_node(data["Nid"], **data)
         self.nid = cg_public_ip_port
         self.node = self._graph.nodes[self.nid]
 
@@ -190,3 +193,9 @@ class RouterGraph():
             self.update_data(data)
         elif sync_type == "add_whole_graph":
             self.sync_channel_graph_from_graph(data)
+
+    def draw_graph(self):
+        import matplotlib.pyplot as plt
+        plt.subplot()
+        nx.draw(self._graph, with_labels=True, font_weight='bold')
+        plt.savefig("test/{}.png".format(self.nid))

@@ -208,6 +208,30 @@ def generate_sync_tree_msg(route_tree, sender):
     }
     return message
 
+def generate_sync_graph_msg(sync_type, sender, **kwargs):
+    """
+    :param sync_type: "add_single_edge|remove_single_edge|update_node_data|add_whole_graph"\n
+    :param kwargs: {route_graph,source,target,node}
+    """
+    message = {
+        "MessageType": "SyncChannelState",
+        "SyncType": sync_type
+        "Sender": sender,
+        "Broadcast": True,
+        "Source": kwargs["source"],
+        "Target": kwargs["target"]
+        # "MessageBody": route_tree.to_json()
+    }
+    if sync_type == "add_whole_graph":
+        message["MessageBody"] = kwargs["route_graph"].to_json()
+    elif sync_type == "add_single_edge":
+        message["MessageBody"] = kwargs["node"]
+    elif sync_type == "remove_single_edge":
+        pass
+    elif sync_type == "update_node_data":
+        message["MessageBody"] = route_graph.node
+    return message
+
 def generate_resume_channel_msg(sender):
     message = {
         "MessageType": "ResumeChannel",
