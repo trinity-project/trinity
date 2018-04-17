@@ -1019,7 +1019,7 @@ class SettleResponseMessage(TransactionMessage):
             tx_id = self.settlement.get("originalData").get("txId")
             witness = self.settlement.get("originalData").get("witness")
             raw_data = witness.format(signSelf=tx_data_sign_self, signOther=tx_data_sign_other)
-            TrinityTransaction.sendrawtransaction(TrinityTransaction.genarate_raw_data(tx_data, witness))
+            TrinityTransaction.sendrawtransaction(TrinityTransaction.genarate_raw_data(tx_data, raw_data))
             register_monitor(tx_id,monitor_founding,self.channel_name, EnumChannelState.CLOSED.name)
 
     def verify(self):
