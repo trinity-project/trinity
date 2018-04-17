@@ -1018,12 +1018,22 @@ class SettleResponseMessage(TransactionMessage):
             tx_data_sign_self = self.wallet.SignContent(tx_data)
             tx_id = self.settlement.get("originalData").get("txId")
             witness = self.settlement.get("originalData").get("witness")
+            role = ch.Channel.channel(self.channel_name).get_role_in_channel(self.wallet.url)
+            if role =="Founder":
+                sign_self = tx_data_sign_self
+                sign_other = tx_data_sign_other
+            elif role == "Partner":
+                sign_self = tx_data_sign_other
+                sign_other = tx_data_sign_self
+            else:
+                raise Exception("Not Find the url")
             raw_data = witness.format(signSelf=tx_data_sign_self, signOther=tx_data_sign_other)
             TrinityTransaction.sendrawtransaction(TrinityTransaction.genarate_raw_data(tx_data, raw_data))
             register_monitor(tx_id,monitor_founding,self.channel_name, EnumChannelState.CLOSED.name)
 
     def verify(self):
         return True, None
+
 
 def monitor_founding(height, channel_name, state):
     channel = ch.Channel.channel(channel_name)
@@ -1035,6 +1045,7 @@ def monitor_founding(height, channel_name, state):
 
 def monitor_height(height, txdata, signother, signself):
     register_block(str(int(height)+1000),send_rsmcr_transaction,height,txdata,signother, signself)
+
 
 def send_rsmcr_transaction(height,txdata,signother, signself):
     height_script = blockheight_to_script(height)

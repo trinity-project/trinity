@@ -199,6 +199,14 @@ class Channel(object):
                "Balance":self.get_balance()}
         return jsn
 
+    def get_role_in_channel(self, url):
+        if url == self.src_addr:
+            return "Founder"
+        elif url == self.dest_addr:
+            return "Partner"
+        else:
+            return None
+
 
 
 def create_channel(founder, partner, asset_type, depoist:int, cli=True):
