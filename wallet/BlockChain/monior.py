@@ -37,31 +37,28 @@ BlockHeightRecord = os.path.join(TxDataDir,"block.data")
 
 class Monitor(object):
     GoOn = True
+
     @classmethod
     def stop_monitor(cls):
         cls.GoOn = False
+
+    @staticmethod
+    def update_block_height():
+        pass
 
 
 def monitorblock():
     blockHeight = get_block_count()
 
     while Monitor.GoOn:
-        #block = Blockchain.Default().GetBlock(str(Blockchain.Default().Height))
         try:
 
             block = get_bolck(int(blockHeight)-1)
-            #block.LoadTransactions()
-            #jsn = block.ToJson()
-            #jsn['confirmations'] = Blockchain.Default().Height - block.Index + 1
-            #hash = Blockchain.Default().GetNextBlockHash(block.Hash)
-            #if hash:
-                #jsn['nextblockhash'] = '0x%s' % hash.decode('utf-8')
-            #send_message_to_gateway(block)
             handle_message(int(blockHeight)-1,block)
-            #logger.info("Block %s / %s", str(block), blockHeight)
             blockHeight +=1
         except Exception as e:
-            LOG.debug("GetBlockError {}".format(e))
+            pass
+
         time.sleep(15)
 
 
@@ -83,7 +80,7 @@ def handle_message(height,jsn):
     txids = copy.deepcopy(TxIDRegister)
     for value in txids:
         txid = value[0]
-        logger.info("Handle Txid: {}".format(txid))
+        LOG.info("Handle Txid: {}".format(txid))
         if txid in block_txids:
             value[1](value[0],*value[2:])
             match_list.append(value)
