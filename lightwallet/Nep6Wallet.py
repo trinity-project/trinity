@@ -279,5 +279,5 @@ class Nep6Wallet(object):
     def SaveStoredData(self, key, value):
         wallet_info  = self.fromJsonFile(self._path)
         wallet_info["extra"][key] = value
-        with open(self._path) as f:
+        with open(self._path,"wb") as f:
             f.write(json.dumps(wallet_info).encode())
