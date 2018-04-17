@@ -970,7 +970,7 @@ class SettleMessage(TransactionMessage):
         receiver_pubkey = receiver.split("@")[0].strip()
         sender_balance = balance.get(sender_pubkey).get(asset_type.upper())
         receiver_balance = balance.get(receiver_pubkey).get(asset_type.upper())
-        settlement_tx = createRefundTX(address_founder,sender_balance,receiver_balance,sender_pubkey,receiver_balance,
+        settlement_tx = createRefundTX(address_founder,float(sender_balance),receiver_balance,sender_pubkey,receiver_pubkey,
                                     founder_script)
 
         message = { "MessageType":"Settle",

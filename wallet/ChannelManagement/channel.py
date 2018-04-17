@@ -227,8 +227,8 @@ def chose_channel(channels, publick_key, tx_count, asset_type):
 def close_channel(channel_name, wallet):
     ch = Channel.channel(channel_name)
     peer = ch.get_peer(wallet.url)
-    tx = trans.TrinityTransaction(channel_name, wallet)
-    tx.realse_transaction()
+    #tx = trans.TrinityTransaction(channel_name, wallet)
+    #tx.realse_transaction()
     mg.SettleMessage.create(channel_name,wallet,wallet.url, peer, "TNC") #ToDo
 
 
