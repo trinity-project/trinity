@@ -17,15 +17,12 @@ from lightwallet.Utils import get_from_addr, get_arg, get_asset_id, get_balance,
 
 class Nep6Wallet(object):
     AddressVersion = None
-    _passwordHash=None
+
     Name=None
-    _path = ''
-    _keys = {}
     Version = "1.0"
     Scrypt={"n":16384,"r":8,"p":8}
-    _accounts=[]
 
-    _db_path = _path
+
 
 
 
@@ -39,6 +36,9 @@ class Nep6Wallet(object):
         """
 
         self._path = path
+        self._accounts = []
+        self._keys={}
+        self._passwordHash=None
 
         if create:
             self._iv = bytes(Random.get_random_bytes(16))
