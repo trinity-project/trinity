@@ -1,28 +1,28 @@
 #!/usr/bin/env python3
 
-import argparse
-import datetime
-import json
 import os
-import psutil
-import traceback
-import logging
 import sys
-from logzero import logger
+pythonpath = os.path.dirname(os.path.dirname(__file__))
+sys.path.append(pythonpath)
+
+
+import argparse
+import json
+
+import traceback
+
 from prompt_toolkit import prompt
 from prompt_toolkit.contrib.completers import WordCompleter
 from prompt_toolkit.shortcuts import print_tokens
 from prompt_toolkit.token import Token
 from twisted.internet import reactor, task, endpoints
 from log import LOG
-import gevent
-from gevent import monkey
-#monkey.patch_all()
+from lightwallet.Settings import settings
 
 from wallet.utils import get_arg,to_aes_key
 from wallet.Interface.rpc_interface import RpcInteraceApi
 from twisted.web.server import Site
-from thin_wallet.prompt import PromptInterface
+from lightwallet.prompt import PromptInterface
 from wallet.ChannelManagement.channel import create_channel, filter_channel_via_address,\
     get_channel_via_address,chose_channel,close_channel
 from wallet.TransactionManagement import message as mg
@@ -61,7 +61,8 @@ class UserPromptInterface(PromptInterface):
         """
         wallet = self.Wallet.ToJson()
         try:
-            return wallet["address"], wallet["pubkey"]
+            account =  wallet.get("accounts")[0]
+            return account["address"], account["pubkey"]
         except AttributeError:
             return None,None
 
@@ -70,10 +71,21 @@ class UserPromptInterface(PromptInterface):
         """
         :return:
         """
+
+        tokens = [(Token.Neo, 'TRINITY'), (Token.Default, ' cli. Type '),
+                  (Token.Command, "'help' "), (Token.Default, 'to get started')]
+
+        print_tokens(tokens,self.token_style)
+        print("\n")
+
+
         while self.go_on:
             try:
-                result = prompt("trinity> ",
+                result = prompt("trinity>",
                                 history=self.history,
+                                get_bottom_toolbar_tokens=self.get_bottom_toolbar,
+                                style=self.token_style,
+                                # refresh_interval=15
                                 )
             except EOFError:
                 return self.quit()
@@ -151,7 +163,7 @@ class UserPromptInterface(PromptInterface):
             if result:
                 self.Wallet.url = json.loads(result).get("MessageBody").get("Url")
                 self.Channel = True
-                print("Channel Funtion Opend")
+                print("Channel Function Enabled")
             else:
                 self._channel_noopen()
 
@@ -261,7 +273,21 @@ def main():
     # Show the  version
     parser.add_argument("--version", action="version",
                         version=Version)
+    parser.add_argument("-m", "--mainnet", action="store_true", default=False,
+                        help="Use MainNet instead of the default TestNet")
+    parser.add_argument("-p", "--privnet", action="store_true", default=False,
+                        help="Use PrivNet instead of the default TestNet")
+
     args = parser.parse_args()
+
+    if args.mainnet:
+        settings.setup_mainnet()
+    elif args.privnet:
+        settings.setup_privnet()
+    else:
+        settings.setup_testnet()
+
+
     UserPrompt = UserPromptInterface()
     api_server_rpc = RpcInteraceApi("20556")
     endpoint_rpc = "tcp:port={0}:interface={1}".format("20556", "0.0.0.0")
