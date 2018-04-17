@@ -1,14 +1,16 @@
 #!/usr/bin/env python3
 
-import argparse
-import datetime
-import json
 import os
-import psutil
-import traceback
-import logging
 import sys
-from logzero import logger
+pythonpath = os.path.dirname(os.path.dirname(__file__))
+sys.path.append(pythonpath)
+
+
+import argparse
+import json
+
+import traceback
+
 from prompt_toolkit import prompt
 from prompt_toolkit.contrib.completers import WordCompleter
 from prompt_toolkit.shortcuts import print_tokens
