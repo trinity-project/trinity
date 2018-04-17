@@ -23,10 +23,18 @@ tcp_msg_types = [
     "RegisterChannel",
     "SyncChannelState",
     "ResumeChannel",
-    "Rsmc",
-    "FounderSign",
-    "Founder","RsmcSign",
-    "FounderFail"
+     "Rsmc",
+     "FounderSign",
+     "Founder",
+     "RsmcSign",
+     "FounderFail",
+     "Settle",
+     "SettleSign",
+     "SettleFail",
+     "RsmcFail",
+     "Htlc",
+     "HtlcSign",
+     "HtlcFail"
 ]
 
 request_handle_result = {
