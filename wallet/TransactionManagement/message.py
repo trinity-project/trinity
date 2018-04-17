@@ -33,7 +33,7 @@ from wallet.BlockChain.monior import register_block, register_monitor
 from sserver.model import APIChannel
 from log import LOG
 import json
-import time
+
 
 class Message(object):
     """
@@ -885,6 +885,144 @@ class HtlcResponsesMessage(TransactionMessage):
     def verify(self):
         return True, None
 
+
+class SettleMessage(TransactionMessage):
+    """
+       { "MessageType":"Settle",
+      "Sender": self.receiver,
+      "Receiver":self.sender,
+      "TxNonce": 10,
+      "ChannelName":"090A8E08E0358305035709403",
+      "MessageBody": {
+                   "Commitment":{}
+
+    }
+    }
+    """
+
+    def __init__(self, message, wallet):
+        super().__init__(message, wallet)
+        self.settlement = self.message_body.get("Settlement")
+        self.channel_name = self.message.get("ChannelName")
+        self.transaction = TrinityTransaction(self.channel_name, self.wallet)
+        self.tx_nonce = self.message.get("TxNonce")
+        self.balance = self.message_body.get("Balance")
+
+    def handle_message(self):
+        verify, error = self.verify()
+        if verify:
+            tx_id = self.settlement.get("txId")
+            txdata_sign = self.wallet.SignContent(self.settlement.get("txData"))
+            message = { "MessageType":"SettleSign",
+                        "Sender": self.receiver,
+                        "Receiver":self.sender,
+                        "TxNonce": self.tx_nonce,
+                        "ChannelName":self.channel_name,
+                        "MessageBody": {
+                                  "Settlement":{
+                                      "txDataSign":txdata_sign,
+                                      "originalData":self.settlement
+                                  }
+                       }
+                   }
+            Message.send(message)
+            ch.Channel.channel(self.channel_name).update_channel(state = EnumChannelState.SETTLING.name)
+            register_monitor(tx_id, monitor_founding, self.channel_name, EnumChannelState.CLOSED.name)
+
+        else:
+            message = {"MessageType": "SettleSign",
+                       "Sender": self.receiver,
+                       "Receiver": self.sender,
+                       "TxNonce": self.tx_nonce,
+                       "ChannelName": self.channel_name,
+                       "MessageBody": {
+                           "Settlement": self.settlement,
+                           "Balance":self.balance
+                                    },
+                       "Error":error
+                       }
+
+            Message.send(message)
+
+    @staticmethod
+    def create(channel_name, wallet, sender, receiver, asset_type):
+        """
+           { "MessageType":"Settle",
+          "Sender": sender,
+          "Receiver":receiver,
+          "TxNonce": 10,
+          "ChannelName":"090A8E08E0358305035709403",
+          "MessageBody": {
+                       "Settlement":{}
+                       "Balance":{}
+        }
+        }
+        """
+        trans = TrinityTransaction(channel_name, wallet)
+        founder = trans.get_founder()
+        address_founder = founder["originalData"]["addressFunding"]
+        founder_script = founder["originalData"]["scriptFunding"]
+        tx_nonce = "-1"
+        channel = ch.Channel.channel(channel_name)
+        balance = channel.get_balance()
+        sender_pubkey = sender.split("@")[0].strip()
+        receiver_pubkey = receiver.split("@")[0].strip()
+        sender_balance = balance.get(sender_pubkey).get(asset_type.upper())
+        receiver_balance = balance.get(receiver_pubkey).get(asset_type.upper())
+        settlement_tx = createRefundTX(address_founder,sender_balance,receiver_balance,sender_pubkey,receiver_balance,
+                                    founder_script)
+
+        message = { "MessageType":"Settle",
+          "Sender": sender,
+          "Receiver":receiver,
+          "TxNonce": tx_nonce,
+          "ChannelName":channel_name,
+          "MessageBody": {"Settlement":settlement_tx,
+                          "Balance": balance
+                           }
+         }
+        Message.send(message)
+        ch.Channel.channel(channel_name).update_channel(state=EnumChannelState.SETTLING.name)
+
+    def verify(self):
+        return True, None
+
+class SettleResponseMessage(TransactionMessage):
+    """
+       { "MessageType":"SettleSign",
+      "Sender": self.receiver,
+      "Receiver":self.sender,
+      "TxNonce": 10,
+      "ChannelName":"090A8E08E0358305035709403",
+      "MessageBody": {
+                   "Commitment":{}
+
+    }
+    }
+    """
+
+    def __init__(self, message, wallet):
+        super().__init__(message, wallet)
+        self.settlement = self.message_body.get("Settlement")
+        self.channel_name = self.message.get("ChannelName")
+        self.transaction = TrinityTransaction(self.channel_name, self.wallet)
+        self.tx_nonce = self.message.get("TxNonce")
+        self.balance = self.message_body.get("Balance")
+
+    def handle_message(self):
+        verify, error = self.verify()
+        if verify:
+            tx_data = self.settlement.get("originalData").get("txData")
+            tx_data_sign_other = self.settlement.get("txDataSign")
+            tx_data_sign_self = self.wallet.SignContent(tx_data)
+            tx_id = self.settlement.get("originalData").get("txId")
+            witness = self.settlement.get("originalData").get("witness")
+            raw_data = witness.formate(signSelf=tx_data_sign_self, signOther=tx_data_sign_other)
+            TrinityTransaction.sendrawtransaction(TrinityTransaction.genarate_raw_data(tx_data, witness))
+            register_monitor(tx_id,monitor_founding,self.channel_name, EnumChannelState.CLOSED.name)
+
+    def verify(self):
+        return True, None
 
 def monitor_founding(height, channel_name, state):
     channel = ch.Channel.channel(channel_name)

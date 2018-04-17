@@ -242,9 +242,6 @@ class Nep6Wallet(object):
                 }
             }
             jsn['accounts'].append(tmp_dict)
-
-
-
         return jsn
 
     def ToJsonFile(self, path,password):

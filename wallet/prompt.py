@@ -215,9 +215,7 @@ class UserPromptInterface(PromptInterface):
             channel_name = get_arg(arguments, 1)
             print("Closing channel {}".format(channel_name))
             if channel_name:
-                result = trinitytx.TrinityTransaction(channel_name, self.Wallet).realse_transaction()
-                if result:
-                    close_channel(channel_name)
+                close_channel(channel_name)
             else:
                 print("No Channel Create")
 
@@ -248,14 +246,18 @@ class UserPromptInterface(PromptInterface):
             return "Error Message"
         if message_type == "Founder":
             m_instance = mg.FounderMessage(message, self.Wallet)
-        elif message_type == "FounderSign" or message_type == "FounderFail":
+        elif message_type in [ "FounderSign" ,"FounderFail"]:
             m_instance = mg.FounderResponsesMessage(message, self.Wallet)
         elif message_type == "Htlc":
             m_instance = mg.HtlcMessage(message, self.Wallet)
         elif message_type == "Rsmc":
             m_instance = mg.RsmcMessage(message, self.Wallet)
-        elif message_type == "RsmcSign" or message_type == "RsmcFail":
+        elif message_type in ["RsmcSign", "RsmcFail"]:
             m_instance = mg.RsmcResponsesMessage(message, self.Wallet)
+        elif message_type == "Settle":
+            m_instance = mg.SettleMessage(message, self.Wallet)
+        elif message_type in ["SettleSign","SettleFail"]:
+            m_instance = mg.SettleResponseMessage(message, self.Wallet)
         elif message_type == "RegisterChannel":
             m_instance = mg.RegisterMessage(message, self.Wallet)
         elif message_type == "CreateTranscation":
