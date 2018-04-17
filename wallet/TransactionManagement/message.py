@@ -856,7 +856,7 @@ class HtlcMessage(TransactionMessage):
 
 class HtlcResponsesMessage(TransactionMessage):
     """
-    { "MessageType":"HtlcSign",
+    { "MessageType":"HtlcGSign",
       "Sender": self.receiver,
       "Receiver":self.sender,
       "TxNonce": 0,
@@ -1018,7 +1018,7 @@ class SettleResponseMessage(TransactionMessage):
             tx_data_sign_self = self.wallet.SignContent(tx_data)
             tx_id = self.settlement.get("originalData").get("txId")
             witness = self.settlement.get("originalData").get("witness")
-            raw_data = witness.formate(signSelf=tx_data_sign_self, signOther=tx_data_sign_other)
+            raw_data = witness.format(signSelf=tx_data_sign_self, signOther=tx_data_sign_other)
             TrinityTransaction.sendrawtransaction(TrinityTransaction.genarate_raw_data(tx_data, witness))
             register_monitor(tx_id,monitor_founding,self.channel_name, EnumChannelState.CLOSED.name)
 

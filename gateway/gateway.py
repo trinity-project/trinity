@@ -37,7 +37,7 @@ class Gateway():
                       "SettleSign",
                       "SettleFail",
                       "RsmcFail",
-                      "Htlc", 
+                      "Htlc",
                       "HtlcSign",
                       "HtlcFail"]
 
