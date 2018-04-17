@@ -223,12 +223,14 @@ def chose_channel(channels, publick_key, tx_count, asset_type):
             else:
                 continue
 
+
 def close_channel(channel_name, wallet):
     ch = Channel.channel(channel_name)
     peer = ch.get_peer(wallet.url)
     tx = trans.TrinityTransaction(channel_name, wallet)
     tx.realse_transaction()
-    mg.SettleMessage.create(channel_name,wallet,wallet.url, peer)
+    mg.SettleMessage.create(channel_name,wallet,wallet.url, peer, "TNC") #ToDo
+
 
 def sync_channel_info_to_gateway(channel_name, type):
     LOG.info("Debug sync_channel_info_to_gateway  channelname {} type {}".format(channel_name, type))
