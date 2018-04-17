@@ -126,3 +126,26 @@ def createBRTX(addressRSMC,addressOther,balanceSelf,RSMCScript):
         "txId":createTxid(tx.get_tx_data()),
         "witness": "01{blockheight_script}40{signOther}40{signSelf}fd" + createVerifyScript(RSMCScript)
     }
+
+
+def createRefundTX(addressFunding,balanceSelf,balanceOther,pubkeySelf,pubkeyOther,fundingScript):
+
+    time_stamp = TransactionAttribute(usage=TransactionAttributeUsage.Remark,
+                                      data=bytearray.fromhex(hex(int(time.time()))[2:]))
+    address_hash_funding = TransactionAttribute(usage=TransactionAttributeUsage.Script,
+                                         data=ToAddresstHash(addressFunding).Data)
+    txAttributes = [address_hash_funding, time_stamp]
+
+    op_data_to_self = create_opdata(address_from=addressFunding, address_to=pubkeyToAddress(pubkeySelf), value=balanceSelf,contract_hash=TNC)
+    op_data_to_other = create_opdata(address_from=addressFunding, address_to=pubkeyToAddress(pubkeyOther), value=balanceOther,contract_hash=TNC)
+
+    tx = InvocationTransaction()
+    tx.Version = 1
+    tx.Attributes = txAttributes
+    tx.Script = binascii.unhexlify(op_data_to_self+op_data_to_other)
+
+    return {
+        "txData":tx.get_tx_data(),
+        "txId":createTxid(tx.get_tx_data()),
+        "witness":"018240{signSelf}40{signOther}47"+fundingScript
+    }
