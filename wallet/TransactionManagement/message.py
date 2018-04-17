@@ -839,7 +839,7 @@ class HtlcMessage(TransactionMessage):
                                                   }
                                 }
         else:
-            message_response = { "MessageType":"FounderFail",
+            message_response = { "MessageType":"HtlcFail",
                                 "Sender": self.receiver,
                                 "Receiver":self.sender,
                                 "TxNonce": self.tx_nonce,
@@ -856,7 +856,7 @@ class HtlcMessage(TransactionMessage):
 
 class HtlcResponsesMessage(TransactionMessage):
     """
-    { "MessageType":"htlcSign",
+    { "MessageType":"HtlcSign",
       "Sender": self.receiver,
       "Receiver":self.sender,
       "TxNonce": 0,
