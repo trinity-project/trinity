@@ -37,29 +37,58 @@ BlockHeightRecord = os.path.join(TxDataDir,"block.data")
 
 class Monitor(object):
     GoOn = True
+    Wallet = None
+    Wallet_Change = None
 
     @classmethod
     def stop_monitor(cls):
         cls.GoOn = False
 
-    @staticmethod
-    def update_block_height():
-        pass
+    @classmethod
+    def start_monitor(cls, wallet):
+        cls.Wallet = wallet
+        cls.Wallet_Change = True
+
+    @classmethod
+    def update_block_height(cls, blockheight):
+        if cls.Wallet_Change:
+            return None
+        if cls.Wallet:
+            cls.Wallet.SaveStoredData("BlockHeight", blockheight)
+        else:
+            LOG.debug("Wallet not opened")
+            return None
+
+    @classmethod
+    def get_wallet_block_height(cls):
+        if cls.Wallet:
+            block_height =  cls.Wallet.LoadStoredData("BlockHeight")
+            cls.Wallet_Change = False
+            return block_height
+        else:
+            LOG.debug("Wallet not opened")
+            return None
 
 
 def monitorblock():
-    blockHeight = get_block_count()
-
     while Monitor.GoOn:
-        try:
+        blockheight = Monitor.get_wallet_block_height()
+        if blockheight:
+            try:
+                block = get_bolck(int(blockheight)-1)
+                handle_message(int(blockheight)-1,block)
+                blockheight +=1
+                Monitor.update_block_height(blockheight)
+            except Exception as e:
+                pass
+        else:
+            LOG.debug("Not get the blockheight")
 
-            block = get_bolck(int(blockHeight)-1)
-            handle_message(int(blockHeight)-1,block)
-            blockHeight +=1
-        except Exception as e:
-            pass
-
-        time.sleep(15)
+        blockheight_onchain = get_block_count()
+        if blockheight < blockheight_onchain:
+            time.sleep(1)
+        else:
+            time.sleep(15)
 
 
 def send_message_to_gateway(message):
