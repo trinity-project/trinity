@@ -37,6 +37,9 @@ from wallet.BlockChain.interface import get_block_count
 
 from functools import reduce
 from wallet.BlockChain.monior import monitorblock,Monitor
+from wallet.TransactionManagement.payment import Payment
+import requests
+import qrcode_terminal
 
 GateWayIP = Configure.get("GatewayIP")
 Version = Configure.get("Version")
@@ -49,11 +52,14 @@ class UserPromptInterface(PromptInterface):
 
     def __init__(self):
         super().__init__()
-        user_commands = ["channel enable","channel create {partner} {asset_type} {deposit}",
+        self.user_commands = ["channel enable","channel create {partner} {asset_type} {deposit}",
                          "channel tx {receiver} {asset_type} {count}",
-                         "channel close {peer},"
-                         "channel peer"]
-        self.commands.extend(user_commands)
+                         "channel close {channel},"
+                         "channel peer",
+                         "channel payment {asset}, {count}, [{comments}]",
+                         "channel qrcode {on/off}"]
+        self.commands.extend(self.user_commands)
+        self.qrcode = False
 
     def get_address(self):
         """
@@ -134,26 +140,29 @@ class UserPromptInterface(PromptInterface):
                 traceback.print_exc()
 
     def retry_channel_enable(self):
-        for i in range(100):
+        for i in range(30):
             enable = self.enable_channel()
             if enable:
                 break
             else:
-                time.sleep(0.5)
+                sys.stdout.write("Wait connect to gateway...{}...\r".format(i))
+                time.sleep(0.2)
         else:
             self._channel_noopen()
 
     def do_open(self, arguments):
         super().do_open(arguments)
-        Monitor.start_monitor(self.Wallet)
-        self.retry_channel_enable()
+        if self.Wallet:
+            Monitor.start_monitor(self.Wallet)
+            self.retry_channel_enable()
 
     def do_create(self, arguments):
         super().do_create(arguments)
-        blockheight = get_block_count()
-        self.Wallet.SaveStoredData("BlockHeight", blockheight)
-        Monitor.start_monitor(self.Wallet)
-        self.retry_channel_enable()
+        if self.Wallet:
+            blockheight = get_block_count()
+            self.Wallet.SaveStoredData("BlockHeight", blockheight)
+            Monitor.start_monitor(self.Wallet)
+            self.retry_channel_enable()
 
     def quit(self):
         print('Shutting down. This may take about 15 sec to sync the block info')
@@ -164,20 +173,28 @@ class UserPromptInterface(PromptInterface):
 
     def enable_channel(self):
         self.Wallet.address, self.Wallet.pubkey = self.get_address()
-        result = gate_way.join_gateway(self.Wallet.pubkey).get("result")
-        if result:
-            self.Wallet.url = json.loads(result).get("MessageBody").get("Url")
-            self.Channel = True
-            print("Channel Function Enabled")
-            return True
-        else:
-            return False
+        try:
+            result = gate_way.join_gateway(self.Wallet.pubkey).get("result")
+            if result:
+                self.Wallet.url = json.loads(result).get("MessageBody").get("Url")
+                self.Channel = True
+                print("Channel Function Enabled")
+                return True
+        except requests.exceptions.ConnectionError:
+            pass
+        return False
 
     def do_channel(self,arguments):
         if not self.Wallet:
             print("Please open a wallet")
             return
+
         command = get_arg(arguments)
+        channel_command = [i.split()[1] for i in self.user_commands]
+        if command not in channel_command:
+            print("no support command, please check the help")
+            self.help()
+            return
 
         if command == 'create':
             if not self.Channel:
@@ -230,11 +247,17 @@ class UserPromptInterface(PromptInterface):
                         tx_nonce = trinitytx.TrinityTransaction(channel_name, self.Wallet).get_latest_nonceid()
                         mg.RsmcMessage.create(channel_name, self.Wallet, self.Wallet.pubkey,
                                               receiverpubkey, int(count), receiverip, gate_way_ip, str(tx_nonce + 1),
-                                              asset_type="TNC",router= r, next_router=n)
+                                              asset_type="TNC",router=r, next_router=n)
                     else:
                         return None
                 else:
                     return
+
+        elif command == "qrcode":
+            enable = get_arg(arguments,1)
+            if enable not in ["on","off"]:
+                print("should be on or off")
+            self.qrcode = True if enable.upper() == "ON" else False
 
         elif command == "close":
             if not self.Channel:
@@ -251,6 +274,19 @@ class UserPromptInterface(PromptInterface):
                 self._channel_noopen()
             get_channel_via_address(self.Wallet.url)
             return
+        elif command == "payment":
+            asset_type = get_arg(arguments, 1)
+            if not asset_type:
+                print("command not give the asset type")
+            value = get_arg(arguments, 2)
+            if not value:
+                print("command not give the count")
+            comments = " ".join(arguments[2:])
+            comments = comments if comments else "None"
+            paycode = Payment(self.Wallet).generate_payment_code(asset_type, value, comments)
+            if self.qrcode:
+                qrcode_terminal.draw(paycode, version=4)
+            print(paycode)
 
     def _channel_noopen(self):
         print("Channel Function Can Not be Opened at Present, You can try again via channel enable")

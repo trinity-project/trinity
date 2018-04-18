@@ -798,7 +798,7 @@ class HtlcMessage(TransactionMessage):
         receiver_address = pubkey_to_address(receiverpubkey)
         sender_balance = balance.get(sender_address)
         receiver_balance = balance.get(receiver_address)
-        hctx = createHCTX(senderpubkey,receiverpubkey,HTLCvalue,sender_balance,
+        hctx = createSelfHCTX(senderpubkey,receiverpubkey,HTLCvalue,sender_balance)
         #                 receiver_balance,hashR,founder["addressFunding"],founder["scriptFunding"])
         #hedtx = createHEDTX(hctx["addressHTLC"], receiver_address, HTLCvalue, hctx["HTLCscript"])
         #httx = createHTTX(hctx["addressHTLC"], sender_address, HTLCvalue, hctx["HTLCscript"])
