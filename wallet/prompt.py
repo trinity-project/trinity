@@ -33,6 +33,7 @@ from sserver.model.base_enum import EnumChannelState
 
 from wallet.Interface import gate_way
 from wallet.configure import Configure
+from wallet.BlockChain.interface import get_block_count
 
 from functools import reduce
 from wallet.BlockChain.monior import monitorblock,Monitor
@@ -132,8 +133,7 @@ class UserPromptInterface(PromptInterface):
                 traceback.print_stack()
                 traceback.print_exc()
 
-    def do_open(self, arguments):
-        super().do_open(arguments)
+    def retry_channel_enable(self):
         for i in range(100):
             enable = self.enable_channel()
             if enable:
@@ -142,6 +142,18 @@ class UserPromptInterface(PromptInterface):
                 time.sleep(0.5)
         else:
             self._channel_noopen()
+
+    def do_open(self, arguments):
+        super().do_open(arguments)
+        Monitor.start_monitor(self.Wallet)
+        self.retry_channel_enable()
+
+    def do_create(self, arguments):
+        super().do_create(arguments)
+        blockheight = get_block_count()
+        self.Wallet.SaveStoredData("BlockHeight", blockheight)
+        Monitor.start_monitor(self.Wallet)
+        self.retry_channel_enable()
 
     def quit(self):
         print('Shutting down. This may take about 15 sec to sync the block info')
