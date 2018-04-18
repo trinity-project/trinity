@@ -209,6 +209,7 @@ def scriptToAddress(script):
     address=Crypto.ToAddress(scriptHash)
     return address
 
+
 def construt_init_channel_transction(params):
 
     walletSelf={
@@ -254,6 +255,8 @@ def construt_update_channel_transction(params):
                             balanceSelf=walletSelf["deposit"], RSMCScript=script_rsmc)
 
     return {"BR_tx": BR_tx, "C_TX": C_tx, "R_TX": RD_tx}
+
+
 
 if __name__== "__main__":
     tx = TrinityTransaction("Mytest","walle")

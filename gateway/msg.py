@@ -82,7 +82,7 @@ message = {
     "MessageType":"SyncWallet",
     "MesssgeBody":{
         "Publickey":publickey,
-        "CommitMinDeposit":Configure["Channel"]["CommitMinDeposit"]
+        "CommitMinDeposit":Configure["Channel"]["CommitMinDeposit"],
         "Fee":Configure["Fee"]
     }
 }

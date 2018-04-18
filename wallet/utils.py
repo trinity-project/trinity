@@ -62,7 +62,7 @@ def sign(wallet, context):
     res = wallet.SignContent(context)
     return res
 
-def get_arg(arguments, index=0, convert_to_int=False, do_parse=False):
+def get_arg(arguments, index=0, convert_to_int=False):
     """
 
     :param arguments:
@@ -76,8 +76,6 @@ def get_arg(arguments, index=0, convert_to_int=False, do_parse=False):
         arg = arguments[index]
         if convert_to_int:
             return int(arg)
-        if do_parse:
-            return parse_param(arg)
         return arg
     except Exception as e:
         pass

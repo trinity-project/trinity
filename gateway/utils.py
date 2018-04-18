@@ -223,7 +223,7 @@ def generate_sync_graph_msg(sync_type, sender, **kwargs):
     """
     message = {
         "MessageType": "SyncChannelState",
-        "SyncType": sync_type
+        "SyncType": sync_type,
         "Sender": sender,
         "Broadcast": True,
         "Source": kwargs["source"],

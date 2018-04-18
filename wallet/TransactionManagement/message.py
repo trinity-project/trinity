@@ -102,6 +102,7 @@ class RegisterMessage(Message):
             return False, "The Endpoint is Not Me"
         return True, None
 
+
 class TestMessage(Message):
 
     def __init__(self, message, wallet):
@@ -109,7 +110,7 @@ class TestMessage(Message):
         self.wallet= wallet
 
     def handle_message(self):
-        founder = "{}@{}".format(self.wallet.url)
+        founder = self.wallet.url
         ch.create_channel(founder, "292929929292929292@10.10.12.1:20332", "TNC", 10)
 
 
@@ -719,8 +720,6 @@ class RsmcMessage(TransactionMessage):
             LOG.info("Send RsmcMessage Response {}".format(json.dumps(message_response)))
 
 
-
-
 class RsmcResponsesMessage(TransactionMessage):
     """
     { "MessageType":"RsmcSign",
@@ -757,6 +756,7 @@ class RsmcResponsesMessage(TransactionMessage):
 
     def verify(self):
         return True, None
+
 
 class HtlcMessage(TransactionMessage):
     """
@@ -798,8 +798,7 @@ class HtlcMessage(TransactionMessage):
         receiver_address = pubkey_to_address(receiverpubkey)
         sender_balance = balance.get(sender_address)
         receiver_balance = balance.get(receiver_address)
-        #Todo
-        #hctx = createHCTX(senderpubkey,receiverpubkey,HTLCvalue,sender_balance,
+        hctx = createSelfHCTX(senderpubkey,receiverpubkey,HTLCvalue,sender_balance)
         #                 receiver_balance,hashR,founder["addressFunding"],founder["scriptFunding"])
         #hedtx = createHEDTX(hctx["addressHTLC"], receiver_address, HTLCvalue, hctx["HTLCscript"])
         #httx = createHTTX(hctx["addressHTLC"], sender_address, HTLCvalue, hctx["HTLCscript"])
@@ -815,8 +814,6 @@ class HtlcMessage(TransactionMessage):
         #                }
         #           }
         #HtlcMessage.send(message)
-
-
 
     def send_responses(self, error = None):
         if not error:
@@ -987,6 +984,7 @@ class SettleMessage(TransactionMessage):
 
     def verify(self):
         return True, None
+
 
 class SettleResponseMessage(TransactionMessage):
     """

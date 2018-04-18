@@ -56,17 +56,17 @@ class Monitor(object):
         if cls.Wallet:
             cls.Wallet.SaveStoredData("BlockHeight", blockheight)
         else:
-            LOG.debug("Wallet not opened")
+            #LOG.debug("Wallet not opened")
             return None
 
     @classmethod
     def get_wallet_block_height(cls):
         if cls.Wallet:
-            block_height =  cls.Wallet.LoadStoredData("BlockHeight")
+            block_height = cls.Wallet.LoadStoredData("BlockHeight")
             cls.Wallet_Change = False
             return block_height
         else:
-            LOG.debug("Wallet not opened")
+            #LOG.debug("Wallet not opened")
             return None
 
 
@@ -82,9 +82,10 @@ def monitorblock():
             except Exception as e:
                 pass
         else:
-            LOG.debug("Not get the blockheight")
-
+            #LOG.debug("Not get the blockheight")
+            pass
         blockheight_onchain = get_block_count()
+        blockheight = blockheight if blockheight else 0
         if blockheight < blockheight_onchain:
             time.sleep(1)
         else:
