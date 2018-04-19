@@ -180,41 +180,47 @@ if __name__ == "__main__":
         "Balance": 5,
         "SpvList": []
     }
-    G = RouterGraph(node1)
-    G.add_edge("p1","p2",node2)
-    # G._graph.add_node("p3", **node3)
-    G.add_edge("p2","p3",node3)
-    G.add_edge("p1","p4",node4)
-    G.add_edge("p3","p4",node4)
+    # G = RouterGraph(node1)
+    # G.add_edge("p1","p2",node2)
+    # # G._graph.add_node("p3", **node3)
+    # G.add_edge("p2","p3",node3)
+    # G.add_edge("p1","p4",node4)
+    # G.add_edge("p3","p4",node4)
     # G.remove_edge("p3","p2")
-    print("更新前")
-    print(nx.convert.to_edgelist(G._graph))
-    for k in G._graph.nodes:
-        print(k,G._graph.nodes[k])
-    print("最短路径")
-    print(G.find_shortest_path_decide_by_fee("p2", "p4"))
-    data = {
-        "Nid": "p3",
-        "Ip": "n2",
-        "Pblickkey": "pk2",
-        "Name": "test1",
-        "Deposit": "1",
-        "Fee": 0,
-        "Balance": 6,
-        "SpvList": []
-    }
-    G.update_data(data)
-    print("最短路径")
-    print(G.find_shortest_path_decide_by_fee("p2", "p4"))
+    # print("更新前")
+    # print(nx.convert.to_edgelist(G._graph))
+    # for k in G._graph.nodes:
+    #     print(k,G._graph.nodes[k])
+    # print("最短路径")
+    # print(G.find_shortest_path_decide_by_fee("p2", "p4"))
+    # data = {
+    #     "Nid": "p3",
+    #     "Ip": "n2",
+    #     "Pblickkey": "pk2",
+    #     "Name": "test1",
+    #     "Deposit": "1",
+    #     "Fee": 0,
+    #     "Balance": 6,
+    #     "SpvList": []
+    # }
+    # G.update_data(data)
+    # print("最短路径")
+    # print(G.find_shortest_path_decide_by_fee("p2", "p4"))
     # print(G._graph.edges["p1","p2"])
-    # G1 = nx.Graph()
-    # G2 = nx.Graph()
+    G1 = nx.Graph()
+    G2 = nx.Graph()
     # G1.add_edge('n1', 'n2', weight=1)
     # G1.add_edge('n1', 'n3', weight=2)
     
-    # G2.add_edge('n1', 'n4', weight=3)
+    G2.add_edge('1', '2', weight=3)
     # G2.add_node('n5')
-    # G3 = nx.algorithms.operators.binary.compose(G1,G2)
+    # G1.add_node('3')
+    G3 = nx.algorithms.operators.binary.compose(G1,G2)
+    G3.add_edge("3","1")
+    G3.add_edge("3","2")
+    # G3.add_edge("1","4")
+    print(list(G3.nodes))
+    print(set(G3.neighbors("3")))
     # # G1.add_edge('n1', 'n4', weight=1)
     # print(G3.nodes)
     # del G1
@@ -232,10 +238,10 @@ if __name__ == "__main__":
     #     print(e)
     # except StopIteration:
     #     print("isolad")
-    print("更新后")
-    print(nx.convert.to_edgelist(G._graph))
-    for k in G._graph.nodes:
-        print(k,G._graph.nodes[k])
+    # print("更新后")
+    # print(nx.convert.to_edgelist(G._graph))
+    # for k in G._graph.nodes:
+    #     print(k,G._graph.nodes[k])
     # print([edge for edge in G.edges])
     # print(G.has_edge("n2","n1"))
     # print(G.adj)
@@ -244,4 +250,5 @@ if __name__ == "__main__":
     # data1 = json_graph.node_link_data(G._graph)
     # print(data1)
     # print(list(G.adjacency()))
-    show_graph(G._graph)
+    show_graph(G3)
+    # show_graph(G3)

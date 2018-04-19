@@ -76,23 +76,26 @@ class RouterGraph():
 
     def add_self_node(self, data):
         self._graph.add_node(data["Nid"], **data)
-        self.nid = cg_public_ip_port
+        self.nid = data["Nid"]
         self.node = self._graph.nodes[self.nid]
 
-    def add_edge(self, sid, tid, data):
+    def add_edge(self, sid, tid):
         # first sid must in the graph
         # otherwise local node will not receive this sync type msg
         if not self._graph.has_edge(sid, tid):
-            # tid already in the graph
-            if self._graph.has_node(tid):
-                t_fee = self._graph.nodes[tid]["Fee"]
-            # tid not yet in the graph
-            else:
-                self._graph.add_node(tid, **data)
-                t_fee = data["Fee"]
+            t_fee = self._graph.nodes[tid]["Fee"]
             s_fee = self._graph.nodes[sid]["Fee"]
-            fee = s_fee + t_fee
             self._graph.add_edge(sid, tid, weight=fee)
+            # # tid already in the graph
+            # if self._graph.has_node(tid):
+            #     t_fee = self._graph.nodes[tid]["Fee"]
+            # # tid not yet in the graph
+            # else:
+            #     self._graph.add_node(tid, **data)
+            #     t_fee = data["Fee"]
+            # s_fee = self._graph.nodes[sid]["Fee"]
+            # fee = s_fee + t_fee
+            # self._graph.add_edge(sid, tid, weight=fee)
         else:
             pass
         # self.add_edge(source, target, weight=1)
@@ -149,12 +152,15 @@ class RouterGraph():
         # tid = utils.get_ip_port(target)
         return nx.shortest_path(self._graph, source, target, weight='weight')
 
-    def to_json(self):
+    def to_json(self, target=None):
         """
-        :return type json str
+        :return type dict or json str
         """
         data = json_graph.node_link_data(self._graph)
-        return json.dumps(data)
+        if target == "str":
+            return json.dumps(data)
+        else:
+            return data
 
     def to_graph(self, data):
         """
@@ -167,11 +173,36 @@ class RouterGraph():
         """
         :param data: type dict
         """
-        peer_nid = utils.get_ip_port(data["Source"])
-        peer_graph = self.to_graph(data["MessageBody"])
-        peer_fee = peer_graph.nodes[peer_nid]["Fee"]
-        self._graph = nx.algorithms.operators.binary.compose(self._graph, peer_graph)
-        self._graph.edges[sid, self.nid]["weight"] = self.node["Fee"] + peer_fee
+        # source_nid = utils.get_ip_port(data["Source"])
+        sender_nid = utils.get_ip_port(data["Sender"])
+        source_graph = self.to_graph(data["MessageBody"])
+        # u_fee = source_graph.nodes[source_nid]["Fee"]
+        # sync triggled by wallet notification
+        self._graph = nx.algorithms.operators.binary.compose(self._graph, source_graph)
+        if not self._graph.has_edge(sender_nid, self.nid):
+            u_fee = self._graph.nodes[sender_nid]["Fee"]
+            v_fee = self._graph.nodes[self.nid]["Fee"]
+            self._graph.add_edge(sender_nid, self.nid, weight=u_fee + v_fee)
+        # if source_nid == sender_nid:
+        #     v_fee = self.node["Fee"]
+        #     # del self._graph
+        #     self._graph = nx.algorithms.operators.binary.compose(self._graph, source_graph)
+        #     self.node = self._graph.nodes[self.nid]
+
+        #     # print("==========={}===========".format(self.node))
+        #     # print("==========={}===========".format(self._graph.nodes))
+        #     if not self._graph.has_edge(source_nid, self.nid):
+        #         # print("添加了边")
+        #         self._graph.add_edge(source_nid, self.nid, weight=u_fee + v_fee)
+        #     # self._graph.edges[source_nid, self.nid]["weight"] = u_fee + v_fee
+        # # sync triggled by sync to neighbors
+        # else: #195 error
+        #     self._graph = nx.algorithms.operators.binary.compose(self._graph, source_graph)
+        #     self.node = self._graph.nodes[self.nid]
+        #     if not self._graph.has_edge(source_nid, sender_nid):
+        #         v_fee = self._graph.nodes[sender_nid]["Fee"]
+        #         self._graph.add_edge(source_nid, sender_nid, weight=u_fee + v_fee)
+            # self._graph.edges[source_nid, sender_nid]["weight"] =  u_fee + v_fee
 
     def sync_channel_graph(self, data):
         """
@@ -182,8 +213,8 @@ class RouterGraph():
         if sync_type == "add_single_edge":
             sid = utils.get_ip_port(data["Source"])
             tid = utils.get_ip_port(data["Target"])
-            data = data["MessageBody"]
-            self.add_edge(sid, tid, data)
+            # data = data["MessageBody"]
+            self.add_edge(sid, tid)
         elif sync_type == "remove_single_edge":
             sid = utils.get_ip_port(data["Source"])
             tid = utils.get_ip_port(data["Target"])
@@ -197,5 +228,19 @@ class RouterGraph():
     def draw_graph(self):
         import matplotlib.pyplot as plt
         plt.subplot()
-        nx.draw(self._graph, with_labels=True, font_weight='bold')
+        nx.draw(self._graph, with_labels=True, font_size=3)
         plt.savefig("test/{}.png".format(self.nid))
+
+    def show_edgelist(self):
+        return nx.convert.to_edgelist(self._graph)
+
+    def has_node(self, nid):
+        if "@" in nid:
+            nid = utils.get_ip_port(nid)
+        return self._graph.has_node(nid)
+
+    def has_edge(self, u, v):
+        if "@" in u:
+            u = utils.get_ip_port(u)
+            v = utils.get_ip_port(v)
+        return self._graph.has_edge(u, v)

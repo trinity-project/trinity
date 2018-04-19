@@ -6,6 +6,7 @@ import utils
 import time
 import datetime
 from routertree import RouteTree, SPVHashTable
+from routergraph import RouterGraph
 from tcp import create_server_coro, send_tcp_msg_coro, find_connection
 from wsocket import WsocketService
 from jsonrpc import AsyncJsonRpc
@@ -19,6 +20,7 @@ node_list = set()
 node = {
     "wallet_info": None,
     "route_tree": RouteTree(),
+    "route_graph": RouterGraph(),
     "spv_table": SPVHashTable(),
     # configurable
     "name": cg_node_name
@@ -26,7 +28,7 @@ node = {
 global_statistics = Statistics()
 class Gateway():
     """
-    gateway 类 定义了所有直接相关的行为与属性
+    gateway class
     """
     def __init__(self):
         """Counstruct"""
@@ -44,14 +46,14 @@ class Gateway():
 
     def _save(self, services, loop):
         """
-        保存servers、event loop
+        save servers、event loop
         """
         self.tcpserver, self.websocket = services
         self.loop = loop
 
     
     def start(self):
-        """ 启动gateway"""
+        """ start gateway"""
         services_future = gather(*self._create_service_coros())
         loop = get_event_loop()
         loop.run_until_complete(services_future)
@@ -65,7 +67,7 @@ class Gateway():
 
     def clearn(self):
         """
-        清理任务
+        clearn task
         """
         # print(self.websocket.server)
         self.websocket.close()
@@ -83,8 +85,8 @@ class Gateway():
 
     async def _stop(self):
         """
-        延迟stop loop\n
-        避免CancelledError exception
+        delay stop loop\n
+        avoid CancelledError exception
         """
         await sleep(0.25)
         self.loop.stop()
@@ -141,26 +143,22 @@ class Gateway():
                     return utils.request_handle_result.get("correct")
                 elif msg_type == "SyncChannelState":
                     # node receive the syncchannel msg
-                    # first update self tree
-                    # then sync to self's peers except the peer which send the syncchannel msg
-                    data_body = data["MessageBody"]
-                    if type(data_body) != dict:
-                        return utils.request_handle_result.get("invalid")
+                    # first update self
+                    # then sync to self's neighbors except (has synced)
                     try:
-                        node["route_tree"].sync_tree(RouteTree.to_tree(json.dumps(data["MessageBody"])))
-                        data["Path"].append(utils.get_ip_port(node["wallet_info"]["url"]))
+                        node["route_graph"].sync_channel_graph(data)
+                        tcp_logger.debug("sync graph from peer successful")
+                        print("**********number of edges is: ",node["route_graph"]._graph.number_of_edges(),"**********")
+                        print("**********",node["route_graph"].show_edgelist(),"**********")
                     except Exception:
                         tcp_logger.exception("sync tree from peer raise an exception")
                         return utils.request_handle_result.get("invalid")
                     else:
-                        tcp_logger.debug("sync tree from peer successful")
-                        node["route_tree"].show(idhidden=False)
-                        # tcp_logger.debug(node["route_tree"].show("ascii"))
-                        tcp_logger.debug("new tree is {}".format(node["route_tree"].to_dict(with_data=True)))
                         if data["Broadcast"]:
-                            except_peer = data["Sender"]
-                            self.sync_channel_route_to_peer(data["Path"], except_peer)
-                            return utils.request_handle_result.get("correct")
+                            data["Sender"] = node["wallet_info"]["url"]
+                            self.sync_channel_route_to_peer(data)
+                        # node["route_graph"].draw_graph()
+                        return utils.request_handle_result.get("correct")
         
 
     def handle_wsocket_request(self, websocket, strdata):
@@ -233,9 +231,11 @@ class Gateway():
         :param receiver: str type: xxxx@ip:port \n
         :param data: dict type
         """
+        # time.sleep(0.04)
         bdata = utils.encode_bytes(data)
         # addr = utils.get_addr(sender)
-        connection = find_connection(receiver)
+        # connection = find_connection(receiver)
+        connection = None
         if connection:
             tcp_logger.info("find the exist connection")
             connection.write(bdata)
@@ -283,7 +283,7 @@ class Gateway():
                 "balance": body["Balance"]
             }
             # todo init self tree from local file or db
-            self._init_or_update_self_tree()
+            self._init_or_update_self_graph()
             return json.dumps(utils.generate_ack_sync_wallet_msg(node["wallet_info"]["url"]))
         # search chanenl router return the path
         elif method == "GetRouterInfo":
@@ -326,19 +326,52 @@ class Gateway():
             channel_receiver = data["MessageBody"]["Receiver"]
             channel_peer = channel_receiver if channel_founder == self_url else channel_founder
             if msg_type == "AddChannel":
-                # send self tree to peer
-                message = utils.generate_sync_tree_msg(node["route_tree"], self_url)
-                message["Path"] = [utils.get_ip_port(self_url)]
+                route_graph = node["route_graph"]
+                # only channel receiver as the broadcast source
+                if channel_founder == self_url:
+                    broadcast = True
+                    print("{}and{}build channel,only {} broadcast channel graph".format(channel_founder, channel_peer, channel_peer))
+                else:
+                    broadcast = False
+                # if route_graph.has_node(channel_peer):
+                #     sync_type = "add_single_edge"
+                sync_type = "add_whole_graph"
+                message = utils.generate_sync_graph_msg(
+                    sync_type,
+                    self_url,
+                    source=self_url,
+                    target=channel_peer,
+                    route_graph=route_graph,
+                    broadcast=broadcast,
+                    excepts=[]
+                )
                 self._send_tcp_msg(channel_peer, message)
+
             elif msg_type == "UpdateChannel":
-                #update balance and send self tree to peers
-                self_node = node["route_tree"].get_node(utils.get_ip_port(self_url))
-                self_node.data["Balance"] = data["MessageBody"]["Balance"]
-                self.sync_channel_route_to_peer()
+                # first update self's balance and sync with self's peers
+                self_node = node["route_graph"].node
+                self_node["Balance"] = data["MessageBody"]["Balance"]
+                message = utils.generate_sync_graph_msg(
+                    "update_node_data",
+                    self_url,
+                    source=self_url,
+                    node=self_node,
+                    excepts=[]
+                )
+                self.sync_channel_route_to_peer(message)
             elif msg_type == "DeleteChannel":
                 # remove channel_peer and notification peers
-                node["route_tree"].remove_node(utils.get_ip_port(channel_peer))
-                self.sync_channel_route_to_peer()
+                sid = utils.get_ip_port(self_url)
+                tid = utils.get_ip_port(channel_peer)
+                node["route_graph"].remove_edge(sid, tid)
+                message = utils.generate_sync_graph_msg(
+                    "remove_single_edge",
+                    self_url,
+                    source=self_url,
+                    target=channel_peer,
+                    excepts=[]
+                )
+                self.sync_channel_route_to_peer(message)
 
 
     def handle_web_first_connect(self, websocket):
@@ -362,13 +395,13 @@ class Gateway():
         message = {}
         ensure_future(WsocketService.push_by_timer(self.websocket.websockets, 15, message))
     
-    def _init_or_update_self_tree(self):
-        tag = "node"
+    def _init_or_update_self_graph(self):
         nid = utils.get_ip_port(node["wallet_info"]["url"])
         pk = utils.get_public_key(node["wallet_info"]["url"])
         spv_list = node["spv_table"].find(pk)
-        self_root =  node["route_tree"].root
+        self_nid =  node["route_graph"].nid
         data = {
+            "Nid": nid,
             "Ip": nid,
             "Pblickkey": pk,
             "Name": node["name"],
@@ -377,26 +410,34 @@ class Gateway():
             "Balance": node["wallet_info"]["balance"],
             "SpvList": [] if not spv_list else spv_list
         }
-        if not self_root:
-            node["route_tree"].create_node(tag=tag, identifier=nid, data=data)
+        if not self_nid:
+            node["route_graph"].add_self_node(data)
         else:
-            node["route_tree"].get_node(self_root).data.update(data)
-        node["route_tree"].show(idhidden=False)
+            node["route_graph"].update_data(data)
+            # todo sync to self's peers
+        # node["route_graph"].draw_graph()
 
-    def sync_channel_route_to_peer(self, path, except_peer=None):
+    def sync_channel_route_to_peer(self, message, path=None, except_peer=None):
         """
         :param except_peer: str type (except peer url)
         """
-        self_tree = node["route_tree"]
-        except_nid = None if not except_peer else utils.get_ip_port(except_peer)
-        message = utils.generate_sync_tree_msg(self_tree, node["wallet_info"]["url"])
-        message["Path"] = path
-        print(">>>>>{}<<<<<<".format(path))
-        for child in self_tree.is_branch(self_tree.root):
-            if child != except_nid and child not in path:
-                node_object = self_tree.get_node(child)
-                ip_port = node_object.data["Ip"].split(":")
-                receiver = node_object.data["Pblickkey"] + "@" + child
+        if message.get("SyncType") == "add_whole_graph":
+            message["MessageBody"] = node["route_graph"].to_json()
+        # message["Path"] = path
+        # nodes = message["Nodes"]
+        # except_nid = None if not except_peer else utils.get_ip_port(except_peer)
+        # source_nid = utils.get_ip_port(message["Source"])
+        excepts = message["Excepts"]
+        # excepts.append(utils.get_ip_port(node["wallet_info"]["url"]))
+        set_excepts = set(excepts)
+        set_neighbors = set(node["route_graph"]._graph.neighbors(node["route_graph"].nid))
+        union_excepts_excepts = set_excepts.union(set_neighbors)
+        union_excepts_excepts.add(utils.get_ip_port(node["wallet_info"]["url"]))
+        for ner in set_neighbors:
+            if ner not in set_excepts:
+                receiver = node["route_graph"].node["Pblickkey"] + "@" + ner
+                print("===============sync to the neighbors: {}=============".format(ner))
+                message["Excepts"] = list(union_excepts_excepts)
                 self._send_tcp_msg(receiver, message)
 
     def handle_transaction_message(self, data):
@@ -512,7 +553,7 @@ class Gateway():
             "fee": 1,
             "balance": 10
         }
-        self._init_or_update_self_tree()
+        self._init_or_update_self_graph()
         peer_list = ["pk2@localhost:8090","pk3@localhost:8091"]
         generate_resume_channel_msg = utils.generate_resume_channel_msg
         for peer in peer_list:

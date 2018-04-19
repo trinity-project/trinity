@@ -215,21 +215,24 @@ def generate_sync_graph_msg(sync_type, sender, **kwargs):
     """
     message = {
         "MessageType": "SyncChannelState",
-        "SyncType": sync_type
+        "SyncType": sync_type,
         "Sender": sender,
-        "Broadcast": True,
-        "Source": kwargs["source"],
-        "Target": kwargs["target"]
+        "Broadcast": kwargs.get("broadcast"),
+        "Source": kwargs.get("source"),
+        "Target": kwargs.get("target"),
+        "Excepts": kwargs.get("excepts")
         # "MessageBody": route_tree.to_json()
     }
     if sync_type == "add_whole_graph":
+        # print(kwargs["route_graph"]._graph.nodes)
         message["MessageBody"] = kwargs["route_graph"].to_json()
     elif sync_type == "add_single_edge":
-        message["MessageBody"] = kwargs["node"]
+        # message["MessageBody"] = kwargs["node"]
+        pass
     elif sync_type == "remove_single_edge":
         pass
     elif sync_type == "update_node_data":
-        message["MessageBody"] = route_graph.node
+        message["MessageBody"] = kwargs["node"]
     return message
 
 def generate_resume_channel_msg(sender):

@@ -51,8 +51,11 @@ class TProtocol(Protocol):
     def data_received(self, data):
         self.received.append(data)
         last_index = len(cg_end_mark)
+        # print("+++++++{}+++++++".format(data))
         if cg_end_mark.encode(cg_bytes_encoding) == data[-last_index:]:
+            received_len = len(self.received)
             complete_bdata = b"".join(self.received)
+            self.received = []
             tcp_logger.info("receive %d bytes message from %s", len(complete_bdata), self.get_peername())
             tcp_logger.debug(">>>> %s <<<<", complete_bdata)
             from gateway import gateway_singleton
@@ -62,16 +65,15 @@ class TProtocol(Protocol):
                 self.rev_totals += len(complete_bdata)
                 # tcp_logger.info("receive %d bytes valid message from %s", len(complete_bdata), self.get_peername())
                 # split data statistics
-                if len(self.received) > 1:
+                if received_len > 1:
                     tcp_manager.rev_data_split_times += 1
                     tcp_manager.rev_split_data_totals.append(len(complete_bdata))
-                    tcp_logger.info("split TCP data--[%d]", len(self.received))
+                    tcp_logger.info("split TCP data--[%d]", received_len)
             else:
                 # tcp_logger.info("receive a invalid message from %s", self.get_peername())
                 tcp_manager.rev_invalid_times += 1
-                if len(self.received) > 1:
-                    tcp_logger.info("split TCP data--[%d]", len(self.received))
-            self.received = []
+                if received_len > 1:
+                    tcp_logger.info("split TCP data--[%d]", received_len)
         else:
             tcp_logger.info("split TCP data--[%d]", len(self.received))
 

@@ -3,29 +3,37 @@ import time
 import os
 import json
 import psutil
+import random
 # import asyncio
 from client import Client
 from pprint import pprint
 import jsonrpcclient
 
-str_tree = '{"Harry": {"data": null, "children": [{"Bill": {"data": null}}, {"Jane": {"data": null, "children": [{"Diane": {"data": null}}, {"Mark": {"data": null}}]}}, {"Mary": {"data": null}}]}}'
-def sync_wallet_data(n):
-    for x in range(1, n+1):
+def sync_wallet_data():
+    ips = [
+            "192.168.205.217",
+            "192.168.205.181",
+            "192.168.205.180",
+            "192.168.205.179",
+            "192.168.205.182",
+            "192.168.205.178",
+            "192.168.205.167",
+            "192.168.205.166",
+        ]
+    for ip in ips:
         message = {
             "MessageBody": {
-                "Publickey": "pk{}".format(x),
+                "Publickey": "pk{}".format(ips.index(ip) + 1),
                 "CommitMinDeposit": 1,
-                "Fee": 1,
-                "Balance": 10
+                "Fee": random.randint(1,10),
+                "Balance": 100
             }
         }
-        req_url = "http://localhost:{}/".format(8077 + x - 1)
-        # pprint(message)
-        # req_url = ["http://192.168.205.221:8077/"]
+        req_url = "http://{}:8077/".format(ip)
+        print(req_url)
         jsonrpcclient.request(req_url, 'SyncWalletData', json.dumps(message))
 
 def sync_channel(founder, receiver):
-    start_req_port = 8077
     message = {
         "MessageType":"AddChannel",
         "MessageBody": {
@@ -33,10 +41,11 @@ def sync_channel(founder, receiver):
             "Receiver": receiver
         }
     }
-    f_pk_id = int(founder[2])
-    r_pk_id = int(receiver[2])
-    jsonrpcclient.request("http://localhost:{}".format(start_req_port + f_pk_id - 1), 'SyncChannel', json.dumps(message))
-    jsonrpcclient.request("http://localhost:{}".format(start_req_port + r_pk_id - 1), 'SyncChannel', json.dumps(message))
+    f_url = founder.split("@")[1].split(":")[0]
+    r_url = receiver.split("@")[1].split(":")[0]
+    print(f_url,r_url)
+    jsonrpcclient.request("http://{}:8077/".format(f_url), 'SyncChannel', json.dumps(message))
+    jsonrpcclient.request("http://{}:8077/".format(r_url), 'SyncChannel', json.dumps(message))
 
 def triggle_tx(origin, distination):
     start_req_port = 8077
@@ -70,27 +79,39 @@ def log_process_memory_cpu_used(process, pids):
         fs.write("cpu used: {}%    memory used: {}MB\n".format(cpu_percent, rss))
 
 if __name__ == "__main__":
-    sync_wallet_data(1)
-    ############ 4、5、6 ############
-    # sync_channel("pk4@localhost:8092", "pk5@localhost:8093")
+    # start_ip = "192.168.205.217"
+    # sync_wallet_data()
+    # # # ############ 4、5、6 ############
+    # sync_channel("pk4@192.168.205.179:8089", "pk5@192.168.205.182:8089")
     # time.sleep(5)
-    # sync_channel("pk4@localhost:8092", "pk6@localhost:8094")
+    # sync_channel("pk4@192.168.205.179:8089", "pk6@192.168.205.178:8089")
     # time.sleep(5)
-    # sync_channel("pk5@localhost:8093", "pk6@localhost:8094")
-
-    # sync_channel("pk4@localhost:8092", "pk2@localhost:8090")
-
-    ############ 1、2、3 ############
-    # sync_wallet_data(6)
+    # sync_channel("pk5@192.168.205.182:8089", "pk6@192.168.205.178:8089")
     # time.sleep(5)
-    # sync_channel("pk1@localhost:8089", "pk3@localhost:8091")
+    # # # # ############ 1、2、3 ############
+    # # # # sync_wallet_data(6)
     # time.sleep(5)
-    # sync_channel("pk1@localhost:8089", "pk2@localhost:8090")
+    # sync_channel("pk1@192.168.205.217:8089", "pk3@192.168.205.180:8089")
     # time.sleep(5)
-    # sync_channel("pk3@localhost:8091", "pk2@localhost:8090")
-    # sync_channel("pk4@localhost:8092", "pk3@localhost:8091")
-    ############3、4 ############
-    # sync_channel("pk3@localhost:8091", "pk4@localhost:8092")
+    # sync_channel("pk1@192.168.205.217:8089", "pk2@192.168.205.181:8089")
+    # time.sleep(5)
+    # sync_channel("pk3@192.168.205.180:8089", "pk2@192.168.205.181:8089")
+    # time.sleep(5)
+    
+    ############2、4 ############
+    # time.sleep(5)
+    # sync_channel("pk4@192.168.205.179:8089", "pk2@192.168.205.181:8089")
+    ############7、8 ############
+    # sync_channel("pk7@192.168.205.167:8089", "pk8@192.168.205.166:8089")
+    ############7、1 ############
+    # time.sleep(5)
+    # sync_channel("pk7@192.168.205.167:8089", "pk1@192.168.205.217:8089")
+    ############8、1 ############
+    # time.sleep(5)
+    # sync_channel("pk8@192.168.205.166:8089", "pk1@192.168.205.217:8089")
+    ############2、6 ############
+    time.sleep(5)
+    sync_channel("pk6@192.168.205.178:8089", "pk2@192.168.205.181:8089")
     ############1、5 ############
     # sync_channel("pk1@localhost:8089", "pk5@localhost:8093")
     # sync_wallet_data(5)

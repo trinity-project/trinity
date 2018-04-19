@@ -6,7 +6,6 @@ import utils
 import time
 import datetime
 from routertree import RouteTree, SPVHashTable
-from routergraph import RouterGraph
 from tcp import create_server_coro, send_tcp_msg_coro, find_connection
 from wsocket import WsocketService
 from jsonrpc import AsyncJsonRpc
@@ -20,7 +19,6 @@ node_list = set()
 node = {
     "wallet_info": None,
     "route_tree": RouteTree(),
-    "route_graph": RouterGraph(),
     "spv_table": SPVHashTable(),
     # configurable
     "name": cg_node_name
@@ -285,7 +283,7 @@ class Gateway():
                 "balance": body["Balance"]
             }
             # todo init self tree from local file or db
-            self._init_or_update_self_graph()
+            self._init_or_update_self_tree()
             return json.dumps(utils.generate_ack_sync_wallet_msg(node["wallet_info"]["url"]))
         # search chanenl router return the path
         elif method == "GetRouterInfo":
@@ -329,19 +327,13 @@ class Gateway():
             channel_peer = channel_receiver if channel_founder == self_url else channel_founder
             if msg_type == "AddChannel":
                 # send self tree to peer
-                message = utils.generate_sync_graph_msg(
-                    "add_whole_graph",
-                    self_url,
-                    route_graph=node["route_graph"],
-                    source=self_url,
-                    target=channel_peer
-                )
-                # message["Path"] = [utils.get_ip_port(self_url)]
+                message = utils.generate_sync_tree_msg(node["route_tree"], self_url)
+                message["Path"] = [utils.get_ip_port(self_url)]
                 self._send_tcp_msg(channel_peer, message)
             elif msg_type == "UpdateChannel":
                 #update balance and send self tree to peers
-                self_node = node["route_graph"].node
-                self_node["Balance"] = data["MessageBody"]["Balance"]
+                self_node = node["route_tree"].get_node(utils.get_ip_port(self_url))
+                self_node.data["Balance"] = data["MessageBody"]["Balance"]
                 self.sync_channel_route_to_peer()
             elif msg_type == "DeleteChannel":
                 # remove channel_peer and notification peers
@@ -370,13 +362,13 @@ class Gateway():
         message = {}
         ensure_future(WsocketService.push_by_timer(self.websocket.websockets, 15, message))
     
-    def _init_or_update_self_graph(self):
+    def _init_or_update_self_tree(self):
+        tag = "node"
         nid = utils.get_ip_port(node["wallet_info"]["url"])
         pk = utils.get_public_key(node["wallet_info"]["url"])
         spv_list = node["spv_table"].find(pk)
-        self_nid =  node["route_graph"].nid
+        self_root =  node["route_tree"].root
         data = {
-            "Nid": nid,
             "Ip": nid,
             "Pblickkey": pk,
             "Name": node["name"],
@@ -385,12 +377,11 @@ class Gateway():
             "Balance": node["wallet_info"]["balance"],
             "SpvList": [] if not spv_list else spv_list
         }
-        if not self_nid:
-            node["route_graph"].add_self_node(data)
+        if not self_root:
+            node["route_tree"].create_node(tag=tag, identifier=nid, data=data)
         else:
-            node["route_graph"].update_data(data)
-            # todo sync to self's peers
-        node["route_graph"].draw_graph()
+            node["route_tree"].get_node(self_root).data.update(data)
+        node["route_tree"].show(idhidden=False)
 
     def sync_channel_route_to_peer(self, path, except_peer=None):
         """
@@ -521,7 +512,7 @@ class Gateway():
             "fee": 1,
             "balance": 10
         }
-        self._init_or_update_self_graph()
+        self._init_or_update_self_tree()
         peer_list = ["pk2@localhost:8090","pk3@localhost:8091"]
         generate_resume_channel_msg = utils.generate_resume_channel_msg
         for peer in peer_list:
