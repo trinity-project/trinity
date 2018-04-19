@@ -23,9 +23,6 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE."""
 import hashlib
 import time
-from enum import IntEnum
-from exception.exceptions import ChannelExist
-from sserver.model.address_model import APIWalletAddress
 from sserver.model.channel_model import APIChannel
 from sserver.model.base_enum import EnumChainType,EnumChannelState
 from wallet.TransactionManagement import message as mg
@@ -34,6 +31,7 @@ from wallet.utils import pubkey_to_address
 from wallet.Interface.gate_way import sync_channel
 from log import LOG
 import json
+from wallet.BlockChain.monior import register_monitor
 
 def get_gateway_ip():
     return "127.0.0.1:20554"
@@ -177,6 +175,14 @@ class Channel(object):
         else:
             return None
 
+    def get_peer(self, url):
+        if self.founder == url:
+            return self.partner
+        elif self.partner == url:
+            return self.founder
+        else:
+            return None
+
     def get_deposit(self):
         ch = self._get_channel()
         if ch:
@@ -192,6 +198,15 @@ class Channel(object):
                "Deposit":self.get_deposit(),
                "Balance":self.get_balance()}
         return jsn
+
+    def get_role_in_channel(self, url):
+        if url == self.src_addr:
+            return "Founder"
+        elif url == self.dest_addr:
+            return "Partner"
+        else:
+            return None
+
 
 
 def create_channel(founder, partner, asset_type, depoist:int, cli=True):
@@ -216,21 +231,24 @@ def chose_channel(channels, publick_key, tx_count, asset_type):
                 balance_value = balance.get(publick_key).get(asset_type.upper())
             except:
                 continue
-            if float(balance_value) > float(tx_count):
+            if float(balance_value) >= float(tx_count):
                 return ch
             else:
                 continue
 
-def close_channel(channel_name):
+
+def close_channel(channel_name, wallet):
     ch = Channel.channel(channel_name)
-    ch.update_channel(state=EnumChannelState.CLOSING.name)
-    time.sleep(15)
-    ch.delete_channel()
+    peer = ch.get_peer(wallet.url)
+    #tx = trans.TrinityTransaction(channel_name, wallet)
+    #tx.realse_transaction()
+    mg.SettleMessage.create(channel_name,wallet,wallet.url, peer, "TNC") #ToDo
+
 
 def sync_channel_info_to_gateway(channel_name, type):
     LOG.info("Debug sync_channel_info_to_gateway  channelname {} type {}".format(channel_name, type))
     ch = Channel.channel(channel_name)
-    balance  = ch.get_balance()
+    balance = ch.get_balance()
     nb = {}
     for item, value in balance.items():
         if item in ch.founder:

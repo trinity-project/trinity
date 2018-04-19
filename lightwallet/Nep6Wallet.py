@@ -17,15 +17,12 @@ from lightwallet.Utils import get_from_addr, get_arg, get_asset_id, get_balance,
 
 class Nep6Wallet(object):
     AddressVersion = None
-    _passwordHash=None
+
     Name=None
-    _path = ''
-    _keys = {}
     Version = "1.0"
     Scrypt={"n":16384,"r":8,"p":8}
-    _accounts=[]
 
-    _db_path = _path
+
 
 
 
@@ -39,6 +36,9 @@ class Nep6Wallet(object):
         """
 
         self._path = path
+        self._accounts = []
+        self._keys={}
+        self._passwordHash=None
 
         if create:
             self._iv = bytes(Random.get_random_bytes(16))
@@ -190,6 +190,11 @@ class Nep6Wallet(object):
         return [item["account"] for item in self._accounts]
 
     def Sign(self,tx_data):
+        """
+
+        :param tx_data:
+        :return:
+        """
         privtKey=binascii.hexlify(self._accounts[0]["account"].PrivateKey).decode()
         signature = privtkey_sign(tx_data, privtKey)
         publicKey = privtKey_to_publicKey(privtKey)
@@ -197,7 +202,12 @@ class Nep6Wallet(object):
         return rawData
 
 
-    def Sign1(self,tx_data):
+    def SignContent(self,tx_data):
+        """
+
+        :param tx_data:
+        :return:
+        """
         privtKey=binascii.hexlify(self._accounts[0]["account"].PrivateKey).decode()
         signature = privtkey_sign(tx_data, privtKey)
         return signature
@@ -210,9 +220,10 @@ class Nep6Wallet(object):
         res = construct_tx(addressFrom,addressTo,amount,assetId)
         print(res)
         raw_txdata=self.Sign(res["result"]["txData"])
-        send_raw_tx(raw_txdata)
-        print("txid: "+res["result"]["txid"])
-        return True
+        if send_raw_tx(raw_txdata):
+            print("txid: "+res["result"]["txid"])
+            return True,res["result"]["txid"]
+        return False,res["result"]["txid"]
 
     def ToJson(self, verbose=False):
 
@@ -231,9 +242,6 @@ class Nep6Wallet(object):
                 }
             }
             jsn['accounts'].append(tmp_dict)
-
-
-
         return jsn
 
     def ToJsonFile(self, path,password):
@@ -252,12 +260,22 @@ class Nep6Wallet(object):
 
         with open(path,"wb") as f:
             f.write(json.dumps(jsn).encode())
-        f.close()
+
 
 
         return None
 
     def fromJsonFile(self,path):
-        with open (path,"rb") as f:
+        with open(path,"rb") as f:
             content=json.loads(f.read().decode())
         return content
+
+    def LoadStoredData(self, key):
+        wallet = self.fromJsonFile(self._path)
+        return wallet.get("extra").get(key)
+
+    def SaveStoredData(self, key, value):
+        wallet_info  = self.fromJsonFile(self._path)
+        wallet_info["extra"][key] = value
+        with open(self._path,"wb") as f:
+            f.write(json.dumps(wallet_info).encode())

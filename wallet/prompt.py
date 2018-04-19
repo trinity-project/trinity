@@ -1,28 +1,28 @@
 #!/usr/bin/env python3
 
-import argparse
-import datetime
-import json
 import os
-import psutil
-import traceback
-import logging
 import sys
-from logzero import logger
+pythonpath = os.path.dirname(os.path.dirname(__file__))
+sys.path.append(pythonpath)
+
+
+import argparse
+import json
+
+import traceback
+
 from prompt_toolkit import prompt
 from prompt_toolkit.contrib.completers import WordCompleter
 from prompt_toolkit.shortcuts import print_tokens
 from prompt_toolkit.token import Token
 from twisted.internet import reactor, task, endpoints
 from log import LOG
-import gevent
-from gevent import monkey
-#monkey.patch_all()
+from lightwallet.Settings import settings
 
 from wallet.utils import get_arg,to_aes_key
 from wallet.Interface.rpc_interface import RpcInteraceApi
 from twisted.web.server import Site
-from thin_wallet.prompt import PromptInterface
+from lightwallet.prompt import PromptInterface
 from wallet.ChannelManagement.channel import create_channel, filter_channel_via_address,\
     get_channel_via_address,chose_channel,close_channel
 from wallet.TransactionManagement import message as mg
@@ -33,9 +33,13 @@ from sserver.model.base_enum import EnumChannelState
 
 from wallet.Interface import gate_way
 from wallet.configure import Configure
+from wallet.BlockChain.interface import get_block_count
 
 from functools import reduce
 from wallet.BlockChain.monior import monitorblock,Monitor
+from wallet.TransactionManagement.payment import Payment
+import requests
+import qrcode_terminal
 
 GateWayIP = Configure.get("GatewayIP")
 Version = Configure.get("Version")
@@ -48,11 +52,14 @@ class UserPromptInterface(PromptInterface):
 
     def __init__(self):
         super().__init__()
-        user_commands = ["channel enable","channel create {partner} {asset_type} {deposit}",
+        self.user_commands = ["channel enable","channel create {partner} {asset_type} {deposit}",
                          "channel tx {receiver} {asset_type} {count}",
-                         "channel close {peer},"
-                         "channel peer"]
-        self.commands.extend(user_commands)
+                         "channel close {channel},"
+                         "channel peer",
+                         "channel payment {asset}, {count}, [{comments}]",
+                         "channel qrcode {on/off}"]
+        self.commands.extend(self.user_commands)
+        self.qrcode = False
 
     def get_address(self):
         """
@@ -61,7 +68,8 @@ class UserPromptInterface(PromptInterface):
         """
         wallet = self.Wallet.ToJson()
         try:
-            return wallet["address"], wallet["pubkey"]
+            account =  wallet.get("accounts")[0]
+            return account["address"], account["pubkey"]
         except AttributeError:
             return None,None
 
@@ -70,10 +78,21 @@ class UserPromptInterface(PromptInterface):
         """
         :return:
         """
+
+        tokens = [(Token.Neo, 'TRINITY'), (Token.Default, ' cli. Type '),
+                  (Token.Command, "'help' "), (Token.Default, 'to get started')]
+
+        print_tokens(tokens,self.token_style)
+        print("\n")
+
+
         while self.go_on:
             try:
-                result = prompt("trinity> ",
+                result = prompt("trinity>",
                                 history=self.history,
+                                get_bottom_toolbar_tokens=self.get_bottom_toolbar,
+                                style=self.token_style,
+                                # refresh_interval=15
                                 )
             except EOFError:
                 return self.quit()
@@ -120,6 +139,30 @@ class UserPromptInterface(PromptInterface):
                 traceback.print_stack()
                 traceback.print_exc()
 
+    def retry_channel_enable(self):
+        for i in range(30):
+            enable = self.enable_channel()
+            if enable:
+                break
+            else:
+                sys.stdout.write("Wait connect to gateway...{}...\r".format(i))
+                time.sleep(0.2)
+        else:
+            self._channel_noopen()
+
+    def do_open(self, arguments):
+        super().do_open(arguments)
+        if self.Wallet:
+            Monitor.start_monitor(self.Wallet)
+            self.retry_channel_enable()
+
+    def do_create(self, arguments):
+        super().do_create(arguments)
+        if self.Wallet:
+            blockheight = get_block_count()
+            self.Wallet.SaveStoredData("BlockHeight", blockheight)
+            Monitor.start_monitor(self.Wallet)
+            self.retry_channel_enable()
 
     def quit(self):
         print('Shutting down. This may take about 15 sec to sync the block info')
@@ -128,11 +171,30 @@ class UserPromptInterface(PromptInterface):
         self.do_close_wallet()
         reactor.stop()
 
+    def enable_channel(self):
+        self.Wallet.address, self.Wallet.pubkey = self.get_address()
+        try:
+            result = gate_way.join_gateway(self.Wallet.pubkey).get("result")
+            if result:
+                self.Wallet.url = json.loads(result).get("MessageBody").get("Url")
+                self.Channel = True
+                print("Channel Function Enabled")
+                return True
+        except requests.exceptions.ConnectionError:
+            pass
+        return False
+
     def do_channel(self,arguments):
         if not self.Wallet:
             print("Please open a wallet")
             return
+
         command = get_arg(arguments)
+        channel_command = [i.split()[1] for i in self.user_commands]
+        if command not in channel_command:
+            print("no support command, please check the help")
+            self.help()
+            return
 
         if command == 'create':
             if not self.Channel:
@@ -146,13 +208,7 @@ class UserPromptInterface(PromptInterface):
             create_channel(self.Wallet.url, partner,asset_type, deposit)
 
         elif command == "enable":
-            self.Wallet.address, self.Wallet.pubkey = self.get_address()
-            result = gate_way.join_gateway(self.Wallet.pubkey).get("result")
-            if result:
-                self.Wallet.url = json.loads(result).get("MessageBody").get("Url")
-                self.Channel = True
-                print("Channel Funtion Opend")
-            else:
+            if not self.enable_channel():
                 self._channel_noopen()
 
         elif command == "tx":
@@ -191,11 +247,17 @@ class UserPromptInterface(PromptInterface):
                         tx_nonce = trinitytx.TrinityTransaction(channel_name, self.Wallet).get_latest_nonceid()
                         mg.RsmcMessage.create(channel_name, self.Wallet, self.Wallet.pubkey,
                                               receiverpubkey, int(count), receiverip, gate_way_ip, str(tx_nonce + 1),
-                                              asset_type="TNC",router= r, next_router=n)
+                                              asset_type="TNC",router=r, next_router=n)
                     else:
                         return None
                 else:
                     return
+
+        elif command == "qrcode":
+            enable = get_arg(arguments,1)
+            if enable not in ["on","off"]:
+                print("should be on or off")
+            self.qrcode = True if enable.upper() == "ON" else False
 
         elif command == "close":
             if not self.Channel:
@@ -203,9 +265,7 @@ class UserPromptInterface(PromptInterface):
             channel_name = get_arg(arguments, 1)
             print("Closing channel {}".format(channel_name))
             if channel_name:
-                result = trinitytx.TrinityTransaction(channel_name, self.Wallet).realse_transaction()
-                if result:
-                    close_channel(channel_name)
+                close_channel(channel_name, self.Wallet)
             else:
                 print("No Channel Create")
 
@@ -214,9 +274,22 @@ class UserPromptInterface(PromptInterface):
                 self._channel_noopen()
             get_channel_via_address(self.Wallet.url)
             return
+        elif command == "payment":
+            asset_type = get_arg(arguments, 1)
+            if not asset_type:
+                print("command not give the asset type")
+            value = get_arg(arguments, 2)
+            if not value:
+                print("command not give the count")
+            comments = " ".join(arguments[2:])
+            comments = comments if comments else "None"
+            paycode = Payment(self.Wallet).generate_payment_code(asset_type, value, comments)
+            if self.qrcode:
+                qrcode_terminal.draw(paycode, version=4)
+            print(paycode)
 
     def _channel_noopen(self):
-        print("Channel Function Can Not be Opened at Present")
+        print("Channel Function Can Not be Opened at Present, You can try again via channel enable")
         return
 
     def handlemaessage(self):
@@ -236,14 +309,18 @@ class UserPromptInterface(PromptInterface):
             return "Error Message"
         if message_type == "Founder":
             m_instance = mg.FounderMessage(message, self.Wallet)
-        elif message_type == "FounderSign" or message_type == "FounderFail":
+        elif message_type in [ "FounderSign" ,"FounderFail"]:
             m_instance = mg.FounderResponsesMessage(message, self.Wallet)
         elif message_type == "Htlc":
             m_instance = mg.HtlcMessage(message, self.Wallet)
         elif message_type == "Rsmc":
             m_instance = mg.RsmcMessage(message, self.Wallet)
-        elif message_type == "RsmcSign" or message_type == "RsmcFail":
+        elif message_type in ["RsmcSign", "RsmcFail"]:
             m_instance = mg.RsmcResponsesMessage(message, self.Wallet)
+        elif message_type == "Settle":
+            m_instance = mg.SettleMessage(message, self.Wallet)
+        elif message_type in ["SettleSign","SettleFail"]:
+            m_instance = mg.SettleResponseMessage(message, self.Wallet)
         elif message_type == "RegisterChannel":
             m_instance = mg.RegisterMessage(message, self.Wallet)
         elif message_type == "CreateTranscation":
@@ -261,7 +338,21 @@ def main():
     # Show the  version
     parser.add_argument("--version", action="version",
                         version=Version)
+    parser.add_argument("-m", "--mainnet", action="store_true", default=False,
+                        help="Use MainNet instead of the default TestNet")
+    parser.add_argument("-p", "--privnet", action="store_true", default=False,
+                        help="Use PrivNet instead of the default TestNet")
+
     args = parser.parse_args()
+
+    if args.mainnet:
+        settings.setup_mainnet()
+    elif args.privnet:
+        settings.setup_privnet()
+    else:
+        settings.setup_testnet()
+
+
     UserPrompt = UserPromptInterface()
     api_server_rpc = RpcInteraceApi("20556")
     endpoint_rpc = "tcp:port={0}:interface={1}".format("20556", "0.0.0.0")

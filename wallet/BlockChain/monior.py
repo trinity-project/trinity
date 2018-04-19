@@ -23,7 +23,7 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE."""
 
 
-from logzero import logger
+from log import LOG
 #from neo.Core.Blockchain import Blockchain
 import time
 from wallet.TransactionManagement.transaction import BlockHightRegister, TxIDRegister,TxDataDir, crypto_channel
@@ -37,32 +37,59 @@ BlockHeightRecord = os.path.join(TxDataDir,"block.data")
 
 class Monitor(object):
     GoOn = True
+    Wallet = None
+    Wallet_Change = None
+
     @classmethod
     def stop_monitor(cls):
         cls.GoOn = False
 
+    @classmethod
+    def start_monitor(cls, wallet):
+        cls.Wallet = wallet
+        cls.Wallet_Change = True
+
+    @classmethod
+    def update_block_height(cls, blockheight):
+        if cls.Wallet_Change:
+            return None
+        if cls.Wallet:
+            cls.Wallet.SaveStoredData("BlockHeight", blockheight)
+        else:
+            #LOG.debug("Wallet not opened")
+            return None
+
+    @classmethod
+    def get_wallet_block_height(cls):
+        if cls.Wallet:
+            block_height = cls.Wallet.LoadStoredData("BlockHeight")
+            cls.Wallet_Change = False
+            return block_height
+        else:
+            #LOG.debug("Wallet not opened")
+            return None
+
 
 def monitorblock():
-    blockHeight = get_block_count()
-
     while Monitor.GoOn:
-        #block = Blockchain.Default().GetBlock(str(Blockchain.Default().Height))
-        try:
-
-            block = get_bolck(int(blockHeight)-1)
-            #block.LoadTransactions()
-            #jsn = block.ToJson()
-            #jsn['confirmations'] = Blockchain.Default().Height - block.Index + 1
-            #hash = Blockchain.Default().GetNextBlockHash(block.Hash)
-            #if hash:
-                #jsn['nextblockhash'] = '0x%s' % hash.decode('utf-8')
-            #send_message_to_gateway(block)
-            handle_message(int(blockHeight)-1,block)
-            logger.info("Block %s / %s", str(block), blockHeight)
-            blockHeight +=1
-        except Exception as e:
-            logger.error("GetBlockError", e)
-        time.sleep(15)
+        blockheight = Monitor.get_wallet_block_height()
+        if blockheight:
+            try:
+                block = get_bolck(int(blockheight)-1)
+                handle_message(int(blockheight)-1,block)
+                blockheight +=1
+                Monitor.update_block_height(blockheight)
+            except Exception as e:
+                pass
+        else:
+            #LOG.debug("Not get the blockheight")
+            pass
+        blockheight_onchain = get_block_count()
+        blockheight = blockheight if blockheight else 0
+        if blockheight < blockheight_onchain:
+            time.sleep(1)
+        else:
+            time.sleep(15)
 
 
 def send_message_to_gateway(message):
@@ -83,7 +110,7 @@ def handle_message(height,jsn):
     txids = copy.deepcopy(TxIDRegister)
     for value in txids:
         txid = value[0]
-        logger.info("Handle Txid: {}".format(txid))
+        LOG.info("Handle Txid: {}".format(txid))
         if txid in block_txids:
             value[1](value[0],*value[2:])
             match_list.append(value)

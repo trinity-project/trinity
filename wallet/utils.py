@@ -59,13 +59,10 @@ def sign(wallet, context):
     :param context:
     :return:
     """
-
-    keypairs = wallet.LoadKeyPairs().values()
-    keypair = [i for i in keypairs][0]
-    res = binascii.hexlify(Crypto.Sign(message=context, private_key=bytes(keypair.PrivateKey))).decode()
+    res = wallet.SignContent(context)
     return res
 
-def get_arg(arguments, index=0, convert_to_int=False, do_parse=False):
+def get_arg(arguments, index=0, convert_to_int=False):
     """
 
     :param arguments:
@@ -79,8 +76,6 @@ def get_arg(arguments, index=0, convert_to_int=False, do_parse=False):
         arg = arguments[index]
         if convert_to_int:
             return int(arg)
-        if do_parse:
-            return parse_param(arg)
         return arg
     except Exception as e:
         pass
