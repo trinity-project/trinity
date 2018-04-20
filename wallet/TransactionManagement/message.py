@@ -1057,13 +1057,16 @@ class PaymentLink(TransactionMessage):
 
     def __init__(self, message, wallet):
         super().__init__(message, wallet)
-        self.amount = self.message_body.get("Amount")
-        self.asset = self.message_body.get("Assets")
-        self.comments = self.message_body.get("Description")
+
+        parameter = self.message_body.get("Parameter")
+        self.amount = parameter.get("Amount") if parameter else None
+        self.asset = parameter.get("Assets") if parameter else None
+        self.comments = parameter.get("Description") if parameter else None
 
     def handle_message(self):
+        print(self.asset)
         pycode = Payment(self.wallet,self.sender).generate_payment_code(get_asset_type_id(self.asset),
-                                                            self.amount, self.comments)
+                         self.amount, self.comments)
         message = {"MessageType":"PaymentLinkAck",
                    "Receiver":self.sender,
                    "MessageBody": {
@@ -1071,6 +1074,13 @@ class PaymentLink(TransactionMessage):
                                    },
                    }
         Message.send(message)
+
+        #ToDo Just for test, will be remove soon
+        # time.sleep(30)
+        # state ,result = Payment.decode_payment_code(pycode)
+        # hr = json.loads(result).get("hr")
+        # PaymentAck.create(self.sender, hr)
+
         return None
 
 
