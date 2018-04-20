@@ -47,14 +47,13 @@ class WsocketService:
             except Exception:
                 wst_logger.info('client {} disconnected'.format(con.remote_address))
                 gateway_singleton.handle_wsocket_disconnection(con)
-                # task done
+                # task done or cancelled
                 break
             else:
                 try:
                     gateway_singleton.handle_wsocket_request(con, message)
                 except Exception:
                     pass
-                    
 
     @staticmethod
     async def send_msg(con, msg):

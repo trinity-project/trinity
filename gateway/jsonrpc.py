@@ -6,6 +6,7 @@ from aiohttp import web, ClientSession
 from jsonrpcserver.aio import methods
 from jsonrpcclient.aiohttp_client import aiohttpClient
 from config import cg_local_jsonrpc_addr, cg_remote_jsonrpc_addr
+from glog import rpc_logger
 
 @methods.add
 async def ShowNodeList(params):
@@ -54,10 +55,14 @@ class AsyncJsonRpc():
             return web.json_response(response, status=response.http_status)
 
     @staticmethod
-    def start_jsonrpc_serv():
+    async def start_jsonrpc_serv():
         app = web.Application()
         app.router.add_post('/', AsyncJsonRpc.handle)
-        web.run_app(app, host=cg_local_jsonrpc_addr[0], port=cg_local_jsonrpc_addr[1])
+        loop = asyncio.get_event_loop()
+        server = await loop.create_server(app.make_handler(), cg_local_jsonrpc_addr[0], cg_local_jsonrpc_addr[1])
+        rpc_logger.info("TCP server is serving on %s", cg_local_jsonrpc_addr)
+        return server
+        # web.run_app(app, host=cg_local_jsonrpc_addr[0], port=cg_local_jsonrpc_addr[1])
         
     @staticmethod
     async def jsonrpc_request(loop, method, params):

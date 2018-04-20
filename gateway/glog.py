@@ -11,7 +11,7 @@ class _NoErrorFilter(logging.Filter):
         return record.levelno < logging.ERROR
         
 
-
+rpc_logger = logging.getLogger("RPC")
 tcp_logger = logging.getLogger("TCP")
 wst_logger = logging.getLogger("WST")
 
@@ -23,6 +23,7 @@ if cg_debug:
     console_handler.setLevel(logging.DEBUG)
     console_handler.setFormatter(_formatter)
 
+    rpc_logger.addHandler(console_handler)
     tcp_logger.addHandler(console_handler)
     wst_logger.addHandler(console_handler)
 else:
@@ -38,6 +39,8 @@ else:
     access_file_handler.setFormatter(_formatter)
     error_file_handler.setFormatter(_formatter)
 
+    rpc_logger.addHandler(error_file_handler)
+    rpc_logger.addHandler(access_file_handler)
     tcp_logger.addHandler(error_file_handler)
     tcp_logger.addHandler(access_file_handler)
     wst_logger.addHandler(access_file_handler)

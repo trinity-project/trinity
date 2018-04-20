@@ -47,6 +47,7 @@ class Gateway():
         """Counstruct"""
         self.websocket = None
         self.tcpserver = None
+        self.rpcserver = None
         self.loop = None
         self.tcp_pk_dict = {}
         self.ws_pk_dict = {}
@@ -55,13 +56,13 @@ class Gateway():
         创建tcp wsocket service coros\n
         它们进入event_loop执行后最终返回tcp、wsocket server
         """
-        return create_server_coro(cg_tcp_addr), WsocketService.create(cg_wsocket_addr)
+        return create_server_coro(cg_tcp_addr), WsocketService.create(cg_wsocket_addr), AsyncJsonRpc.start_jsonrpc_serv()
 
     def _save(self, services, loop):
         """
         save servers、event loop
         """
-        self.tcpserver, self.websocket = services
+        self.tcpserver, self.websocket, self.rpcserver = services
         self.loop = loop
 
     
@@ -73,8 +74,8 @@ class Gateway():
         self._save(services_future.result(), loop)
         if os.getenv("resume"):
             self.resume_channel_from_db()
-        AsyncJsonRpc.start_jsonrpc_serv()
-        # loop.run_forever()
+        # AsyncJsonRpc.start_jsonrpc_serv()
+        loop.run_forever()
 
     def clearn(self):
         """
@@ -84,6 +85,7 @@ class Gateway():
         # self.websocket.close()
         tasks = gather(*Task.all_tasks(), loop=self.loop, return_exceptions=True)
         print(">>>>>",tasks,"<<<<<<")
+        # tasks.add_done_callback(lambda t: t.exception())
         tasks.add_done_callback(lambda t: self.loop.stop())
         tasks.cancel()
         while not tasks.done() and not self.loop.is_closed():
