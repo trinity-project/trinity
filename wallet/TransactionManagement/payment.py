@@ -63,10 +63,11 @@ class Payment(object):
         base58_code = payment_code[2:]
         code = base58.b58decode(base58_code).decode()
         info = code.split("&",5)
+        print(info)
         if len(info) !=5:
             return False, None
-        keys=["uri","hr","asset_type","value","comments"]
-        result = dict((keys, info))
+        keys=["uri","hr","asset_type","count","comments"]
+        result = dict(zip(keys, info))
         return True, json.dumps(result)
 
     def create_hr(self):
@@ -89,3 +90,13 @@ class Payment(object):
 
 def hash_r(r):
     return hashlib.sha1(r.encode()).hexdigest()
+
+if __name__ == "__main__":
+    result = Payment.decode_payment_code("TNJ2dZc36Z4eRSMELP7Bp445PghkEbuRR4yhCcpAa2mTWSRPzzcXJKzu4rJdT7Lp2g5mA"
+                                         "8WtUqBCE2wcRJrL9dPvVfWPAKc3Wh9WEyv7YXhm4Jr47Nnqi4nmY2rPaoypr7kzGKHTRb"
+                                         "vBQJxF4p65K9p5UqXcfK768gvRHwYxaj9YQYSesSPzeF78JF2XHCBhesw5Kn4z8RyviVg"
+                                         "TVhUV2hbozdMETvwx7yvTb6i5R9Kaa8LUyoe1iiZ1SqiMCjKEWUtq")
+
+    print(result)
+
+

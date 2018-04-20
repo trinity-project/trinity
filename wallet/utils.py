@@ -25,6 +25,7 @@ SOFTWARE."""
 
 from neocore.Cryptography.Crypto import Crypto
 import binascii
+from wallet.configure import Configure
 
 import hashlib
 
@@ -79,6 +80,15 @@ def get_arg(arguments, index=0, convert_to_int=False):
         return arg
     except Exception as e:
         pass
+    return None
+
+
+def get_asset_type_name(asset_type):
+    for key, value in Configure.get("AssetType"):
+        if value.replace("0x","") == asset_type.replace("0x",""):
+            return key
+        else:
+            continue
     return None
 
 

@@ -767,8 +767,12 @@ class HtlcMessage(TransactionMessage):
     "ChannelName":"3333333333333333333333333333",
     "MessageBody": {
             "HCTX":"",
+            "RDTX":"",
             "HEDTX":"",
-            "HTTX":""
+            "HTTX":""，
+            "HTDTX":"",
+            "HTRDTX":"",
+            "RoleIndex":""
         }
     }
     """
@@ -777,7 +781,11 @@ class HtlcMessage(TransactionMessage):
         super().__init__(message,wallet)
         self.hctx = self.message_body.get("HCTX")
         self.hedtx = self.message_body.get("HEDTX")
+        self.rdtx = self.message_body.get("RDTX")
+        self.htdtx = self.message_body.get("HTDTX")
         self.httx = self.message_body.get("HTTX")
+        self.htrdtx = self.message_body.get("HTRDTX")
+        self.role_index = self.message_body.get("RoleIndex")
         self.channel_name = message.get("ChannelName")
 
     def handle_message(self):
