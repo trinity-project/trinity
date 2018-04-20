@@ -2,7 +2,7 @@
 
 import os
 import sys
-pythonpath = os.path.dirname(os.path.dirname(__file__))
+pythonpath = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.append(pythonpath)
 
 
