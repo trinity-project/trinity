@@ -19,7 +19,7 @@ from twisted.internet import reactor, task, endpoints
 from log import LOG
 from lightwallet.Settings import settings
 
-from wallet.utils import get_arg,to_aes_key
+from wallet.utils import get_arg,to_aes_key,get_asset_type_name
 from wallet.Interface.rpc_interface import RpcInteraceApi
 from twisted.web.server import Site
 from lightwallet.prompt import PromptInterface
@@ -40,6 +40,7 @@ from wallet.BlockChain.monior import monitorblock,Monitor
 from wallet.TransactionManagement.payment import Payment
 import requests
 import qrcode_terminal
+
 
 GateWayIP = Configure.get("GatewayIP")
 Version = Configure.get("Version")
@@ -92,7 +93,7 @@ class UserPromptInterface(PromptInterface):
                                 history=self.history,
                                 get_bottom_toolbar_tokens=self.get_bottom_toolbar,
                                 style=self.token_style,
-                                # refresh_interval=15
+                                refresh_interval=3
                                 )
             except EOFError:
                 return self.quit()
@@ -139,6 +140,20 @@ class UserPromptInterface(PromptInterface):
                 traceback.print_stack()
                 traceback.print_exc()
 
+    def get_bottom_toolbar(self, cli=None):
+        out = []
+        try:
+            out = [
+                (Token.Command, "[%s]" % settings.NET_NAME),
+                (Token.Default, str(Monitor.get_wallet_block_height())),
+                (Token.Command, '/'),
+                (Token.Default, str(Monitor.get_block_height()))]
+
+        except Exception as e:
+            pass
+
+        return out
+
     def retry_channel_enable(self):
         for i in range(30):
             enable = self.enable_channel()
@@ -153,6 +168,7 @@ class UserPromptInterface(PromptInterface):
     def do_open(self, arguments):
         super().do_open(arguments)
         if self.Wallet:
+            self.Wallet.BlockHeight = self.Wallet.LoadStoredData("BlockHeight")
             Monitor.start_monitor(self.Wallet)
             self.retry_channel_enable()
 
@@ -160,9 +176,14 @@ class UserPromptInterface(PromptInterface):
         super().do_create(arguments)
         if self.Wallet:
             blockheight = get_block_count()
+            self.Wallet.BlockHeight = blockheight
             self.Wallet.SaveStoredData("BlockHeight", blockheight)
             Monitor.start_monitor(self.Wallet)
             self.retry_channel_enable()
+
+    def do_close_wallet(self):
+        self.Wallet.SaveStoredData("BlockHeight", self.Wallet.BlockHeight)
+        super().do_close_wallet()
 
     def quit(self):
         print('Shutting down. This may take about 15 sec to sync the block info')
@@ -214,11 +235,26 @@ class UserPromptInterface(PromptInterface):
         elif command == "tx":
             if not self.Channel:
                 self._channel_noopen()
-            receiver = get_arg(arguments,1)
-            asset_type = get_arg(arguments,2)
-            count = get_arg(arguments,3)
+            argument1 = get_arg(arguments,1)
+            if len(argument1) > 88:
+                # payment code
+                result, info = Payment.decode_payment_code(argument1)
+                if result:
+                    receiver = info.get("uri")
+                    hr = info.get("hr")
+                    asset_type = info.get("asset_type")
+                    asset_type = get_asset_type_name(asset_type)
+                    count = info.get("count")
+                    comments = info.get("comments")
+                else:
+                    print("The payment code is not correct")
+                    return
+            else:
+                receiver = get_arg(arguments, 1)
+                asset_type = get_arg(arguments, 2)
+                count = get_arg(arguments, 3)
 
-            receiverpubkey,receiverip= receiver.split("@")
+            receiverpubkey, receiverip= receiver.split("@")
             channels = filter_channel_via_address(self.Wallet.url,receiver, EnumChannelState.OPENED.name)
             ch = chose_channel(channels,self.Wallet.url.split("@")[0].strip(), count, asset_type)
             channel_name = ch.channel
@@ -281,7 +317,7 @@ class UserPromptInterface(PromptInterface):
             value = get_arg(arguments, 2)
             if not value:
                 print("command not give the count")
-            comments = " ".join(arguments[2:])
+            comments = " ".join(arguments[3:])
             comments = comments if comments else "None"
             paycode = Payment(self.Wallet).generate_payment_code(asset_type, value, comments)
             if self.qrcode:

@@ -39,6 +39,7 @@ class Monitor(object):
     GoOn = True
     Wallet = None
     Wallet_Change = None
+    BlockHeight = None
 
     @classmethod
     def stop_monitor(cls):
@@ -50,11 +51,11 @@ class Monitor(object):
         cls.Wallet_Change = True
 
     @classmethod
-    def update_block_height(cls, blockheight):
+    def update_wallet_block_height(cls, blockheight):
         if cls.Wallet_Change:
             return None
         if cls.Wallet:
-            cls.Wallet.SaveStoredData("BlockHeight", blockheight)
+            cls.Wallet.BlockHeight=blockheight
         else:
             #LOG.debug("Wallet not opened")
             return None
@@ -62,32 +63,48 @@ class Monitor(object):
     @classmethod
     def get_wallet_block_height(cls):
         if cls.Wallet:
-            block_height = cls.Wallet.LoadStoredData("BlockHeight")
+            block_height = cls.Wallet.BlockHeight
             cls.Wallet_Change = False
-            return block_height
+            return block_height if block_height else 1
         else:
             #LOG.debug("Wallet not opened")
-            return None
+            return 1
+
+    @classmethod
+    def update_block_height(cls, blockheight):
+        cls.BlockHeight = blockheight
+
+    @classmethod
+    def get_block_height(cls):
+        return cls.BlockHeight if cls.BlockHeight else 1
 
 
 def monitorblock():
     while Monitor.GoOn:
+        blockheight_onchain = get_block_count()
+        Monitor.update_block_height(blockheight_onchain)
+
         blockheight = Monitor.get_wallet_block_height()
         if blockheight:
             try:
-                block = get_bolck(int(blockheight)-1)
-                handle_message(int(blockheight)-1,block)
-                blockheight +=1
-                Monitor.update_block_height(blockheight)
+                if blockheight > 130000:
+                    block = get_bolck(int(blockheight))
+                    handle_message(int(blockheight),block)
+                    blockheight += 1
+                else:
+                    blockheight +=1000
+                    pass
+
+                Monitor.update_wallet_block_height(blockheight)
             except Exception as e:
                 pass
         else:
             #LOG.debug("Not get the blockheight")
             pass
-        blockheight_onchain = get_block_count()
-        blockheight = blockheight if blockheight else 0
+
         if blockheight < blockheight_onchain:
-            time.sleep(1)
+            #time.sleep(0.1)
+            pass
         else:
             time.sleep(15)
 
