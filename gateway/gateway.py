@@ -74,7 +74,7 @@ class Gateway():
         self._save(services_future.result(), loop)
         if os.getenv("resume"):
             self.resume_channel_from_db()
-        # AsyncJsonRpc.start_jsonrpc_serv()
+        print("###### Trinity Gateway Start Successfully! ######")
         loop.run_forever()
 
     def clearn(self):
@@ -84,7 +84,7 @@ class Gateway():
         # print(self.websocket.server)
         # self.websocket.close()
         tasks = gather(*Task.all_tasks(), loop=self.loop, return_exceptions=True)
-        print(">>>>>",tasks,"<<<<<<")
+        # print(">>>>>",tasks,"<<<<<<")
         # tasks.add_done_callback(lambda t: t.exception())
         tasks.add_done_callback(lambda t: self.loop.stop())
         tasks.cancel()
@@ -93,7 +93,7 @@ class Gateway():
 
     def close(self):
         self.loop.close()
-        print("gateway closed")
+        print("###### Trinity Gateway Closed ######")
 
     async def _stop(self):
         """
@@ -203,13 +203,13 @@ class Gateway():
                     "Next": node["wallet_info"]["url"]
                 }
             else:
-                nids = node["route_tree"].find_router(receiver_ip_port)
+                nids = node["route_graph"].find_shortest_path_decide_by_fee(node["route_graph"].nid, receiver_ip_port)
                 # next_jump = nids.index()
                 full_path = []
                 for nid in nids:
-                    node_object = node["route_tree"].get_node(nid)
-                    url = node_object.data["Pblickkey"] + "@" + node_object.identifier
-                    fee = node_object.data["fee"]
+                    node_object = node["route_graph"]._graph.nodes(nid)
+                    url = node_object.get("Pblickkey") + "@" + node_object.get("Ip")
+                    fee = node_object.get("Fee")
                     full_path.append((url, fee))
                 if not len(full_path):
                     router = None
@@ -306,16 +306,16 @@ class Gateway():
             receiver_ip_port = utils.parse_url(receiver)[1]
             try:
                 # search tree through ip_port(node identifier in the tree)
-                nids = node["route_tree"].find_router(receiver_ip_port)
+                nids = node["route_graph"].find_shortest_path_decide_by_fee(node["route_graph"].nid, receiver_ip_port)
             # receiver not in the tree
             except Exception:
                 return json.dumps(utils.generate_ack_router_info_msg(None))
             # next_jump = nids.index()
             full_path = []
             for nid in nids:
-                node_object = node["route_tree"].get_node(nid)
-                url = node_object.data["Pblickkey"] + "@" + node_object.identifier
-                fee = node_object.data["Fee"]
+                node_object = node["route_graph"]._graph.nodes[nid]
+                url = node_object.get("Pblickkey") + "@" + node_object.get("Ip")
+                fee = node_object.get("Fee")
                 full_path.append((url, fee))
             next_jump = full_path[0][0]
             
