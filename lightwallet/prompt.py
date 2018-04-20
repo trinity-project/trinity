@@ -102,8 +102,6 @@ class PromptInterface(object):
                             print("Could not remove {}: {}".format(path, e))
                     return
 
-
-
             else:
                 print("Please specify a path")
 

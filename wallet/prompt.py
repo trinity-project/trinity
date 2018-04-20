@@ -93,7 +93,7 @@ class UserPromptInterface(PromptInterface):
                                 history=self.history,
                                 get_bottom_toolbar_tokens=self.get_bottom_toolbar,
                                 style=self.token_style,
-                                # refresh_interval=15
+                                refresh_interval=3
                                 )
             except EOFError:
                 return self.quit()
@@ -140,6 +140,20 @@ class UserPromptInterface(PromptInterface):
                 traceback.print_stack()
                 traceback.print_exc()
 
+    def get_bottom_toolbar(self, cli=None):
+        out = []
+        try:
+            out = [
+                (Token.Command, "[%s]" % settings.NET_NAME),
+                (Token.Default, str(Monitor.get_wallet_block_height())),
+                (Token.Command, '/'),
+                (Token.Default, str(Monitor.get_block_height()))]
+
+        except Exception as e:
+            pass
+
+        return out
+
     def retry_channel_enable(self):
         for i in range(30):
             enable = self.enable_channel()
@@ -154,6 +168,7 @@ class UserPromptInterface(PromptInterface):
     def do_open(self, arguments):
         super().do_open(arguments)
         if self.Wallet:
+            self.Wallet.BlockHeight = self.Wallet.LoadStoredData("BlockHeight")
             Monitor.start_monitor(self.Wallet)
             self.retry_channel_enable()
 
@@ -161,9 +176,14 @@ class UserPromptInterface(PromptInterface):
         super().do_create(arguments)
         if self.Wallet:
             blockheight = get_block_count()
+            self.Wallet.BlockHeight = blockheight
             self.Wallet.SaveStoredData("BlockHeight", blockheight)
             Monitor.start_monitor(self.Wallet)
             self.retry_channel_enable()
+
+    def do_close_wallet(self):
+        self.Wallet.SaveStoredData("BlockHeight", self.Wallet.BlockHeight)
+        super().do_close_wallet()
 
     def quit(self):
         print('Shutting down. This may take about 15 sec to sync the block info')
