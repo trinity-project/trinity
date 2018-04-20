@@ -1076,10 +1076,10 @@ class PaymentLink(TransactionMessage):
         Message.send(message)
 
         #ToDo Just for test, will be remove soon
-        time.sleep(30)
-        state ,result = Payment.decode_payment_code(pycode)
-        hr = json.loads(result).get("hr")
-        PaymentAck.create(self.sender, hr)
+        # time.sleep(30)
+        # state ,result = Payment.decode_payment_code(pycode)
+        # hr = json.loads(result).get("hr")
+        # PaymentAck.create(self.sender, hr)
 
         return None
 
