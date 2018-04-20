@@ -143,5 +143,5 @@ async def create_server_coro(addr):
     loop = get_event_loop()
     server = await loop.create_server(TProtocol, addr[0], addr[1])
     tcp_manager.wrap(server)
-    tcp_logger.debug("TCP server is serving on %s", addr)
+    tcp_logger.info("TCP server is serving on %s", addr)
     return tcp_manager

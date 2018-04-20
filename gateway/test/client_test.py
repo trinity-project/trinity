@@ -70,7 +70,7 @@ def log_process_memory_cpu_used(process, pids):
         fs.write("cpu used: {}%    memory used: {}MB\n".format(cpu_percent, rss))
 
 if __name__ == "__main__":
-    sync_wallet_data(1)
+    # sync_wallet_data(1)
     ############ 4、5、6 ############
     # sync_channel("pk4@localhost:8092", "pk5@localhost:8093")
     # time.sleep(5)
@@ -127,6 +127,14 @@ if __name__ == "__main__":
     #     if x%7500 == 0:
     #         for process in processs:
     #             log_process_memory_cpu_used(process,pids)
+    message = {
+        "MessageType":"PaymentAck",
+        "Receiver":"036e61fcc048800614240cb2c7a3d116203d620d6f1aadf7ef561b295ccba02700@106.15.91.150:8089",
+        "MessageBody": {
+            "PaymentLink": "fdbqsugvouasvbowubvuiwebvebvowbv"
+        }
+    }
+    jsonrpcclient.request("http://localhost:8077", 'TransactionMessage', json.dumps(message))
 
         
    

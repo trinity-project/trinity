@@ -130,7 +130,7 @@ if __name__ == "__main__":
     # G.add_edge('E', 'G', weight=1)
     # K_5 = nx.complete_graph(5)
     # K_3_5 = nx.complete_bipartite_graph(3, 5)
-    # rg = nx.barabasi_albert_graph(100, 5)
+    rg = nx.barabasi_albert_graph(30, 5)
     # get_path(G, "A", "G")
     # show_graph(G)
     # show_edges(G)
@@ -207,20 +207,33 @@ if __name__ == "__main__":
     # print("最短路径")
     # print(G.find_shortest_path_decide_by_fee("p2", "p4"))
     # print(G._graph.edges["p1","p2"])
+    nids = [n for n in "ABCDEFGHIJKLMNOPQRSTUVWXYZ"]
+    nids_ = [n for n in "abcdefghijklmnopqrstuvwxyz"]
     G1 = nx.Graph()
     G2 = nx.Graph()
+    G3 = nx.Graph()
     # G1.add_edge('n1', 'n2', weight=1)
     # G1.add_edge('n1', 'n3', weight=2)
     
-    G2.add_edge('1', '2', weight=3)
+    # G2.add_edge('A', 'B', weight=3)
     # G2.add_node('n5')
     # G1.add_node('3')
-    G3 = nx.algorithms.operators.binary.compose(G1,G2)
-    G3.add_edge("3","1")
-    G3.add_edge("3","2")
+    # G3 = nx.algorithms.operators.binary.compose(G1,G2)
+    import random
+    for u in nids:
+        for v in nids_:
+            # G3.add_edge(u,v)
+            if nids.index(u) + nids_.index(v) <= random.randint(0, 50):
+                G3.add_edge(u,v)
+    # import random
+    # for x in range(32):
+    #     G3.add_edge(nids[random.randint(0,24)],nids_[random.randint(0,24)])
+    # G3.add_edge("C","A")
+    # G3.add_edge("D","A")
+    # G3.add_edge("C","B")
     # G3.add_edge("1","4")
     print(list(G3.nodes))
-    print(set(G3.neighbors("3")))
+    # print(set(G3.neighbors("3")))
     # # G1.add_edge('n1', 'n4', weight=1)
     # print(G3.nodes)
     # del G1
@@ -250,5 +263,5 @@ if __name__ == "__main__":
     # data1 = json_graph.node_link_data(G._graph)
     # print(data1)
     # print(list(G.adjacency()))
+    # show_graph(rg)
     show_graph(G3)
-    # show_graph(G3)

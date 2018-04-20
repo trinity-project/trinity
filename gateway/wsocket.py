@@ -3,11 +3,11 @@ import websockets
 import json
 import random
 from asyncio import sleep
-
+from glog import wst_logger
 class WsocketService:
     """
-    websocket 服务
-    不可实例化
+    websocket server
+    not need instance
     """
     @staticmethod
     async def push_by_event(cons, msg):
@@ -34,31 +34,40 @@ class WsocketService:
     @staticmethod
     async def handle(con, path):
         """
-        处理所有来自客户端的websocket请求
+        the callback that receive the client msg
         """
         # every client first connected the server
         from gateway import gateway_singleton
-        print('client {} conected'.format(con.remote_address))
+        wst_logger.info('client {} connected'.format(con.remote_address))
         gateway_singleton.handle_web_first_connect(con)
         while True:
             try:
                 message = await con.recv()
-                gateway_singleton.handle_wsocket_request(con, message)
-            except websockets.exceptions.ConnectionClosed:
-                print('client {} disconected'.format(con.remote_address))
+                wst_logger.debug(">>>> %s <<<<", message)
+            except Exception:
+                wst_logger.info('client {} disconnected'.format(con.remote_address))
                 gateway_singleton.handle_wsocket_disconnection(con)
+                # task done
                 break
+            else:
+                try:
+                    gateway_singleton.handle_wsocket_request(con, message)
+                except Exception:
+                    pass
+                    
 
     @staticmethod
     async def send_msg(con, msg):
         try:
             await con.send(msg)
-        except websockets.exceptions.ConnectionClosed:
+        except Exception:
             pass
 
     @staticmethod
-    def create(addr):
+    async def create(addr):
         """
-        返回一个await object
+        :return await object
         """
-        return websockets.serve(WsocketService.handle, addr[0], addr[1])
+        ws = await websockets.serve(WsocketService.handle, addr[0], addr[1])
+        wst_logger.info("websocket server is serving on %s", addr)
+        return ws

@@ -13,7 +13,7 @@ from jsonrpc import AsyncJsonRpc
 from asyncio import get_event_loop, gather, Task, sleep, ensure_future, iscoroutine
 from config import cg_tcp_addr, cg_wsocket_addr, cg_public_ip_port, cg_node_name
 from statistics import Statistics, get_timestamp
-from glog import tcp_logger
+from glog import tcp_logger, wst_logger
 
 # route_tree.create_node('node',cg_public_ip_port, data={Deposit:xx,Fee:xx,Balance:4 IP:xx,Publickey:xx,SpvList:[]})  # root node
 node_list = set()
@@ -71,8 +71,6 @@ class Gateway():
         loop = get_event_loop()
         loop.run_until_complete(services_future)
         self._save(services_future.result(), loop)
-        # self._add_timer_push_web_task()
-        print("Gateway websocket service on: {}".format(cg_wsocket_addr))
         if os.getenv("resume"):
             self.resume_channel_from_db()
         AsyncJsonRpc.start_jsonrpc_serv()
@@ -83,14 +81,13 @@ class Gateway():
         clearn task
         """
         # print(self.websocket.server)
-        self.websocket.close()
-        self.loop.run_until_complete(self.websocket.wait_closed())
-        for task in Task.all_tasks():
-            print(task)
-            cancel_result = task.cancel()
-            print(cancel_result)
-        ensure_future(self._stop())
-        self.loop.run_forever()
+        # self.websocket.close()
+        tasks = gather(*Task.all_tasks(), loop=self.loop, return_exceptions=True)
+        print(">>>>>",tasks,"<<<<<<")
+        tasks.add_done_callback(lambda t: self.loop.stop())
+        tasks.cancel()
+        while not tasks.done() and not self.loop.is_closed():
+            self.loop.run_forever()
 
     def close(self):
         self.loop.close()
@@ -179,11 +176,11 @@ class Gateway():
         """
         handle the websocket request
         """
-        # first save the spv_pk and websocket connection map 
-        spv_k = utils.get_public_key(data["Sender"])
+        # first save the spv_pk and websocket connection map
+        data = utils.json_to_dict(strdata)
+        spv_pk = utils.get_public_key(data["Sender"])
         self.ws_pk_dict[spv_pk] = websocket
-        # data = utils.json_to_dict(strdata)
-        data = {}
+        # data = {}
         msg_type = data.get("MessageType")
         # build map bettween spv pk_key with websocket connection
         if msg_type == "AddChannel":
@@ -191,6 +188,9 @@ class Gateway():
             self._send_jsonrpc_msg("method", strdata)
         elif msg_type == "CombinationTransaction":
             pass
+        elif msg_type == "PaymentLink":
+            # to send to wallet
+            self._send_jsonrpc_msg("TransactionMessage", data)
         elif msg_type == "GetRouterInfo":
             receiver_pk, receiver_ip_port = utils.parse_url(data.get("Receiver"))
             slef_pk, self_ip_port = utils.parse_url(node["wallet_info"]["url"])
@@ -219,7 +219,6 @@ class Gateway():
                     }
             message = utils.generate_ack_router_info_msg(router)
             self._send_wsocket_msg(websocket, message)
-        print(strdata)
 
     def _send_wsocket_msg(self, con, data):
         """
@@ -331,6 +330,13 @@ class Gateway():
                 self._send_tcp_msg(data["Receiver"], data)
             elif msg_type in Gateway.TransMessageType:
                 self.handle_transaction_message(data)
+            elif msg_type in ["PaymentLinkAck", "PaymentAck"]:
+                recv_pk = utils.get_public_key(data.get("Receiver"))
+                connection = self.ws_pk_dict.get(recv_pk)
+                if connection:
+                    self._send_wsocket_msg(connection,data)
+                else:
+                    wst_logger.info("the receiver is disconnected")
         elif method == "SyncBlock":
             # push the data to spvs
             pass
@@ -386,8 +392,7 @@ class Gateway():
                     excepts=[]
                 )
                 self.sync_channel_route_to_peer(message)
-
-
+            
     def handle_web_first_connect(self, websocket):
         if not node.get("wallet_info"):
             node["wallet_info"] = {
