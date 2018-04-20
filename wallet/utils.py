@@ -91,6 +91,9 @@ def get_asset_type_name(asset_type):
             continue
     return None
 
+def get_asset_type_id(asset_name):
+    return Configure.get("AssetType").get(asset_name.upper())
+
 
 if __name__ == "__main__":
     print(pubkey_to_address("03a6fcaac0e13dfbd1dd48a964f92b8450c0c81c28ce508107bc47ddc511d60e75"))

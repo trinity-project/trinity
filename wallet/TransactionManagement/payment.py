@@ -37,8 +37,9 @@ class Payment(object):
     """
     HashR={}
 
-    def __init__(self, wallet):
+    def __init__(self, wallet, remark=None):
         self.wallet = wallet
+        self.remark = remark
 
     def generate_payment_code(self,asset_type, value, comments):
         if len(asset_type) == 40:
@@ -74,7 +75,7 @@ class Payment(object):
         key = Random.get_random_bytes(32)
         key_string = binascii.b2a_hex(key).decode()
         hr = hash_r(key_string)
-        self.HashR[hr] = key_string
+        self.HashR[hr] = (key_string, self.remark)
         return hr
 
     @staticmethod
