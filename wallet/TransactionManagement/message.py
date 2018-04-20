@@ -22,7 +22,7 @@ LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE."""
 from wallet.TransactionManagement.transaction import TrinityTransaction
-from wallet.utils import pubkey_to_address
+from wallet.utils import pubkey_to_address, get_asset_type_id
 from TX.interface import *
 from wallet.ChannelManagement import channel as ch
 from sserver.model.base_enum import EnumChannelState
@@ -33,7 +33,7 @@ from wallet.BlockChain.monior import register_block, register_monitor
 from sserver.model import APIChannel
 from log import LOG
 import json
-
+from wallet.TransactionManagement.payment import Payment
 
 class Message(object):
     """
@@ -767,8 +767,12 @@ class HtlcMessage(TransactionMessage):
     "ChannelName":"3333333333333333333333333333",
     "MessageBody": {
             "HCTX":"",
+            "RDTX":"",
             "HEDTX":"",
-            "HTTX":""
+            "HTTX":""，
+            "HTDTX":"",
+            "HTRDTX":"",
+            "RoleIndex":""
         }
     }
     """
@@ -777,7 +781,11 @@ class HtlcMessage(TransactionMessage):
         super().__init__(message,wallet)
         self.hctx = self.message_body.get("HCTX")
         self.hedtx = self.message_body.get("HEDTX")
+        self.rdtx = self.message_body.get("RDTX")
+        self.htdtx = self.message_body.get("HTDTX")
         self.httx = self.message_body.get("HTTX")
+        self.htrdtx = self.message_body.get("HTRDTX")
+        self.role_index = self.message_body.get("RoleIndex")
         self.channel_name = message.get("ChannelName")
 
     def handle_message(self):
@@ -1031,6 +1039,66 @@ class SettleResponseMessage(TransactionMessage):
 
     def verify(self):
         return True, None
+
+
+class PaymentLink(TransactionMessage):
+    """
+    {
+        "MessageType": "PaymentLink",
+        "Sender": "03dc2841ddfb8c2afef94296693315a234026fa8f058c3e4259a04f8be6d540049@106.15.91.150:8089",
+        "MessageBody": {
+            "Parameter": {
+                "Amount": 0,
+                "Assets": "TNC",
+                "Description": "Description"
+            }
+        }
+    }"""
+
+    def __init__(self, message, wallet):
+        super().__init__(message, wallet)
+        self.amount = self.message_body.get("Amount")
+        self.asset = self.message_body.get("Assets")
+        self.comments = self.message_body.get("Description")
+
+    def handle_message(self):
+        pycode = Payment(self.wallet,self.sender).generate_payment_code(get_asset_type_id(self.asset),
+                                                            self.amount, self.comments)
+        message = {"MessageType":"PaymentLinkAck",
+                   "Receiver":self.sender,
+                   "MessageBody": {
+                                    "PaymentLink": pycode
+                                   },
+                   }
+        Message.send(message)
+        return None
+
+
+class PaymentAck(TransactionMessage):
+    """
+        {
+        "MessageType": "PaymentAck",
+        "Receiver": "03dc2841ddfb8c2afef94296693315a234026fa8f058c3e4259a04f8be6d540049@106.15.91.150:8089",
+        "MessageBody": {
+            "State": "Success",
+            "Hr": "Hr"
+        }
+    }
+    """
+    def __init__(self,message, wallet):
+        super().__init__(message, wallet)
+
+    @staticmethod
+    def create(receiver, hr, state="Success"):
+        message = {
+        "MessageType": "PaymentAck",
+        "Receiver": receiver,
+        "MessageBody": {
+                         "State": state,
+                         "Hr": hr
+                         }
+                }
+        Message.send(message)
 
 
 def monitor_founding(height, channel_name, state):

@@ -19,7 +19,7 @@ from twisted.internet import reactor, task, endpoints
 from log import LOG
 from lightwallet.Settings import settings
 
-from wallet.utils import get_arg,to_aes_key
+from wallet.utils import get_arg,to_aes_key,get_asset_type_name
 from wallet.Interface.rpc_interface import RpcInteraceApi
 from twisted.web.server import Site
 from lightwallet.prompt import PromptInterface
@@ -40,6 +40,7 @@ from wallet.BlockChain.monior import monitorblock,Monitor
 from wallet.TransactionManagement.payment import Payment
 import requests
 import qrcode_terminal
+
 
 GateWayIP = Configure.get("GatewayIP")
 Version = Configure.get("Version")
@@ -214,11 +215,26 @@ class UserPromptInterface(PromptInterface):
         elif command == "tx":
             if not self.Channel:
                 self._channel_noopen()
-            receiver = get_arg(arguments,1)
-            asset_type = get_arg(arguments,2)
-            count = get_arg(arguments,3)
+            argument1 = get_arg(arguments,1)
+            if len(argument1) > 88:
+                # payment code
+                result, info = Payment.decode_payment_code(argument1)
+                if result:
+                    receiver = info.get("uri")
+                    hr = info.get("hr")
+                    asset_type = info.get("asset_type")
+                    asset_type = get_asset_type_name(asset_type)
+                    count = info.get("count")
+                    comments = info.get("comments")
+                else:
+                    print("The payment code is not correct")
+                    return
+            else:
+                receiver = get_arg(arguments, 1)
+                asset_type = get_arg(arguments, 2)
+                count = get_arg(arguments, 3)
 
-            receiverpubkey,receiverip= receiver.split("@")
+            receiverpubkey, receiverip= receiver.split("@")
             channels = filter_channel_via_address(self.Wallet.url,receiver, EnumChannelState.OPENED.name)
             ch = chose_channel(channels,self.Wallet.url.split("@")[0].strip(), count, asset_type)
             channel_name = ch.channel
@@ -281,7 +297,7 @@ class UserPromptInterface(PromptInterface):
             value = get_arg(arguments, 2)
             if not value:
                 print("command not give the count")
-            comments = " ".join(arguments[2:])
+            comments = " ".join(arguments[3:])
             comments = comments if comments else "None"
             paycode = Payment(self.Wallet).generate_payment_code(asset_type, value, comments)
             if self.qrcode:
