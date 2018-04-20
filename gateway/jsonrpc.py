@@ -60,7 +60,7 @@ class AsyncJsonRpc():
         app.router.add_post('/', AsyncJsonRpc.handle)
         loop = asyncio.get_event_loop()
         server = await loop.create_server(app.make_handler(), cg_local_jsonrpc_addr[0], cg_local_jsonrpc_addr[1])
-        rpc_logger.info("TCP server is serving on %s", cg_local_jsonrpc_addr)
+        rpc_logger.info("RPC server is serving on %s", cg_local_jsonrpc_addr)
         return server
         # web.run_app(app, host=cg_local_jsonrpc_addr[0], port=cg_local_jsonrpc_addr[1])
         
