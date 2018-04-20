@@ -363,6 +363,8 @@ class UserPromptInterface(PromptInterface):
             m_instance = mg.CreateTranscation(message, self.Wallet)
         elif message_type == "TestMessage":
             m_instance = mg.TestMessage(message, self.Wallet)
+        elif message_type == "PaymentLink":
+            m_instance = mg.PaymentLink(message, self.Wallet)
         else:
             return "No Support Message Type "
 

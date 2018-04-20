@@ -93,10 +93,10 @@ def hash_r(r):
     return hashlib.sha1(r.encode()).hexdigest()
 
 if __name__ == "__main__":
-    result = Payment.decode_payment_code("TNJ2dZc36Z4eRSMELP7Bp445PghkEbuRR4yhCcpAa2mTWSRPzzcXJKzu4rJdT7Lp2g5mA"
-                                         "8WtUqBCE2wcRJrL9dPvVfWPAKc3Wh9WEyv7YXhm4Jr47Nnqi4nmY2rPaoypr7kzGKHTRb"
-                                         "vBQJxF4p65K9p5UqXcfK768gvRHwYxaj9YQYSesSPzeF78JF2XHCBhesw5Kn4z8RyviVg"
-                                         "TVhUV2hbozdMETvwx7yvTb6i5R9Kaa8LUyoe1iiZ1SqiMCjKEWUtq")
+    result = Payment.decode_payment_code("TN2BfTsKzBqXChJcPrRLod7FwBy5PmwKvsiBuWuxpFGk7BSHS5Eh5HQGMoFSAAordz"
+                                         "UYo9KbV8DsrrirpUnpND6RB2Yr1Z8h48CHyCNDo8zYwJPcwHRTBQzi3ARB2sZqRhsC"
+                                         "HHTm3AkHAyGTt9dUgJz4y8Mej8fmUj81hk1n15LQwcF4Fqo1TY1C1cJABYu14E4biv"
+                                         "GKyemF8kKYqoLiB5x3qThE221Fjhc858Chk7SgqUeJyvaFqMU")
 
     print(result)
 
