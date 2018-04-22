@@ -10,12 +10,12 @@ from TX.interface import createFundingTx, createCTX, createRDTX, createBRTX
 from TX.utils import hex_reverse, ToAddresstHash, int_to_hex, createTxid, pubkeyToAddress
 
 walletSelf= {
-    "pubkey":"0374c8ad50206d6fc8de8125fca58c528eb8999680b8f56b3b3632ca5c0e5ec526",
-    "deposit":10
+    "pubkey":"03eb0881d1d64754d50255bf16079ed6cbc3982463a8904cb919422b39178bef3f",
+    "deposit":1
 }
 walletOther= {
-    "pubkey":"02c0fb94ad85caefaef00a65a67a3fcaca3fcf9bb0a6c0fb67a732178c98811313",
-    "deposit":10
+    "pubkey":"0336aa99cdd7149a5d26e2fd8deaf74d9ee160ea4188c375fbbe09d5c0bbda2b2c",
+    "deposit":1
 }
 
 
@@ -32,7 +32,6 @@ self_RD_tx = createRDTX(addressRSMC=self_C_tx["addressRSMC"], addressSelf=pubkey
 
 other_BR_tx = createBRTX(addressRSMC=self_C_tx["addressRSMC"], addressOther=pubkeyToAddress(walletSelf["pubkey"]),
                         balanceSelf=walletSelf["deposit"], RSMCScript=self_C_tx["scriptRSMC"])
-
 
 
 # channelInfo=createChannel(walletSelf=walletSelf,walletOther=walletOther)

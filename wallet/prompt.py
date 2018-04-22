@@ -182,7 +182,8 @@ class UserPromptInterface(PromptInterface):
             self.retry_channel_enable()
 
     def do_close_wallet(self):
-        self.Wallet.SaveStoredData("BlockHeight", self.Wallet.BlockHeight)
+        if self.Wallet:
+            self.Wallet.SaveStoredData("BlockHeight", self.Wallet.BlockHeight)
         super().do_close_wallet()
 
     def quit(self):

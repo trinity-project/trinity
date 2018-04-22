@@ -21,7 +21,7 @@ def createFundingTx(walletSelf,walletOther): #self sign is behind
     :return:
     '''
 
-    multi_contract = createMultiSigContract([walletSelf["pubkey"],walletOther["pubkey"]])
+    multi_contract = createMultiSigContract(walletSelf["pubkey"],walletOther["pubkey"])
     contractAddress = multi_contract["address"]
     time_stamp = TransactionAttribute(usage=TransactionAttributeUsage.Remark,
                                       data=bytearray.fromhex(hex(int(time.time()))[2:]))
@@ -45,7 +45,8 @@ def createFundingTx(walletSelf,walletOther): #self sign is behind
         "addressFunding":contractAddress,
         "txId": createTxid(tx.get_tx_data()),
         "scriptFunding":multi_contract["script"],
-        "witness":"024140{signOther}2321"+walletOther["pubkey"]+"ac"+"4140{signSelf}2321"+walletSelf["pubkey"]+"ac"
+        # "witness":"024140{signOther}2321"+walletOther["pubkey"]+"ac"+"4140{signSelf}2321"+walletSelf["pubkey"]+"ac",
+        "witness":"024140{sign1}2321{pubkey1}ac4140{sign2}2321{pubkey2}ac"
     }
 
 
@@ -72,7 +73,7 @@ def createCTX(addressFunding,balanceSelf,balanceOther,pubkeySelf,pubkeyOther,fun
         "addressRSMC":RSMCContract["address"],
         "scriptRSMC":RSMCContract["script"],
         "txId":createTxid(tx.get_tx_data()),
-        "witness":"018240{signSelf}40{signOther}47"+fundingScript
+        "witness":"018240{signSelf}40{signOther}da"+fundingScript
     }
 
 def createRDTX(addressRSMC,addressSelf,balanceSelf,CTxId,RSMCScript):
