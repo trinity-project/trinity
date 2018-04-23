@@ -6,32 +6,39 @@ from neocore.Cryptography.Crypto import Crypto
 from TX.MyTransaction import InvocationTransaction
 from TX.TransactionAttribute import TransactionAttribute, TransactionAttributeUsage
 from TX.config import *
-from TX.interface import createFundingTx, createCTX, createRDTX, createBRTX
+from TX.interface import createFundingTx, createCTX, createRDTX, createBRTX, create_sender_HTLC_TXS, \
+    create_receiver_HTLC_TXS
 from TX.utils import hex_reverse, ToAddresstHash, int_to_hex, createTxid, pubkeyToAddress
 
 walletSelf= {
     "pubkey":"03eb0881d1d64754d50255bf16079ed6cbc3982463a8904cb919422b39178bef3f",
-    "deposit":1
+    "deposit":10
 }
 walletOther= {
-    "pubkey":"0336aa99cdd7149a5d26e2fd8deaf74d9ee160ea4188c375fbbe09d5c0bbda2b2c",
-    "deposit":1
+    "pubkey":"034e9d2751e1fec65a6a42bc097bdf55c7a79762df7d6e970277f46405c376683a",
+    "deposit":10
 }
 
 
 
 funding_tx = createFundingTx(walletSelf=walletSelf, walletOther=walletOther)
 
-self_C_tx = createCTX(addressFunding=funding_tx["addressFunding"], balanceSelf=walletSelf["deposit"],
-                      balanceOther=walletOther["deposit"], pubkeySelf=walletSelf["pubkey"],
-                      pubkeyOther=walletOther["pubkey"], fundingScript=funding_tx["scriptFunding"])
+# self_C_tx = createCTX(addressFunding=funding_tx["addressFunding"], balanceSelf=walletSelf["deposit"],
+#                       balanceOther=walletOther["deposit"], pubkeySelf=walletSelf["pubkey"],
+#                       pubkeyOther=walletOther["pubkey"], fundingScript=funding_tx["scriptFunding"])
+#
+# self_RD_tx = createRDTX(addressRSMC=self_C_tx["addressRSMC"], addressSelf=pubkeyToAddress(walletSelf["pubkey"]),
+#                         balanceSelf=walletSelf["deposit"], CTxId=self_C_tx["txId"],
+#                         RSMCScript=self_C_tx["scriptRSMC"])
+#
+# other_BR_tx = createBRTX(addressRSMC=self_C_tx["addressRSMC"], addressOther=pubkeyToAddress(walletSelf["pubkey"]),
+#                         balanceSelf=walletSelf["deposit"], RSMCScript=self_C_tx["scriptRSMC"])
 
-self_RD_tx = createRDTX(addressRSMC=self_C_tx["addressRSMC"], addressSelf=pubkeyToAddress(walletSelf["pubkey"]),
-                        balanceSelf=walletSelf["deposit"], CTxId=self_C_tx["txId"],
-                        RSMCScript=self_C_tx["scriptRSMC"])
 
-other_BR_tx = createBRTX(addressRSMC=self_C_tx["addressRSMC"], addressOther=pubkeyToAddress(walletSelf["pubkey"]),
-                        balanceSelf=walletSelf["deposit"], RSMCScript=self_C_tx["scriptRSMC"])
+
+HTLCTXS=create_receiver_HTLC_TXS(pubkeySender=walletSelf["pubkey"], pubkeyReceiver=walletOther["pubkey"], HTLCValue=1,
+                       balanceSender=9,balanceReceiver=10, hashR="ba4290cd3a34d9d3161805bbac70f293590e1473",
+                       addressFunding=funding_tx["addressFunding"], fundingScript=funding_tx["scriptFunding"])
 
 
 # channelInfo=createChannel(walletSelf=walletSelf,walletOther=walletOther)

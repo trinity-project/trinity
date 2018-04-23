@@ -529,8 +529,8 @@ class RsmcMessage(TransactionMessage):
         founder = transaction.get_founder()
         LOG.debug("Rsmc Create  founder {}".format(json.dumps(founder)))
         tx_state = transaction.get_transaction_state()
-        channle = ch.Channel.channel(channel_name)
-        balance = channle.get_balance()
+        channel = ch.Channel.channel(channel_name)
+        balance = channel.get_balance()
         #balance = transaction.get_balance(str(int(tx_nonce)-1))
         LOG.debug("Rsmc Create get balance {}".format(str(balance)))
 
@@ -539,7 +539,7 @@ class RsmcMessage(TransactionMessage):
             receiver_balance = balance.get(receiver_pubkey)
             balance_value = sender_balance.get(asset_type.upper())
             receiver_balance_value = receiver_balance.get(asset_type.upper())
-            LOG.info("RSMC Balance  %s"  %(str(balance_value)))
+            LOG.info("RSMC Balance  %s" %(str(balance_value)))
         else:
             balance_value = 0
             receiver_balance_value = 0
@@ -613,7 +613,7 @@ class RsmcMessage(TransactionMessage):
         subitem = {}
         subitem.setdefault(asset_type.upper(), receiver_balance)
         balance.setdefault(receiver_pubkey,subitem)
-        transaction.update_transaction(str(tx_nonce), Balance=balance, State="confirm")
+        transaction.update_transaction(str(tx_nonce), Balance=balance, State="pending")
 
     def _check_balance(self, balance):
         pass
@@ -1074,12 +1074,6 @@ class PaymentLink(TransactionMessage):
                                    },
                    }
         Message.send(message)
-
-        #ToDo Just for test, will be remove soon
-        # time.sleep(30)
-        # state ,result = Payment.decode_payment_code(pycode)
-        # hr = json.loads(result).get("hr")
-        # PaymentAck.create(self.sender, hr)
 
         return None
 
