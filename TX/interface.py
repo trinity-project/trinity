@@ -46,8 +46,8 @@ def createFundingTx(walletSelf,walletOther): #self sign is behind
         "addressFunding":contractAddress,
         "txId": createTxid(tx.get_tx_data()),
         "scriptFunding":multi_contract["script"],
-        # "witness":"024140{signOther}2321"+walletOther["pubkey"]+"ac"+"4140{signSelf}2321"+walletSelf["pubkey"]+"ac",
-        "witness":"024140{sign1}2321{pubkey1}ac4140{sign2}2321{pubkey2}ac"
+        "witness":"024140{signOther}2321"+walletOther["pubkey"]+"ac"+"4140{signSelf}2321"+walletSelf["pubkey"]+"ac",
+        # "witness":"024140{sign1}2321{pubkey1}ac4140{sign2}2321{pubkey2}ac"
     }
 
 def createCTX(addressFunding,balanceSelf,balanceOther,pubkeySelf,pubkeyOther,fundingScript):
@@ -287,35 +287,6 @@ def createHTRDTX(addressRSMC, addressSender, HTLCValue, HTTxId, RSMCScript):
         "witness": "01{blockheight_script}40{signReceiver}40{signSender}fd"+createVerifyScript(RSMCScript)
     }
 
-def create_sender_HTLC_TXS(pubkeySender, pubkeyReceiver, HTLCValue, balanceSender,
-                           balanceReceiver, hashR, addressFunding, fundingScript):
-    sender_HCTX = create_sender_HCTX(pubkeySender=pubkeySender, pubkeyReceiver=pubkeyReceiver,
-                                     HTLCValue=HTLCValue, balanceSender=balanceSender,
-                                     balanceReceiver=balanceReceiver, hashR=hashR,
-                                     addressFunding=addressFunding, fundingScript=fundingScript)
-
-    sender_RDTX = create_sender_RDTX(addressRSMC=sender_HCTX["addressRSMC"], addressSender=pubkeyToAddress(pubkeySender),
-                                     balanceSender=balanceSender, senderHCTxId=sender_HCTX["txId"],
-                                     RSMCScript=sender_HCTX["RSMCscript"])
-
-    HEDTX = createHEDTX(addressHTLC=sender_HCTX["addressHTLC"], addressReceiver=pubkeyToAddress(pubkeyReceiver),
-                        HTLCValue=HTLCValue, HTLCScript=sender_HCTX["HTLCscript"])
-
-    HTTX = createHTTX(addressHTLC=sender_HCTX["addressHTLC"], pubkeySender=pubkeySender,
-                      pubkeyReceiver=pubkeyReceiver, HTLCValue=HTLCValue,
-                      HTLCScript=sender_HCTX["HTLCscript"])
-
-    HTRDTX = createHTRDTX(addressRSMC=HTTX["addressRSMC"], addressSender=pubkeyToAddress(pubkeySender),
-                          HTLCValue=HTLCValue, HTTxId=HTTX["txId"], RSMCScript=HTTX["RSMCscript"])
-
-    return {
-        "HCTX":sender_HCTX,
-        "RDTX":sender_RDTX,
-        "HEDTX":HEDTX,
-        "HTTX":HTTX,
-        "HTRDTX":HTRDTX
-    }
-
 
 #receiver HTLC
 def create_receiver_HCTX(pubkeySender, pubkeyReceiver, HTLCValue, balanceSender, balanceReceiver, hashR, addressFunding,
@@ -425,6 +396,8 @@ def createHETX(addressHTLC, pubkeySender,pubkeyReceiver,HTLCValue, HTLCScript):
     return {
         "txData": tx.get_tx_data(),
         "txId": createTxid(tx.get_tx_data()),
+        "addressRSMC": RSMCContract["address"],
+        "RSMCscript": RSMCContract["script"],
         "witness": "01{R_script}40{signOther}40{signSelf}fd"+createVerifyScript(HTLCScript)
     }
 
@@ -454,6 +427,38 @@ def createHERDTX(addressRSMC, addressReceiver, HTLCValue, HETxId, RSMCScript):
         "witness": "01{blockheight_script}40{signReceiver}40{signSender}fd"+createVerifyScript(RSMCScript)
     }
 
+
+
+def create_sender_HTLC_TXS(pubkeySender, pubkeyReceiver, HTLCValue, balanceSender,
+                           balanceReceiver, hashR, addressFunding, fundingScript):
+    sender_HCTX = create_sender_HCTX(pubkeySender=pubkeySender, pubkeyReceiver=pubkeyReceiver,
+                                     HTLCValue=HTLCValue, balanceSender=balanceSender,
+                                     balanceReceiver=balanceReceiver, hashR=hashR,
+                                     addressFunding=addressFunding, fundingScript=fundingScript)
+
+    sender_RDTX = create_sender_RDTX(addressRSMC=sender_HCTX["addressRSMC"], addressSender=pubkeyToAddress(pubkeySender),
+                                     balanceSender=balanceSender, senderHCTxId=sender_HCTX["txId"],
+                                     RSMCScript=sender_HCTX["RSMCscript"])
+
+    HEDTX = createHEDTX(addressHTLC=sender_HCTX["addressHTLC"], addressReceiver=pubkeyToAddress(pubkeyReceiver),
+                        HTLCValue=HTLCValue, HTLCScript=sender_HCTX["HTLCscript"])
+
+    HTTX = createHTTX(addressHTLC=sender_HCTX["addressHTLC"], pubkeySender=pubkeySender,
+                      pubkeyReceiver=pubkeyReceiver, HTLCValue=HTLCValue,
+                      HTLCScript=sender_HCTX["HTLCscript"])
+
+    HTRDTX = createHTRDTX(addressRSMC=HTTX["addressRSMC"], addressSender=pubkeyToAddress(pubkeySender),
+                          HTLCValue=HTLCValue, HTTxId=HTTX["txId"], RSMCScript=HTTX["RSMCscript"])
+
+    return {
+        "HCTX":sender_HCTX,
+        "RDTX":sender_RDTX,
+        "HEDTX":HEDTX,
+        "HTTX":HTTX,
+        "HTRDTX":HTRDTX
+    }
+
+
 def create_receiver_HTLC_TXS(pubkeySender, pubkeyReceiver, HTLCValue, balanceSender,
                            balanceReceiver, hashR, addressFunding, fundingScript):
     receiver_HCTX = create_receiver_HCTX(pubkeySender=pubkeySender, pubkeyReceiver=pubkeyReceiver,
@@ -466,7 +471,7 @@ def create_receiver_HTLC_TXS(pubkeySender, pubkeyReceiver, HTLCValue, balanceSen
                                          balanceReceiver=balanceReceiver, receiver_HCTxId=receiver_HCTX["txId"],
                                          RSMCScript=receiver_HCTX["RSMCscript"])
 
-    HTDTX = createHTDTX(addressHTLC=receiver_HCTX["addressHTLC"], pubkeySender=pubkeyToAddress(pubkeySender),
+    HTDTX = createHTDTX(addressHTLC=receiver_HCTX["addressHTLC"], pubkeySender=pubkeySender,
                         HTLCValue=HTLCValue, HTLCScript=receiver_HCTX["HTLCscript"])
 
     HETX = createHETX(addressHTLC=receiver_HCTX["addressHTLC"], pubkeySender=pubkeySender,

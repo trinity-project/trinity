@@ -6,7 +6,8 @@ from neocore.Cryptography.Crypto import Crypto
 from TX.MyTransaction import InvocationTransaction
 from TX.TransactionAttribute import TransactionAttribute, TransactionAttributeUsage
 from TX.config import *
-from TX.interface import createFundingTx, createCTX, createRDTX, createBRTX, create_sender_HTLC_TXS
+from TX.interface import createFundingTx, createCTX, createRDTX, createBRTX, create_sender_HTLC_TXS, \
+    create_receiver_HTLC_TXS
 from TX.utils import hex_reverse, ToAddresstHash, int_to_hex, createTxid, pubkeyToAddress
 
 walletSelf= {
@@ -35,10 +36,9 @@ funding_tx = createFundingTx(walletSelf=walletSelf, walletOther=walletOther)
 
 
 
-HTLCTXS=create_sender_HTLC_TXS(pubkeySender=walletSelf["pubkey"], pubkeyReceiver=walletOther["pubkey"], HTLCValue=1,
-                       balanceSender=9,balanceReceiver=10, hashR="dd5fef9c1c1da1394d6d34b248c51be2ad740840",
+HTLCTXS=create_receiver_HTLC_TXS(pubkeySender=walletSelf["pubkey"], pubkeyReceiver=walletOther["pubkey"], HTLCValue=1,
+                       balanceSender=9,balanceReceiver=10, hashR="ba4290cd3a34d9d3161805bbac70f293590e1473",
                        addressFunding=funding_tx["addressFunding"], fundingScript=funding_tx["scriptFunding"])
-
 
 
 # channelInfo=createChannel(walletSelf=walletSelf,walletOther=walletOther)
