@@ -99,5 +99,9 @@ if __name__ == "__main__":
                                          "GKyemF8kKYqoLiB5x3qThE221Fjhc858Chk7SgqUeJyvaFqMU")
 
     print(result)
+    key = Random.get_random_bytes(32)
+    key_string = binascii.b2a_hex(key).decode()
+    print(key_string)
+    print(len(key_string))
 
 

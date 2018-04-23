@@ -280,7 +280,7 @@ class UserPromptInterface(PromptInterface):
                     n = router.get("Next")
                     fee = reduce(lambda x, y:x+y,[int(i[1]) for i in r])
                     answer = prompt("will use fee %s , Do you still want tx? [Yes/No]> " %(str(fee)))
-                    if answer.upper() == "YES":
+                    if answer.upper() in["YES","Y"]:
                         tx_nonce = trinitytx.TrinityTransaction(channel_name, self.Wallet).get_latest_nonceid()
                         mg.RsmcMessage.create(channel_name, self.Wallet, self.Wallet.pubkey,
                                               receiverpubkey, int(count), receiverip, gate_way_ip, str(tx_nonce + 1),
@@ -292,7 +292,7 @@ class UserPromptInterface(PromptInterface):
 
         elif command == "qrcode":
             enable = get_arg(arguments,1)
-            if enable not in ["on","off"]:
+            if enable.upper() not in ["ON","OFF"]:
                 print("should be on or off")
             self.qrcode = True if enable.upper() == "ON" else False
 
