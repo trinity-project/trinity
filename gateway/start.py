@@ -1,7 +1,7 @@
 # coding: utf-8
 import time
 import os
-from gateway import gateway_singleton, get_event_loop
+from gateway import gateway_singleton
 from config import cg_debug
 
 if __name__ == "__main__":

@@ -43,6 +43,26 @@ class Message:
         valid_types = valid_types + cls.get_tx_msg_types()
         return valid_types
 
+    @classmethod
+    def check_message_is_valid(cls, data, origin="node"):
+        """
+        :param data: dict type \n
+        :param origin: node|wallet|spv
+        """
+        is_valid = True
+        msg_type = data.get("MessageType")
+        if type(data) != dict:
+            is_valid = False
+        elif not msg_type:
+            is_valid = False
+        if origin == "node":
+            if msg_type not in cls.get_valid_msg_types():
+                is_valid = False
+            elif not data.get("Sender"):
+                return False
+        return is_valid
+
+
 class MessageMake:
     """
     the class for make message
@@ -55,18 +75,18 @@ class MessageMake:
         return message
     ###### message for wallet begin ########
     @classmethod
-    def make_trigger_transaction_msg(cls, **kwargs):
+    def make_trigger_transaction_msg(cls, msg_type="CreateChannelMessage", **kwargs):
         """
-        :param kwargs:\n
-        "sender": "xxx@yyy"\n
-        "receiver": "xxx@yyy"\n
-        "asset_type": "TNC/ETH/",\n
+        :param kwargs: \n
+        "sender": xxx@yyy \n
+        "receiver": xxx@yyy \n
+        "asset_type": TNC/ETH/, \n
         "amount": 4
         """
         message = {
             "Sender": kwargs.get("sender"),
-            "MessageType": "CreateChannelMessage",
-            "Receiver": kwargs.get("receiver)",
+            "MessageType": msg_type,
+            "Receiver": kwargs.get("receiver"),
             "MessageBody": {
                 "AssetType": kwargs.get("asset_type"),
                 "Value": kwargs.get("amount")
@@ -80,6 +100,22 @@ class MessageMake:
         )
         return message
 
+    @staticmethod
+    def make_join_net_msg(sender):
+        message = {
+            "MessageType": "JoinNet",
+            "Sender": sender
+        }
+        return message
+
+    @staticmethod
+    def make_ack_show_node_list(node_list):
+        message = {
+            "MessageType": "AckShowNodeList",
+            "NodeList": list(node_list)
+        }
+        return message
+    
     @staticmethod
     def make_ack_sync_wallet_msg(url):
         message = {
@@ -112,13 +148,23 @@ class MessageMake:
         return message
 
     @staticmethod
-    def make_sync_graph_msg(sync_type, sender, **kwargs):
+    def make_ack_node_join_msg(sender, receiver, node_list):
+        message = {
+            "MessageType": "AckJoin",
+            "Sender": sender,
+            "Receiver": receiver,
+            "NodeList": list(node_list)
+        }
+        return message
+
+    @staticmethod
+    def make_sync_graph_msg(sync_type, sender, msg_type="SyncChannelState" ,**kwargs):
         """
-        :param sync_type: "add_single_edge|remove_single_edge|update_node_data|add_whole_graph"\n
-        :param kwargs: {route_graph,source,target,node}
+        :param sync_type: add_single_edge|remove_single_edge|update_node_data|add_whole_graph \n
+        :param kwargs: {route_graph,source,target,node,broadcast,excepts}
         """
         message = {
-            "MessageType": "SyncChannelState",
+            "MessageType": msg_type,
             "SyncType": sync_type,
             "Sender": sender,
             "Broadcast": kwargs.get("broadcast"),
@@ -146,11 +192,17 @@ class MessageMake:
         return message
 
     @staticmethod
-    def make_error_msg(**kwargs):
+    def make_error_msg(msg_type="ErrorMessage", **kwargs):
+        """
+        :param kwargs: \n
+        sender: "xxx@yyy" \n
+        receiver: "xxx@yyy" \n
+        reason: the description about error
+        """
         message = {
             "Sender": kwargs.get("sender"),
             "Receiver": kwargs.get("receiver"),
-            "MessageType": "ErrorMessage",
+            "MessageType": msg_type,
             "Reason": kwargs.get("reason")
         }
         return message
