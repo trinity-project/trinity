@@ -21,6 +21,9 @@ AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
 LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE."""
+
+#coding=utf-8
+
 from wallet.TransactionManagement.transaction import TrinityTransaction
 from wallet.utils import pubkey_to_address, get_asset_type_id
 from TX.interface import *
@@ -56,7 +59,7 @@ class Message(object):
 
 class RegisterMessage(Message):
     """
-    transaction massage：
+    transaction massage:
     { "MessageType":"RegisterChannel",
     "Sender": "9090909090909090909090909@127.0.0.1:20553",
     "Receiver":"101010101001001010100101@127.0.0.1:20552",
@@ -166,7 +169,7 @@ class TransactionMessage(Message):
 
 class FounderMessage(TransactionMessage):
     """
-    transaction massage：
+    transaction massage:
     { "MessageType":"Founder",
     "Sender": "9090909090909090909090909@127.0.0.1:20553",
     "Receiver":"101010101001001010100101@127.0.0.1:20552",
@@ -769,7 +772,7 @@ class HtlcMessage(TransactionMessage):
             "HCTX":"",
             "RDTX":"",
             "HEDTX":"",
-            "HTTX":""，
+            "HTTX":"",
             "HTDTX":"",
             "HTRDTX":"",
             "RoleIndex":""
@@ -787,6 +790,7 @@ class HtlcMessage(TransactionMessage):
         self.htrdtx = self.message_body.get("HTRDTX")
         self.role_index = self.message_body.get("RoleIndex")
         self.channel_name = message.get("ChannelName")
+        self.value = self.message_body.get("Value")
 
     def handle_message(self):
         verify, error = self.verify()
@@ -799,7 +803,7 @@ class HtlcMessage(TransactionMessage):
         return True, None
 
     @staticmethod
-    def create(channel_name, wallet,senderpubkey, receiverpubkey, HTLCvalue, hashR,tx_nonce,partner_ip):
+    def create(channel_name, wallet,senderpubkey, receiverpubkey, HTLCvalue, hashR,tx_nonce,partner_ip, role_index=0):
         founder = TrinityTransaction(channel_name, wallet)
         balance = ch.Channel.channel(channel_name).get_balance()
         sender_address = pubkey_to_address(senderpubkey)
