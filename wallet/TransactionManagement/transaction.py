@@ -38,7 +38,7 @@ BlockHightRegister=[]
 TxIDRegister= []
 
 
-TxDataDir = os.path.join(os.path.dirname(__file__),"txdata")
+TxDataDir = os.path.join(os.path.dirname(os.path.abspath(__file__)),"txdata")
 if not os.path.exists(TxDataDir):
     os.makedirs(TxDataDir)
 
@@ -122,7 +122,10 @@ class TrinityTransaction(object):
         nonce = []
         for i in tx.keys():
             try:
-                nonce.append(int(i))
+                if tx.get("State") == "confirm":
+                    nonce.append(int(i))
+                else:
+                    continue
             except ValueError:
                 continue
         return max(nonce)
