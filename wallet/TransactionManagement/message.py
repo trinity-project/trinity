@@ -898,7 +898,6 @@ class HtlcMessage(TransactionMessage):
         self.hctx = self.message_body.get("HCTX")
         self.hedtx = self.message_body.get("HEDTX")
         self.rdtx = self.message_body.get("RDTX")
-        self.htdtx = self.message_body.get("HTDTX")
         self.httx = self.message_body.get("HTTX")
         self.htrdtx = self.message_body.get("HTRDTX")
         self.role_index = self.message_body.get("RoleIndex")
@@ -992,23 +991,25 @@ class HtlcMessage(TransactionMessage):
         """
         transaction = TrinityTransaction(channel_name, wallet)
         balance = ch.Channel.channel(channel_name).get_balance()
+        print(balance)
         senderpubkey = sender.strip().split("@")[0]
         receiverpubkey = receiver.strip().split("@")[0]
-        sender_balance = balance.get(senderpubkey)
-        receiver_balance = balance.get(receiverpubkey)
+        print(receiverpubkey)
+        sender_balance = balance.get(senderpubkey).get(asset_type)
+        receiver_balance = balance.get(receiverpubkey).get(asset_type)
         founder = transaction.get_founder()
         if role_index ==0:
 
             hctx = create_sender_HTLC_TXS(senderpubkey, receiverpubkey, HTLCvalue, sender_balance,
                                       receiver_balance, hashR, founder["originalData"]["addressFunding"],
-                                      founder["originalData"]["fundingScript"])
+                                      founder["originalData"]["scriptFunding"])
             transaction.update_transaction(str(tx_nonce), HR=hashR, TxType="HTLC",
                                            Count=HTLCvalue, State="pending")
 
         elif role_index == 1:
             hctx = create_receiver_HTLC_TXS(senderpubkey, receiverpubkey, HTLCvalue, sender_balance,
                                       receiver_balance, hashR, founder["originalData"]["addressFunding"],
-                                      founder["originalData"]["fundingScript"])
+                                      founder["originalData"]["scriptFunding"])
 
         else:
             LOG.error("Not correct role index, expect 0/1 but get {}".format(str(role_index)))
@@ -1045,8 +1046,6 @@ class HtlcMessage(TransactionMessage):
                                 "originalData": self.hctx}
             rdtx_sig = {"txDataSign": self.sign_message(self.rdtx.get("txData")),
                       "originalData": self.rdtx}
-            htdtx_sig = {"txDataSign": self.sign_message(self.htdtx.get("txData")),
-                        "originalData": self.htdtx}
             httx_sig = {"txDataSign": self.sign_message(self.httx.get("txData")),
                          "originalData": self.httx}
             htrdtx_sig = {"txDataSign": self.sign_message(self.htrdtx.get("txData")),
@@ -1061,7 +1060,6 @@ class HtlcMessage(TransactionMessage):
                                                  "HCTX": hctx_sig,
                                                  "RDTX": rdtx_sig,
                                                  "HTTX": httx_sig,
-                                                 "HTDTX":htdtx_sig,
                                                  "HTRDTX":htrdtx_sig,
                                                   "RoleIndex":role_index,
                                                   "HR":self.hr
