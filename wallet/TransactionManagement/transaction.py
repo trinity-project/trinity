@@ -122,10 +122,7 @@ class TrinityTransaction(object):
         nonce = []
         for i in tx.keys():
             try:
-                if tx.get("State") == "confirm":
-                    nonce.append(int(i))
-                else:
-                    continue
+                nonce.append(int(i))
             except ValueError:
                 continue
         return max(nonce)

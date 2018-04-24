@@ -36,6 +36,7 @@ class Payment(object):
 
     """
     HashR={}
+    HashHistory = {}
 
     def __init__(self, wallet, remark=None):
         self.wallet = wallet
@@ -85,8 +86,26 @@ class Payment(object):
         else:
             return False
 
+    def fetch_r(self, hr):
+        return self.HashR.get(hr)
+
     def delete_hr(self, hr):
         return self.HashR.pop(hr)
+
+    @staticmethod
+    def update_hash_history(hr, channel, count, state):
+        Payment.HashHistory[hr] = {"Channel":channel,
+                                   "Count":count,
+                                "State":state}
+        return None
+
+    @staticmethod
+    def get_hash_history(hr, state="pending"):
+        channel = Payment.HashHistory.get(hr)
+        if channel.get("State") == state:
+            return channel
+        else:
+            return None
 
 
 def hash_r(r):
