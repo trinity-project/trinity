@@ -118,7 +118,7 @@ class Gateway():
                         print("**********number of edges is: ",node["route_graph"]._graph.number_of_edges(),"**********")
                         print("**********",node["route_graph"].show_edgelist(),"**********")
                     except Exception:
-                        tcp_logger.exception("sync tree from peer raise an exception")
+                        tcp_logger.exception("sync graph from peer raise an exception")
                         return utils.request_handle_result.get("invalid")
                     else:
                         if data["Broadcast"]:
@@ -263,7 +263,7 @@ class Gateway():
                 # only channel receiver as the broadcast source
                 if channel_founder == self_url:
                     broadcast = True
-                    print("{}and{}build channel,only {} broadcast channel graph".format(channel_founder, channel_peer, channel_peer))
+                    print("{} and {}build channel,only {} broadcast channel graph".format(channel_founder, channel_peer, channel_peer))
                 else:
                     broadcast = False
                 # if route_graph.has_node(channel_peer):
@@ -363,7 +363,7 @@ class Gateway():
         union_excepts_excepts.add(utils.get_ip_port(node["wallet_info"]["url"]))
         for ner in set_neighbors:
             if ner not in set_excepts:
-                receiver = node["route_graph"].node["Pblickkey"] + "@" + ner
+                receiver = node["route_graph"]._graph.nodes[ner]["Pblickkey"] + "@" + ner
                 print("===============sync to the neighbors: {}=============".format(ner))
                 message["Excepts"] = list(union_excepts_excepts)
                 Network.send_msg_with_tcp(receiver, message)

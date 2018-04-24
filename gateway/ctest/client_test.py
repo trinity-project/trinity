@@ -20,7 +20,7 @@ def sync_wallet_data(n):
                 "alias": "test"
             }
         }
-        req_url = "http://localhost:{}/".format(8077 + x - 1)
+        req_url = "http://127.0.0.1:{}/".format(8077 + x - 1)
         # pprint(message)
         # req_url = ["http://192.168.205.221:8077/"]
         jsonrpcclient.request(req_url, 'SyncWalletData', json.dumps(message))
@@ -36,8 +36,8 @@ def sync_channel(founder, receiver):
     }
     f_pk_id = int(founder[2])
     r_pk_id = int(receiver[2])
-    jsonrpcclient.request("http://localhost:{}".format(start_req_port + f_pk_id - 1), 'SyncChannel', json.dumps(message))
-    jsonrpcclient.request("http://localhost:{}".format(start_req_port + r_pk_id - 1), 'SyncChannel', json.dumps(message))
+    jsonrpcclient.request("http://127.0.0.1:{}".format(start_req_port + f_pk_id - 1), 'SyncChannel', json.dumps(message))
+    jsonrpcclient.request("http://127.0.0.1:{}".format(start_req_port + r_pk_id - 1), 'SyncChannel', json.dumps(message))
 
 def triggle_tx(origin, distination):
     start_req_port = 8077
@@ -84,9 +84,9 @@ if __name__ == "__main__":
     ############ 1、2、3 ############
     sync_wallet_data(2)
     time.sleep(5)
-    sync_channel("pk1@localhost:8089", "pk3@localhost:8091")
+    # sync_channel("pk1@localhost:8089", "pk3@localhost:8091")
     # time.sleep(5)
-    # sync_channel("pk1@localhost:8089", "pk2@localhost:8090")
+    sync_channel("pk1@127.0.0.1:8089", "pk2@127.0.0.1:8090")
     # time.sleep(5)
     # sync_channel("pk3@localhost:8091", "pk2@localhost:8090")
     # sync_channel("pk4@localhost:8092", "pk3@localhost:8091")

@@ -1,6 +1,6 @@
 # coding: utf-8
 from asyncio import Protocol, get_event_loop
-from config import cg_end_mark, cg_bytes_encoding
+from config import cg_end_mark, cg_bytes_encoding, cg_tcp_addr, cg_debug_multi_ports
 from utils import request_handle_result
 from glog import tcp_logger
 
@@ -43,7 +43,16 @@ class TProtocol(Protocol):
         self.state = "connected"
         self.transport = transport
         peername = transport.get_extra_info('peername')
-        tcp_logger.info("the connection %s was established", peername)
+        if not cg_debug_multi_ports:
+            if cg_tcp_addr[1] ==  peername[1]:
+                tcp_logger.info("connect the server %s", peername)
+            else:
+                tcp_logger.info("client %s connected", peername)
+        else:
+            if "80" in str(peername[1]):
+                tcp_logger.info("connect the server %s", peername)
+            else:
+                tcp_logger.info("client %s connected", peername)
         tcp_manager.register(self)
 
     def data_received(self, data):
