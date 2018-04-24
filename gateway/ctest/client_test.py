@@ -16,7 +16,8 @@ def sync_wallet_data(n):
                 "Publickey": "pk{}".format(x),
                 "CommitMinDeposit": 1,
                 "Fee": 1,
-                "Balance": 10
+                "Balance": {"TNC": 10},
+                "alias": "test"
             }
         }
         req_url = "http://localhost:{}/".format(8077 + x - 1)
@@ -81,9 +82,9 @@ if __name__ == "__main__":
     # sync_channel("pk4@localhost:8092", "pk2@localhost:8090")
 
     ############ 1、2、3 ############
-    # sync_wallet_data(6)
-    # time.sleep(5)
-    # sync_channel("pk1@localhost:8089", "pk3@localhost:8091")
+    sync_wallet_data(2)
+    time.sleep(5)
+    sync_channel("pk1@localhost:8089", "pk3@localhost:8091")
     # time.sleep(5)
     # sync_channel("pk1@localhost:8089", "pk2@localhost:8090")
     # time.sleep(5)
@@ -161,12 +162,12 @@ if __name__ == "__main__":
             "alias": "trinity1"
         }
     }
-    jsonrpcclient.request("http://192.168.204.112:8077", 'SyncWalletData', json.dumps(message_1))
-    # jsonrpcclient.request("http://192.168.205.181:8077", 'SyncWalletData', json.dumps(message_2))
-    time.sleep(5)
+    # jsonrpcclient.request("http://192.168.204.112:8077", 'SyncWalletData', json.dumps(message_1))
+    # # jsonrpcclient.request("http://192.168.205.181:8077", 'SyncWalletData', json.dumps(message_2))
+    # time.sleep(5)
+    # # jsonrpcclient.request("http://192.168.204.112:8077", 'SyncChannel', json.dumps(message1))
     # jsonrpcclient.request("http://192.168.204.112:8077", 'SyncChannel', json.dumps(message1))
-    jsonrpcclient.request("http://192.168.204.112:8077", 'SyncChannel', json.dumps(message1))
-    jsonrpcclient.request("http://118.89.44.106:8077", 'SyncChannel', json.dumps(message1))
+    # jsonrpcclient.request("http://118.89.44.106:8077", 'SyncChannel', json.dumps(message1))
     # jsonrpcclient.request("http://localhost:8077", 'SyncWalletData', json.dumps(message))
 
 

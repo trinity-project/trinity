@@ -74,7 +74,8 @@ class Network:
         :param data: dict type
         """
         bdata = encode_bytes(data)
-        connection = TcpService.find_connection(receiver)
+        # connection = TcpService.find_connection(receiver)
+        connection = None
         if connection:
             tcp_logger.info("find the exist connection")
             connection.write(bdata)
