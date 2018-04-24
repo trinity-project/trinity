@@ -43,7 +43,7 @@ def sync_channel(message_type, channel_name,founder, receiver, balance):
                   }
                }
 
-    request = request = {
+    request = {
         "jsonrpc": "2.0",
         "method": "SyncChannel",
         "params": [message],

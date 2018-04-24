@@ -24,7 +24,7 @@ from wallet.Interface.rpc_interface import RpcInteraceApi
 from twisted.web.server import Site
 from lightwallet.prompt import PromptInterface
 from wallet.ChannelManagement.channel import create_channel, filter_channel_via_address,\
-    get_channel_via_address,chose_channel,close_channel
+    get_channel_via_address,chose_channel,close_channel,udpate_channel_when_setup
 from wallet.TransactionManagement import message as mg
 from wallet.TransactionManagement import transaction as trinitytx
 from wallet.Interface.rpc_interface import MessageList
@@ -159,19 +159,20 @@ class UserPromptInterface(PromptInterface):
         for i in range(30):
             enable = self.enable_channel()
             if enable:
-                break
+                return True
             else:
                 sys.stdout.write("Wait connect to gateway...{}...\r".format(i))
                 time.sleep(0.2)
-        else:
-            self._channel_noopen()
+        return self._channel_noopen()
 
     def do_open(self, arguments):
         super().do_open(arguments)
         if self.Wallet:
             self.Wallet.BlockHeight = self.Wallet.LoadStoredData("BlockHeight")
             Monitor.start_monitor(self.Wallet)
-            self.retry_channel_enable()
+            result = self.retry_channel_enable()
+            if result:
+                udpate_channel_when_setup(self.Wallet.url)
 
     def do_create(self, arguments):
         super().do_create(arguments)
@@ -283,7 +284,7 @@ class UserPromptInterface(PromptInterface):
                                }
                            }
                 router = gate_way.get_router_info(message)
-                if router:
+                if router.get("result").get("RouterInfo"):
                     if not hr:
                         print("No hr in payments")
                         return
@@ -339,7 +340,7 @@ class UserPromptInterface(PromptInterface):
 
     def _channel_noopen(self):
         print("Channel Function Can Not be Opened at Present, You can try again via channel enable")
-        return
+        return False
 
     def handlemaessage(self):
         while self.go_on:

@@ -260,6 +260,20 @@ def sync_channel_info_to_gateway(channel_name, type):
     return sync_channel(type, ch.channel_name,ch.founder,ch.partner,nb)
 
 
+def udpate_channel_when_setup(address):
+    channels = APIChannel.batch_query_channel(filters={"src_addr":address})
+    if channels.get("content"):
+        for ch in channels["content"]:
+            if ch.state == EnumChannelState.OPENED.name:
+                sync_channel_info_to_gateway(ch.channel, "UpdateChannel")
+
+    channeld = APIChannel.batch_query_channel(filters={"dest_addr":address})
+    if channeld.get("content"):
+        for ch in channeld["content"]:
+            if ch.state == EnumChannelState.OPENED.name:
+                sync_channel_info_to_gateway(ch.channel, "UpdateChannel")
+
+
 if __name__ == "__main__":
     result = APIChannel.query_channel(channel="1BE0FCD56A27AD46C22B8EEDC4E835EA")
     print(result)
