@@ -822,6 +822,7 @@ class RResponse(TransactionMessage):
     def handle_message(self):
         verify, error = self.verify()
         if verify:
+            self.transaction.update_transaction(str(self.tx_nonce), State="confirm")
             sender_pubkey, gateway_ip = self.wallet.url.split("@")
             receiver_pubkey, partner_ip = self.sender.splite("@")
             txid = self.transaction.get_latest_nonceid()
@@ -837,6 +838,8 @@ class RResponse(TransactionMessage):
                 LOG.info("peer {}".format(peer))
                 RResponse.create(self.wallet.url,peer,self.tx_nonce, channel_name,
                                  self.hr, self.r, count, self.asset_type, self.comments)
+                transaction = TrinityTransaction(channel_name, self.wallet)
+                transaction.update_transaction(str(self.tx_nonce),State="confirm")
             else:
                 return None
         else:
@@ -888,6 +891,7 @@ class HtlcMessage(TransactionMessage):
         self.count = self.message_body.get("Count")
         self.asset_type = self.message_body.get("AssetType")
         self.hr = self.message_body.get("HashR")
+        self.transaction = TrinityTransaction(self.channel_name, self.wallet)
 
     def handle_message(self):
         verify, error = self.verify()
@@ -904,11 +908,16 @@ class HtlcMessage(TransactionMessage):
         return True, None
 
     def _handle_0_message(self):
-        self.send_responses()
+        self.send_responses(self.role_index)
+        self.transaction.update_transaction(str(self.tx_nonce), TxType = "HTLC", HEDTX=self.hedtx,
+                                            HR=self.hr,Count=self.count,State ="pending")
+        HtlcMessage.create(self.channel_name,self.wallet, self.wallet.url, self.sender, self.count, self.hr,
+                           self.tx_nonce, 1, self.asset_type, self.router, self.next, self.comments)
         if self.next == self.wallet.url:
             r = Payment(self.wallet).fetch_r(self.hr)
             RResponse.create(self.wallet.url, self.sender, self.tx_nonce,
                              self.channel_name, self.hr, r[0], self.count, self.asset_type, self.comments)
+            self.transaction.update_transaction(str(self.tx_nonce), State="confirm")
         else:
             next = self.get_next_router()
             channels = ch.filter_channel_via_address(self.wallet, next, state=EnumChannelState.OPENED)
@@ -919,6 +928,12 @@ class HtlcMessage(TransactionMessage):
             HtlcMessage.create(channel.channel, self.wallet,self.wallet.url, next, count, self.hr,
                                self.tx_nonce, self.role_index,self.asset_type,self.router,
                                    next, comments=self.comments)
+
+
+    def _handle_1_message(self):
+        self.send_responses(self.role_index)
+        self.transaction.update_transaction(str(self.tx_nonce), TxType="HTLC", HEDTX=self.hedtx, State="pending")
+
 
     def get_fee(self, url):
         router_url = [i[0] for i in self.router]
@@ -968,6 +983,8 @@ class HtlcMessage(TransactionMessage):
             hctx = create_sender_HTLC_TXS(senderpubkey, receiverpubkey, HTLCvalue, sender_balance,
                                       receiver_balance, hashR, founder["originalData"]["addressFunding"],
                                       founder["originalData"]["fundingScript"])
+            transaction.update_transaction(str(tx_nonce), HR=hashR, TxType="HTLC",
+                                           Count=HTLCvalue, State="pending")
 
         elif role_index == 1:
             hctx = create_receiver_HTLC_TXS(senderpubkey, receiverpubkey, HTLCvalue, sender_balance,
@@ -999,18 +1016,22 @@ class HtlcMessage(TransactionMessage):
 
         }
         Message.send(message)
-        transaction.update_transaction(str(tx_nonce), Balance=balance, State="pending")
+
         return None
 
 
-    def send_responses(self, error = None):
+    def send_responses(self, role_index, error = None):
         if not error:
             hctx_sig = {"txDataSign": self.sign_message(self.hctx.get("txData")),
                                 "originalData": self.hctx}
-            hedtx_sig = {"txDataSign": self.sign_message(self.hedtx.get("txData")),
-                              "originalData": self.hedtx}
+            rdtx_sig = {"txDataSign": self.sign_message(self.rdtx.get("txData")),
+                      "originalData": self.rdtx}
+            htdtx_sig = {"txDataSign": self.sign_message(self.htdtx.get("txData")),
+                        "originalData": self.htdtx}
             httx_sig = {"txDataSign": self.sign_message(self.httx.get("txData")),
-                      "originalData": self.httx}
+                         "originalData": self.httx}
+            htrdtx_sig = {"txDataSign": self.sign_message(self.htrdtx.get("txData")),
+                         "originalData": self.htrdtx}
 
             message_response = { "MessageType":"HtlcSign",
                                 "Sender": self.receiver,
@@ -1019,8 +1040,12 @@ class HtlcMessage(TransactionMessage):
                                  "ChannelName": self.channel_name,
                                 "MessageBody": {
                                                  "HCTX": hctx_sig,
-                                                 "HEDTX": hedtx_sig,
-                                                 "HTTX": httx_sig
+                                                 "RDTX": rdtx_sig,
+                                                 "HTTX": httx_sig,
+                                                 "HTDTX":htdtx_sig,
+                                                 "HTRDTX":htrdtx_sig,
+                                                  "RoleIndex":role_index,
+                                                  "HR":self.hr
                                                   }
                                 }
         else:
@@ -1029,11 +1054,7 @@ class HtlcMessage(TransactionMessage):
                                 "Receiver":self.sender,
                                 "TxNonce": self.tx_nonce,
                                  "ChannelName": self.channel_name,
-                                "MessageBody": {
-                                                 "HCTX": self.hctx,
-                                                 "HEDTX": self.hedtx,
-                                                 "HTTX": self.httx
-                                                  },
+                                "MessageBody": self.message_body,
                                 "Error": error
                                 }
         self.send(message_response)
@@ -1055,12 +1076,21 @@ class HtlcResponsesMessage(TransactionMessage):
     """
     def __init__(self, message, wallet):
         super().__init__(message, wallet)
-        self.channel_name = message.get("ChannelName")
         self.hctx = self.message_body.get("HCTX")
-        self.hedtx = self.message_body.get("HEDTX")
+        self.rdtx = self.message_body.get("RDTX")
+        self.htdtx = self.message_body.get("HTDTX")
         self.httx = self.message_body.get("HTTX")
+        self.htrdtx = self.message_body.get("HTRDTX")
+        self.role_index = self.message_body.get("RoleIndex")
+        self.channel_name = message.get("ChannelName")
+        self.value = self.message_body.get("Value")
+        self.comments = self.message_body.get("Comments")
+        self.router = self.message.get("Router")
+        self.next = self.message.get("Next")
+        self.count = self.message_body.get("Count")
+        self.asset_type = self.message_body.get("AssetType")
+        self.hr = self.message_body.get("HashR")
         self.transaction = TrinityTransaction(self.channel_name, self.wallet)
-
     def handle_message(self):
         if self.error:
             return "{} message error"
