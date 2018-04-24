@@ -260,8 +260,12 @@ class UserPromptInterface(PromptInterface):
 
             receiverpubkey, receiverip= receiver.split("@")
             channels = filter_channel_via_address(self.Wallet.url,receiver, EnumChannelState.OPENED.name)
+            LOG.debug("Channels {}".format(str(channels)))
             ch = chose_channel(channels,self.Wallet.url.split("@")[0].strip(), count, asset_type)
-            channel_name = ch.channel
+            if ch:
+                channel_name = ch.channel
+            else:
+                channel_name =None
             gate_way_ip = self.Wallet.url.split("@")[1].strip()
 
             if channel_name:

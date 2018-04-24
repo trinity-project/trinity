@@ -226,6 +226,7 @@ def get_channel_via_address(address):
 def chose_channel(channels, publick_key, tx_count, asset_type):
     for ch in channels:
         balance = ch.balance
+        LOG.debug("balance {}".format(balance))
         if balance:
             try:
                 balance_value = balance.get(publick_key).get(asset_type.upper())
