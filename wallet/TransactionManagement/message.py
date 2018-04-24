@@ -855,6 +855,25 @@ class RResponse(TransactionMessage):
         return None
 
 
+class RResponseAck(TransactionMessage):
+    """
+     { "MessageType":"RResponseAck",
+                        "Sender": self.receiver,
+                        "Receiver":self.sender,
+                        "TxNonce": self.tx_nonce,
+                        "ChannelName":self.channel_name,
+                        "MessageBody": self.message_body,
+                        "Error":error
+                     }
+    """
+
+    def __init__(self, message, wallet):
+        super().__init__(message,wallet)
+
+    def handle_message(self):
+        print(json.dumps(self.message, indent=4))
+
+
 class HtlcMessage(TransactionMessage):
     """
     { "MessageType":"Htlc",
