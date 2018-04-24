@@ -351,12 +351,14 @@ class UserPromptInterface(PromptInterface):
             message_type = message.get("MessageType")
         except AttributeError:
             return "Error Message"
-        if message_type == "Founder":
+        if message_type  == "Founder":
             m_instance = mg.FounderMessage(message, self.Wallet)
         elif message_type in [ "FounderSign" ,"FounderFail"]:
             m_instance = mg.FounderResponsesMessage(message, self.Wallet)
         elif message_type == "Htlc":
             m_instance = mg.HtlcMessage(message, self.Wallet)
+        elif message_type in ["HtlcSign", "HtlcFail"]:
+            m_instance = mg.HtlcResponsesMessage(message, self.Wallet)
         elif message_type == "Rsmc":
             m_instance = mg.RsmcMessage(message, self.Wallet)
         elif message_type in ["RsmcSign", "RsmcFail"]:
@@ -365,6 +367,10 @@ class UserPromptInterface(PromptInterface):
             m_instance = mg.SettleMessage(message, self.Wallet)
         elif message_type in ["SettleSign","SettleFail"]:
             m_instance = mg.SettleResponseMessage(message, self.Wallet)
+        elif message_type == "RResponseAck":
+            m_instance = mg.RResponseAck(message,self.Wallet)
+        elif message_type  == "RResponse":
+            m_instance = mg.RResponse(message, self.Wallet)
         elif message_type == "RegisterChannel":
             m_instance = mg.RegisterMessage(message, self.Wallet)
         elif message_type == "CreateTranscation":
