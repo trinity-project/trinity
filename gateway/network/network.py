@@ -102,7 +102,7 @@ class Network:
         """
         data = json.dumps(data)
         future = asyncio.ensure_future(
-            AsyncJsonRpc.jsonrpc_request(method, data, cg_local_jsonrpc_addr)
+            AsyncJsonRpc.jsonrpc_request(method, data, cg_remote_jsonrpc_addr)
         )
         future.add_done_callback(lambda t: t.exception())
 
