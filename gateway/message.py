@@ -25,7 +25,9 @@ class Message:
             "RsmcFail",
             "Htlc",
             "HtlcSign",
-            "HtlcFail"
+            "HtlcFail",
+            "RResponseAck",
+            "RResponse"
         ]
         return tx_types
     
