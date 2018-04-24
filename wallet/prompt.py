@@ -53,12 +53,13 @@ class UserPromptInterface(PromptInterface):
 
     def __init__(self):
         super().__init__()
-        self.user_commands = ["channel enable","channel create {partner} {asset_type} {deposit}",
-                         "channel tx {receiver} {asset_type} {count}",
-                         "channel close {channel},"
-                         "channel peer",
-                         "channel payment {asset}, {count}, [{comments}]",
-                         "channel qrcode {on/off}"]
+        self.user_commands = ["channel enable",
+                              "channel create {partner} {asset_type} {deposit}",
+                              "channel tx {receiver} {asset_type} {count}",
+                              "channel close {channel}",
+                              "channel peer",
+                              "channel payment {asset}, {count}, [{comments}]",
+                              "channel qrcode {on/off}"]
         self.commands.extend(self.user_commands)
         self.qrcode = False
 
