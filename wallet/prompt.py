@@ -284,7 +284,8 @@ class UserPromptInterface(PromptInterface):
                                }
                            }
                 router = gate_way.get_router_info(message)
-                if router.get("result").get("RouterInfo"):
+                routerinfo = json.loads(router.get("result"))
+                if routerinfo.get("RouterInfo"):
                     if not hr:
                         print("No hr in payments")
                         return
