@@ -466,7 +466,8 @@ class RsmcMessage(TransactionMessage):
             "BreachRemedy":"",
             "Value":"",
             "AssetType":"TNC",
-            "RoleIndex":0
+            "RoleIndex":0,
+            "Comments":None
         }
     }
     """
@@ -486,6 +487,7 @@ class RsmcMessage(TransactionMessage):
         self.asset_type = self.message_body.get("AssetType")
         self.transaction = TrinityTransaction(self.channel_name, self.wallet)
         self.role_index = self.message_body.get("RoleIndex")
+        self.comments = self.message_body.get("Comments")
 
     def handle_message(self):
         LOG.info("Handle RsmcMessage : {}".format(str(self.message)))
@@ -508,7 +510,7 @@ class RsmcMessage(TransactionMessage):
     @staticmethod
     def create(channel_name, wallet, sender_pubkey, receiver_pubkey, value, partner_ip,gateway_ip ,
                tx_nonce, asset_type="TNC",cli =False,router = None, next_router=None,
-               role_index=0):
+               role_index=0, comments=None):
         """
 
         :param channel_name:
@@ -525,6 +527,7 @@ class RsmcMessage(TransactionMessage):
         :param router:
         :param next_router:
         :param role_index:
+        :param comments:
         :return:
         """
 
@@ -579,7 +582,8 @@ class RsmcMessage(TransactionMessage):
                                        "RevocableDelivery":revocabledelivery,
                                        "AssetType":asset_type.upper(),
                                        "Value": value,
-                                       "RoleIndex":role_index
+                                       "RoleIndex":role_index,
+                                       "Comments":comments
                                       }
                  }
             if router and next_router:
@@ -604,7 +608,8 @@ class RsmcMessage(TransactionMessage):
                            "BreachRemedy": breachremedy_info,
                            "AssetType": asset_type.upper(),
                            "Value": value,
-                           "RoleIndex":role_index
+                           "RoleIndex":role_index,
+                           "Comments":comments
                            }
                        }
         LOG.info("Send RsmcMessage role index 1 message  ")
@@ -702,7 +707,8 @@ class RsmcMessage(TransactionMessage):
                                 "MessageBody": {"Commitment": commitment_sig,
                                                 "RevocableDelivery": rd_sig,
                                                 "Value": self.value,
-                                                "RoleIndex": self.role_index
+                                                "RoleIndex": self.role_index,
+                                                "Comments":self.comments
                                                 }
                                 }
             self.send(message_response)
@@ -715,7 +721,8 @@ class RsmcMessage(TransactionMessage):
                                 "MessageBody": {"Commitment": self.commitment,
                                                 "RevocableDelivery": self.revocable_delivery,
                                                 "Value": self.value,
-                                                "RoleIndex": self.role_index
+                                                "RoleIndex": self.role_index,
+                                                "Comments":self.comments
                                                 },
                                 "Error": error
                                 }
@@ -761,6 +768,90 @@ class RsmcResponsesMessage(TransactionMessage):
         return True, None
 
 
+class RResponse(TransactionMessage):
+    """
+    { "MessageType":"RResponse",
+    "Sender": "9090909090909090909090909@127.0.0.1:20553",
+    "Receiver":"101010101001001010100101@127.0.0.1:20552",
+    "TxNonce": 0,
+    "ChannelName":"3333333333333333333333333333",
+    "MessageBody": {
+            "HR":hr,
+            "R":r,
+            "Comments":comments
+            }
+    }
+    """
+
+    def __init__(self,message, wallet):
+        super().__init__(message,wallet)
+        self.channel_name = message.get("ChannelName")
+        self.tx_nonce = message.get("TxNonce")
+        self.hr = self.message_body.get("HR")
+        self.r = self.message_body.get("R")
+        self.count = self.message_body.get("Count")
+        self.asset_type = self.message_body.get("AssetType")
+        self.comments = self.message_body.get("Comments")
+        self.transaction = TrinityTransaction(self.channel_name, self.wallet)
+
+    @staticmethod
+    def create(sender, receiver, tx_nonce, channel_name, hr, r, value, asset_type, comments):
+        message = { "MessageType":"RResponse",
+                    "Sender": sender,
+                    "Receiver":receiver,
+                    "TxNonce": tx_nonce,
+                    "ChannelName":channel_name,
+                    "MessageBody": {
+                           "HR":hr,
+                           "R":r,
+                           "Count":value,
+                           "AssetType":asset_type,
+                           "Comments":comments
+                         }
+                   }
+        Message.send(message)
+
+    def verify(self):
+        if self.receiver != self.wallet.url:
+            return False, "Not Send to me"
+        if Payment.verify_hr(self.hr, self.r):
+            return True, None
+        else:
+            return False, "Not find r"
+
+    def handle_message(self):
+        verify, error = self.verify()
+        if verify:
+            sender_pubkey, gateway_ip = self.wallet.url.split("@")
+            receiver_pubkey, partner_ip = self.sender.splite("@")
+            txid = self.transaction.get_latest_nonceid()
+            tx = self.transaction.get_tx_nonce(txid)
+            RsmcMessage.create(self.channel_name, self.wallet, sender_pubkey, receiver_pubkey, self.count,
+                               partner_ip,gateway_ip ,self.tx_nonce, asset_type=self.asset_type,
+               role_index=0, comments=self.hr)
+            payment = Payment.get_hash_history(self.hr)
+            if payment:
+                channel_name = payment.get("Channel")
+                count = payment.get("Count")
+                peer = ch.Channel.channel(channel_name).get_peer(self.wallet)
+                LOG.info("peer {}".format(peer))
+                RResponse.create(self.wallet.url,peer,self.tx_nonce, channel_name,
+                                 self.hr, self.r, count, self.asset_type, self.comments)
+            else:
+                return None
+        else:
+            message = { "MessageType":"RResponseAck",
+                        "Sender": self.receiver,
+                        "Receiver":self.sender,
+                        "TxNonce": self.tx_nonce,
+                        "ChannelName":self.channel_name,
+                        "MessageBody": self.message_body,
+                        "Error":error
+                     }
+            Message.send(message)
+        return None
+
+
 class HtlcMessage(TransactionMessage):
     """
     { "MessageType":"Htlc",
@@ -791,41 +882,126 @@ class HtlcMessage(TransactionMessage):
         self.role_index = self.message_body.get("RoleIndex")
         self.channel_name = message.get("ChannelName")
         self.value = self.message_body.get("Value")
+        self.comments = self.message_body.get("Comments")
+        self.router = self.message.get("Router")
+        self.next = self.message.get("Next")
+        self.count = self.message_body.get("Count")
+        self.asset_type = self.message_body.get("AssetType")
+        self.hr = self.message_body.get("HashR")
 
     def handle_message(self):
         verify, error = self.verify()
         if verify:
-            self.send_responses()
+            Payment.update_hash_history(self.hr,self.channel_name, self.count, "pending")
+            if self.role_index ==0:
+                self._handle_0_message()
+            elif self.role_index ==1:
+                self._handle_1_message()
         else:
             self.send_responses(error = error)
 
     def verify(self):
         return True, None
 
+    def _handle_0_message(self):
+        self.send_responses()
+        if self.next == self.wallet.url:
+            r = Payment(self.wallet).fetch_r(self.hr)
+            RResponse.create(self.wallet.url, self.sender, self.tx_nonce,
+                             self.channel_name, self.hr, r[0], self.count, self.asset_type, self.comments)
+        else:
+            next = self.get_next_router()
+            channels = ch.filter_channel_via_address(self.wallet, next, state=EnumChannelState.OPENED)
+            fee = self.get_fee(self.next)
+            count = float(self.count)-float(fee)
+            channel = ch.chose_channel(channels,self.wallet.url.split("@")[0], count, self.asset_type)
+
+            HtlcMessage.create(channel.channel, self.wallet,self.wallet.url, next, count, self.hr,
+                               self.tx_nonce, self.role_index,self.asset_type,self.router,
+                                   next, comments=self.comments)
+
+    def get_fee(self, url):
+        router_url = [i[0] for i in self.router]
+        index = router_url.index(url)
+        try:
+            return self.router[index][1]
+        except IndexError:
+            return 0
+
+    def get_next_router(self):
+        router_url = [i[0] for i in self.router]
+        index = router_url.index(self.wallet.url)
+        try:
+            return router_url[index+1]
+        except IndexError:
+            return None
+
+
     @staticmethod
-    def create(channel_name, wallet,senderpubkey, receiverpubkey, HTLCvalue, hashR,tx_nonce,partner_ip, role_index=0):
-        founder = TrinityTransaction(channel_name, wallet)
+    def create(channel_name, wallet,sender, receiver, HTLCvalue, hashR,tx_nonce, role_index,asset_type,router,
+               next_router, comments=None):
+        """
+
+        :param channel_name:
+        :param wallet:
+        :param sender:
+        :param receiver:
+        :param HTLCvalue:
+        :param hashR:
+        :param tx_nonce:
+        :param role_index:
+        :param asset_type:
+        :param router:
+        :param next_router:
+        :param comments:
+        :return:
+        """
+        transaction = TrinityTransaction(channel_name, wallet)
         balance = ch.Channel.channel(channel_name).get_balance()
-        sender_address = pubkey_to_address(senderpubkey)
-        receiver_address = pubkey_to_address(receiverpubkey)
-        sender_balance = balance.get(sender_address)
-        receiver_balance = balance.get(receiver_address)
-        hctx = createSelfHCTX(senderpubkey,receiverpubkey,HTLCvalue,sender_balance)
-        #                 receiver_balance,hashR,founder["addressFunding"],founder["scriptFunding"])
-        #hedtx = createHEDTX(hctx["addressHTLC"], receiver_address, HTLCvalue, hctx["HTLCscript"])
-        #httx = createHTTX(hctx["addressHTLC"], sender_address, HTLCvalue, hctx["HTLCscript"])
-        #message = {"MessageType": "Founder",
-        #           "Sender": "{}@{}".format(senderpubkey, gateway_ip),
-        #           "Receiver": "{}@{}".format(receiverpubkey, partner_ip),
-        #           "TxNonce":tx_nonce ,
-        #          "ChannelName": channel_name,
-        #          "MessageBody": {
-        #               "HCTX": hctx,
-        #               "HEDTX": hedtx,
-        #               "HTTX": httx
-        #                }
-        #           }
-        #HtlcMessage.send(message)
+        senderpubkey = sender.strip().split("@")[0]
+        receiverpubkey = receiver.strip().split("@")[0]
+        sender_balance = balance.get(senderpubkey)
+        receiver_balance = balance.get(receiverpubkey)
+        founder = transaction.get_founder()
+        if role_index ==0:
+
+            hctx = create_sender_HTLC_TXS(senderpubkey, receiverpubkey, HTLCvalue, sender_balance,
+                                      receiver_balance, hashR, founder["originalData"]["addressFunding"],
+                                      founder["originalData"]["fundingScript"])
+
+        elif role_index == 1:
+            hctx = create_receiver_HTLC_TXS(senderpubkey, receiverpubkey, HTLCvalue, sender_balance,
+                                      receiver_balance, hashR, founder["originalData"]["addressFunding"],
+                                      founder["originalData"]["fundingScript"])
+
+        else:
+            LOG.error("Not correct role index, expect 0/1 but get {}".format(str(role_index)))
+            return None
+
+        hedtx_sign = wallet.SignContent(hctx["HEDTX"]["txData"])
+        hedtx = {"txDataSign":hedtx_sign,
+                 "originalData":hctx["HEDTX"]}
+        hctx["HEDTX"] = hedtx
+        hctx["RoleIndex"] = role_index
+        hctx["Comments"] = comments
+        hctx["Count"] = HTLCvalue
+        hctx["AssetType"] = asset_type
+        hctx["HashR"] = hashR
+
+        message = { "MessageType":"Htlc",
+                  "Sender": sender,
+                  "Receiver":receiver,
+                  "TxNonce": tx_nonce,
+                  "ChannelName":channel_name,
+                   "Router": router,
+                   "Next":next_router,
+                  "MessageBody": hctx
+
+        }
+        Message.send(message)
+        transaction.update_transaction(str(tx_nonce), Balance=balance, State="pending")
+        return None
+
 
     def send_responses(self, error = None):
         if not error:

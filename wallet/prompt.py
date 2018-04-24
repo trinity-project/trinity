@@ -254,6 +254,7 @@ class UserPromptInterface(PromptInterface):
                 receiver = get_arg(arguments, 1)
                 asset_type = get_arg(arguments, 2)
                 count = get_arg(arguments, 3)
+                hr = None
 
             receiverpubkey, receiverip= receiver.split("@")
             channels = filter_channel_via_address(self.Wallet.url,receiver, EnumChannelState.OPENED.name)
@@ -264,9 +265,10 @@ class UserPromptInterface(PromptInterface):
             if channel_name:
                 tx_nonce = trinitytx.TrinityTransaction(channel_name, self.Wallet).get_latest_nonceid()
                 mg.RsmcMessage.create(channel_name,self.Wallet,self.Wallet.pubkey,
-                                      receiverpubkey, int(count), receiverip, gate_way_ip, str(tx_nonce+1), asset_type="TNC")
+                                      receiverpubkey, int(count), receiverip, gate_way_ip, str(tx_nonce+1),
+                                      asset_type="TNC", comments=hr)
             else:
-                message = {"MessageType":"QueryRouter",
+                message = {"MessageType":"GetRouterInfo",
                            "Sender":self.Wallet.url,
                             "Receiver": receiver,
                            "MessageBody":{
@@ -276,15 +278,19 @@ class UserPromptInterface(PromptInterface):
                            }
                 router = gate_way.get_router_info(message)
                 if router:
-                    r = router.get("FatherPath")
+                    if not hr:
+                        print("No hr in payments")
+                        return
+                    r = router.get("FullPath")
                     n = router.get("Next")
                     fee = reduce(lambda x, y:x+y,[int(i[1]) for i in r])
                     answer = prompt("will use fee %s , Do you still want tx? [Yes/No]> " %(str(fee)))
                     if answer.upper() in["YES","Y"]:
+                        count = int(count) + int(fee)
                         tx_nonce = trinitytx.TrinityTransaction(channel_name, self.Wallet).get_latest_nonceid()
-                        mg.RsmcMessage.create(channel_name, self.Wallet, self.Wallet.pubkey,
-                                              receiverpubkey, int(count), receiverip, gate_way_ip, str(tx_nonce + 1),
-                                              asset_type="TNC",router=r, next_router=n)
+                        mg.HtlcMessage.create(channel_name, self.Wallet,self.Wallet.url, receiver,
+                                             count, hr,tx_nonce, role_index=0,asset_type=asset_type,
+                                              router=r, next_router=n, comments=comments)
                     else:
                         return None
                 else:
