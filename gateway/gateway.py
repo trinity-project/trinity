@@ -203,8 +203,8 @@ class Gateway():
                 "url": body["Publickey"] + "@" + cg_public_ip_port,
                 "deposit": body["CommitMinDeposit"],
                 "fee": body["Fee"],
-                "balance": body["Balance"],
-                "name": body["Alias"]
+                "balance": body["Balance"]["TNC"],
+                "name": body["alias"]
             }
             # todo init self tree from local file or db
             self._init_or_update_self_graph()

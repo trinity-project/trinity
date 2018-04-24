@@ -135,6 +135,7 @@ if __name__ == "__main__":
         }
     }
     # jsonrpcclient.request("http://localhost:8077", 'TransactionMessage', json.dumps(message))
+    "02442f3eda23eba03aadb02bb25ccb0b680748eb70f4ef96906425ebffc289b103@106.15.91.150:8089"
     message1 = {
         "MessageType":"AddChannel",
         "MessageBody": {
@@ -142,18 +143,29 @@ if __name__ == "__main__":
             "Receiver": "03a6fcaac0e13dfbd1dd48a964f92b8450c0c81c28ce508107bc47ddc511d60e75@118.89.44.106:8089"
         }
     }
-    message = {
+    message_1 = {
             "MessageBody": {
             "Publickey": "02442f3eda23eba03aadb02bb25ccb0b680748eb70f4ef96906425ebffc289b103",
+            "CommitMinDeposit": 3,
+            "Fee": 1,
+            "Balance": 10,
+            "Alias": "trinity2"
+        }
+    }
+    message_2 = {
+            "MessageBody": {
+            "Publickey": "03a6fcaac0e13dfbd1dd48a964f92b8450c0c81c28ce508107bc47ddc511d60e75",
             "CommitMinDeposit": 3,
             "Fee": 1,
             "Balance": 10,
             "Alias": "trinity1"
         }
     }
-    # jsonrpcclient.request("http://106.15.91.150:8077", 'SyncWalletData', json.dumps(message))
-    # jsonrpcclient.request("http://118.89.44.106:8077", 'SyncChannel', json.dumps(message1))
-    jsonrpcclient.request("http://localhost:8077", 'SyncWalletData', json.dumps(message))
+    jsonrpcclient.request("http://106.15.91.150:8077", 'SyncWalletData', json.dumps(message_1))
+    jsonrpcclient.request("http://118.89.44.106:8077", 'SyncWalletData', json.dumps(message_2))
+    jsonrpcclient.request("http://118.89.44.106:8077", 'SyncChannel', json.dumps(message1))
+    jsonrpcclient.request("http://106.15.91.150:8077", 'SyncChannel', json.dumps(message1))
+    # jsonrpcclient.request("http://localhost:8077", 'SyncWalletData', json.dumps(message))
 
 
    
