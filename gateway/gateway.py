@@ -203,7 +203,8 @@ class Gateway():
                 "url": body["Publickey"] + "@" + cg_public_ip_port,
                 "deposit": body["CommitMinDeposit"],
                 "fee": body["Fee"],
-                "balance": body["Balance"]
+                "balance": body["Balance"],
+                "name": body["Alias"]
             }
             # todo init self tree from local file or db
             self._init_or_update_self_graph()
@@ -315,7 +316,7 @@ class Gateway():
                 "balance": 15,
                 "url": "03a6fcaac0e13dfbd1dd48a964f92b8450c0c81c28ce508107bc47ddc511d60e75@" + cg_public_ip_port
             }
-        self._init_or_update_self_graph()
+            self._init_or_update_self_graph()
         message =  MessageMake.make_node_list_msg(node["route_graph"])
         Network.send_msg_with_wsocket(websocket, message)
 

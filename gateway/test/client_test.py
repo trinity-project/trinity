@@ -134,7 +134,26 @@ if __name__ == "__main__":
             "PaymentLink": "fdbqsugvouasvbowubvuiwebvebvowbv"
         }
     }
-    jsonrpcclient.request("http://localhost:8077", 'TransactionMessage', json.dumps(message))
+    # jsonrpcclient.request("http://localhost:8077", 'TransactionMessage', json.dumps(message))
+    message1 = {
+        "MessageType":"AddChannel",
+        "MessageBody": {
+            "Founder":  "02442f3eda23eba03aadb02bb25ccb0b680748eb70f4ef96906425ebffc289b103@106.15.91.150:8089",
+            "Receiver": "03a6fcaac0e13dfbd1dd48a964f92b8450c0c81c28ce508107bc47ddc511d60e75@118.89.44.106:8089"
+        }
+    }
+    message = {
+            "MessageBody": {
+            "Publickey": "02442f3eda23eba03aadb02bb25ccb0b680748eb70f4ef96906425ebffc289b103",
+            "CommitMinDeposit": 3,
+            "Fee": 1,
+            "Balance": 10,
+            "Alias": "trinity1"
+        }
+    }
+    # jsonrpcclient.request("http://106.15.91.150:8077", 'SyncWalletData', json.dumps(message))
+    # jsonrpcclient.request("http://118.89.44.106:8077", 'SyncChannel', json.dumps(message1))
+    jsonrpcclient.request("http://localhost:8077", 'SyncWalletData', json.dumps(message))
 
-        
+
    

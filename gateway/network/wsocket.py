@@ -1,6 +1,6 @@
 # coding: utf-8
 import websockets
-from asyncio import sleep
+from asyncio import sleep,CancelledError
 from glog import wst_logger
 class WsocketService:
     """
@@ -42,11 +42,14 @@ class WsocketService:
             try:
                 message = await con.recv()
                 wst_logger.debug("receive: %s", message)
-            except Exception:
+            except websockets.exceptions.ConnectionClosed as ex:
+                # print(ex.code, ex.reason)
                 wst_logger.info('client {} disconnected'.format(con.remote_address))
                 gateway_singleton.handle_spv_lost_connection(con)
                 # task done or cancelled
                 break
+            # except Exception:
+            #     pass
             else:
                 try:
                     gateway_singleton.handle_spv_request(con, message)

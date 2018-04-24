@@ -37,6 +37,9 @@ class Network:
 
     @classmethod
     def clearn_servers(cls):
+        cls.ws_server.close()
+        cls.tcp_manager.server.close()
+        cls.rpc_server.close()
         tasks = asyncio.gather(*asyncio.Task.all_tasks(), loop=cls.loop, return_exceptions=True)
         tasks.add_done_callback(lambda t: cls.loop.stop())
         tasks.cancel()
