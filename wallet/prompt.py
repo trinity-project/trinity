@@ -242,6 +242,7 @@ class UserPromptInterface(PromptInterface):
                 # payment code
                 result, info = Payment.decode_payment_code(argument1)
                 if result:
+                    info = json.loads(info)
                     receiver = info.get("uri")
                     hr = info.get("hr")
                     asset_type = info.get("asset_type")
