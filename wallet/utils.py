@@ -84,7 +84,8 @@ def get_arg(arguments, index=0, convert_to_int=False):
 
 
 def get_asset_type_name(asset_type):
-    for key, value in Configure.get("AssetType"):
+    asset= Configure.get("AssetType")
+    for key, value in asset.items():
         if value.replace("0x","") == asset_type.replace("0x",""):
             return key
         else:

@@ -226,6 +226,7 @@ def get_channel_via_address(address):
 def chose_channel(channels, publick_key, tx_count, asset_type):
     for ch in channels:
         balance = ch.balance
+        LOG.debug("balance {}".format(balance))
         if balance:
             try:
                 balance_value = balance.get(publick_key).get(asset_type.upper())
@@ -257,6 +258,20 @@ def sync_channel_info_to_gateway(channel_name, type):
             nb[ch.partner] = value
 
     return sync_channel(type, ch.channel_name,ch.founder,ch.partner,nb)
+
+
+def udpate_channel_when_setup(address):
+    channels = APIChannel.batch_query_channel(filters={"src_addr":address})
+    if channels.get("content"):
+        for ch in channels["content"]:
+            if ch.state == EnumChannelState.OPENED.name:
+                sync_channel_info_to_gateway(ch.channel, "UpdateChannel")
+
+    channeld = APIChannel.batch_query_channel(filters={"dest_addr":address})
+    if channeld.get("content"):
+        for ch in channeld["content"]:
+            if ch.state == EnumChannelState.OPENED.name:
+                sync_channel_info_to_gateway(ch.channel, "UpdateChannel")
 
 
 if __name__ == "__main__":
