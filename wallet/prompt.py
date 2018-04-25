@@ -309,6 +309,7 @@ class UserPromptInterface(PromptInterface):
                             print("Error, can not find the channel with next router")
                             return None
                         tx_nonce = trinitytx.TrinityTransaction(channel_name, self.Wallet).get_latest_nonceid()
+                        tx_nonce = int(tx_nonce)+1
                         mg.HtlcMessage.create(channel_name, self.Wallet,self.Wallet.url, next,
                                              count, hr,tx_nonce, role_index=0,asset_type=asset_type,
                                               router=r, next_router=r[2][0], comments=comments)
