@@ -560,9 +560,12 @@ class RsmcMessage(TransactionMessage):
                            }
                 Message.send(message)
                 return
-
-        sender_balance = float(balance_value) - float(value)
-        receiver_balance = float(receiver_balance_value) + float(value)
+        if role_index in [0,2]:
+            sender_balance = float(balance_value) - float(value)
+            receiver_balance = float(receiver_balance_value) + float(value)
+        elif role_index in [1,3]:
+            sender_balance = float(balance_value) + float(value)
+            receiver_balance = float(receiver_balance_value) - float(value)
         message = {}
         if role_index == 0 or role_index == 1:
             commitment = createCTX(founder["originalData"]["addressFunding"], sender_balance, receiver_balance,
@@ -585,6 +588,14 @@ class RsmcMessage(TransactionMessage):
                                        "Comments":comments
                                       }
                  }
+            balance = {}
+            subitem = {}
+            subitem.setdefault(asset_type.upper(), sender_balance)
+            balance.setdefault(sender_pubkey, subitem)
+            subitem = {}
+            subitem.setdefault(asset_type.upper(), receiver_balance)
+            balance.setdefault(receiver_pubkey, subitem)
+            transaction.update_transaction(str(tx_nonce), Balance=balance, State="pending")
             if router and next_router:
                 message.setdefault("Router", router)
                 message.setdefault("NextRouter", next_router)
@@ -619,14 +630,7 @@ class RsmcMessage(TransactionMessage):
                        }
         LOG.info("Send RsmcMessage role index 1 message  ")
         RsmcMessage.send(message)
-        balance = {}
-        subitem = {}
-        subitem.setdefault(asset_type.upper(), sender_balance)
-        balance.setdefault(sender_pubkey,subitem)
-        subitem = {}
-        subitem.setdefault(asset_type.upper(), receiver_balance)
-        balance.setdefault(receiver_pubkey,subitem)
-        transaction.update_transaction(str(tx_nonce), Balance=balance, State="pending")
+
 
     def _check_balance(self, balance):
         pass
