@@ -899,6 +899,7 @@ class HtlcMessage(TransactionMessage):
         self.hedtx = self.message_body.get("HEDTX")
         self.rdtx = self.message_body.get("RDTX")
         self.httx = self.message_body.get("HTTX")
+        self.htdtx = self.message_body.get("HTDTX")
         self.htrdtx = self.message_body.get("HTRDTX")
         self.role_index = self.message_body.get("RoleIndex")
         self.channel_name = message.get("ChannelName")
@@ -938,7 +939,8 @@ class HtlcMessage(TransactionMessage):
             self.transaction.update_transaction(str(self.tx_nonce), State="confirm")
         else:
             next = self.get_next_router()
-            channels = ch.filter_channel_via_address(self.wallet, next, state=EnumChannelState.OPENED)
+            LOG.debug("Get Next Router {}".format(str(next)))
+            channels = ch.filter_channel_via_address(self.wallet.url, next, state=EnumChannelState.OPENED.name)
             fee = self.get_fee(self.next)
             count = float(self.count)-float(fee)
             channel = ch.chose_channel(channels,self.wallet.url.split("@")[0], count, self.asset_type)
@@ -998,7 +1000,7 @@ class HtlcMessage(TransactionMessage):
         sender_balance = balance.get(senderpubkey).get(asset_type)
         receiver_balance = balance.get(receiverpubkey).get(asset_type)
         founder = transaction.get_founder()
-        if role_index ==0:
+        if role_index == 0:
 
             hctx = create_sender_HTLC_TXS(senderpubkey, receiverpubkey, HTLCvalue, sender_balance,
                                       receiver_balance, hashR, founder["originalData"]["addressFunding"],
@@ -1006,19 +1008,30 @@ class HtlcMessage(TransactionMessage):
             transaction.update_transaction(str(tx_nonce), HR=hashR, TxType="HTLC",
                                            Count=HTLCvalue, State="pending")
 
+            hedtx_sign = wallet.SignContent(hctx["HEDTX"]["txData"])
+            hedtx = {"txDataSign": hedtx_sign,
+                     "originalData": hctx["HEDTX"]}
+            hctx["HEDTX"] = hedtx
+
         elif role_index == 1:
             hctx = create_receiver_HTLC_TXS(senderpubkey, receiverpubkey, HTLCvalue, sender_balance,
                                       receiver_balance, hashR, founder["originalData"]["addressFunding"],
                                       founder["originalData"]["scriptFunding"])
 
+            hetx_sign = wallet.SignContent(hctx["HETX"]["txData"])
+            hetx = {"txDataSign": hetx_sign,
+                     "originalData": hctx["HETX"]}
+            hctx["HETX"] = hetx
+
+            herdtx_sign = wallet.SignContent(hctx["HERDTX"]["txData"])
+            herdtx = {"txDataSign": hetx_sign,
+                    "originalData": hctx["HERDTX"]}
+            hctx["HERDTX"] = herdtx
+
         else:
             LOG.error("Not correct role index, expect 0/1 but get {}".format(str(role_index)))
             return None
 
-        hedtx_sign = wallet.SignContent(hctx["HEDTX"]["txData"])
-        hedtx = {"txDataSign":hedtx_sign,
-                 "originalData":hctx["HEDTX"]}
-        hctx["HEDTX"] = hedtx
         hctx["RoleIndex"] = role_index
         hctx["Comments"] = comments
         hctx["Count"] = HTLCvalue
@@ -1039,32 +1052,63 @@ class HtlcMessage(TransactionMessage):
 
         return None
 
+    def _send_0_response(self):
+        hctx_sig = {"txDataSign": self.sign_message(self.hctx.get("txData")),
+                    "originalData": self.hctx}
+        rdtx_sig = {"txDataSign": self.sign_message(self.rdtx.get("txData")),
+                    "originalData": self.rdtx}
+        httx_sig = {"txDataSign": self.sign_message(self.httx.get("txData")),
+                    "originalData": self.httx}
+        htrdtx_sig = {"txDataSign": self.sign_message(self.htrdtx.get("txData")),
+                      "originalData": self.htrdtx}
+
+
+        message_response = {"MessageType": "HtlcSign",
+                            "Sender": self.receiver,
+                            "Receiver": self.sender,
+                            "TxNonce": self.tx_nonce,
+                            "ChannelName": self.channel_name,
+                            "MessageBody": {
+                                "HCTX": hctx_sig,
+                                "RDTX": rdtx_sig,
+                                "HTTX": httx_sig,
+                                "HTRDTX": htrdtx_sig,
+                                "RoleIndex": 0
+                                }
+                            }
+        Message.send(message_response)
+
+
+    def _send_1_response(self):
+        hctx_sig = {"txDataSign": self.sign_message(self.hctx.get("txData")),
+                    "originalData": self.hctx}
+        rdtx_sig = {"txDataSign": self.sign_message(self.rdtx.get("txData")),
+                    "originalData": self.rdtx}
+        htdtx_sig = {"txDataSign": self.sign_message(self.htdtx.get("txData")),
+                    "originalData": self.htdtx}
+        message_response = {"MessageType": "HtlcSign",
+                            "Sender": self.receiver,
+                            "Receiver": self.sender,
+                            "TxNonce": self.tx_nonce,
+                            "ChannelName": self.channel_name,
+                            "MessageBody": {
+                                "HCTX": hctx_sig,
+                                "RDTX": rdtx_sig,
+                                "HTDTX": htdtx_sig,
+                                "RoleIndex": 1
+                                 }
+                            }
+        Message.send(message_response)
+
 
     def send_responses(self, role_index, error = None):
         if not error:
-            hctx_sig = {"txDataSign": self.sign_message(self.hctx.get("txData")),
-                                "originalData": self.hctx}
-            rdtx_sig = {"txDataSign": self.sign_message(self.rdtx.get("txData")),
-                      "originalData": self.rdtx}
-            httx_sig = {"txDataSign": self.sign_message(self.httx.get("txData")),
-                         "originalData": self.httx}
-            htrdtx_sig = {"txDataSign": self.sign_message(self.htrdtx.get("txData")),
-                         "originalData": self.htrdtx}
-
-            message_response = { "MessageType":"HtlcSign",
-                                "Sender": self.receiver,
-                                "Receiver":self.sender,
-                                "TxNonce": self.tx_nonce,
-                                 "ChannelName": self.channel_name,
-                                "MessageBody": {
-                                                 "HCTX": hctx_sig,
-                                                 "RDTX": rdtx_sig,
-                                                 "HTTX": httx_sig,
-                                                 "HTRDTX":htrdtx_sig,
-                                                  "RoleIndex":role_index,
-                                                  "HR":self.hr
-                                                  }
-                                }
+            if role_index == 0:
+                self._send_0_response()
+            elif role_index == 1:
+                self._send_1_response()
+            else:
+                LOG.error("No correct roleindex {}".format(str(role_index)))
         else:
             message_response = { "MessageType":"HtlcFail",
                                 "Sender": self.receiver,
@@ -1074,7 +1118,7 @@ class HtlcMessage(TransactionMessage):
                                 "MessageBody": self.message_body,
                                 "Error": error
                                 }
-        self.send(message_response)
+            Message.send(message_response)
 
 
 class HtlcResponsesMessage(TransactionMessage):
@@ -1095,6 +1139,7 @@ class HtlcResponsesMessage(TransactionMessage):
         super().__init__(message, wallet)
         self.hctx = self.message_body.get("HCTX")
         self.rdtx = self.message_body.get("RDTX")
+        self.hedtx = self.message_body.get("HEDTX")
         self.htdtx = self.message_body.get("HTDTX")
         self.httx = self.message_body.get("HTTX")
         self.htrdtx = self.message_body.get("HTRDTX")
@@ -1291,7 +1336,6 @@ class PaymentLink(TransactionMessage):
         self.comments = parameter.get("Description") if parameter else None
 
     def handle_message(self):
-        print(self.asset)
         pycode = Payment(self.wallet,self.sender).generate_payment_code(get_asset_type_id(self.asset),
                          self.amount, self.comments)
         message = {"MessageType":"PaymentLinkAck",
