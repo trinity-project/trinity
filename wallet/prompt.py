@@ -283,22 +283,36 @@ class UserPromptInterface(PromptInterface):
                                "Value":count
                                }
                            }
-                router = gate_way.get_router_info(message)
-                routerinfo = json.loads(router.get("result"))
-                if routerinfo.get("RouterInfo"):
+                result = gate_way.get_router_info(message)
+                routerinfo = json.loads(result.get("result"))
+                router=routerinfo.get("RouterInfo")
+                if router:
                     if not hr:
                         print("No hr in payments")
                         return
                     r = router.get("FullPath")
+                    LOG.info("Get Router {}".format(str(r)))
                     n = router.get("Next")
-                    fee = reduce(lambda x, y:x+y,[int(i[1]) for i in r])
+                    LOG.info("Get Next {}".format(str(n)))
+                    fee = reduce(lambda x, y:x+y,[float(i[1]) for i in r])
+                    LOG.info("Get Fee {}".format(str(fee)))
                     answer = prompt("will use fee %s , Do you still want tx? [Yes/No]> " %(str(fee)))
                     if answer.upper() in["YES","Y"]:
                         count = int(count) + int(fee)
+                        next = r[1][0]
+                        channels = filter_channel_via_address(self.Wallet.url, next, EnumChannelState.OPENED.name)
+                        LOG.debug("Channels {}".format(str(channels)))
+                        ch = chose_channel(channels, self.Wallet.url.split("@")[0].strip(), count, asset_type)
+                        if ch:
+                            channel_name = ch.channel
+                        else:
+                            print("Error, can not find the channel with next router")
+                            return None
                         tx_nonce = trinitytx.TrinityTransaction(channel_name, self.Wallet).get_latest_nonceid()
-                        mg.HtlcMessage.create(channel_name, self.Wallet,self.Wallet.url, receiver,
+                        tx_nonce = int(tx_nonce)+1
+                        mg.HtlcMessage.create(channel_name, self.Wallet,self.Wallet.url, next,
                                              count, hr,tx_nonce, role_index=0,asset_type=asset_type,
-                                              router=r, next_router=n, comments=comments)
+                                              router=r, next_router=r[2][0], comments=comments)
                     else:
                         return None
                 else:

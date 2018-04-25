@@ -11,6 +11,7 @@ from config import cg_tcp_addr, cg_wsocket_addr, cg_public_ip_port, cg_local_jso
 cg_remote_jsonrpc_addr
 from utils import encode_bytes
 from glog import tcp_logger
+import time
 
 class Network:
     """
@@ -73,6 +74,7 @@ class Network:
         :param receiver: str type: xxxx@ip:port \n
         :param data: dict type
         """
+        time.sleep(0.04)
         bdata = encode_bytes(data)
         connection = TcpService.find_connection(receiver)
         if connection:
