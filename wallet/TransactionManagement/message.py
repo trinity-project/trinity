@@ -648,7 +648,7 @@ class RsmcMessage(TransactionMessage):
         RsmcMessage.create(self.channel_name,self.wallet,
                                self.receiver_pubkey,self.sender_pubkey,
                                self.value,self.sender_ip,self.receiver_ip,self.tx_nonce,
-                           asset_type=self.asset_type.upper(), role_index= 1)
+                           asset_type=self.asset_type.upper(), role_index= 1, comments=self.comments)
 
 
     def _handle_1_message(self):
@@ -660,7 +660,7 @@ class RsmcMessage(TransactionMessage):
         RsmcMessage.create(self.channel_name, self.wallet,
                            self.receiver_pubkey, self.sender_pubkey,
                            self.value, self.sender_ip, self.receiver_ip, self.tx_nonce,
-                           asset_type=self.asset_type.upper(), role_index=2)
+                           asset_type=self.asset_type.upper(), role_index=2, comments=self.comments)
 
     def _handle_2_message(self):
         # send 3 message
@@ -668,7 +668,7 @@ class RsmcMessage(TransactionMessage):
         RsmcMessage.create(self.channel_name, self.wallet,
                            self.receiver_pubkey, self.sender_pubkey,
                            self.value, self.sender_ip, self.receiver_ip, self.tx_nonce,
-                           asset_type=self.asset_type.upper(), role_index=3)
+                           asset_type=self.asset_type.upper(), role_index=3, comments=self.comments)
         self.confirm_transaction()
 
     def _handle_3_message(self):
@@ -687,16 +687,24 @@ class RsmcMessage(TransactionMessage):
         self.transaction.update_transaction(str(self.tx_nonce), State="confirm")
         ch.Channel.channel(self.channel_name).update_channel(balance=balance)
         ch.sync_channel_info_to_gateway(self.channel_name, "UpdateChannel")
-
         last_tx = self.transaction.get_tx_nonce(str(int(self.tx_nonce) - 1))
         monitor_ctxid = last_tx.get("MonitorTxId")
         btxDataself = ctx.get("BR").get("originalData").get("txData")
         btxsignself = self.sign_message(btxDataself)
         btxsignother =  ctx.get("BR").get("txDataSign")
         bwitness = ctx.get("BR").get("originalData").get("witness")
+        try:
+            self.confirm_payment()
+        except Exception as e:
+            LOG.info("Confirm payment error {}".format(str(e)))
 
         register_monitor(monitor_ctxid, monitor_height, btxDataself + bwitness, btxsignother, btxsignself)
 
+    def confirm_payment(self):
+        for key, value in Payment.HashR.items():
+            if key == self.comments:
+                PaymentAck.create(value[1], key)
+                Payment(self.wallet,value[1]).delete_hr()
 
     def send_responses(self, error = None):
         if not error:
