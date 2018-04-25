@@ -14,9 +14,9 @@ def sync_wallet_data(n):
         message = {
             "MessageBody": {
                 "Publickey": "pk{}".format(x),
-                "CommitMinDeposit": 1,
-                "Fee": 1,
-                "Balance": {"TNC": 10},
+                "CommitMinDeposit": 1.5,
+                "Fee": 11,
+                "Balance": {"TNC": 110},
                 "alias": "test"
             }
         }
@@ -82,11 +82,11 @@ if __name__ == "__main__":
     # sync_channel("pk4@localhost:8092", "pk2@localhost:8090")
 
     ############ 1、2、3 ############
-    sync_wallet_data(2)
-    time.sleep(5)
+    sync_wallet_data(1)
+    # time.sleep(5)
     # sync_channel("pk1@localhost:8089", "pk3@localhost:8091")
     # time.sleep(5)
-    sync_channel("pk1@127.0.0.1:8089", "pk2@127.0.0.1:8090")
+    # sync_channel("pk1@127.0.0.1:8089", "pk2@127.0.0.1:8090")
     # time.sleep(5)
     # sync_channel("pk3@localhost:8091", "pk2@localhost:8090")
     # sync_channel("pk4@localhost:8092", "pk3@localhost:8091")

@@ -31,10 +31,10 @@ class TBLNode(DBManager):
         Created         : 2018-02-13
         Modified        : 2018-03-21
     """
-    def add_one(self, address: str, public_key:str, ip: str, port: int, deposit: dict, fee: int,
-                state: str, tti=0, type=''):
-        return super(TBLNode, self).add(address=address, public_key=public_key, ip=ip, port=port,
-                                        deposit=deposit, fee=fee, state=state, tti=tti, type='')
+    def add_one(self, address: str, public_key:str, ip: str, balance: int, deposit: dict, fee: int,
+                name:str, state: str, tti=0, type=''):
+        return super(TBLNode, self).add(address=address, public_key=public_key, ip=ip, balance=balance,
+                                        deposit=deposit, fee=fee, name=name, state=state, tti=tti, type='')
 
     @property
     @connection_singleton
@@ -43,7 +43,7 @@ class TBLNode(DBManager):
 
     @property
     def db_table(self):
-        return self.client.db.Channel
+        return self.client.db.Node
 
     @property
     def primary_key(self):

@@ -208,6 +208,7 @@ class Gateway():
             }
             # todo init self tree from local file or db
             self._init_or_update_self_graph()
+            utils.add_or_update_wallet_to_db(node["wallet_info"])
             response = MessageMake.make_ack_sync_wallet_msg(node["wallet_info"]["url"])
             return json.dumps(response)
         # search chanenl router return the path
@@ -482,17 +483,26 @@ class Gateway():
                 Network.send_msg_with_tcp(data.get("Receiver"), data)
 
     def resume_channel_from_db(self):
+        nodes = utils.get_wallet_from_db(cg_public_ip_port)
+        if not nodes:
+            return 
+        wallet = nodes[0]
         node["wallet_info"] = {
-            "url": "pk1@localhost:8089",
-            "deposit": 1,
-            "fee": 1,
-            "balance": 10
+            "url": wallet.address,
+            "deposit": wallet.deposit,
+            "fee": wallet.fee,
+            "name": wallet.name,
+            "balance": wallet.balance
         }
+        pprint.pprint(node)
         self._init_or_update_self_graph()
-        peer_list = ["pk2@localhost:8090","pk3@localhost:8091"]
-        message = MessageMake.make_resume_channel_msg(node["wallet_info"]["url"])
-        for peer in peer_list:
-            Network.send_msg_with_tcp(peer, message)
+        self_url = node["wallet_info"]
+        channels = utils.get_channels_form_db(self_url)
+        if channels:
+            message = MessageMake.make_resume_channel_msg(self_url)
+            for channel in channels:
+                peer = channel.dest_addr if channel.src_addr == self_url else channel.src_addr
+                Network.send_msg_with_tcp(peer, message)
 
 
 gateway_singleton = Gateway()

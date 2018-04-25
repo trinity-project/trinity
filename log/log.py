@@ -30,7 +30,7 @@ if not os.path.exists(LogDataDir):
     os.makedirs(LogDataDir)
 LOG = logging.getLogger('logger')
 # log configuration parts
-if __os_platform__ in ['LINUX']:
+if __os_platform__ in ['LINUX', 'DARWIN']:
     TRINITY_LOG_PATH = os.path.join(LogDataDir,"trinity.log")
 else:
     TRINITY_LOG_PATH = os.getcwd().split(os.sep)[0]+os.sep+'temp'

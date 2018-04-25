@@ -12,7 +12,8 @@ import sys
 path = os.getcwd().replace("/gateway", "")
 sys.path.append(path)
 print(path)
-# from sserver.model.channel_model import APIChannel
+from sserver.model.channel_model import APIChannel
+from sserver.model.node_model import APINode
 
 request_handle_result = {
     "invalid": 0,
@@ -87,10 +88,40 @@ def del_dict_item_by_value(dic, value):
         del_index = values.index(value)
         del dic[keys[del_index]]
 
-def get_peers_form_db(address):
+def get_channels_form_db(address):
     condition = {
         "$or": [{"src_addr": address}, {"dest_addr": address}]
     }
     channels = APIChannel.batch_query_channel(filters=condition)
-    channels = APIChannel.batch_query_channel(filters={"src_addr":address})
-    channeld = APIChannel.batch_query_channel(filters={"dest_addr":address})
+    print(channels)
+    return channels.get("content")
+
+def get_wallet_from_db(ip):
+    nodes = APINode.batch_query_node(filters={"ip": ip})
+    # print(nodes)
+    return nodes.get("content")
+
+def add_or_update_wallet_to_db(wallet):
+    if not wallet:
+        return
+    addr = wallet["url"]
+    if APINode.query_node(addr).get("content"):
+        APINode.update_node(
+            addr,
+            balance=wallet["balance"],
+            deposit=wallet["deposit"],
+            fee=wallet["fee"],
+            name=wallet["name"]
+        )
+    else:
+        APINode.add_ransaction(
+            wallet["url"],
+            get_public_key(wallet["url"]),
+            get_ip_port(wallet["url"]),
+            wallet["balance"],
+            wallet["deposit"],
+            wallet["fee"],
+            wallet["name"],
+            "alive"
+        )
+
