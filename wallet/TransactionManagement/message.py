@@ -592,9 +592,15 @@ class RsmcMessage(TransactionMessage):
 
         elif role_index == 2 or role_index == 3:
             tx = transaction.get_tx_nonce(tx_nonce=str(int(tx_nonce)-1))
-            commitment = tx.get("Commitment").get("originalData")
+            if tx.get("Commitment"):
+                commitment = tx.get("Commitment").get("originalData")
+                rscmcscript = commitment["scriptRSMC"]
+            elif tx.get("HCTX"):
+                commitment = tx.get("HCTX").get("originalData")
+                rscmcscript = commitment["RSMCscript"]
+
             breachremedy = createBRTX(founder["originalData"]["addressFunding"], pubkey_to_address(receiver_pubkey), sender_balance,
-                                      commitment["scriptRSMC"])
+                                      rscmcscript)
             breachremedy_sign = sign(wallet, breachremedy.get("txData"))
             breachremedy_info = {"txDataSign": breachremedy_sign,
                                  "originalData":breachremedy}
@@ -824,22 +830,25 @@ class RResponse(TransactionMessage):
         if verify:
             self.transaction.update_transaction(str(self.tx_nonce), State="confirm")
             sender_pubkey, gateway_ip = self.wallet.url.split("@")
-            receiver_pubkey, partner_ip = self.sender.splite("@")
-            txid = self.transaction.get_latest_nonceid()
-            tx = self.transaction.get_tx_nonce(txid)
+            receiver_pubkey, partner_ip = self.sender.split("@")
+            tx_nonce = int(self.tx_nonce)+1
+
             RsmcMessage.create(self.channel_name, self.wallet, sender_pubkey, receiver_pubkey, self.count,
-                               partner_ip,gateway_ip ,self.tx_nonce, asset_type=self.asset_type,
+                               partner_ip,gateway_ip ,tx_nonce, asset_type=self.asset_type,
                role_index=0, comments=self.hr)
             payment = Payment.get_hash_history(self.hr)
+
             if payment:
                 channel_name = payment.get("Channel")
+                LOG.debug("Payment get channel {}/{}".format(json.dumps(payment), channel_name))
                 count = payment.get("Count")
-                peer = ch.Channel.channel(channel_name).get_peer(self.wallet)
+                peer = ch.Channel.channel(channel_name).get_peer(self.wallet.url)
                 LOG.info("peer {}".format(peer))
                 RResponse.create(self.wallet.url,peer,self.tx_nonce, channel_name,
                                  self.hr, self.r, count, self.asset_type, self.comments)
                 transaction = TrinityTransaction(channel_name, self.wallet)
                 transaction.update_transaction(str(self.tx_nonce),State="confirm")
+                Payment.update_hash_history(self.hr, channel_name, count, "confirm")
             else:
                 return None
         else:
@@ -916,12 +925,13 @@ class HtlcMessage(TransactionMessage):
         verify, error = self.verify()
         if verify:
             Payment.update_hash_history(self.hr,self.channel_name, self.count, "pending")
+
             if self.role_index ==0:
                 self._handle_0_message()
             elif self.role_index ==1:
                 self._handle_1_message()
         else:
-            self.send_responses(error = error)
+            self.send_responses(self.role_index,error = error)
 
     def verify(self):
         return True, None
@@ -930,10 +940,9 @@ class HtlcMessage(TransactionMessage):
         self.send_responses(self.role_index)
         self.transaction.update_transaction(str(self.tx_nonce), TxType = "HTLC", HEDTX=self.hedtx,
                                             HR=self.hr,Count=self.count,State ="pending")
-        HtlcMessage.create(self.channel_name,self.wallet, self.wallet.url, self.sender, self.count, self.hr,
-                           self.tx_nonce, 1, self.asset_type, self.router, self.next, self.comments)
         if self.next == self.wallet.url:
             r = Payment(self.wallet).fetch_r(self.hr)
+            time.sleep(0.1)
             RResponse.create(self.wallet.url, self.sender, self.tx_nonce,
                              self.channel_name, self.hr, r[0], self.count, self.asset_type, self.comments)
             self.transaction.update_transaction(str(self.tx_nonce), State="confirm")

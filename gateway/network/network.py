@@ -74,7 +74,7 @@ class Network:
         :param receiver: str type: xxxx@ip:port \n
         :param data: dict type
         """
-        time.sleep(0.04)
+        time.sleep(0.05)
         bdata = encode_bytes(data)
         connection = TcpService.find_connection(receiver)
         if connection:
