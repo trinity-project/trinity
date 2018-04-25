@@ -295,7 +295,8 @@ class UserPromptInterface(PromptInterface):
                     LOG.info("Get Router {}".format(str(r)))
                     n = router.get("Next")
                     LOG.info("Get Next {}".format(str(n)))
-                    fee = reduce(lambda x, y:x+y,[float(i[1]) for i in r])
+                    fee_router = [i[0] not in (self.Wallet.url, receiver) for i in r]
+                    fee = reduce(lambda x, y:x+y,[float(i[1]) for i in fee_router])
                     LOG.info("Get Fee {}".format(str(fee)))
                     answer = prompt("will use fee %s , Do you still want tx? [Yes/No]> " %(str(fee)))
                     if answer.upper() in["YES","Y"]:
