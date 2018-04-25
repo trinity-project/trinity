@@ -300,7 +300,7 @@ class UserPromptInterface(PromptInterface):
                     LOG.info("Get Fee {}".format(str(fee)))
                     answer = prompt("will use fee %s , Do you still want tx? [Yes/No]> " %(str(fee)))
                     if answer.upper() in["YES","Y"]:
-                        count = int(count) + int(fee)
+                        count = float(count) + float(fee)
                         next = r[1][0]
                         channels = filter_channel_via_address(self.Wallet.url, next, EnumChannelState.OPENED.name)
                         LOG.debug("Channels {}".format(str(channels)))

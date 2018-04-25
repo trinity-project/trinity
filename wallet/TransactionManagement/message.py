@@ -952,7 +952,7 @@ class HtlcMessage(TransactionMessage):
             next = self.get_next_router()
             LOG.debug("Get Next Router {}".format(str(next)))
             channels = ch.filter_channel_via_address(self.wallet.url, next, state=EnumChannelState.OPENED.name)
-            fee = self.get_fee(self.next)
+            fee = self.get_fee(self.wallet.url)
             count = float(self.count)-float(fee)
             channel = ch.chose_channel(channels,self.wallet.url.split("@")[0], count, self.asset_type)
 
@@ -1075,6 +1075,7 @@ class HtlcMessage(TransactionMessage):
                             "Receiver": self.sender,
                             "TxNonce": self.tx_nonce,
                             "ChannelName": self.channel_name,
+                            "Router": self.router,
                             "MessageBody": {
                                 "HCTX": hctx_sig,
                                 "RDTX": rdtx_sig,
@@ -1082,7 +1083,6 @@ class HtlcMessage(TransactionMessage):
                                 "HTRDTX": htrdtx_sig,
                                 "RoleIndex": 0,
                                 "Count":self.count,
-                                "Router":self.router,
                                 "AssetType": self.asset_type,
                                  "HashR": self.hr
                                 }
@@ -1101,13 +1101,13 @@ class HtlcMessage(TransactionMessage):
                             "Receiver": self.sender,
                             "TxNonce": self.tx_nonce,
                             "ChannelName": self.channel_name,
+                            "Router": self.router,
                             "MessageBody": {
                                 "HCTX": hctx_sig,
                                 "RDTX": rdtx_sig,
                                 "HTDTX": htdtx_sig,
                                 "RoleIndex": 1,
                                 "Count": self.count,
-                                "Router":self.router,
                                 "AssetType": self.asset_type,
                                  "HashR": self.hr
                                  }
