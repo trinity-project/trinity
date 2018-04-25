@@ -28,7 +28,8 @@ def sync_wallet_data():
                 "Publickey": "pk{}".format(ips.index(ip) + 1),
                 "CommitMinDeposit": 1,
                 "Fee": random.randint(1,10),
-                "Balance": 100
+                "Balance": {"TNC": 10},
+                "alias": "trinity1"
             }
         }
         req_url = "http://{}:8077/".format(ip)
@@ -82,7 +83,7 @@ def log_process_memory_cpu_used(process, pids):
 
 if __name__ == "__main__":
     # start_ip = "192.168.205.217"
-    # sync_wallet_data()
+    sync_wallet_data()
     # # # ############ 4、5、6 ############
     # sync_channel("pk4@192.168.205.179:8089", "pk5@192.168.205.182:8089")
     # time.sleep(5)
@@ -94,8 +95,8 @@ if __name__ == "__main__":
     # # # # sync_wallet_data(6)
     # time.sleep(5)
     # sync_channel("pk1@192.168.205.217:8089", "pk3@192.168.205.180:8089")
-    # time.sleep(5)
-    # sync_channel("pk1@192.168.205.217:8089", "pk2@192.168.205.181:8089")
+    time.sleep(5)
+    sync_channel("pk1@192.168.204.112:8089", "pk2@192.168.205.181:8089")
     # time.sleep(5)
     # sync_channel("pk3@192.168.205.180:8089", "pk2@192.168.205.181:8089")
     # time.sleep(5)
@@ -112,8 +113,8 @@ if __name__ == "__main__":
     # time.sleep(5)
     # sync_channel("pk8@192.168.205.166:8089", "pk1@192.168.205.217:8089")
     ############2、6 ############
-    time.sleep(5)
-    sync_channel("pk6@192.168.205.178:8089", "pk2@192.168.205.181:8089")
+    # time.sleep(5)
+    # sync_channel("pk6@192.168.205.178:8089", "pk2@192.168.205.181:8089")
     ############1、5 ############
     # sync_channel("pk1@localhost:8089", "pk5@localhost:8093")
     # sync_wallet_data(5)
