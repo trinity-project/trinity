@@ -59,7 +59,8 @@ class UserPromptInterface(PromptInterface):
                               "channel close {channel}",
                               "channel peer",
                               "channel payment {asset}, {count}, [{comments}]",
-                              "channel qrcode {on/off}"]
+                              "channel qrcode {on/off}",
+                              "channel trans"]
         self.commands.extend(self.user_commands)
         self.qrcode = False
 
@@ -352,6 +353,12 @@ class UserPromptInterface(PromptInterface):
             if self.qrcode:
                 qrcode_terminal.draw(paycode, version=4)
             print(paycode)
+        elif command ==  "trans":
+            channel_name = get_arg(arguments, 1)
+            tx= trinitytx.TrinityTransaction(channel_name,self.Wallet)
+            result = tx.read_transaction()
+            print(json.dumps(result,indent=4))
+            return None
 
     def _channel_noopen(self):
         print("Channel Function Can Not be Opened at Present, You can try again via channel enable")
