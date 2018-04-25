@@ -100,6 +100,9 @@ class Payment(object):
     @staticmethod
     def get_hash_history(hr, state="pending"):
         channel = Payment.HashHistory.get(hr)
+        if not channel:
+            LOG.debug("not get the channel {}/{}".format(json.dumps(Payment.HashHistory),hr))
+            return None
         if channel.get("State") == state:
             return channel
         else:
