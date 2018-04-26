@@ -149,8 +149,6 @@ def check_partner(wallet, partner):
         par_pubkey, ip = partner.strip().split("@")
         if par_pubkey == wallet.pubkey:
             return False
-        elif ip == wallet.url.split("@")[1]:
-            return False
         else:
             return True
     else:
