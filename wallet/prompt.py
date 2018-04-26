@@ -59,7 +59,9 @@ class UserPromptInterface(PromptInterface):
                               "channel close {channel}",
                               "channel peer",
                               "channel payment {asset}, {count}, [{comments}]",
-                              "channel qrcode {on/off}"]
+                              "channel qrcode {on/off}",
+                              "channel trans",
+                              ]
         self.commands.extend(self.user_commands)
         self.qrcode = False
 
@@ -132,6 +134,8 @@ class UserPromptInterface(PromptInterface):
                         self.show_tx(arguments)
                     elif command == 'channel':
                         self.do_channel(arguments)
+                    elif command == "faucet":
+                        self.do_faucet()
                     else:
                         print("command %s not found" % command)
 
@@ -152,8 +156,27 @@ class UserPromptInterface(PromptInterface):
 
         except Exception as e:
             pass
-
         return out
+
+    #faucet for test tnc
+    def do_faucet(self):
+        if not self.Wallet:
+            print("Please Open The Wallet First")
+            return
+        print(self.Wallet.address)
+        request = {
+                "jsonrpc": "2.0",
+                "method": "transferTnc",
+                "params": ["AGgZna4kbTXPm16yYZyG6RyrQz2Sqotno6",self.Wallet.address],
+                "id": 1
+                }
+        result = requests.post(url="http://47.88.35.235:21332",json=request)
+        txid = result.json().get("result")
+        if txid:
+            print(txid)
+        else:
+            print(result.json())
+        return
 
     def retry_channel_enable(self):
         for i in range(30):
@@ -294,11 +317,12 @@ class UserPromptInterface(PromptInterface):
                     LOG.info("Get Router {}".format(str(r)))
                     n = router.get("Next")
                     LOG.info("Get Next {}".format(str(n)))
-                    fee = reduce(lambda x, y:x+y,[float(i[1]) for i in r])
+                    fee_router = [i for i in r if i[0] not in (self.Wallet.url, receiver)]
+                    fee = reduce(lambda x, y:x+y,[float(i[1]) for i in fee_router])
                     LOG.info("Get Fee {}".format(str(fee)))
                     answer = prompt("will use fee %s , Do you still want tx? [Yes/No]> " %(str(fee)))
                     if answer.upper() in["YES","Y"]:
-                        count = int(count) + int(fee)
+                        count = float(count) + float(fee)
                         next = r[1][0]
                         channels = filter_channel_via_address(self.Wallet.url, next, EnumChannelState.OPENED.name)
                         LOG.debug("Channels {}".format(str(channels)))
@@ -352,6 +376,12 @@ class UserPromptInterface(PromptInterface):
             if self.qrcode:
                 qrcode_terminal.draw(paycode, version=4)
             print(paycode)
+        elif command ==  "trans":
+            channel_name = get_arg(arguments, 1)
+            tx= trinitytx.TrinityTransaction(channel_name,self.Wallet)
+            result = tx.read_transaction()
+            print(json.dumps(result,indent=4))
+            return None
 
     def _channel_noopen(self):
         print("Channel Function Can Not be Opened at Present, You can try again via channel enable")

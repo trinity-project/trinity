@@ -53,7 +53,6 @@ class Message(object):
 
     @staticmethod
     def send(message):
-        LOG.info("Message Send:  {}".format(json.dumps(message)))
         send_message(message)
 
 
@@ -561,9 +560,12 @@ class RsmcMessage(TransactionMessage):
                            }
                 Message.send(message)
                 return
-
-        sender_balance = float(balance_value) - float(value)
-        receiver_balance = float(receiver_balance_value) + float(value)
+        if role_index in [0,2]:
+            sender_balance = float(balance_value) - float(value)
+            receiver_balance = float(receiver_balance_value) + float(value)
+        elif role_index in [1,3]:
+            sender_balance = float(balance_value) + float(value)
+            receiver_balance = float(receiver_balance_value) - float(value)
         message = {}
         if role_index == 0 or role_index == 1:
             commitment = createCTX(founder["originalData"]["addressFunding"], sender_balance, receiver_balance,
@@ -586,15 +588,29 @@ class RsmcMessage(TransactionMessage):
                                        "Comments":comments
                                       }
                  }
+            balance = {}
+            subitem = {}
+            subitem.setdefault(asset_type.upper(), sender_balance)
+            balance.setdefault(sender_pubkey, subitem)
+            subitem = {}
+            subitem.setdefault(asset_type.upper(), receiver_balance)
+            balance.setdefault(receiver_pubkey, subitem)
+            transaction.update_transaction(str(tx_nonce), Balance=balance, State="pending")
             if router and next_router:
                 message.setdefault("Router", router)
                 message.setdefault("NextRouter", next_router)
 
         elif role_index == 2 or role_index == 3:
             tx = transaction.get_tx_nonce(tx_nonce=str(int(tx_nonce)-1))
-            commitment = tx.get("Commitment").get("originalData")
+            if tx.get("Commitment"):
+                commitment = tx.get("Commitment").get("originalData")
+                rscmcscript = commitment["scriptRSMC"]
+            elif tx.get("HCTX"):
+                commitment = tx.get("HCTX").get("originalData")
+                rscmcscript = commitment["RSMCscript"]
+
             breachremedy = createBRTX(founder["originalData"]["addressFunding"], pubkey_to_address(receiver_pubkey), sender_balance,
-                                      commitment["scriptRSMC"])
+                                      rscmcscript)
             breachremedy_sign = sign(wallet, breachremedy.get("txData"))
             breachremedy_info = {"txDataSign": breachremedy_sign,
                                  "originalData":breachremedy}
@@ -614,14 +630,7 @@ class RsmcMessage(TransactionMessage):
                        }
         LOG.info("Send RsmcMessage role index 1 message  ")
         RsmcMessage.send(message)
-        balance = {}
-        subitem = {}
-        subitem.setdefault(asset_type.upper(), sender_balance)
-        balance.setdefault(sender_pubkey,subitem)
-        subitem = {}
-        subitem.setdefault(asset_type.upper(), receiver_balance)
-        balance.setdefault(receiver_pubkey,subitem)
-        transaction.update_transaction(str(tx_nonce), Balance=balance, State="pending")
+
 
     def _check_balance(self, balance):
         pass
@@ -643,7 +652,7 @@ class RsmcMessage(TransactionMessage):
         RsmcMessage.create(self.channel_name,self.wallet,
                                self.receiver_pubkey,self.sender_pubkey,
                                self.value,self.sender_ip,self.receiver_ip,self.tx_nonce,
-                           asset_type=self.asset_type.upper(), role_index= 1)
+                           asset_type=self.asset_type.upper(), role_index= 1, comments=self.comments)
 
 
     def _handle_1_message(self):
@@ -655,7 +664,7 @@ class RsmcMessage(TransactionMessage):
         RsmcMessage.create(self.channel_name, self.wallet,
                            self.receiver_pubkey, self.sender_pubkey,
                            self.value, self.sender_ip, self.receiver_ip, self.tx_nonce,
-                           asset_type=self.asset_type.upper(), role_index=2)
+                           asset_type=self.asset_type.upper(), role_index=2, comments=self.comments)
 
     def _handle_2_message(self):
         # send 3 message
@@ -663,7 +672,7 @@ class RsmcMessage(TransactionMessage):
         RsmcMessage.create(self.channel_name, self.wallet,
                            self.receiver_pubkey, self.sender_pubkey,
                            self.value, self.sender_ip, self.receiver_ip, self.tx_nonce,
-                           asset_type=self.asset_type.upper(), role_index=3)
+                           asset_type=self.asset_type.upper(), role_index=3, comments=self.comments)
         self.confirm_transaction()
 
     def _handle_3_message(self):
@@ -682,16 +691,24 @@ class RsmcMessage(TransactionMessage):
         self.transaction.update_transaction(str(self.tx_nonce), State="confirm")
         ch.Channel.channel(self.channel_name).update_channel(balance=balance)
         ch.sync_channel_info_to_gateway(self.channel_name, "UpdateChannel")
-
         last_tx = self.transaction.get_tx_nonce(str(int(self.tx_nonce) - 1))
         monitor_ctxid = last_tx.get("MonitorTxId")
         btxDataself = ctx.get("BR").get("originalData").get("txData")
         btxsignself = self.sign_message(btxDataself)
         btxsignother =  ctx.get("BR").get("txDataSign")
         bwitness = ctx.get("BR").get("originalData").get("witness")
+        try:
+            self.confirm_payment()
+        except Exception as e:
+            LOG.info("Confirm payment error {}".format(str(e)))
 
         register_monitor(monitor_ctxid, monitor_height, btxDataself + bwitness, btxsignother, btxsignself)
 
+    def confirm_payment(self):
+        for key, value in Payment.HashR.items():
+            if key == self.comments:
+                PaymentAck.create(value[1], key)
+                Payment(self.wallet,value[1]).delete_hr(key)
 
     def send_responses(self, error = None):
         if not error:
@@ -824,22 +841,25 @@ class RResponse(TransactionMessage):
         if verify:
             self.transaction.update_transaction(str(self.tx_nonce), State="confirm")
             sender_pubkey, gateway_ip = self.wallet.url.split("@")
-            receiver_pubkey, partner_ip = self.sender.splite("@")
-            txid = self.transaction.get_latest_nonceid()
-            tx = self.transaction.get_tx_nonce(txid)
+            receiver_pubkey, partner_ip = self.sender.split("@")
+            tx_nonce = int(self.tx_nonce)+1
+
             RsmcMessage.create(self.channel_name, self.wallet, sender_pubkey, receiver_pubkey, self.count,
-                               partner_ip,gateway_ip ,self.tx_nonce, asset_type=self.asset_type,
+                               partner_ip,gateway_ip ,tx_nonce, asset_type=self.asset_type,
                role_index=0, comments=self.hr)
             payment = Payment.get_hash_history(self.hr)
+
             if payment:
                 channel_name = payment.get("Channel")
+                LOG.debug("Payment get channel {}/{}".format(json.dumps(payment), channel_name))
                 count = payment.get("Count")
-                peer = ch.Channel.channel(channel_name).get_peer(self.wallet)
+                peer = ch.Channel.channel(channel_name).get_peer(self.wallet.url)
                 LOG.info("peer {}".format(peer))
                 RResponse.create(self.wallet.url,peer,self.tx_nonce, channel_name,
                                  self.hr, self.r, count, self.asset_type, self.comments)
                 transaction = TrinityTransaction(channel_name, self.wallet)
                 transaction.update_transaction(str(self.tx_nonce),State="confirm")
+                Payment.update_hash_history(self.hr, channel_name, count, "confirm")
             else:
                 return None
         else:
@@ -915,33 +935,36 @@ class HtlcMessage(TransactionMessage):
     def handle_message(self):
         verify, error = self.verify()
         if verify:
-            Payment.update_hash_history(self.hr,self.channel_name, self.count, "pending")
             if self.role_index ==0:
                 self._handle_0_message()
             elif self.role_index ==1:
                 self._handle_1_message()
         else:
-            self.send_responses(error = error)
+            self.send_responses(self.role_index,error = error)
 
     def verify(self):
         return True, None
 
+    def check_if_the_last_router(self):
+        return self.wallet.url == self.router[-1][0]
+
+
     def _handle_0_message(self):
+        Payment.update_hash_history(self.hr, self.channel_name, self.count, "pending")
         self.send_responses(self.role_index)
         self.transaction.update_transaction(str(self.tx_nonce), TxType = "HTLC", HEDTX=self.hedtx,
                                             HR=self.hr,Count=self.count,State ="pending")
-        HtlcMessage.create(self.channel_name,self.wallet, self.wallet.url, self.sender, self.count, self.hr,
-                           self.tx_nonce, 1, self.asset_type, self.router, self.next, self.comments)
-        if self.next == self.wallet.url:
-            r = Payment(self.wallet).fetch_r(self.hr)
-            RResponse.create(self.wallet.url, self.sender, self.tx_nonce,
-                             self.channel_name, self.hr, r[0], self.count, self.asset_type, self.comments)
-            self.transaction.update_transaction(str(self.tx_nonce), State="confirm")
+        HtlcMessage.create(self.channel_name, self.wallet, self.wallet.url, self.sender, self.count, self.hr,
+                           self.tx_nonce, 1, self.asset_type, self.router,
+                           self.next, comments=self.comments)
+
+        if self.check_if_the_last_router():
+            pass
         else:
             next = self.get_next_router()
             LOG.debug("Get Next Router {}".format(str(next)))
             channels = ch.filter_channel_via_address(self.wallet.url, next, state=EnumChannelState.OPENED.name)
-            fee = self.get_fee(self.next)
+            fee = self.get_fee(self.wallet.url)
             count = float(self.count)-float(fee)
             channel = ch.chose_channel(channels,self.wallet.url.split("@")[0], count, self.asset_type)
 
@@ -949,11 +972,9 @@ class HtlcMessage(TransactionMessage):
                                self.tx_nonce, self.role_index,self.asset_type,self.router,
                                    next, comments=self.comments)
 
-
     def _handle_1_message(self):
         self.send_responses(self.role_index)
         self.transaction.update_transaction(str(self.tx_nonce), TxType="HTLC", HEDTX=self.hedtx, State="pending")
-
 
     def get_fee(self, url):
         router_url = [i[0] for i in self.router]
@@ -970,7 +991,6 @@ class HtlcMessage(TransactionMessage):
             return router_url[index+1]
         except IndexError:
             return None
-
 
     @staticmethod
     def create(channel_name, wallet,sender, receiver, HTLCvalue, hashR,tx_nonce, role_index,asset_type,router,
@@ -996,7 +1016,6 @@ class HtlcMessage(TransactionMessage):
         print(balance)
         senderpubkey = sender.strip().split("@")[0]
         receiverpubkey = receiver.strip().split("@")[0]
-        print(receiverpubkey)
         sender_balance = balance.get(senderpubkey).get(asset_type)
         receiver_balance = balance.get(receiverpubkey).get(asset_type)
         founder = transaction.get_founder()
@@ -1068,16 +1087,19 @@ class HtlcMessage(TransactionMessage):
                             "Receiver": self.sender,
                             "TxNonce": self.tx_nonce,
                             "ChannelName": self.channel_name,
+                            "Router": self.router,
                             "MessageBody": {
                                 "HCTX": hctx_sig,
                                 "RDTX": rdtx_sig,
                                 "HTTX": httx_sig,
                                 "HTRDTX": htrdtx_sig,
-                                "RoleIndex": 0
+                                "RoleIndex": 0,
+                                "Count":self.count,
+                                "AssetType": self.asset_type,
+                                 "HashR": self.hr
                                 }
                             }
         Message.send(message_response)
-
 
     def _send_1_response(self):
         hctx_sig = {"txDataSign": self.sign_message(self.hctx.get("txData")),
@@ -1091,15 +1113,18 @@ class HtlcMessage(TransactionMessage):
                             "Receiver": self.sender,
                             "TxNonce": self.tx_nonce,
                             "ChannelName": self.channel_name,
+                            "Router": self.router,
                             "MessageBody": {
                                 "HCTX": hctx_sig,
                                 "RDTX": rdtx_sig,
                                 "HTDTX": htdtx_sig,
-                                "RoleIndex": 1
+                                "RoleIndex": 1,
+                                "Count": self.count,
+                                "AssetType": self.asset_type,
+                                 "HashR": self.hr
                                  }
                             }
         Message.send(message_response)
-
 
     def send_responses(self, role_index, error = None):
         if not error:
@@ -1148,17 +1173,26 @@ class HtlcResponsesMessage(TransactionMessage):
         self.value = self.message_body.get("Value")
         self.comments = self.message_body.get("Comments")
         self.router = self.message.get("Router")
-        self.next = self.message.get("Next")
         self.count = self.message_body.get("Count")
         self.asset_type = self.message_body.get("AssetType")
         self.hr = self.message_body.get("HashR")
         self.transaction = TrinityTransaction(self.channel_name, self.wallet)
+
+    def check_if_the_last_router(self):
+        return self.wallet.url == self.router[-1][0]
+
     def handle_message(self):
         if self.error:
             return "{} message error"
         verify, error = self.verify()
         if verify:
             self.transaction.update_transaction(str(self.tx_nonce), HCTX = self.hctx, HEDTX=self.hedtx, HTTX= self.httx)
+            if self.role_index ==1:
+                if self.check_if_the_last_router():
+                    r = Payment(self.wallet).fetch_r(self.hr)
+                    RResponse.create(self.wallet.url, self.sender, self.tx_nonce,
+                                     self.channel_name, self.hr, r[0], self.count, self.asset_type, self.comments)
+                    self.transaction.update_transaction(str(self.tx_nonce), State="confirm")
 
     def verify(self):
         return True, None

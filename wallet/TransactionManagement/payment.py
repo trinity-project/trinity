@@ -81,10 +81,7 @@ class Payment(object):
 
     @staticmethod
     def verify_hr(hr,r):
-        if Payment.HashR.get(hr):
-            return True if hash_r(r) == hr else False
-        else:
-            return False
+        return True if hash_r(r) == hr else False
 
     def fetch_r(self, hr):
         return self.HashR.get(hr)
@@ -94,6 +91,7 @@ class Payment(object):
 
     @staticmethod
     def update_hash_history(hr, channel, count, state):
+        LOG.debug("update hash history {}".format(channel))
         Payment.HashHistory[hr] = {"Channel":channel,
                                    "Count":count,
                                 "State":state}
@@ -102,6 +100,9 @@ class Payment(object):
     @staticmethod
     def get_hash_history(hr, state="pending"):
         channel = Payment.HashHistory.get(hr)
+        if not channel:
+            LOG.debug("not get the channel {}/{}".format(json.dumps(Payment.HashHistory),hr))
+            return None
         if channel.get("State") == state:
             return channel
         else:
