@@ -62,6 +62,7 @@ class UserPromptInterface(PromptInterface):
                               "channel payment {asset}, {count}, [{comments}]",
                               "channel qrcode {on/off}",
                               "channel trans",
+                              "channel show uri"
                               ]
         self.commands.extend(self.user_commands)
         self.qrcode = False
@@ -256,12 +257,19 @@ class UserPromptInterface(PromptInterface):
             if not check_support_asset_type(asset_type):
                 print("Now we just support TNC, mulit-asset will coming soon")
                 return None
-            if not check_onchain_balance(self.Wallet, asset_type, deposit):
+
+            if not check_onchain_balance(self.Wallet.pubkey, asset_type, deposit):
                 print("Now the balance on chain is less then the deposit")
                 return None
+
             if not check_partner(self.Wallet, partner):
                 print("Partner URI is not correct, Please check the partner uri")
                 return None
+
+            if not check_onchain_balance(partner.strip().split("@")[0], asset_type, deposit):
+                print("Partner balance on chain is less than the deposit")
+                return None
+
             create_channel(self.Wallet.url, partner,asset_type, deposit)
 
         elif command == "enable":
@@ -386,11 +394,19 @@ class UserPromptInterface(PromptInterface):
             if self.qrcode:
                 qrcode_terminal.draw(paycode, version=4)
             print(paycode)
+            return None
         elif command ==  "trans":
             channel_name = get_arg(arguments, 1)
             tx= trinitytx.TrinityTransaction(channel_name,self.Wallet)
             result = tx.read_transaction()
             print(json.dumps(result,indent=4))
+            return None
+        elif command == "show":
+            subcommand  = get_arg(arguments,1)
+            if subcommand.upper() == "URI":
+                print(self.Wallet.url)
+            else:
+                self.help()
             return None
 
     def _channel_noopen(self):

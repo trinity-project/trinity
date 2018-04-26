@@ -901,6 +901,8 @@ class HtlcMessage(TransactionMessage):
     "Receiver":"101010101001001010100101@127.0.0.1:20552",
     "TxNonce": 0,
     "ChannelName":"3333333333333333333333333333",
+    "Router":[],
+    "Next":"",
     "MessageBody": {
             "HCTX":"",
             "RDTX":"",
@@ -908,7 +910,8 @@ class HtlcMessage(TransactionMessage):
             "HTTX":"",
             "HTDTX":"",
             "HTRDTX":"",
-            "RoleIndex":""
+            "RoleIndex":"",
+            "Comments":""
         }
     }
     """
