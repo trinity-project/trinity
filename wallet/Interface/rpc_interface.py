@@ -132,9 +132,12 @@ class RpcInteraceApi(object):
         elif method == "TransactionMessage":
             return MessageList.append(params)
 
-        elif method == "ConstrutInitChannelTransction":
-            return transaction.construt_init_channel_transction(params)
+        elif method == "FunderTransaction":
+            return transaction.funder_trans(params)
 
-        elif method == "ConstrutUpdateChannelTransction":
-            return transaction.construt_update_channel_transction(params)
+        elif method == "RSMCTransaction":
+            return transaction.rsmc_trans(params)
+
+        elif method == "HTLCTransaction":
+            return transaction.hltc_trans()
 

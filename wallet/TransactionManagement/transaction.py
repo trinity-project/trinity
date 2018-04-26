@@ -213,7 +213,7 @@ def scriptToAddress(script):
     return address
 
 
-def construt_init_channel_transction(params):
+def funder_trans(params):
     """
 
     :param params:
@@ -235,29 +235,63 @@ def construt_init_channel_transction(params):
 
     return {"C_TX":C_tx,"R_TX":RD_tx}
 
-def construt_update_channel_transction(params):
-    walletSelf={
-        "pubkey":params[0],
-        "balance":params[1],
-    }
-    walletOther={
-        "pubkey":params[2],
-        "balance":params[3],
-    }
-    script_funding=params[4]
-    script_rsmc=params[5]
-    C_tx = createCTX(addressFunding=scriptToAddress(script_funding), balanceSelf=walletSelf["balance"],
-                          balanceOther=walletOther["balance"], pubkeySelf=walletSelf["pubkey"],
-                          pubkeyOther=walletOther["pubkey"], fundingScript=script_funding)
+def rsmc_trans(params):
+    """
+
+    :param params:
+    :return:
+    """
+    script_funding = params[0]
+    balanceself = params[1]
+    balanceother = params[2]
+    pubkeyself = params[3]
+    pubkeyother = params[4]
+
+
+    C_tx = createCTX(addressFunding=scriptToAddress(script_funding), balanceSelf=balanceself,
+                          balanceOther=balanceother, pubkeySelf=pubkeyself,
+                          pubkeyOther=pubkeyother, fundingScript=script_funding)
 
     RD_tx = createRDTX(addressRSMC=C_tx["addressRSMC"], addressSelf=pubkeyToAddress(walletSelf["pubkey"]),
                             balanceSelf=walletSelf["deposit"], CTxId=C_tx["txId"],
                             RSMCScript=C_tx["scriptRSMC"])
 
-    BR_tx = createBRTX(addressRSMC=scriptToAddress(script_rsmc), addressOther=pubkeyToAddress(walletSelf["pubkey"]),
-                            balanceSelf=walletSelf["deposit"], RSMCScript=script_rsmc)
+    return {"C_TX": C_tx, "R_TX": RD_tx}
 
-    return {"BR_tx": BR_tx, "C_TX": C_tx, "R_TX": RD_tx}
+
+def br_trans(params):
+    """
+
+    :param params:
+    :return:
+    """
+    script_rsmc = params[0]
+    selfpubkey = params[1]
+    balanceself = params[2]
+
+    BR_tx = createBRTX(addressRSMC=scriptToAddress(script_rsmc), addressOther=pubkeyToAddress(selfpubkey),
+                            balanceSelf=balanceself, RSMCScript=script_rsmc)
+
+    return {"BR_tx": BR_tx}
+
+def hltc_trans(params):
+    """
+
+    :param params:
+    :return:
+    """
+    pubkeySender = params[0]
+    pubkeyReceiver = params[1]
+    HTLCValue = params[2]
+    balanceSender = params[3]
+    balanceReceiver = params[4]
+    hashR = params[5]
+    addressFunding = params[6]
+    fundingScript = params[7]
+
+
+    return create_sender_HCTX(pubkeySender, pubkeyReceiver, HTLCValue, balanceSender, balanceReceiver, hashR,
+                       addressFunding, fundingScript)
 
 
 
