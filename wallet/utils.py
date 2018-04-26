@@ -26,8 +26,11 @@ SOFTWARE."""
 from neocore.Cryptography.Crypto import Crypto
 import binascii
 from wallet.configure import Configure
-
+from wallet.BlockChain.interface import get_balance
+import re
 import hashlib
+
+SupportAssetType = ["TNC"] #Todo multi-asset will come soon, before that hardcode here
 
 
 def to_aes_key(password):
@@ -84,6 +87,11 @@ def get_arg(arguments, index=0, convert_to_int=False):
 
 
 def get_asset_type_name(asset_type):
+    """
+
+    :param asset_type:
+    :return:
+    """
     asset= Configure.get("AssetType")
     for key, value in asset.items():
         if value.replace("0x","") == asset_type.replace("0x",""):
@@ -92,8 +100,65 @@ def get_asset_type_name(asset_type):
             continue
     return None
 
+
 def get_asset_type_id(asset_name):
+    """
+
+    :param asset_name:
+    :return:
+    """
     return Configure.get("AssetType").get(asset_name.upper())
+
+
+def check_support_asset_type(asset_type):
+    """
+
+    :param asset_type:
+    :return:
+    """
+    if asset_type.upper() in SupportAssetType:
+        return True
+    else:
+        return False
+
+
+def check_onchain_balance(pubkey,asset_type,depoist):
+    """
+
+    :param wallet:
+    :param asset_type: eg TNC
+    :param depoist:
+    :return:
+    """
+    balance = get_balance(pubkey, asset_type)
+    if float(depoist) <= float(balance):
+        return True
+    else:
+        return False
+
+
+def check_partner(wallet, partner):
+    """
+
+    :param wallet:
+    :param partner:
+    :return:
+    """
+    p = re.match(r"[0-9|a-f]{66}@\d+\.\d+\.\d+\.\d+:\d+", partner.strip())
+    if p:
+        par_pubkey, ip = partner.strip().split("@")
+        if par_pubkey == wallet.pubkey:
+            return False
+        elif ip == wallet.url.split("@")[1]:
+            return False
+        else:
+            return True
+    else:
+        return False
+
+
+
+
 
 
 if __name__ == "__main__":
