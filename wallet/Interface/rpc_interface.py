@@ -139,5 +139,5 @@ class RpcInteraceApi(object):
             return transaction.rsmc_trans(params)
 
         elif method == "HTLCTransaction":
-            return transaction.hltc_trans()
+            return transaction.hltc_trans(params)
 
