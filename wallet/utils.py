@@ -26,8 +26,11 @@ SOFTWARE."""
 from neocore.Cryptography.Crypto import Crypto
 import binascii
 from wallet.configure import Configure
-
+from wallet.BlockChain.interface import get_balance
+import re
 import hashlib
+
+SupportAssetType = ["TNC"] #Todo multi-asset will come soon, before that hardcode here
 
 
 def to_aes_key(password):
@@ -92,8 +95,43 @@ def get_asset_type_name(asset_type):
             continue
     return None
 
+
 def get_asset_type_id(asset_name):
     return Configure.get("AssetType").get(asset_name.upper())
+
+
+def check_support_asset_type(asset_type):
+    if asset_type.upper() in SupportAssetType:
+        return True
+    else:
+        return False
+
+
+def check_onchain_balance(wallet,asset_type,depoist):
+    asset_type = asset_type if len(asset_type) >10 else get_asset_type_id(asset_type)
+    balance = get_balance(wallet.pubkey, asset_type)
+    if float(depoist) <= float(balance):
+        return True
+    else:
+        return False
+
+
+def check_partner(wallet, partner):
+    p = re.match(r"[0-9|a-f]{66}@\d+\.\d+\.\d+\.\d+:\d+", partner.strip())
+    if p:
+        par_pubkey, ip = partner.strip().split("@")
+        if par_pubkey == wallet.pubkey:
+            return False
+        elif ip == wallet.url.split("@")[1]:
+            return False
+        else:
+            return True
+    else:
+        return False
+
+
+
+
 
 
 if __name__ == "__main__":

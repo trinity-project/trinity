@@ -5,35 +5,37 @@ import sys
 pythonpath = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.append(pythonpath)
 
-
 import argparse
 import json
-
 import traceback
-
 from prompt_toolkit import prompt
 from prompt_toolkit.shortcuts import print_tokens
 from prompt_toolkit.token import Token
 from twisted.internet import reactor, endpoints
 from log import LOG
 from lightwallet.Settings import settings
-
-from wallet.utils import get_arg, get_asset_type_name
+from wallet.utils import get_arg, \
+    get_asset_type_name,\
+    check_support_asset_type,\
+    check_onchain_balance,\
+    check_partner
 from wallet.Interface.rpc_interface import RpcInteraceApi
 from twisted.web.server import Site
 from lightwallet.prompt import PromptInterface
-from wallet.ChannelManagement.channel import create_channel, filter_channel_via_address,\
-    get_channel_via_address,chose_channel,close_channel,udpate_channel_when_setup
+from wallet.ChannelManagement.channel import create_channel, \
+    filter_channel_via_address,\
+    get_channel_via_address,\
+    chose_channel,\
+    close_channel,\
+    udpate_channel_when_setup
 from wallet.TransactionManagement import message as mg
 from wallet.TransactionManagement import transaction as trinitytx
 from wallet.Interface.rpc_interface import MessageList
 import time
 from model.base_enum import EnumChannelState
-
 from wallet.Interface import gate_way
 from wallet.configure import Configure
 from wallet.BlockChain.interface import get_block_count
-
 from functools import reduce
 from wallet.BlockChain.monior import monitorblock,Monitor
 from wallet.TransactionManagement.payment import Payment
@@ -250,7 +252,16 @@ class UserPromptInterface(PromptInterface):
                 raise Exception("Please Open The Wallet First")
             partner = get_arg(arguments, 1)
             asset_type = get_arg(arguments, 2)
-            deposit = int(get_arg(arguments, 3).strip())
+            deposit = float(get_arg(arguments, 3).strip())
+            if not check_support_asset_type(asset_type):
+                print("Now we just support TNC, mulit-asset will coming soon")
+                return None
+            if not check_onchain_balance(self.Wallet, asset_type, deposit):
+                print("Now the balance on chain is less then the deposit")
+                return None
+            if not check_partner(self.Wallet, partner):
+                print("Partner URI is not correct, Please check the partner uri")
+                return None
             create_channel(self.Wallet.url, partner,asset_type, deposit)
 
         elif command == "enable":
