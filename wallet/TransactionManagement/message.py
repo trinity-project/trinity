@@ -708,7 +708,7 @@ class RsmcMessage(TransactionMessage):
         for key, value in Payment.HashR.items():
             if key == self.comments:
                 PaymentAck.create(value[1], key)
-                Payment(self.wallet,value[1]).delete_hr()
+                Payment(self.wallet,value[1]).delete_hr(key)
 
     def send_responses(self, error = None):
         if not error:
