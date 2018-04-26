@@ -17,7 +17,7 @@ class Gateway():
     """
     def __init__(self):
         # the wallet dict
-        self.wallets = {},
+        self.wallets = {}
         
 
     def start(self):
@@ -42,6 +42,25 @@ class Gateway():
         data = params
         if type(data) == str:
             data = json.loads(data)
-        pass
-    
+        msg_type = data.get("MessageType")
+        if method == "SyncWalletData":
+            print("Get the wallet sync data\n", data)
+            body = data.get("MessageBody")
+            Wallet.add_or_update_wallet(
+                self.wallets,
+                public_key=body.get("Publickey"),
+                name=body.get("alias"),
+                deposit=body.get("CommitMinDeposit"),
+                fee=body.get("Fee"),
+                asset_type=list(body.get("Balance").items())[0][0],
+                balance=list(body.get("Balance").items())[0][1]
+            )
+            url = self.wallets.get(body.get("Publickey")).url
+            response = MessageMake.make_ack_sync_wallet_msg(url)
+            return json.dumps(response)
+        elif method == "TransactionMessage":
+            if msg_type == "RegisterChannel":
+                rev_ip_port = utils.get_ip_port(data.get("Receiver"))
+                rev_pk = utils.get_public_key(data.get("Receiver"))
+                
     gateway_singleton = Gateway()

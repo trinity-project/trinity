@@ -36,8 +36,7 @@ class Gateway():
     def start(self):
         """ start gateway"""
         Network.create_servers()
-        if os.getenv("resume"):
-            self.resume_channel_from_db()
+        self.resume_channel_from_db()
         print("###### Trinity Gateway Start Successfully! ######")
         Network.run_servers_forever()
 
@@ -503,7 +502,7 @@ class Gateway():
         }
         pprint.pprint(node)
         self._init_or_update_self_graph()
-        self_url = node["wallet_info"]
+        self_url = node["wallet_info"]["url"]
         channels = utils.get_channels_form_db(self_url)
         if channels:
             message = MessageMake.make_resume_channel_msg(self_url)

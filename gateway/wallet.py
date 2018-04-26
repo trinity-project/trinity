@@ -88,8 +88,9 @@ class Wallet:
     @classmethod
     def add_or_update_wallet(cls, wallets, **kwargs):
         """
+        add or update a wallet by public_key \n
         :param wallets: the dict with the pairs(pk,Wallet instace)\n
-        :param kwargs: fee,deposit,balance,asset_type,public_key
+        :param kwargs: fee,deposit,balance,asset_type,public_key,name
         """
         public_key = kwargs.get("public_key")
         if not public_key:
@@ -109,7 +110,7 @@ class Wallet:
         :param public_key:
         """
         if not wallets.get(public_key):
-            return
+            raise Exception("public_key must provide")
         del wallets[public_key]
     
 if __name__ == "__main__":

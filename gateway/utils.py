@@ -4,7 +4,8 @@ gateway utils
 """
 import json
 import re
-from config import cg_end_mark, cg_bytes_encoding
+from config import cg_end_mark, cg_bytes_encoding, cg_wsocket_addr,\
+ cg_tcp_addr, cg_public_ip_port
 import os
 import sys
 path = os.getcwd().replace("/gateway", "")
@@ -49,6 +50,13 @@ def encode_bytes(data):
         data = json.dumps(data)
     data = _add_end_mark(data)
     return data.encode(cg_bytes_encoding)
+
+def check_is_spv(url):
+    ip_port = get_ip_port(url)
+    if ip_port == cg_public_ip_port.split(":")[0] + str(cg_wsocket_addr[1]):
+        return True
+    else:
+        return False
 
 def json_to_dict(str_json):
     return json.loads(str_json)
