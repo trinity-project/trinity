@@ -105,6 +105,8 @@ class RegisterMessage(Message):
         return True, None
 
 
+
+
 class TestMessage(Message):
 
     def __init__(self, message, wallet):
