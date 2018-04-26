@@ -61,7 +61,7 @@ class Wallet:
     def _add_or_update_asset(self, **kwargs):
         asset_type = kwargs.get("asset_type")
         if not asset_type:
-            return
+            raise Exception("asset_type must provide")
         if self.assets.get(asset_type):
             asset = self.assets[asset_type]
             asset.update(**kwargs)
@@ -93,7 +93,7 @@ class Wallet:
         """
         public_key = kwargs.get("public_key")
         if not public_key:
-            return
+            raise Exception("public_key must provide")
         if wallets.get(public_key):
             wallet = wallets[public_key]
             print(kwargs)
