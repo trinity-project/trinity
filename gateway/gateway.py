@@ -140,7 +140,7 @@ class Gateway():
         # build map bettween spv pk_key with websocket connection
         if msg_type == "RegisterChannel":
             # pass the message to wallet to handle
-            Network.send_msg_with_jsonrpc("AddChannel", data)
+            Network.send_msg_with_jsonrpc("TransactionMessage", data)
         elif msg_type == "CombinationTransaction":
             pass
         elif msg_type == "PaymentLink":
