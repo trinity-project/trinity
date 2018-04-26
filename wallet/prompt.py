@@ -60,7 +60,8 @@ class UserPromptInterface(PromptInterface):
                               "channel peer",
                               "channel payment {asset}, {count}, [{comments}]",
                               "channel qrcode {on/off}",
-                              "channel trans"]
+                              "channel trans",
+                              ]
         self.commands.extend(self.user_commands)
         self.qrcode = False
 
@@ -133,6 +134,8 @@ class UserPromptInterface(PromptInterface):
                         self.show_tx(arguments)
                     elif command == 'channel':
                         self.do_channel(arguments)
+                    elif command == "faucet":
+                        self.do_faucet()
                     else:
                         print("command %s not found" % command)
 
@@ -153,8 +156,27 @@ class UserPromptInterface(PromptInterface):
 
         except Exception as e:
             pass
-
         return out
+
+    #faucet for test tnc
+    def do_faucet(self):
+        if not self.Wallet:
+            print("Please Open The Wallet First")
+            return
+        print(self.Wallet.address)
+        request = {
+                "jsonrpc": "2.0",
+                "method": "transferTnc",
+                "params": ["AGgZna4kbTXPm16yYZyG6RyrQz2Sqotno6",self.Wallet.address],
+                "id": 1
+                }
+        result = requests.post(url="http://47.88.35.235:21332",json=request)
+        txid = result.json().get("result")
+        if txid:
+            print(txid)
+        else:
+            print(result.json())
+        return
 
     def retry_channel_enable(self):
         for i in range(30):
