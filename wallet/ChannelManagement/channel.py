@@ -23,15 +23,14 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE."""
 import hashlib
 import time
-from sserver.model.channel_model import APIChannel
-from sserver.model.base_enum import EnumChainType,EnumChannelState
+from model.channel_model import APIChannel
+from model.base_enum import EnumChannelState
 from wallet.TransactionManagement import message as mg
-from wallet.TransactionManagement import transaction as trans
 from wallet.utils import pubkey_to_address
 from wallet.Interface.gate_way import sync_channel
 from log import LOG
 import json
-from wallet.BlockChain.monior import register_monitor
+
 
 def get_gateway_ip():
     return "127.0.0.1:20554"

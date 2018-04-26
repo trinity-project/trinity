@@ -3,17 +3,15 @@
 gateway utils
 """
 import json
-import time
 import re
-import copy
 from config import cg_end_mark, cg_bytes_encoding
 import os
 import sys
 path = os.getcwd().replace("/gateway", "")
 sys.path.append(path)
 print(path)
-from sserver.model.channel_model import APIChannel
-from sserver.model.node_model import APINode
+from model.channel_model import APIChannel
+from model.node_model import APINode
 
 request_handle_result = {
     "invalid": 0,

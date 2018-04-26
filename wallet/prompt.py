@@ -12,14 +12,13 @@ import json
 import traceback
 
 from prompt_toolkit import prompt
-from prompt_toolkit.contrib.completers import WordCompleter
 from prompt_toolkit.shortcuts import print_tokens
 from prompt_toolkit.token import Token
-from twisted.internet import reactor, task, endpoints
+from twisted.internet import reactor, endpoints
 from log import LOG
 from lightwallet.Settings import settings
 
-from wallet.utils import get_arg,to_aes_key,get_asset_type_name
+from wallet.utils import get_arg, get_asset_type_name
 from wallet.Interface.rpc_interface import RpcInteraceApi
 from twisted.web.server import Site
 from lightwallet.prompt import PromptInterface
@@ -29,7 +28,7 @@ from wallet.TransactionManagement import message as mg
 from wallet.TransactionManagement import transaction as trinitytx
 from wallet.Interface.rpc_interface import MessageList
 import time
-from sserver.model.base_enum import EnumChannelState
+from model.base_enum import EnumChannelState
 
 from wallet.Interface import gate_way
 from wallet.configure import Configure
