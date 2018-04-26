@@ -138,7 +138,7 @@ class Gateway():
         # data = {}
         msg_type = data.get("MessageType")
         # build map bettween spv pk_key with websocket connection
-        if msg_type == "AddChannel":
+        if msg_type == "RegisterChannel":
             # pass the message to wallet to handle
             Network.send_msg_with_jsonrpc("AddChannel", data)
         elif msg_type == "CombinationTransaction":
@@ -241,7 +241,14 @@ class Gateway():
                 return json.dumps(MessageMake.make_ack_router_info_msg(router))
         elif method == "TransactionMessage":
             if msg_type == "RegisterChannel":
-                Network.send_msg_with_tcp(data.get("Receiver"), data)
+                rev_ip_port = utils.get_ip_port(data.get("Receiver"))
+                rev_pk = utils.get_public_key(data.get("Receiver"))
+                if rev_ip_port == cg_public_ip_port:
+                    con = self.ws_pk_dict.get(rev_pk)
+                    if not con:
+                        Network.send_msg_with_wsocket(con, data)
+                else:
+                    Network.send_msg_with_tcp(data.get("Receiver"), data)
             elif msg_type in Message.get_tx_msg_types():
                 self.handle_transaction_message(data)
             elif msg_type in ["PaymentLinkAck", "PaymentAck"]:
