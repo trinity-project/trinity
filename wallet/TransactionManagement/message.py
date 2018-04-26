@@ -28,12 +28,12 @@ from wallet.TransactionManagement.transaction import TrinityTransaction
 from wallet.utils import pubkey_to_address, get_asset_type_id
 from TX.interface import *
 from wallet.ChannelManagement import channel as ch
-from sserver.model.base_enum import EnumChannelState
+from model.base_enum import EnumChannelState
 from wallet.Interface.gate_way import send_message
 from wallet.utils import sign
 from TX.utils import blockheight_to_script
 from wallet.BlockChain.monior import register_block, register_monitor
-from sserver.model import APIChannel
+from model import APIChannel
 from log import LOG
 import json
 from wallet.TransactionManagement.payment import Payment
@@ -901,6 +901,8 @@ class HtlcMessage(TransactionMessage):
     "Receiver":"101010101001001010100101@127.0.0.1:20552",
     "TxNonce": 0,
     "ChannelName":"3333333333333333333333333333",
+    "Router":[],
+    "Next":"",
     "MessageBody": {
             "HCTX":"",
             "RDTX":"",
@@ -908,7 +910,8 @@ class HtlcMessage(TransactionMessage):
             "HTTX":"",
             "HTDTX":"",
             "HTRDTX":"",
-            "RoleIndex":""
+            "RoleIndex":"",
+            "Comments":""
         }
     }
     """
