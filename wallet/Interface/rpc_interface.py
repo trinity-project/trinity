@@ -122,17 +122,12 @@ class RpcInteraceApi(object):
 
     def json_rpc_method_handler(self, method, params):
 
-        if method == "CreateChannel":
-            return  channel.create_channel(params)
-
-        elif method == "SendRawtransaction":
+        if method == "SendRawtransaction":
             return transaction.TrinityTransaction.sendrawtransaction(params[0])
 
-        elif method == "CloseChannel":
-            return channel.closechannel(params)
-
-        elif method ==  "QueryHistory":
-            return transaction.querytransaction(params)
+        #Todo
+        #elif method ==  "QueryHistory":
+            #return transaction.querytransaction(params)
 
         elif method == "TransactionMessage":
             return MessageList.append(params)

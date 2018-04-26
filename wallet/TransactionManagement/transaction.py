@@ -214,26 +214,26 @@ def scriptToAddress(script):
 
 
 def construt_init_channel_transction(params):
+    """
 
-    walletSelf={
-        "pubkey":params[0],
-        "deposit":params[1],
-    }
-    walletOther={
-        "pubkey":params[2],
-        "deposit":params[3],
-    }
-    funding_tx = createFundingTx(walletSelf=walletSelf, walletOther=walletOther)
+    :param params:
+    :return:
+    """
+    selfpubkey = params[0]
+    otherpubkey = params[1]
+    addressFunding = params[2]
+    scriptFunding = params[3]
+    deposit = params[4]
 
-    C_tx = createCTX(addressFunding=funding_tx["addressFunding"], balanceSelf=walletSelf["deposit"],
-                          balanceOther=walletOther["deposit"], pubkeySelf=walletSelf["pubkey"],
-                          pubkeyOther=walletOther["pubkey"], fundingScript=funding_tx["scriptFunding"])
+    C_tx = createCTX(addressFunding=addressFunding, balanceSelf=deposit,
+                          balanceOther=deposit, pubkeySelf=selfpubkey,
+                          pubkeyOther=otherpubkey, fundingScript=scriptFunding)
 
-    RD_tx = createRDTX(addressRSMC=C_tx["addressRSMC"], addressSelf=pubkeyToAddress(walletSelf["pubkey"]),
-                            balanceSelf=walletSelf["deposit"], CTxId=C_tx["txId"],
+    RD_tx = createRDTX(addressRSMC=C_tx["addressRSMC"], addressSelf=pubkeyToAddress(selfpubkey),
+                            balanceSelf=deposit, CTxId=C_tx["txId"],
                             RSMCScript=C_tx["scriptRSMC"])
 
-    return {"funding_TX":funding_tx,"C_TX":C_tx,"R_TX":RD_tx}
+    return {"C_TX":C_tx,"R_TX":RD_tx}
 
 def construt_update_channel_transction(params):
     walletSelf={
@@ -258,6 +258,8 @@ def construt_update_channel_transction(params):
                             balanceSelf=walletSelf["deposit"], RSMCScript=script_rsmc)
 
     return {"BR_tx": BR_tx, "C_TX": C_tx, "R_TX": RD_tx}
+
+
 
 
 
