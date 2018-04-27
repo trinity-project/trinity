@@ -101,7 +101,7 @@ class Channel(object):
         md5s.update(str(time.time()).encode())
         return md5s.hexdigest().upper()
 
-    def create(self, asset_type, deposit, cli=True):
+    def create(self, asset_type, deposit, cli=True, comments= None):
         #if Channel.get_channel(self.founder_pubkey, self.partner_pubkey):
             #raise ChannelExist
         self.start_time = time.time()
@@ -123,7 +123,8 @@ class Channel(object):
                  "ChannelName": self.channel_name,
                  "MessageBody":{
                                 "AssetType":asset_type,
-                                "Deposit":deposit
+                                "Deposit":deposit,
+                                "Comments":comments
                                 }
             }
             return mg.Message.send(message)
@@ -208,8 +209,8 @@ class Channel(object):
 
 
 
-def create_channel(founder, partner, asset_type, depoist:int, cli=True):
-    return Channel(founder, partner).create(asset_type, depoist, cli)
+def create_channel(founder, partner, asset_type, depoist:int, cli=True, comments = None):
+    return Channel(founder, partner).create(asset_type, depoist, cli, comments)
 
 
 def filter_channel_via_address(address1, address2, state=None):

@@ -417,7 +417,10 @@ class UserPromptInterface(PromptInterface):
         while self.go_on:
             if MessageList:
                 message = MessageList.pop(0)
-                self._handlemessage(message[0])
+                try:
+                    self._handlemessage(message[0])
+                except Exception as e:
+                    LOG.error("handle message error {} {}".format(json.dumps(message), str(e)))
             time.sleep(0.1)
 
     def _handlemessage(self,message):

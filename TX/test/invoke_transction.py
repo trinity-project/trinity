@@ -11,12 +11,12 @@ from TX.interface import createFundingTx, createCTX, createRDTX, createBRTX, cre
 from TX.utils import hex_reverse, ToAddresstHash, int_to_hex, createTxid, pubkeyToAddress
 
 walletSelf= {
-    "pubkey":"03eb0881d1d64754d50255bf16079ed6cbc3982463a8904cb919422b39178bef3f",
-    "deposit":10
+    "pubkey":"0382ea335fa9aae67f77fca7831dcdc3a1b97dde3611c24ed62fe66a24814976a5",
+    "deposit":1
 }
 walletOther= {
-    "pubkey":"034e9d2751e1fec65a6a42bc097bdf55c7a79762df7d6e970277f46405c376683a",
-    "deposit":10
+    "pubkey":"0299dc85df93fee8ff2230af0418cf8c5000296f0aed514fcc0ab0dd969ce0bdb0",
+    "deposit":1
 }
 
 
@@ -36,9 +36,9 @@ funding_tx = createFundingTx(walletSelf=walletSelf, walletOther=walletOther)
 
 
 
-HTLCTXS=create_receiver_HTLC_TXS(pubkeySender=walletSelf["pubkey"], pubkeyReceiver=walletOther["pubkey"], HTLCValue=1,
-                       balanceSender=9,balanceReceiver=10, hashR="ba4290cd3a34d9d3161805bbac70f293590e1473",
-                       addressFunding=funding_tx["addressFunding"], fundingScript=funding_tx["scriptFunding"])
+# HTLCTXS=create_receiver_HTLC_TXS(pubkeySender=walletSelf["pubkey"], pubkeyReceiver=walletOther["pubkey"], HTLCValue=1,
+#                        balanceSender=9,balanceReceiver=10, hashR="ba4290cd3a34d9d3161805bbac70f293590e1473",
+#                        addressFunding=funding_tx["addressFunding"], fundingScript=funding_tx["scriptFunding"])
 
 
 # channelInfo=createChannel(walletSelf=walletSelf,walletOther=walletOther)

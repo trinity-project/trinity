@@ -90,6 +90,7 @@ def create_opdata(address_from, address_to, value, contract_hash):
 
 
 def createRSMCContract(hashSelf,pubkeySelf,hashOther,pubkeyOther,magicTimestamp):
+    print(magicTimestamp)
     magicTimestamp = binascii.hexlify(str(magicTimestamp).encode()).decode()
     length=hex(int(len(magicTimestamp)/2))[2:]
     magicTimestamp=length+magicTimestamp

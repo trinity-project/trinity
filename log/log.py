@@ -24,7 +24,7 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE."""
 import os
 import logging.config
-from trinity import __os_platform__, __running_mode__
+from trinity import __os_platform__, __running_mode__, Console_log
 LogDataDir = os.path.join(os.path.dirname(__file__),"log")
 if not os.path.exists(LogDataDir):
     os.makedirs(LogDataDir)
@@ -63,7 +63,7 @@ log_settings = {
     },
     'loggers': {
         'logger': {
-            'handlers': ['file'] if __running_mode__ else ['file', 'console'],
+            'handlers': ['file', 'console'] if Console_log else ['file'],#if __running_mode__ else ,
             'level': 'INFO' if __running_mode__ else 'DEBUG',
         }
     },

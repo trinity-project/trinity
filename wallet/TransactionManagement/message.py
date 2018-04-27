@@ -203,6 +203,7 @@ class FounderMessage(TransactionMessage):
         self.deposit = self.message_body.get("Deposit")
         self.role_index = self.message_body.get("RoleIndex")
         self.rdtxid = self.revocable_delivery.get("txId")
+        self.comments = self.message.get("Comments")
 
     def _check_transaction_file(self):
         if not self.wallet.LoadStoredData(self.channel_name):
@@ -221,6 +222,7 @@ class FounderMessage(TransactionMessage):
         txid = self.founder.get("txId")
         self.send_responses(role_index=self.role_index)
         ch.Channel.channel(self.channel_name).update_channel(state=EnumChannelState.OPENING.name)
+        print("Channel Now is Opening")
         register_monitor(txid, monitor_founding, self.channel_name, EnumChannelState.OPENED.name)
         subitem = {}
         subitem.setdefault(self.asset_type.upper(), self.deposit)
@@ -246,7 +248,7 @@ class FounderMessage(TransactionMessage):
 
     @staticmethod
     def create(channel_name, self_pubkey, partner_pubkey,asset_type, deposit, partner_ip,
-               gateway_ip,role_index=0, wallet=None):
+               gateway_ip,role_index=0, wallet=None, comments= None):
         """
 
         :param channel_name:
@@ -269,7 +271,7 @@ class FounderMessage(TransactionMessage):
             "deposit":float(deposit)
     }
 
-        transaction =  TrinityTransaction(channel_name, wallet)
+        transaction = TrinityTransaction(channel_name, wallet)
 
         if role_index == 0:
             founder = createFundingTx(walletpartner, walletfounder)
@@ -295,8 +297,9 @@ class FounderMessage(TransactionMessage):
                                        "RevocableDelivery":revocabledelivery,
                                        "AssetType":asset_type.upper(),
                                        "Deposit": deposit,
-                                       "RoleIndex":role_index
-                                      }
+                                       "RoleIndex":role_index,
+                                      },
+                    "Comments": comments
                  }
         FounderMessage.send(message)
 
@@ -305,7 +308,6 @@ class FounderMessage(TransactionMessage):
             return False, "Not Support Sender is Receiver"
         if self.receiver != self.wallet.url:
             return False, "The Endpoint is Not Me"
-
         return True, None
 
     def send_responses(self, role_index, error = None):
@@ -326,8 +328,9 @@ class FounderMessage(TransactionMessage):
                                                   "RevocableDelivery":self.revocable_delivery,
                                                 "AssetType":self.asset_type.upper(),
                                                 "Deposit":self.deposit,
-                                                "RoleIndex": role_index
+                                                "RoleIndex": role_index,
                                                 },
+                                 "Comments": self.comments,
                                  "Error":error
                                 }
         else:
@@ -341,8 +344,9 @@ class FounderMessage(TransactionMessage):
                                                   "RevocableDelivery":rd_sig,
                                                 "AssetType": self.asset_type.upper(),
                                                 "Deposit": self.deposit,
-                                                "RoleIndex": role_index
+                                                "RoleIndex": role_index,
                                                 },
+                                 "Comments": self.comments
                                 }
         FounderMessage.send(message_response)
         LOG.info("Send FounderMessage Response:  {}".format(json.dumps(message_response )))
@@ -361,7 +365,8 @@ class FounderResponsesMessage(TransactionMessage):
                    "RevocableDelivery":self.revocabledelivery,
                    "AssetType": self.asset_type.upper(),
                     "Deposit": self.deposit,
-                    "RoleIndex": role_index
+                    "RoleIndex": role_index,
+                    "Comments"："retry"
 
                     }
     }
@@ -376,6 +381,7 @@ class FounderResponsesMessage(TransactionMessage):
         self.deposit = self.message_body.get("Deposit")
         self.transaction = TrinityTransaction(self.channel_name, self.wallet)
         self.role_index = self.message_body.get("RoleIndex")
+        self.comments = self.message.get("Comments")
 
     def _check_transaction_file(self):
         if not self.wallet.LoadStoredData(self.channel_name):
@@ -393,6 +399,7 @@ class FounderResponsesMessage(TransactionMessage):
         result = self.send_founder_raw_transaction()
         if result is True:
             ch.Channel.channel(self.channel_name).update_channel(state=EnumChannelState.OPENING.name)
+            print("Channel Now is Opening")
             txid = self.founder.get("originalData").get("txId")
             register_monitor(txid, monitor_founding, self.channel_name, EnumChannelState.OPENED.name)
         else:
@@ -402,19 +409,23 @@ class FounderResponsesMessage(TransactionMessage):
                                 "ChannelName": self.channel_name,
                                 "TxNonce": 0,
                                 "MessageBody":self.message_body,
-                                "Error": "SendFounderRawTransactionFail"
+                                "Error": "SendFounderRawTransactionFail",
+                                "Comments":"retry" if self.comments != "retry" else None
                                 }
             Message.send(message_response)
             ch.Channel.channel(self.channel_name).delete_channel()
 
     def _handle_error_message(self):
-        return ch.Channel.channel(self.channel_name).delete_channel()
+        ch.Channel.channel(self.channel_name).delete_channel()
+        #ToDo  Just walk around
+        if self.comments == "retry":
+            ch.create_channel(self.wallet.url, self.sender, self.asset_type,self.deposit, comments=self.comments)
 
     def send_founder_raw_transaction(self):
         signdata = self.founder.get("txDataSign")
         txdata = self.founder.get("originalData").get("txData")
-
         signdata_self = self.sign_message(txdata)
+
         witnes = self.founder.get("originalData").get("witness").format(signOther=signdata,
                                                                         signSelf=signdata_self)
         return TrinityTransaction.sendrawtransaction(TrinityTransaction.genarate_raw_data(txdata, witnes))
@@ -1420,6 +1431,7 @@ def monitor_founding(height, channel_name, state):
     deposit = channel.get_deposit()
     channel.update_channel(state=state, balance = deposit)
     ch.sync_channel_info_to_gateway(channel_name,"AddChannel")
+    print("Channel is {}".format(state))
     return None
 
 
