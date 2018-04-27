@@ -222,6 +222,7 @@ class FounderMessage(TransactionMessage):
         txid = self.founder.get("txId")
         self.send_responses(role_index=self.role_index)
         ch.Channel.channel(self.channel_name).update_channel(state=EnumChannelState.OPENING.name)
+        print("Channel Now is Opening")
         register_monitor(txid, monitor_founding, self.channel_name, EnumChannelState.OPENED.name)
         subitem = {}
         subitem.setdefault(self.asset_type.upper(), self.deposit)
@@ -398,6 +399,7 @@ class FounderResponsesMessage(TransactionMessage):
         result = self.send_founder_raw_transaction()
         if result is True:
             ch.Channel.channel(self.channel_name).update_channel(state=EnumChannelState.OPENING.name)
+            print("Channel Now is Opening")
             txid = self.founder.get("originalData").get("txId")
             register_monitor(txid, monitor_founding, self.channel_name, EnumChannelState.OPENED.name)
         else:
@@ -1429,6 +1431,7 @@ def monitor_founding(height, channel_name, state):
     deposit = channel.get_deposit()
     channel.update_channel(state=state, balance = deposit)
     ch.sync_channel_info_to_gateway(channel_name,"AddChannel")
+    print("Channel is {}".format(state))
     return None
 
 
