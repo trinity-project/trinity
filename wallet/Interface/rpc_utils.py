@@ -50,5 +50,6 @@ def cors_header(func):
     def wrapper(self, request, *args, **kwargs):
         res = func(self, request, *args, **kwargs)
         request.setHeader('Access-Control-Allow-Origin', '*')
+        request.setHeader('Access-Control-Allow-Headers','x-requested-with,content-type')
         return res
     return wrapper
