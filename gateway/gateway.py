@@ -293,15 +293,22 @@ class Gateway():
             elif msg_type == "UpdateChannel":
                 # first update self's balance and sync with self's peers
                 self_node = node["route_graph"].node
-                self_node["Balance"] = data["MessageBody"]["Balance"]
-                message = MessageMake.make_sync_graph_msg(
-                    "update_node_data",
-                    self_url,
-                    source=self_url,
-                    node=self_node,
-                    excepts=[]
-                )
-                self.sync_channel_route_to_peer(message)
+                rev_self_balance = data["MessageBody"]["Balance"][self_url]["TNC"]
+                rev_peer_balance = data["MessageBody"]["Balance"][channel_peer]["TNC"]
+                peer_ip_port = utils.get_ip_port(channel_peer)
+                if node["route_graph"]._graph.has_node(peer_ip_port):
+                    node["route_graph"]._graph.nodes[peer_ip_port]["Balance"] = rev_peer_balance
+                if self_node["Balance"] != rev_self_balance:
+                    self_node["Balance"] = data["MessageBody"]["Balance"][self_url]["TNC"]
+                    message = MessageMake.make_sync_graph_msg(
+                        "update_node_data",
+                        self_url,
+                        source=self_url,
+                        node=self_node,
+                        broadcast=True,
+                        excepts=[utils.get_ip_port(self_url), peer_ip_port]
+                    )
+                    self.sync_channel_route_to_peer(message)
             elif msg_type == "DeleteChannel":
                 # remove channel_peer and notification peers
                 sid = utils.get_ip_port(self_url)
