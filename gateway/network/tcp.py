@@ -3,6 +3,8 @@ from asyncio import Protocol, get_event_loop
 from config import cg_end_mark, cg_bytes_encoding, cg_tcp_addr, cg_debug_multi_ports
 from utils import request_handle_result
 from glog import tcp_logger
+import struct
+# from datagram import Datagram
 
 class ProtocolManage():
     """
@@ -33,9 +35,10 @@ class TProtocol(Protocol):
     """
     def __init__(self):
         super().__init__()
-        self.received = []
+        self.received = bytes()
         self.rev_totals = 0
         self.send_totals = 0
+        self.header_size = 12
         self.transport = None
         self.state = None
     
@@ -56,33 +59,33 @@ class TProtocol(Protocol):
         tcp_manager.register(self)
 
     def data_received(self, data):
-        self.received.append(data)
-        last_index = len(cg_end_mark)
-        # print("+++++++{}+++++++".format(data))
-        if cg_end_mark.encode(cg_bytes_encoding) == data[-last_index:]:
-            received_len = len(self.received)
-            complete_bdata = b"".join(self.received)
-            self.received = []
-            tcp_logger.info("receive %d bytes message from %s", len(complete_bdata), self.get_peername())
-            tcp_logger.debug(">>>> %s <<<<", complete_bdata)
+        # tcp_logger.info("receive %d bytes message from %s", body_size, self.get_peername())
+        self.received = self.received + data
+        # print(len(self.received))
+        # print(self.received)
+        while True:
+            # print(len(self.received), self.header_size)
+            if len(self.received) < self.header_size:
+                return
+            header_pack = struct.unpack("!3I", self.received[:self.header_size])
+            # print("header_pack:", header_pack)
+            body_size = header_pack[1]
+            if header_pack[0] + header_pack[2] != 102:
+                return
+            # print(body_size)
+            # package split situation
+            if len(self.received) < self.header_size + body_size:
+                return
+            body = self.received[self.header_size:self.header_size+body_size]
+            tcp_logger.info("receive %d bytes message from %s", body_size, self.get_peername())
+            tcp_logger.debug(">>>> %s <<<<", body)
             from gateway import gateway_singleton
-            result = gateway_singleton.handle_node_request(self, complete_bdata)
-            # statistics based on request handled correct or not
-            if result == request_handle_result["correct"]:
-                self.rev_totals += len(complete_bdata)
-                # tcp_logger.info("receive %d bytes valid message from %s", len(complete_bdata), self.get_peername())
-                # split data statistics
-                if received_len > 1:
-                    tcp_manager.rev_data_split_times += 1
-                    tcp_manager.rev_split_data_totals.append(len(complete_bdata))
-                    tcp_logger.info("split TCP data--[%d]", received_len)
-            else:
-                # tcp_logger.info("receive a invalid message from %s", self.get_peername())
-                tcp_manager.rev_invalid_times += 1
-                if received_len > 1:
-                    tcp_logger.info("split TCP data--[%d]", received_len)
-        else:
-            tcp_logger.info("split TCP data--[%d]", len(self.received))
+            result = gateway_singleton.handle_node_request(self, body)
+            # package splicing or clan the data_buffer:self.received
+            self.received = self.received[self.header_size+body_size:]
+            print(self.received)
+            
+            
 
     def connection_lost(self, exc):
         peername = self.transport.get_extra_info('peername')

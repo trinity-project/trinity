@@ -24,3 +24,4 @@ cg_node_name = "trinity1"
 # only for debug control
 cg_debug = True
 cg_debug_multi_ports = False
+cg_reused_tcp_connection = True

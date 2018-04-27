@@ -509,7 +509,7 @@ class Gateway():
             "name": wallet.name,
             "balance": wallet.balance
         }
-        pprint.pprint(node)
+        # pprint.pprint(node)
         self._init_or_update_self_graph()
         self_url = node["wallet_info"]["url"]
         channels = utils.get_channels_form_db(self_url)

@@ -3,12 +3,13 @@
 the module gather all protocols for trinity network communication  
 """
 import asyncio
+import uvloop
 import json
 from .tcp import TcpService
 from .jsonrpc import AsyncJsonRpc
 from .wsocket import WsocketService
 from config import cg_tcp_addr, cg_wsocket_addr, cg_public_ip_port, cg_local_jsonrpc_addr,\
-cg_remote_jsonrpc_addr
+cg_remote_jsonrpc_addr, cg_reused_tcp_connection
 from utils import encode_bytes
 from glog import tcp_logger
 import time
@@ -21,13 +22,14 @@ class Network:
     # class methods
     @classmethod
     def create_servers(cls):
+        loop = uvloop.new_event_loop()
+        asyncio.set_event_loop(loop)
         create_server_coros = [
             AsyncJsonRpc.create_server_coro(cg_local_jsonrpc_addr),
             TcpService.create_server_coro(cg_tcp_addr),
             WsocketService.create_server_coro(cg_wsocket_addr)
         ]
         tasks = asyncio.gather(*create_server_coros)
-        loop = asyncio.get_event_loop()
         loop.run_until_complete(tasks)
         cls.loop = loop
         cls.rpc_server, cls.tcp_manager, cls.ws_server = tasks.result()
@@ -74,10 +76,10 @@ class Network:
         :param receiver: str type: xxxx@ip:port \n
         :param data: dict type
         """
-        time.sleep(0.05)
+        # time.sleep(0.05)
         bdata = encode_bytes(data)
         connection = TcpService.find_connection(receiver)
-        if connection:
+        if connection and cg_reused_tcp_connection:
             tcp_logger.info("find the exist connection")
             connection.write(bdata)
         else:

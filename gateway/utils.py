@@ -37,7 +37,7 @@ def decode_bytes(bdata, target="dict"):
     """
     data = bdata.decode(cg_bytes_encoding)
     if target == "dict":
-        data = _remove_end_mark(data)
+        # data = _remove_end_mark(data)
         data = json.loads(data)
     return data
 
@@ -48,8 +48,14 @@ def encode_bytes(data):
     """
     if type(data) != str:
         data = json.dumps(data)
-    data = _add_end_mark(data)
-    return data.encode(cg_bytes_encoding)
+    # data = _add_end_mark(data)
+    version = 0x000001
+    cmd = 0x000065
+    bdata = data.encode(cg_bytes_encoding)
+    header = [version, len(bdata), cmd]
+    header_pack = struct.pack("!3I", *header)
+    return header_pack + bdata
+    # return data.encode(cg_bytes_encoding)
 
 def check_is_spv(url):
     ip_port = get_ip_port(url)
