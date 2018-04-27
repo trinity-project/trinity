@@ -48,7 +48,10 @@ def send_raw(raw):
   "id": 1}
 
     result = requests.post(url=TestNetUrl, json=request)
-    return result.json()["result"]
+    if result.json().get("result") is not None:
+        return result.json()["result"]
+    else:
+        return result.json()
 
 
 def get_bolck(index):
