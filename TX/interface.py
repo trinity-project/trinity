@@ -46,7 +46,8 @@ def createFundingTx(walletSelf,walletOther): #self sign is behind
         "addressFunding":contractAddress,
         "txId": createTxid(tx.get_tx_data()),
         "scriptFunding":multi_contract["script"],
-        "witness":"024140{signOther}2321"+walletOther["pubkey"]+"ac"+"4140{signSelf}2321"+walletSelf["pubkey"]+"ac",
+        "witness":"024140{signOther}2321"+walletOther["pubkey"]+"ac"+"4140{signSelf}2321"+walletSelf["pubkey"]+"ac" \
+            if walletOther["pubkey"]<walletSelf["pubkey"] else "024140{signSelf}2321"+walletSelf["pubkey"]+"ac"+"4140{signOther}2321"+walletOther["pubkey"]+"ac",
         # "witness":"024140{sign1}2321{pubkey1}ac4140{sign2}2321{pubkey2}ac"
     }
 
