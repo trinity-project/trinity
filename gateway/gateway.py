@@ -145,6 +145,8 @@ class Gateway():
         elif msg_type == "PaymentLink":
             # to send to wallet
             Network.send_msg_with_jsonrpc("TransactionMessage", data)
+        elif msg_type == Message.get_tx_msg_types():
+            self.handle_transaction_message(data)
         elif msg_type == "GetRouterInfo":
             receiver_pk, receiver_ip_port = utils.parse_url(data.get("Receiver"))
             slef_pk, self_ip_port = utils.parse_url(node["wallet_info"]["url"])
