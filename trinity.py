@@ -31,6 +31,8 @@ __version__ = '0.1.1'
 __os_platform__ = platform.system().upper() if platform.system() else 'LINUX'
 __running_mode__ = (0 == operator.imod(int(__version__.split('.')[1]), 2))
 Configure_file = os.path.join(os.path.dirname(__file__), "Configure.json")
+Console_log = False
+
 
 with open(Configure_file, 'r') as f:
     CONFIGURE = json.load(f)

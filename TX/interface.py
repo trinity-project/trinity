@@ -41,6 +41,7 @@ def createFundingTx(walletSelf,walletOther): #self sign is behind
     tx.Version = 1
     tx.Attributes = txAttributes
     tx.Script = binascii.unhexlify(op_dataSelf + op_dataOther)
+
     return {
         "txData":tx.get_tx_data(),
         "addressFunding":contractAddress,
@@ -51,8 +52,8 @@ def createFundingTx(walletSelf,walletOther): #self sign is behind
     }
 
 def createCTX(addressFunding,balanceSelf,balanceOther,pubkeySelf,pubkeyOther,fundingScript):
-    RSMCContract=createRSMCContract(hashSelf=pubkeyToAddressHash(pubkeySelf),pubkeySelf=pubkeySelf,
-                       hashOther=pubkeyToAddressHash(pubkeyOther),pubkeyOther=pubkeyOther,magicTimestamp=time.time())
+    RSMCContract=createRSMCContract(hashSelf=pubkeyToAddressHash(pubkeySelf.strip()),pubkeySelf=pubkeySelf.strip(),
+                       hashOther=pubkeyToAddressHash(pubkeyOther.strip()),pubkeyOther=pubkeyOther.strip(),magicTimestamp=time.time())
     time_stamp = TransactionAttribute(usage=TransactionAttributeUsage.Remark,
                                       data=bytearray.fromhex(hex(int(time.time()))[2:]))
     address_hash_funding = TransactionAttribute(usage=TransactionAttributeUsage.Script,
@@ -488,3 +489,11 @@ def create_receiver_HTLC_TXS(pubkeySender, pubkeyReceiver, HTLCValue, balanceSen
         "HETX": HETX,
         "HERDTX": HERDTX
     }
+
+
+
+if __name__ == "__main__":
+    result= createFundingTx({"pubkey":"03c0aaf3e23ee4d38ca99f16248d93f6b0d439b638586dce56503941b321d94108","deposit":1.0},
+                            {"pubkey":"02d28d2314f0920ddee218e863bc1a50d492787a1198570a8db549e651949b205f","deposit":1.0}
+                            )
+    print(result)
