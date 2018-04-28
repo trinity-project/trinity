@@ -29,8 +29,37 @@ from wallet.Interface.rpc_utils import json_response, cors_header
 from wallet.ChannelManagement import channel
 from wallet.TransactionManagement import transaction
 from log import LOG
+from wallet.configure import Configure
+from wallet.BlockChain.interface import get_balance
+
 
 MessageList = []
+
+
+class CurrentLiveWallet(object):
+    Wallet = None
+
+    @classmethod
+    def update_current_wallet(cls, wallet):
+        cls.Wallet = wallet
+
+    @classmethod
+    def wallet_info(cls):
+        if not cls.Wallet:
+            return None
+        balance = {}
+        for i in Configure["AssetType"].keys():
+            b = get_balance(cls.Wallet.pubkey, i.upper())
+            balance[i] = b
+        return {
+                   "Publickey":cls.Wallet.pubkey,
+                   "CommitMinDeposit":Configure["CommitMinDeposit"],
+                   "Fee":Configure["Fee"],
+                   "alias":Configure["alias"],
+                   "AutoCreate":Configure["AutoCreate"],
+                   "MaxChannel":Configure["MaxChannel"],
+                   "Balance":balance
+                   }
 
 
 class RpcError(Exception):
@@ -141,3 +170,9 @@ class RpcInteraceApi(object):
         elif method == "HTLCTransaction":
             return transaction.hltc_trans(params)
 
+        elif method == "SyncWallet":
+            from wallet import prompt as PR
+            wallet_info = PR.CurrentLiveWallet.wallet_info()
+            return {"MessageType":"SyncWallet",
+               "MessageBody": wallet_info
+               }
