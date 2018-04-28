@@ -19,7 +19,7 @@ from wallet.utils import get_arg, \
     check_support_asset_type,\
     check_onchain_balance,\
     check_partner
-from wallet.Interface.rpc_interface import RpcInteraceApi
+from wallet.Interface.rpc_interface import RpcInteraceApi,CurrentLiveWallet
 from twisted.web.server import Site
 from lightwallet.prompt import PromptInterface
 from wallet.ChannelManagement.channel import create_channel, \
@@ -41,10 +41,13 @@ from wallet.BlockChain.monior import monitorblock,Monitor
 from wallet.TransactionManagement.payment import Payment
 import requests
 import qrcode_terminal
+from wallet.BlockChain.interface import get_balance
 
 
 GateWayIP = Configure.get("GatewayIP")
 Version = Configure.get("Version")
+
+
 
 
 
@@ -193,6 +196,7 @@ class UserPromptInterface(PromptInterface):
     def do_open(self, arguments):
         super().do_open(arguments)
         if self.Wallet:
+            CurrentLiveWallet.update_current_wallet(self.Wallet)
             self.Wallet.BlockHeight = self.Wallet.LoadStoredData("BlockHeight")
             Monitor.start_monitor(self.Wallet)
             result = self.retry_channel_enable()
@@ -202,6 +206,7 @@ class UserPromptInterface(PromptInterface):
     def do_create(self, arguments):
         super().do_create(arguments)
         if self.Wallet:
+            CurrentLiveWallet.update_current_wallet(self.Wallet)
             blockheight = get_block_count()
             self.Wallet.BlockHeight = blockheight
             self.Wallet.SaveStoredData("BlockHeight", blockheight)
@@ -218,6 +223,7 @@ class UserPromptInterface(PromptInterface):
         self.go_on = False
         Monitor.stop_monitor()
         self.do_close_wallet()
+        CurrentLiveWallet.update_current_wallet(None)
         reactor.stop()
 
     def enable_channel(self):
@@ -395,7 +401,7 @@ class UserPromptInterface(PromptInterface):
                 qrcode_terminal.draw(paycode, version=4)
             print(paycode)
             return None
-        elif command ==  "trans":
+        elif command == "trans":
             channel_name = get_arg(arguments, 1)
             tx= trinitytx.TrinityTransaction(channel_name,self.Wallet)
             result = tx.read_transaction()
@@ -463,6 +469,8 @@ class UserPromptInterface(PromptInterface):
             return "No Support Message Type "
 
         return m_instance.handle_message()
+
+
 
 
 def main():
