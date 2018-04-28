@@ -325,12 +325,12 @@ class Gateway():
                 self.sync_channel_route_to_peer(message)
 
     def handle_jsonrpc_response(self, method, response):
-        print(response)
-        if not response:
-            return
+        # print(response)
         if method == "SyncWallet":
             if type(response) == str:
                 response = json.loads(response)
+            if not response.get("MessageBody"):
+                return
             body = response.get("MessageBody")
             node["wallet_info"] = {
                 "url": body["Publickey"] + "@" + cg_public_ip_port,
