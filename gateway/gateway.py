@@ -36,7 +36,8 @@ class Gateway():
     def start(self):
         """ start gateway"""
         Network.create_servers()
-        self.resume_channel_from_db()
+        Network.send_msg_with_jsonrpc("SyncWallet",data={})
+        # self.resume_channel_from_db()
         print("###### Trinity Gateway Start Successfully! ######")
         Network.run_servers_forever()
 
@@ -322,7 +323,26 @@ class Gateway():
                     excepts=[]
                 )
                 self.sync_channel_route_to_peer(message)
-        
+
+    def handle_jsonrpc_response(self, method, response):
+        print(response)
+        if not response:
+            return
+        if method == "SyncWallet":
+            if type(response) == str:
+                response = json.loads(response)
+            body = response.get("MessageBody")
+            node["wallet_info"] = {
+                "url": body["Publickey"] + "@" + cg_public_ip_port,
+                "deposit": body["CommitMinDeposit"],
+                "fee": body["Fee"],
+                "balance": body["Balance"]["TNC"],
+                "name": body["alias"]
+            }
+            self._init_or_update_self_graph()
+            self.resume_channel_from_db()
+
+      
     def handle_spv_make_connection(self, websocket):
         if not node.get("wallet_info"):
             node["wallet_info"] = {
@@ -498,19 +518,6 @@ class Gateway():
                 Network.send_msg_with_tcp(data.get("Receiver"), data)
 
     def resume_channel_from_db(self):
-        nodes = utils.get_wallet_from_db(cg_public_ip_port)
-        if not nodes:
-            return 
-        wallet = nodes[0]
-        node["wallet_info"] = {
-            "url": wallet.address,
-            "deposit": wallet.deposit,
-            "fee": wallet.fee,
-            "name": wallet.name,
-            "balance": wallet.balance
-        }
-        # pprint.pprint(node)
-        self._init_or_update_self_graph()
         self_url = node["wallet_info"]["url"]
         channels = utils.get_channels_form_db(self_url)
         if channels:
