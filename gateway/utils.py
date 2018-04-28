@@ -13,6 +13,7 @@ sys.path.append(path)
 print(path)
 from model.channel_model import APIChannel
 from model.node_model import APINode
+import struct
 
 request_handle_result = {
     "invalid": 0,

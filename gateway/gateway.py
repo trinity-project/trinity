@@ -517,7 +517,8 @@ class Gateway():
             message = MessageMake.make_resume_channel_msg(self_url)
             for channel in channels:
                 peer = channel.dest_addr if channel.src_addr == self_url else channel.src_addr
-                Network.send_msg_with_tcp(peer, message)
+                if utils.get_ip_port(peer) != cg_public_ip_port:
+                    Network.send_msg_with_tcp(peer, message)
 
 
 gateway_singleton = Gateway()
