@@ -7,7 +7,7 @@ from TX.MyTransaction import InvocationTransaction
 from TX.TransactionAttribute import TransactionAttribute, TransactionAttributeUsage
 from TX.config import *
 from TX.interface import createFundingTx, createCTX, createRDTX, createBRTX, create_sender_HTLC_TXS, \
-    create_receiver_HTLC_TXS
+    create_receiver_HTLC_TXS, construct_tx, sign
 from TX.utils import hex_reverse, ToAddresstHash, int_to_hex, createTxid, pubkeyToAddress
 
 walletSelf= {
@@ -20,9 +20,9 @@ walletOther= {
 }
 
 
-
-funding_tx = createFundingTx(walletSelf=walletSelf, walletOther=walletOther)
-
+# funding_tx = createFundingTx(walletSelf=walletSelf, walletOther=walletOther)
+tx=construct_tx(addressFrom="AdoHFZV8fxnVQBZ881mdGhynjGC3156Skv",addressTo="AdXhNrj6eGHq9SWbWCYMxZGUyA4d7sc3ER",value=1,assetId="0x849d095d07950b9e56d0c895ec48ec5100cfdff1")
+raw=sign(tx["txData"],"c23e3dd5f88591a6b5be66c3c68e8f3e6969d9c67fd2d5f585e577071581e760")
 # self_C_tx = createCTX(addressFunding=funding_tx["addressFunding"], balanceSelf=walletSelf["deposit"],
 #                       balanceOther=walletOther["deposit"], pubkeySelf=walletSelf["pubkey"],
 #                       pubkeyOther=walletOther["pubkey"], fundingScript=funding_tx["scriptFunding"])

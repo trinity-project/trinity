@@ -5,7 +5,9 @@ from TX.MyTransaction import InvocationTransaction
 from TX.TransactionAttribute import TransactionAttribute, TransactionAttributeUsage
 from TX.config import *
 from TX.utils import hex_reverse, ToAddresstHash, createTxid, createMultiSigContract, create_opdata, \
-    createRSMCContract, createHTLCContract, createVerifyScript, pubkeyToAddress, pubkeyToAddressHash
+    createRSMCContract, createHTLCContract, createVerifyScript, pubkeyToAddress, pubkeyToAddressHash, privtkey_sign, \
+    privtKey_to_publicKey
+
 
 #RSMC
 
@@ -490,10 +492,55 @@ def create_receiver_HTLC_TXS(pubkeySender, pubkeyReceiver, HTLCValue, balanceSen
         "HERDTX": HERDTX
     }
 
+#构建给单个地址发tnc的交易
+def construct_tx(addressFrom,addressTo,value,assetId):
+
+    time_stamp = TransactionAttribute(usage=TransactionAttributeUsage.Remark,
+                                      data=bytearray.fromhex(hex(int(time.time()))[2:]))
+    address_hash = TransactionAttribute(usage=TransactionAttributeUsage.Script,
+                                        data=ToAddresstHash(addressFrom).Data)
+
+    txAttributes = [address_hash, time_stamp]
+
+    op_data = create_opdata(address_from=addressFrom, address_to=addressTo, value=value,
+                            contract_hash=assetId)
+    tx = InvocationTransaction()
+    tx.Version = 1
+    tx.Attributes = txAttributes
+    tx.Script = binascii.unhexlify(op_data)
+
+    return {
+        "txData": tx.get_tx_data(),
+        "txid": createTxid(tx.get_tx_data())
+    }
+
+#构建给3个地址发tnc的交易
+def construct_multi_tx(addressFrom, targetList, assetId):
+    time_stamp = TransactionAttribute(usage=TransactionAttributeUsage.Remark,
+                                      data=bytearray.fromhex(hex(int(time.time()))[2:]))
+    address_hash = TransactionAttribute(usage=TransactionAttributeUsage.Script,
+                                        data=ToAddresstHash(addressFrom).Data)
+
+    txAttributes = [address_hash, time_stamp]
+    op_data=""
+    for item in targetList:
+        op_data += create_opdata(address_from=addressFrom, address_to=item[0], value=item[1],
+                            contract_hash=assetId)
+
+    tx = InvocationTransaction()
+    tx.Version = 1
+    tx.Attributes = txAttributes
+    tx.Script = binascii.unhexlify(op_data)
+
+    return {
+        "txData": tx.get_tx_data(),
+        "txid": createTxid(tx.get_tx_data())
+    }
 
 
-if __name__ == "__main__":
-    result= createFundingTx({"pubkey":"03c0aaf3e23ee4d38ca99f16248d93f6b0d439b638586dce56503941b321d94108","deposit":1.0},
-                            {"pubkey":"02d28d2314f0920ddee218e863bc1a50d492787a1198570a8db549e651949b205f","deposit":1.0}
-                            )
-    print(result)
+def sign(txData,privtKey):
+    signature = privtkey_sign(txData,privtKey)
+    publicKey=privtKey_to_publicKey(privtKey)
+    rawData=txData+"01"+"41"+"40"+signature+"23"+"21"+publicKey+"ac"
+    return rawData
+
