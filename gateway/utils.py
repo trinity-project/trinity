@@ -65,6 +65,18 @@ def check_is_spv(url):
     else:
         return False
 
+def select_channel_peer(founder, receiver, wallets):
+    """
+    :param founder:  url
+    :param receiver: url
+    :param wallets:  wallet dict
+    """
+    f_pk = get_public_key(founder)
+    if wallets.get(f_pk):
+        return receiver
+    else:
+        return founder
+
 def json_to_dict(str_json):
     return json.loads(str_json)
 
@@ -100,6 +112,19 @@ def del_dict_item_by_value(dic, value):
         keys = list(dic.keys())
         del_index = values.index(value)
         del dic[keys[del_index]]
+
+def make_kwargs_for_wallet(data):
+    """
+    :param data: dict type
+    """
+    return {
+        "public_key": data.get("Publickey"),
+        "name": data.get("alias"),
+        "deposit": data.get("CommitMinDeposit"),
+        "fee": data.get("Fee"),
+        "asset_type": list(data.get("Balance").items())[0][0],
+        "balance": list(data.get("Balance").items())[0][1]
+    }
 
 def get_channels_form_db(address):
     condition = {

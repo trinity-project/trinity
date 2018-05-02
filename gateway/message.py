@@ -31,6 +31,17 @@ class Message:
         ]
         return tx_types
     
+    @staticmethod
+    def get_payment_msg_types():
+        """
+        :return: all payment msg type
+        """
+        payment_types = [
+            "PaymentLinkAck", 
+            "PaymentAck"
+        ]
+        return payment_types
+        
     # classmethods
     @classmethod
     def get_valid_msg_types(cls):

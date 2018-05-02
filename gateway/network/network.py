@@ -11,7 +11,7 @@ from .wsocket import WsocketService
 from config import cg_tcp_addr, cg_wsocket_addr, cg_public_ip_port, cg_local_jsonrpc_addr,\
 cg_remote_jsonrpc_addr, cg_reused_tcp_connection
 from utils import encode_bytes
-from glog import tcp_logger
+from glog import tcp_logger, wst_logger
 import time
 
 class Network:
@@ -92,9 +92,12 @@ class Network:
         :param connection: wsocket connection\n
         :param data: dict type
         """
-        data = json.dumps(data)
-        future = asyncio.ensure_future(WsocketService.send_msg(connection, data))
-        future.add_done_callback(lambda t: t.exception())
+        if connection:
+            data = json.dumps(data)
+            future = asyncio.ensure_future(WsocketService.send_msg(connection, data))
+            future.add_done_callback(lambda t: t.exception())
+        else:
+            wst_logger.info("the receiver is disconnected")
 
     @staticmethod
     def send_msg_with_jsonrpc(method, data, loop=None):

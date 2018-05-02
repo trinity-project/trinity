@@ -247,7 +247,7 @@ class Gateway():
                 rev_pk = utils.get_public_key(data.get("Receiver"))
                 if rev_ip_port == cg_public_ip_port:
                     con = self.ws_pk_dict.get(rev_pk)
-                    if not con:
+                    if con:
                         Network.send_msg_with_wsocket(con, data)
                 else:
                     Network.send_msg_with_tcp(data.get("Receiver"), data)

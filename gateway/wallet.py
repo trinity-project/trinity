@@ -1,5 +1,8 @@
 # coding: utf-8
-from routertree import RouteTree, SPVHashTable
+"""
+module for multi wallets and asset
+"""
+from routertree import SPVHashTable
 from routergraph import RouterGraph
 from config import cg_public_ip_port
 

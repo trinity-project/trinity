@@ -18,7 +18,8 @@ class Gateway():
     def __init__(self):
         # the wallet dict
         self.wallets = {}
-        
+        self.pk_ws = {}
+        self.pk_tcp = {}
 
     def start(self):
         Network.create_servers()
@@ -48,19 +49,92 @@ class Gateway():
             body = data.get("MessageBody")
             Wallet.add_or_update_wallet(
                 self.wallets,
-                public_key=body.get("Publickey"),
-                name=body.get("alias"),
-                deposit=body.get("CommitMinDeposit"),
-                fee=body.get("Fee"),
-                asset_type=list(body.get("Balance").items())[0][0],
-                balance=list(body.get("Balance").items())[0][1]
+                **utils.make_kwargs_for_wallet(body)
             )
             url = self.wallets.get(body.get("Publickey")).url
             response = MessageMake.make_ack_sync_wallet_msg(url)
             return json.dumps(response)
+        elif method == "GetRouterInfo":
+            rev_pk, rev_ip_port = utils.parse_url(data.get("Receiver"))
+            sed_pk, sed_ip_port = utils.parse_url(data.get("Sender"))
+            # check the wallet is attached this gatway
+            # if not do nothing
+            if sed_ip_port != cg_public_ip_port:
+                return "Invalid request"
+            body = data.get("MessageBody")
+            asset_type = body.get("AssetType")
+            tx_amount = body.get("Value")
+            router_graph = self.wallets[rev_pk].assets[asset_type].router_graph
+            nids = router_graph.find_shortest_path_decide_by_fee(sed_ip_port, rev_ip_port)
+            # the length of path is zero
+            if not len(nids):
+                return json.dumps(MessageMake.make_ack_router_info_msg(None))
+            full_path = []
+            total_fee = 0
+            for nid in nids:
+                node = router_graph._graph.nodes[nid]
+                url = node.get("PublicKey") + "@" + node.get("Ip")
+                fee = node.get("Fee")
+                full_path.append((url, fee))
+                index = nids.index(nid)
+                if index > 0 and index < len(nids) - 1:
+                    total_fee = total_fee + fee
+            next_jump = full_path[0][0]
+            router = {
+                "FullPath": full_path,
+                "Next": next_jump
+            }
+            return json.dumps(MessageMake.make_ack_router_info_msg(router))
         elif method == "TransactionMessage":
+            rev = data.get("Receiver")
+            rev_pk, rev_ip_port = utils.parse_url(rev)
             if msg_type == "RegisterChannel":
-                rev_ip_port = utils.get_ip_port(data.get("Receiver"))
-                rev_pk = utils.get_public_key(data.get("Receiver"))
-                
+                if rev_ip_port == cg_public_ip_port:
+                    Network.send_msg_with_wsocket(self.pk_ws.get(rev_pk), data)
+                else:
+                    Network.send_msg_with_tcp(rev, data)
+            elif msg_type in Message.get_tx_msg_types():
+                self.handle_transaction_message(data)
+            elif msg_type in Message.get_payment_msg_types():
+                Network.send_msg_with_wsocket(self.pk_ws.get(rev_pk), data)
+        elif method == "SyncChannel":
+            channel_founder = data["MessageBody"]["Founder"]
+            channel_receiver = data["MessageBody"]["Receiver"]
+            channel_peer = utils.select_channel_peer(channel_founder, channel_receiver, self.wallets)
+            channel_self = channel_founder if channel_peer == channel_receiver else channel_receiver
+            asset_type = data["MessageBody"]["Balance"][channel_self]
+            router_graph = self.wallets.get(utils.get_public_key(channel_self)).assets.get(asset_type).router_graph
+            if msg_type == "AddChannel":
+                message = MessageMake.make_sync_graph_msg(
+                    "add_whole_graph",
+                    channel_self,
+                    source=channel_self,
+                    target=channel_peer,
+                    route_graph=router_graph,
+                    broadcast=True,
+                    excepts=[channel_founder, channel_receiver]
+                )
+    def handle_wallet_response(self, method, response):
+        if method == "SyncWallet":
+            if type(response) == str:
+                response = json.loads(response)
+            if not response.get("MessageBody"):
+                return
+            Wallet.add_or_update_wallet(
+                self.wallets,
+                **utils.make_kwargs_for_wallet(response.get("MessageBody"))
+            )
+            self.resume_channel_from_db()
+
+    def resume_channel_from_db(self):
+        for pk, wallet in self.wallets.items():
+            channels = utils.get_channels_form_db(wallet.url)
+            if channels:
+                message = MessageMake.make_resume_channel_msg(wallet.url)
+                for channel in channels:
+                    peer = channel.dest_addr if channel.src_addr == wallet.url else channel.src_addr
+                    if utils.get_ip_port(peer) != cg_public_ip_port:
+                        Network.send_msg_with_tcp(peer, message)
+
+
     gateway_singleton = Gateway()
