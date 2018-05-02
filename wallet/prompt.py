@@ -319,7 +319,7 @@ class UserPromptInterface(PromptInterface):
             if channel_name:
                 tx_nonce = trinitytx.TrinityTransaction(channel_name, self.Wallet).get_latest_nonceid()
                 mg.RsmcMessage.create(channel_name,self.Wallet,self.Wallet.pubkey,
-                                      receiverpubkey, int(count), receiverip, gate_way_ip, str(tx_nonce+1),
+                                      receiverpubkey, float(count), receiverip, gate_way_ip, str(tx_nonce+1),
                                       asset_type="TNC", comments=hr)
             else:
                 message = {"MessageType":"GetRouterInfo",
@@ -342,7 +342,10 @@ class UserPromptInterface(PromptInterface):
                     n = router.get("Next")
                     LOG.info("Get Next {}".format(str(n)))
                     fee_router = [i for i in r if i[0] not in (self.Wallet.url, receiver)]
-                    fee = reduce(lambda x, y:x+y,[float(i[1]) for i in fee_router])
+                    if fee_router:
+                        fee = reduce(lambda x, y:x+y,[float(i[1]) for i in fee_router])
+                    else:
+                        fee = 0
                     LOG.info("Get Fee {}".format(str(fee)))
                     answer = prompt("will use fee %s , Do you still want tx? [Yes/No]> " %(str(fee)))
                     if answer.upper() in["YES","Y"]:
