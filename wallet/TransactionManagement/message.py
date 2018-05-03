@@ -99,12 +99,32 @@ class RegisterMessage(Message):
 
     def verify(self):
         if self.sender == self.receiver:
+            message = {
+                "MessageType": "RegisterChannelFail",
+                "Sender": self.receiver,
+                "Receiver": self.sender,
+                "ChannelName": self.channel_name,
+                "MessageBody": {
+                    "OrigianlMessage":self.message
+                },
+                "Error": "Not Support Sender is Receiver"
+            }
+            Message.send(message)
             return False, "Not Support Sender is Receiver"
         if self.receiver != self.wallet.url:
+            message = {
+                "MessageType": "RegisterChannelFail",
+                "Sender": self.receiver,
+                "Receiver": self.sender,
+                "ChannelName": self.channel_name,
+                "MessageBody": {
+                    "OrigianlMessage": self.message
+                },
+                "Error": "The Endpoint is Not Me, I am {}".format(self.wallet.url)
+            }
+            Message.send(message)
             return False, "The Endpoint is Not Me"
         return True, None
-
-
 
 
 class TestMessage(Message):
@@ -419,7 +439,8 @@ class FounderResponsesMessage(TransactionMessage):
         ch.Channel.channel(self.channel_name).delete_channel()
         #ToDo  Just walk around
         if self.comments == "retry":
-            ch.create_channel(self.wallet.url, self.sender, self.asset_type,self.deposit, comments=self.comments)
+            ch.create_channel(self.wallet.url, self.sender, self.asset_type,self.deposit, comments=self.comments,
+                              channel_name=self.channel_name)
 
     def send_founder_raw_transaction(self):
         signdata = self.founder.get("txDataSign")
