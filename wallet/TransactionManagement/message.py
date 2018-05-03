@@ -216,7 +216,7 @@ class FounderMessage(TransactionMessage):
         role_index = int(self.role_index) + 1
         FounderMessage.create(self.channel_name, self.receiver_pubkey,
                               self.sender_pubkey, self.asset_type.upper(), self.deposit, self.sender_ip,
-                              self.receiver_ip, role_index=role_index, wallet=self.wallet)
+                              self.receiver_ip, role_index=role_index, wallet=self.wallet, comments=self.comments)
 
     def _handle_1_message(self):
         txid = self.founder.get("txId")
