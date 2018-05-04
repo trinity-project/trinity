@@ -41,7 +41,7 @@ class Message:
             "PaymentAck"
         ]
         return payment_types
-        
+
     # classmethods
     @classmethod
     def get_valid_msg_types(cls):
@@ -180,6 +180,7 @@ class MessageMake:
             "MessageType": msg_type,
             "SyncType": sync_type,
             "Sender": sender,
+            "AssetType": kwargs.get("asset_type"),
             "Broadcast": kwargs.get("broadcast"),
             "Source": kwargs.get("source"),
             "Target": kwargs.get("target"),

@@ -82,11 +82,11 @@ if __name__ == "__main__":
     # sync_channel("pk4@localhost:8092", "pk2@localhost:8090")
 
     ############ 1、2、3 ############
-    sync_wallet_data(2)
+    # sync_wallet_data(2)
     # time.sleep(5)
     # sync_channel("pk1@localhost:8089", "pk3@localhost:8091")
-    time.sleep(5)
-    sync_channel("pk1@127.0.0.1:8089", "pk2@127.0.0.1:8090")
+    # time.sleep(5)
+    # sync_channel("pk1@127.0.0.1:8089", "pk2@127.0.0.1:8090")
     # time.sleep(5)
     # sync_channel("pk3@localhost:8091", "pk2@localhost:8090")
     # sync_channel("pk4@localhost:8092", "pk3@localhost:8091")
@@ -140,13 +140,22 @@ if __name__ == "__main__":
     message1 = {
         "MessageType":"AddChannel",
         "MessageBody": {
-            "Founder":  "02442f3eda23eba03aadb02bb25ccb0b680748eb70f4ef96906425ebffc289b103@192.168.204.112:8089",
-            "Receiver": "038d8719a35672f66131c7876f4e520c8cd91203893c2214a4294ee3f43c5c10ee@118.89.44.106:8089"
+            "Founder":  "pk1@localhost:8089",
+            "Receiver": "pk2@localhost:8089",
+            "Balance": {
+                "pk2@localhost:8089": {
+                    "TNC": 10
+                },
+                "pk1@localhost:8089": {
+                    "TNC": 10
+                }
+            }
         }
     }
     message_1 = {
             "MessageBody": {
-            "Publickey": "02442f3eda23eba03aadb02bb25ccb0b680748eb70f4ef96906425ebffc289b103",
+            "Publickey": "pk1",
+            "Ip": "0.0.0.0",
             "CommitMinDeposit": 3,
             "Fee": 1,
             "Balance": {"TNC": 10},
@@ -155,18 +164,18 @@ if __name__ == "__main__":
     }
     message_2 = {
             "MessageBody": {
-            "Publickey": "03a6fcaac0e13dfbd1dd48a964f92b8450c0c81c28ce508107bc47ddc511d60e75",
+            "Publickey": "pk2",
             "CommitMinDeposit": 3,
             "Fee": 1,
             "Balance": {"TNC": 10},
             "alias": "trinity1"
         }
     }
-    # jsonrpcclient.request("http://192.168.204.112:8077", 'SyncWalletData', json.dumps(message_1))
-    # # jsonrpcclient.request("http://192.168.205.181:8077", 'SyncWalletData', json.dumps(message_2))
-    # time.sleep(5)
-    # # jsonrpcclient.request("http://192.168.204.112:8077", 'SyncChannel', json.dumps(message1))
-    # jsonrpcclient.request("http://192.168.204.112:8077", 'SyncChannel', json.dumps(message1))
+    jsonrpcclient.request("http://localhost:8077", 'SyncWalletData', json.dumps(message_1))
+    # jsonrpcclient.request("http://localhost:8077", 'SyncWalletData', json.dumps(message_2))
+    # time.sleep(15)
+    # jsonrpcclient.request("http://localhost:8077", 'SyncChannel', json.dumps(message1))
+    # jsonrpcclient.request("http://localhost:8077", 'SyncChannel', json.dumps(message1))
     # jsonrpcclient.request("http://118.89.44.106:8077", 'SyncChannel', json.dumps(message1))
     # jsonrpcclient.request("http://localhost:8077", 'SyncWalletData', json.dumps(message))
 

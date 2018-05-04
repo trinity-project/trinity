@@ -59,17 +59,27 @@ def encode_bytes(data):
     # return data.encode(cg_bytes_encoding)
 
 def check_is_spv(url):
+    """
+    check the sender or receiver is spv
+    """
     ip_port = get_ip_port(url)
     if ip_port == cg_public_ip_port.split(":")[0] + str(cg_wsocket_addr[1]):
         return True
     else:
         return False
 
+def check_is_same_gateway(founder, receiver):
+    """
+    check the founder and receiver are attached same gateway
+    """
+    return get_ip_port(founder) == get_ip_port(receiver)
+
 def select_channel_peer(founder, receiver, wallets):
     """
-    :param founder:  url
-    :param receiver: url
-    :param wallets:  wallet dict
+    just for the wallet not in the same gateway\n
+    :param founder:  url\n
+    :param receiver: url\n
+    :param wallets:  wallet dict\n
     """
     f_pk = get_public_key(founder)
     if wallets.get(f_pk):
@@ -118,6 +128,7 @@ def make_kwargs_for_wallet(data):
     :param data: dict type
     """
     return {
+        "ip": data.get("Ip"),
         "public_key": data.get("Publickey"),
         "name": data.get("alias"),
         "deposit": data.get("CommitMinDeposit"),

@@ -44,7 +44,6 @@ class AsyncJsonRpc():
     @staticmethod
     async def handle(request):
         request = await request.text()
-        # print(request)
         response = await methods.dispatch(request)
         if response.is_notification:
             return web.Response()
