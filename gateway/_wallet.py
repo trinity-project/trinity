@@ -59,13 +59,16 @@ class _Wallet:
         self.asset_type = kwargs.get("asset_type")
         self.url = "{}@{}".format(self.public_key, cg_public_ip_port)
         self.name = kwargs.get("name")
+        # save wallet_client ip
         self.ip = kwargs.get("ip")
         # wallet status 1: opened;0:closed
         self.status = 1
 
     def __str__(self):
-        return "Wallet(pk: {}, name: {}, asset_type: {}, fee: {}, deposit: {}, balance: {}, status: {})".\
-            format(self.public_key, self.name, self.asset_type, self.fee, self.deposit, self.balance, self.status)
+        # return "Wallet(name: {}, asset_type: {}, fee: {}, deposit: {}, balance: {}, status: {})".\
+        #     format(self.name, self.asset_type, self.fee, self.deposit, self.balance, self.status)
+        return "Wallet(name: {}, asset_type: {}, status: {})".\
+            format(self.name, self.asset_type, self.status)
 
     def __repr__(self):
         return self.__str__()
@@ -85,14 +88,14 @@ class _Wallet:
         public_key = kwargs.get("public_key")
         if wallets.get(public_key):
             wallet = wallets[public_key]
-            print(kwargs)
+            # print(kwargs)
             wallet._update_basic_attributes(**kwargs)
             wallet.status = 1
         else:
             wallet = cls(**kwargs)
             wallets[public_key] = wallet
         return wallet
-    
+
 class WalletClient:
     
     def __init__(self, ip):
@@ -101,8 +104,8 @@ class WalletClient:
         self.wallets = {}
 
     def __str__(self):
-        return "WalletClient(ip: {}, wallets: {})".\
-            format(self.ip, self.wallets)
+        return "WalletClient(wallets: {})".\
+            format(self.wallets)
 
     def __repr__(self):
         return self.__str__()
@@ -138,7 +141,7 @@ class WalletClient:
             clients[ip] = client
         wallet = _Wallet.add_or_update(client.wallets, **kwargs)
         client._update_opened_wallet(wallet)
-        # return client
+        return wallet
 
 if __name__ == "__main__":
     from pprint import pprint

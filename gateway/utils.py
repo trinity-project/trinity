@@ -74,18 +74,17 @@ def check_is_same_gateway(founder, receiver):
     """
     return get_ip_port(founder) == get_ip_port(receiver)
 
-def select_channel_peer(founder, receiver, wallets):
+def select_channel_peer_source(founder, receiver):
     """
     just for the wallet not in the same gateway\n
     :param founder:  url\n
     :param receiver: url\n
     :param wallets:  wallet dict\n
     """
-    f_pk = get_public_key(founder)
-    if wallets.get(f_pk):
-        return receiver
+    if get_ip_port(founder) == cg_public_ip_port:
+        return receiver, founder
     else:
-        return founder
+        return founder, receiver
 
 def json_to_dict(str_json):
     return json.loads(str_json)
@@ -135,6 +134,21 @@ def make_kwargs_for_wallet(data):
         "fee": data.get("Fee"),
         "asset_type": list(data.get("Balance").items())[0][0],
         "balance": list(data.get("Balance").items())[0][1]
+    }
+
+def make_topo_node_data(wallet):
+    """
+    :param wallet: _Wallet instance
+    """
+    return {
+        "Publickey": wallet.public_key,
+        "Name": wallet.name,
+        "Deposit": wallet.deposit,
+        "Fee": wallet.fee,
+        "Balance": wallet.balance,
+        "Ip": cg_public_ip_port,
+        "WalletIp": wallet.ip,
+        "SpvList": []
     }
 
 def get_channels_form_db(address):

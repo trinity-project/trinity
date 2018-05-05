@@ -68,17 +68,27 @@ def timethis(func):
         return r
     return wrapper
 
-class RouterGraph:
+class Nettopo:
     def __init__(self):
+        # save wallet pk set that attached this gateway
         self.nids = set()
         self._graph = nx.Graph()
 
+    def __str__(self):
+        return "Nettopo(nodes: {}, links: {})".format(
+            list(self._graph.nodes.keys()),
+            list(self._graph.edges.keys())
+        )
+        
+    def __repr__(self):
+        return self.__str__()
+
     def add_node(self, data, pk=None):
-        if not data.get("PublicKey"):
-            raise Exception("PublicKey must provide")
         if not pk:
-            pk = data["PublicKey"]
-        self._graph.add_node(data["PublicKey"], **data)
+            pk = data.get("Publickey")
+        if not pk:
+            raise Exception("public_key must provide")
+        self._graph.add_node(pk, **data)
         self.nids.add(pk)
         # self.nid = pk
         # self.nid = data["Nid"]
@@ -90,6 +100,7 @@ class RouterGraph:
         if not self._graph.has_edge(sid, tid):
             t_fee = self._graph.nodes[tid]["Fee"]
             s_fee = self._graph.nodes[sid]["Fee"]
+            fee = t_fee + s_fee
             self._graph.add_edge(sid, tid, weight=fee)
         else:
             pass
@@ -97,19 +108,21 @@ class RouterGraph:
     def remove_edge(self, sid, tid):
         if self._graph.has_edge(sid, tid):
             self._graph.remove_edge(sid, tid)
-            for nid in [sid, tid]:
-                if self._isolated(nid) and nid != self.nid:
-                    self._graph.remove_node(nid)
+            return True
+            # for nid in [sid, tid]:
+            #     if self._isolated(nid) and nid != self.nid:
+            #         self._graph.remove_node(nid)
         else:
-            pass
+            return False
     
     def update_data(self, data):
-        nid = data["Nid"]
+        nid = data.get("Publickey")
         if not self._graph.has_node(nid):
             return
-        node = self.node if nid == self.nid else self._graph.nodes[nid]
+        node = self._graph.nodes[nid]
         if data["Fee"] != node["Fee"]:
-            self._update_edge_data(node, data)
+            diff_fee = data["Fee"] - node["Fee"]
+            self._update_edge_data(nid, diff_fee)
         self._update_node_data(node, data)
 
     def _isolated(self, nid):
@@ -121,19 +134,16 @@ class RouterGraph:
         return isolated
 
     def _update_node_data(self, node, data):
-        print("just update node")
+        print("update node attributes")
         node.update(data)
 
-    def _update_edge_data(self, node, data):
+    def _update_edge_data(self, nid, diff_fee):
         # update the edges's weight that include the nid
         # self.edges[source, target]['weight'] = weight
-        print("update edge")
-        nid = data["Nid"]
-        old_fee = node["Fee"]
-        diff = data["Fee"] - old_fee
+        print("update edge attribute")
         for edge in self._graph.edges:
             if nid in edge:
-                self._graph.edges[edge[0],edge[1]]["weight"] += diff
+                self._graph.edges[edge[0],edge[1]]["weight"] += diff_fee
                 
     @timethis
     def find_shortest_path_decide_by_fee(self, source, target):
@@ -168,12 +178,13 @@ class RouterGraph:
         :param data: type dict
         """
         sender_nid = utils.get_public_key(data["Sender"])
-        source_graph = self.to_graph(data["MessageBody"])
-        self._graph = nx.algorithms.operators.binary.compose(self._graph, source_graph)
-        if not self._graph.has_edge(sender_nid, self.nid):
+        receiver_nid = utils.get_public_key(data["Receiver"])
+        sync_graph = self.to_graph(data["MessageBody"])
+        self._graph = nx.algorithms.operators.binary.compose(self._graph, sync_graph)
+        if not self._graph.has_edge(sender_nid, receiver_nid):
             u_fee = self._graph.nodes[sender_nid]["Fee"]
-            v_fee = self._graph.nodes[self.nid]["Fee"]
-            self._graph.add_edge(sender_nid, self.nid, weight=u_fee + v_fee)
+            v_fee = self._graph.nodes[receiver_nid]["Fee"]
+            self._graph.add_edge(sender_nid, receiver_nid, weight=u_fee + v_fee)
 
     def sync_channel_graph(self, data):
         """
@@ -221,3 +232,22 @@ class RouterGraph:
 
     def get_neighbors_set(self, nid):
         return set(self._graph.neighbors(nid))
+
+    def get_number_of_edges(self):
+        return self._graph.number_of_edges()
+
+    @classmethod
+    def add_or_update(cls, topos, wallet):
+        pk = wallet.public_key
+        asset_type = wallet.asset_type
+        data = utils.make_topo_node_data(wallet)
+        if topos.get(asset_type):
+            topo = topos[asset_type]
+            if topo.has_node(pk):
+                topo.update_data(data)
+            else:
+                topo.add_node(data, pk=pk)
+        else:
+            topo = cls()
+            topo.add_node(data, pk=pk)
+            topos[asset_type] = topo

@@ -144,10 +144,40 @@ if __name__ == "__main__":
             "Receiver": "pk2@localhost:8089",
             "Balance": {
                 "pk2@localhost:8089": {
-                    "TNC": 10
+                    "NEO": 10
                 },
                 "pk1@localhost:8089": {
-                    "TNC": 10
+                    "NEO": 10
+                }
+            }
+        }
+    }
+    message2 = {
+        "MessageType":"AddChannel",
+        "MessageBody": {
+            "Founder":  "pk1@localhost:8089",
+            "Receiver": "pk3@localhost:8089",
+            "Balance": {
+                "pk3@localhost:8089": {
+                    "NEO": 10
+                },
+                "pk1@localhost:8089": {
+                    "NEO": 10
+                }
+            }
+        }
+    }
+    message3 = {
+        "MessageType":"AddChannel",
+        "MessageBody": {
+            "Founder":  "pk2@localhost:8089",
+            "Receiver": "pk3@localhost:8089",
+            "Balance": {
+                "pk3@localhost:8089": {
+                    "NEO": 10
+                },
+                "pk2@localhost:8089": {
+                    "NEO": 10
                 }
             }
         }
@@ -157,24 +187,41 @@ if __name__ == "__main__":
             "Publickey": "pk1",
             "Ip": "0.0.0.0",
             "CommitMinDeposit": 3,
-            "Fee": 1,
-            "Balance": {"TNC": 10},
+            "Fee": 2,
+            "Balance": {"NEO": 10},
             "alias": "trinity2"
         }
     }
     message_2 = {
             "MessageBody": {
             "Publickey": "pk2",
+            "Ip": "0.0.0.0",
             "CommitMinDeposit": 3,
             "Fee": 1,
-            "Balance": {"TNC": 10},
+            "Balance": {"NEO": 10},
+            "alias": "trinity1"
+        }
+    }
+    message_3 = {
+            "MessageBody": {
+            "Publickey": "pk3",
+            "Ip": "0.0.0.0",
+            "CommitMinDeposit": 3,
+            "Fee": 1.5,
+            "Balance": {"NEO": 10},
             "alias": "trinity1"
         }
     }
     jsonrpcclient.request("http://localhost:8077", 'SyncWalletData', json.dumps(message_1))
-    # jsonrpcclient.request("http://localhost:8077", 'SyncWalletData', json.dumps(message_2))
-    # time.sleep(15)
+    jsonrpcclient.request("http://localhost:8077", 'SyncWalletData', json.dumps(message_2))
+    jsonrpcclient.request("http://localhost:8077", 'SyncWalletData', json.dumps(message_3))
+    time.sleep(5)
+    jsonrpcclient.request("http://localhost:8077", 'SyncChannel', json.dumps(message1))
+    time.sleep(5)
+    jsonrpcclient.request("http://localhost:8077", 'SyncChannel', json.dumps(message2))
+    # time.sleep(5)
     # jsonrpcclient.request("http://localhost:8077", 'SyncChannel', json.dumps(message1))
+
     # jsonrpcclient.request("http://localhost:8077", 'SyncChannel', json.dumps(message1))
     # jsonrpcclient.request("http://118.89.44.106:8077", 'SyncChannel', json.dumps(message1))
     # jsonrpcclient.request("http://localhost:8077", 'SyncWalletData', json.dumps(message))

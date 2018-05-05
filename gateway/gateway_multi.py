@@ -5,10 +5,10 @@ import json
 import utils
 from _wallet import WalletClient
 from routertree import SPVHashTable
-from routergraph import RouterGraph
+from topo import Nettopo
 from network import Network
 from message import Message, MessageMake
-from glog import tcp_logger, wst_logger
+from glog import tcp_logger, wst_logger, rpc_logger
 from config import cg_public_ip_port
 
 class Gateway:
@@ -18,7 +18,7 @@ class Gateway:
     def __init__(self):
         # the wallet dict
         self.wallet_clients = {}
-        self.ntopology = {}
+        self.net_topos = {}
         self.ws_pk_dict = {}
         self.tcp_pk_dict = {}
 
@@ -65,12 +65,11 @@ class Gateway:
                     receiver = data.get("Receiver")
                     asset_type = data.get("AssetType")
                     if receiver and asset_type:
-                        rev_pk = utils.get_public_key(receiver)
-                        router_graph = self.wallets.get(rev_pk).assets.get(asset_type).router_graph
-                        router_graph.sync_channel_graph(data)
+                        net_topo = self.net_topos.get(asset_type)
+                        net_topo.sync_channel_graph(data)
                         tcp_logger.debug("sync graph from peer successful")
-                        print("**********number of edges is: ",router_graph._graph.number_of_edges(),"**********")
-                        print("**********",router_graph.show_edgelist(),"**********")
+                        print("**********number of edges is: ",net_topo.get_number_of_edges(),"**********")
+                        print("**********",net_topo.show_edgelist(),"**********")
                         if data.get("Broadcast"):
                             data["Sender"] = receiver
                             self.sync_channel_route_to_peer(data)
@@ -86,14 +85,17 @@ class Gateway:
             data = json.loads(data)
         msg_type = data.get("MessageType")
         if method == "SyncWalletData":
-            print("Get the wallet sync data\n", data)
+            rpc_logger.debug("Get the wallet sync data:\n{}".format(data))
             body = data.get("MessageBody")
-            WalletClient.add_or_update(
+            wallet = WalletClient.add_or_update(
                 self.wallet_clients,
                 **utils.make_kwargs_for_wallet(body)
             )
-            url = self.wallet_clients[body.get("Ip")].wallets[body.get("Publickey")].url
-            response = MessageMake.make_ack_sync_wallet_msg(url)
+            Nettopo.add_or_update(self.net_topos, wallet)
+            response = MessageMake.make_ack_sync_wallet_msg(wallet.url)
+            print(self.wallet_clients)
+            print(self.net_topos)
+            print(self.wallet_clients["0.0.0.0"].opened_wallet)
             return json.dumps(response)
         elif method == "GetRouterInfo":
             rev_pk, rev_ip_port = utils.parse_url(data.get("Receiver"))
@@ -142,77 +144,54 @@ class Gateway:
             channel_founder = data["MessageBody"]["Founder"]
             channel_receiver = data["MessageBody"]["Receiver"]
             asset_type = list(data["MessageBody"]["Balance"][channel_founder].items())[0][0]
+            net_topo = self.net_topos.get(asset_type)
+            if not net_topo: return
             # founder and receiver are attached the same gateway
             if utils.check_is_same_gateway(channel_founder, channel_receiver):
                 fid = utils.get_public_key(channel_founder)
                 rid = utils.get_public_key(channel_receiver)
-                founder_router_graph = self.wallets.get(fid).assets.get(asset_type).router_graph
-                receiver_router_graph = self.wallets.get(rid).assets.get(asset_type).router_graph
                 if msg_type == "AddChannel":
+                    net_topo.add_edge(fid, rid)
+                    print(self.net_topos)
                     message_founder = MessageMake.make_sync_graph_msg(
                         "add_whole_graph",
-                        channel_founder,
+                        [channel_founder, channel_receiver],
                         source=channel_founder,
                         target=channel_receiver,
                         asset_type=asset_type,
-                        route_graph=receiver_router_graph,
+                        route_graph=net_topo,
                         broadcast=True,
                         excepts=[fid, rid]
                     )
-                    founder_router_graph.sync_channel_graph(message_founder)
                     self.sync_channel_route_to_peer(message_founder)
-                    message_receiver = MessageMake.make_sync_graph_msg(
-                        "add_whole_graph",
-                        channel_receiver,
-                        source=channel_receiver,
-                        target=channel_founder,
-                        asset_type=asset_type,
-                        route_graph=founder_router_graph,
-                        broadcast=True,
-                        excepts=[fid, rid]
-                    )
-                    receiver_router_graph.sync_channel_graph(message_receiver)
-                    self.sync_channel_route_to_peer(message_receiver)
-                    pprint.pprint(self.wallets)
                 elif msg_type == "UpdateChannel":
                     founder_balance = data["MessageBody"]["Balance"][channel_founder][asset_type]
-                    founder_node = founder_router_graph.node
+                    founder_node = net_topo.get_node_dict(fid)
                     receiver_balance = data["MessageBody"]["Balance"][channel_receiver][asset_type]
-                    receiver_node = receiver_router_graph.node
-                    if founder_router_graph._graph.has_node(rid):
-                        founder_router_graph._graph.nodes[rid]["Balance"] = receiver_balance
-                    if founder_balance != founder_node["Balance"]:
+                    receiver_node = net_topo.get_node_dict(rid)
+                    if founder_balance != founder_node["Balance"] or receiver_balance != receiver_node["Balance"]:
                         founder_node["Balance"] = founder_balance
+                        receiver_node["Balance"] = receiver_balance
+                        update_data = {
+                            fid: {"Balance": founder_balance},
+                            rid: {"Balance": receiver_balance}
+                        }
                         message = MessageMake.make_sync_graph_msg(
                             "update_node_data",
-                            channel_founder,
+                            [channel_founder, channel_receiver],
                             source=channel_founder,
                             asset_type=asset_type,
-                            node=founder_node,
-                            broadcast=True,
-                            excepts=[fid, rid]
-                        )
-                        self.sync_channel_route_to_peer(message)
-                    if receiver_router_graph._graph.has_node(fid):
-                        receiver_router_graph._graph.nodes[fid]["Balance"] = founder_balance
-                    if receiver_balance != receiver_node["Balance"]:
-                        receiver_node["Balance"] = receiver_balance
-                        message = MessageMake.make_sync_graph_msg(
-                            "update_node_data",
-                            channel_receiver,
-                            source=channel_receiver,
-                            asset_type=asset_type,
-                            node=receiver_node,
+                            node=update_data,
                             broadcast=True,
                             excepts=[fid, rid]
                         )
                         self.sync_channel_route_to_peer(message)
                 elif msg_type == "DeleteChannel":
-                    if founder_router_graph.has_edge(fid, rid):
-                        founder_router_graph.remove_edge(fid, rid)
+                    result = net_topo.remove_edge(fid, rid)
+                    if result:
                         message = MessageMake.make_sync_graph_msg(
                             "remove_single_edge",
-                            channel_founder,
+                            [channel_founder, channel_receiver],
                             broadcast=True,
                             asset_type=asset_type,
                             source=channel_founder,
@@ -220,24 +199,10 @@ class Gateway:
                             excepts=[fid, rid]
                         )
                         self.sync_channel_route_to_peer(message)
-                    if receiver_router_graph.has_edge(fid, rid):
-                        receiver_router_graph.remove_edge(fid, rid)
-                        message = MessageMake.make_sync_graph_msg(
-                            "remove_single_edge",
-                            channel_receiver,
-                            broadcast=True,
-                            asset_type=asset_type,
-                            source=channel_receiver,
-                            target=channel_founder,
-                            excepts=[fid, rid]
-                        )
-                        self.sync_channel_route_to_peer(message)
             else:
-                channel_peer = utils.select_channel_peer(channel_founder, channel_receiver, self.wallets)
-                channel_source = channel_founder if channel_peer == channel_receiver else channel_receiver
+                channel_peer, channel_source = utils.select_channel_peer_source(channel_founder, channel_receiver)
                 sid = utils.get_public_key(channel_source)
                 tid = utils.get_public_key(channel_peer)
-                router_graph = self.wallets.get(utils.get_public_key(channel_source)).assets.get(asset_type).router_graph
                 if msg_type == "AddChannel":
                     message = MessageMake.make_sync_graph_msg(
                         "add_whole_graph",
@@ -247,7 +212,7 @@ class Gateway:
                         # source=channel_peer,
                         # target=channel_source,
                         asset_type=asset_type,
-                        route_graph=router_graph,
+                        route_graph=net_topo,
                         broadcast=True,
                         excepts=[sid, tid]
                     )
@@ -256,9 +221,9 @@ class Gateway:
                 elif msg_type == "UpdateChannel":
                     source_balance = data["MessageBody"]["Balance"][channel_source][asset_type]
                     peer_balance = data["MessageBody"]["Balance"][channel_peer][asset_type]
-                    source_node = router_graph._graph.nodes(sid)
-                    if router_graph._graph.has_node(tid):
-                        router_graph._graph.nodes[tid]["Balance"] = peer_balance
+                    source_node = net_topo.get_node_dict(nid)
+                    # if router_graph._graph.has_node(tid):
+                    #     router_graph._graph.nodes[tid]["Balance"] = peer_balance
                     if source_node["Balance"] != source_balance:
                         source_node["Balance"] = source_balance
                         message = MessageMake.make_sync_graph_msg(
@@ -272,17 +237,18 @@ class Gateway:
                         )
                         self.sync_channel_route_to_peer(message)
                 elif msg_type == "DeleteChannel":
-                    router_graph.remove_edge(sid, tid)
-                    message = MessageMake.make_sync_graph_msg(
-                        "remove_single_edge",
-                        channel_source,
-                        broadcast=True,
-                        asset_type=asset_type,
-                        source=channel_source,
-                        target=channel_peer,
-                        excepts=[sid, tid]
-                    )
-                    self.sync_channel_route_to_peer(message)
+                    result = net_topo.remove_edge(sid, tid)
+                    if result:
+                        message = MessageMake.make_sync_graph_msg(
+                            "remove_single_edge",
+                            channel_source,
+                            broadcast=True,
+                            asset_type=asset_type,
+                            source=channel_source,
+                            target=channel_peer,
+                            excepts=[sid, tid]
+                        )
+                        self.sync_channel_route_to_peer(message)
 
     def handle_wallet_response(self, method, response):
         if method == "SyncWallet":
@@ -301,25 +267,35 @@ class Gateway:
         :param except_peer: str type (except peer url)
         """
         asset_type = message.get("AssetType")
-        # the caller is neighbors(passon sync msg situation)
-        if message.get("Receiver"):
-            pk = utils.get_public_key(message["Receiver"])
-            router_graph = self.wallets.get(pk).assets.get(asset_type).router_graph
-            if message.get("SyncType") == "add_whole_graph":
-                message["MessageBody"] = router_graph.to_json()
-        # the caller is source(first caller)
+        net_topo = self.net_topos[asset_type]
+        sender = message.get("Sender")
+        if message.get("SyncType") == "add_whole_graph":
+            message["MessageBody"] = net_topo.to_json()
+        # wallets in the same gateway first call(call in handle_wallet_request)
+        if type(sender) == list:
+            uid = utils.get_public_key(sender[0])
+            vid = utils.get_public_key(sender[1])
+            set_u_neighbors = net_topo.get_neighbors_set(uid)
+            set_v_neighbors = net_topo.get_neighbors_set(vid)
+            set_neighbors = set_u_neighbors.union(set_v_neighbors)
+            set_neighbors.remove(uid)
+            set_neighbors.remove(vid)
         else:
-            pk = utils.get_public_key(message["Source"])
-            router_graph = self.wallets.get(pk).assets.get(asset_type).router_graph
-        excepts = message["Excepts"]
-        set_excepts = set(excepts)
-        set_neighbors = set(router_graph._graph.neighbors(router_graph.nid))
+            # sync_channel msg passon
+            nid = message.get("Receiver")
+            # wallet in diffrent gateways first call(call in handle_wallet_request)
+            if not nid:
+                nid = message.get("Source")
+            nid = utils.get_public_key(nid)
+            set_neighbors = net_topo.get_neighbors_set(nid)
+        set_excepts = set(message["Excepts"])
         union_excepts = set_excepts.union(set_neighbors)
-        union_excepts.add(router_graph.nid)
+        if message.get("Receiver"):
+            union_excepts.add(utils.get_public_key(message["Receiver"]))
         print("set_neighbors: ",set_neighbors, "set_excepts: ", set_excepts)
         for ner in set_neighbors:
-            if ner not in set_excepts:
-                receiver = ner + "@" + router_graph._graph.nodes[ner]["Ip"]
+            if ner not in set_excepts.union(net_topo.nids):
+                receiver = ner + "@" + net_topo.get_node_dict(ner)["Ip"]
                 print("===============sync to the neighbors: {}=============".format(ner))
                 message["Excepts"] = list(union_excepts)
                 message["Receiver"] = receiver
