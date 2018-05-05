@@ -30,9 +30,14 @@ from TX.interface import *
 from wallet.ChannelManagement import channel as ch
 from model.base_enum import EnumChannelState
 from wallet.Interface.gate_way import send_message
-from wallet.utils import sign
+from wallet.utils import sign,\
+    check_onchain_balance, \
+    check_max_deposit,\
+    check_mix_deposit,\
+    check_deposit
 from TX.utils import blockheight_to_script
-from wallet.BlockChain.monior import register_block, register_monitor
+from wallet.BlockChain.monior import register_block, \
+    register_monitor
 from model import APIChannel
 from log import LOG
 import json
@@ -82,7 +87,17 @@ class RegisterMessage(Message):
         LOG.info("Handle RegisterMessage: {}".format(json.dumps(self.message)))
         verify, error = self.verify()
         if not verify:
-            return error
+            message = {
+                "MessageType": "RegisterChannelFail",
+                "Sender": self.receiver,
+                "Receiver": self.sender,
+                "ChannelName": self.channel_name,
+                "MessageBody": {
+                    "OrigianlMessage": self.message
+                },
+                "Error": error
+            }
+            Message.send(message)
         founder_pubkey, founder_ip = self.sender.split("@")
         partner_pubkey, partner_ip = self.receiver.split("@")
         founder_address = pubkey_to_address(founder_pubkey)
@@ -101,10 +116,45 @@ class RegisterMessage(Message):
         if self.sender == self.receiver:
             return False, "Not Support Sender is Receiver"
         if self.receiver != self.wallet.url:
-            return False, "The Endpoint is Not Me"
+            return False, "The Endpoint is Not Me, I am {}".format(self.wallet.url)
+        state, error = self.check_balance()
+        if not state:
+            return state, error
+        state, error = self.check_depoist()
+        if not state:
+            return state, error
+
         return True, None
 
+    def check_depoist(self):
+        state, de = check_deposit(self.deposit)
+        if not state:
+            if isinstance(de,float):
+                return False,"Deposit should be larger than 0 , but give {}".format(str(de))
+            else:
+                return False,"Deposit Formate error {}".format(de)
 
+        state, maxd = check_max_deposit(self.deposit)
+        if not state:
+            if isinstance(maxd,float):
+                return False, "Deposit is larger than the max, max is {}".format(str(maxd))
+            else:
+                return False, "Max deposit configure error {}".format(maxd)
+
+        state , mixd = check_mix_deposit(self.deposit)
+        if not state:
+            if isinstance(mixd,float):
+                return False, "Deposit is less than the min, min is {}".format(str(mixd))
+            else:
+                return False, "Mix deposit configure error {}".format(mixd)
+
+        return True,None
+
+    def check_balance(self):
+        if check_onchain_balance(self.wallet.pubkey, self.asset_type, self.deposit):
+            return True, None
+        else:
+            return False, "No Balance OnChain to support the deposit"
 
 
 class TestMessage(Message):
@@ -310,6 +360,40 @@ class FounderMessage(TransactionMessage):
             return False, "The Endpoint is Not Me"
         return True, None
 
+    def create_verify_tx(self):
+        if self.role_index == 0:
+            walletfounder = {
+                "pubkey": self.receiver_pubkey,
+                "deposit": float(self.deposit)
+            }
+            walletpartner = {
+                "pubkey": self.sender_pubkey,
+                "deposit": float(self.deposit)
+            }
+            Txfounder = createFundingTx(walletpartner,walletfounder)
+        elif self.role_index == 1:
+            walletfounder = {
+                "pubkey": self.sender_pubkey,
+                "deposit": float(self.deposit)
+            }
+            walletpartner = {
+                "pubkey": self.receiver_pubkey,
+                "deposit": float(self.deposit)
+            }
+            Txfounder = createFundingTx(walletpartner, walletfounder)
+
+        commitment = createCTX(Txfounder.get("addressFunding"), self.deposit, self.deposit, self.sender_pubkey,
+                           self.receiver_pubkey, Txfounder.get("scriptFunding"))
+
+        address_self = pubkey_to_address(self.sender_pubkey)
+
+        revocabledelivery = createRDTX(commitment.get("addressRSMC"), address_self, self.deposit, commitment.get("txId"),
+                                   commitment.get("scriptRSMC"))
+        return {"Founder":Txfounder,
+                "CTx":commitment,
+                "RTx":revocabledelivery}
+
+
     def send_responses(self, role_index, error = None):
         founder_sig = {"txDataSign": self.sign_message(self.founder.get("txData")),
                         "originalData": self.founder}
@@ -419,7 +503,8 @@ class FounderResponsesMessage(TransactionMessage):
         ch.Channel.channel(self.channel_name).delete_channel()
         #ToDo  Just walk around
         if self.comments == "retry":
-            ch.create_channel(self.wallet.url, self.sender, self.asset_type,self.deposit, comments=self.comments)
+            ch.create_channel(self.wallet.url, self.sender, self.asset_type,self.deposit, comments=self.comments,
+                              channel_name=self.channel_name)
 
     def send_founder_raw_transaction(self):
         signdata = self.founder.get("txDataSign")
@@ -463,6 +548,8 @@ class FounderResponsesMessage(TransactionMessage):
         if self.receiver != self.wallet.url:
             return False, "The Endpoint is Not Me"
         return True, None
+
+
 
 
 class RsmcMessage(TransactionMessage):

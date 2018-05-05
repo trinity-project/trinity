@@ -137,6 +137,38 @@ def check_onchain_balance(pubkey,asset_type,depoist):
         return False
 
 
+def check_max_deposit(deposit):
+    maxd = Configure.get("CommitMaxDeposit")
+    if maxd is None or maxd.upper() == "NULL":
+        return True, None
+    else:
+        try:
+            maxd = float(maxd)
+        except ValueError as e:
+            return False, str(e)
+
+        return float(deposit) <= maxd, maxd
+
+
+def check_mix_deposit(deposit):
+    mixd = Configure.get("CommitMinDeposit")
+    if mixd is None or float(mixd) == 0:
+        return True, None
+    else:
+        try:
+            mixd = float(mixd)
+        except ValueError as e:
+            return False, str(e)
+        return float(deposit) >= mixd, mixd
+
+
+def check_deposit(deposit):
+    try:
+        de = float(deposit)
+    except ValueError as e:
+        return False, str(e)
+    return de > 0, de
+
 def check_partner(wallet, partner):
     """
 
