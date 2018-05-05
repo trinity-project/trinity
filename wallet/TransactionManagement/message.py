@@ -360,6 +360,40 @@ class FounderMessage(TransactionMessage):
             return False, "The Endpoint is Not Me"
         return True, None
 
+    def create_verify_tx(self):
+        if self.role_index == 0:
+            walletfounder = {
+                "pubkey": self.receiver_pubkey,
+                "deposit": float(self.deposit)
+            }
+            walletpartner = {
+                "pubkey": self.sender_pubkey,
+                "deposit": float(self.deposit)
+            }
+            Txfounder = createFundingTx(walletpartner,walletfounder)
+        elif self.role_index == 1:
+            walletfounder = {
+                "pubkey": self.sender_pubkey,
+                "deposit": float(self.deposit)
+            }
+            walletpartner = {
+                "pubkey": self.receiver_pubkey,
+                "deposit": float(self.deposit)
+            }
+            Txfounder = createFundingTx(walletpartner, walletfounder)
+
+        commitment = createCTX(Txfounder.get("addressFunding"), self.deposit, self.deposit, self.sender_pubkey,
+                           self.receiver_pubkey, Txfounder.get("scriptFunding"))
+
+        address_self = pubkey_to_address(self.sender_pubkey)
+
+        revocabledelivery = createRDTX(commitment.get("addressRSMC"), address_self, self.deposit, commitment.get("txId"),
+                                   commitment.get("scriptRSMC"))
+        return {"Founder":Txfounder,
+                "CTx":commitment,
+                "RTx":revocabledelivery}
+
+
     def send_responses(self, role_index, error = None):
         founder_sig = {"txDataSign": self.sign_message(self.founder.get("txData")),
                         "originalData": self.founder}
@@ -514,6 +548,8 @@ class FounderResponsesMessage(TransactionMessage):
         if self.receiver != self.wallet.url:
             return False, "The Endpoint is Not Me"
         return True, None
+
+
 
 
 class RsmcMessage(TransactionMessage):
