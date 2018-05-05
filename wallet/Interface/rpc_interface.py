@@ -164,6 +164,9 @@ class RpcInteraceApi(object):
         elif method == "FunderTransaction":
             return transaction.funder_trans(params)
 
+        elif method == "FunderCreate":
+            return transaction.funder_create(params)
+
         elif method == "RSMCTransaction":
             return transaction.rsmc_trans(params)
 

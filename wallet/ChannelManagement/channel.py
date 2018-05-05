@@ -101,7 +101,7 @@ class Channel(object):
         md5s.update(str(time.time()).encode())
         return md5s.hexdigest().upper()
 
-    def create(self, asset_type, deposit, cli=True, comments= None):
+    def create(self, asset_type, deposit, cli=True, comments= None, channel_name = None):
         #if Channel.get_channel(self.founder_pubkey, self.partner_pubkey):
             #raise ChannelExist
         self.start_time = time.time()
@@ -111,7 +111,7 @@ class Channel(object):
         subitem.setdefault(asset_type, deposit)
         self.deposit[self.founder_pubkey] = subitem
         self.deposit[self.partner_pubkey] = subitem
-        self.channel_name = self._init_channle_name()
+        self.channel_name = self._init_channle_name() if not channel_name else channel_name
         print(self.channel_name)
 
         result = APIChannel.add_channel(self.channel_name,self.founder, self.partner,
@@ -209,8 +209,8 @@ class Channel(object):
 
 
 
-def create_channel(founder, partner, asset_type, depoist:int, cli=True, comments = None):
-    return Channel(founder, partner).create(asset_type, depoist, cli, comments)
+def create_channel(founder, partner, asset_type, depoist:float, cli=True, comments = None, channel_name = None):
+    return Channel(founder, partner).create(asset_type, depoist, cli, comments, channel_name)
 
 
 def filter_channel_via_address(address1, address2, state=None):

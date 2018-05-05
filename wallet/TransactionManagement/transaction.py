@@ -235,6 +235,28 @@ def funder_trans(params):
 
     return {"C_TX":C_tx,"R_TX":RD_tx}
 
+
+def funder_create(params):
+        walletfounder = {
+            "pubkey":params[0],
+            "deposit":float(params[2])
+    }
+        walletpartner = {
+            "pubkey":params[1],
+            "deposit":float(params[2])
+    }
+
+        founder = createFundingTx(walletpartner, walletfounder)
+
+        commitment = createCTX(founder.get("addressFunding"), float(params[2]), float(params[2]), params[0],
+                               params[1], founder.get("scriptFunding"))
+
+        address_self = pubkeyToAddress(params[0])
+
+        revocabledelivery = createRDTX(commitment.get("addressRSMC"),address_self, float(params[2]), commitment.get("txId"),
+                                       commitment.get("scriptRSMC"))
+        return {"Founder":founder,"C_TX":commitment,"R_TX":revocabledelivery}
+
 def rsmc_trans(params):
     """
 
