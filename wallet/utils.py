@@ -139,7 +139,7 @@ def check_onchain_balance(pubkey,asset_type,depoist):
 
 def check_max_deposit(deposit):
     maxd = Configure.get("CommitMaxDeposit")
-    if maxd is None or maxd.upper() == "NULL":
+    if maxd is None or str(maxd).upper() == "NULL":
         return True, None
     else:
         try:

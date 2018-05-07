@@ -223,6 +223,20 @@ def get_channel_via_address(address):
     return
 
 
+def get_channel_via_name(params):
+    print ('enter get_channel_via_name', params)
+    if params:
+        print('params is ', params)
+        channel_set = APIChannel.batch_query_channel(filters=params[0]).get('content')
+        print('channel_set is ', channel_set)
+        result=[]
+        for channel in channel_set:
+            result.append({k:v for k, v in channel.__dict__.items() if k in APIChannel.table.required_item})
+        print('result is ', result)
+        return result
+    return None
+
+
 def chose_channel(channels, publick_key, tx_count, asset_type):
     for ch in channels:
         balance = ch.balance

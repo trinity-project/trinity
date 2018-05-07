@@ -629,6 +629,35 @@ class RsmcMessage(TransactionMessage):
         :param comments:
         :return:
         """
+        message = RsmcMessage.generateRSMC(channel_name, wallet, sender_pubkey, receiver_pubkey, value, partner_ip,
+                                           gateway_ip, tx_nonce, asset_type, cli, router, next_router, role_index, comments)
+        LOG.info("Send RsmcMessage role index 1 message  ")
+        RsmcMessage.send(message)
+
+
+    @staticmethod
+    def generateRSMC(channel_name, wallet, sender_pubkey, receiver_pubkey, value, partner_ip, gateway_ip ,
+               tx_nonce, asset_type="TNC",cli =False,router = None, next_router=None,
+               role_index=0, comments=None):
+        """
+
+        :param channel_name:
+        :param wallet:
+        :param sender_pubkey:
+        :param receiver_pubkey:
+        :param value:
+        :param partner_ip:
+        :param gateway_ip:
+        :param tx_nonce:
+        :param asset_type:
+        :param breachremedy:
+        :param cli:
+        :param router:
+        :param next_router:
+        :param role_index:
+        :param comments:
+        :return:
+        """
 
         transaction = TrinityTransaction(channel_name, wallet)
         founder = transaction.get_founder()
@@ -657,9 +686,9 @@ class RsmcMessage(TransactionMessage):
                             "Receiver":"{}@{}".format(receiver_pubkey,partner_ip),
                             "ChannelName":channel_name,
                             "Error": "No Balance"
-                           }
-                Message.send(message)
-                return
+                            }
+                return message
+
         if role_index in [0,2]:
             sender_balance = float(balance_value) - float(value)
             receiver_balance = float(receiver_balance_value) + float(value)
@@ -728,8 +757,8 @@ class RsmcMessage(TransactionMessage):
                            "Comments":comments
                            }
                        }
-        LOG.info("Send RsmcMessage role index 1 message  ")
-        RsmcMessage.send(message)
+
+        return message
 
 
     def _check_balance(self, balance):

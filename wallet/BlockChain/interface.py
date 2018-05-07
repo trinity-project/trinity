@@ -26,7 +26,7 @@ from TX.utils import pubkeyToAddressHash
 from wallet.configure import Configure
 AssetType=Configure["AssetType"]
 
-TestNetUrl = "http://47.88.35.235:20332"
+TestNetUrl = Configure['BlockChain']['NeoTestNetUrl']
 
 
 def get_block_count():
