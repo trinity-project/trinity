@@ -161,7 +161,8 @@ class Gateway:
                         asset_type=asset_type,
                         route_graph=net_topo,
                         broadcast=True,
-                        excepts=[fid, rid]
+                        # excepts=[fid, rid]
+                        excepts = list(net_topo.nids)
                     )
                     self.sync_channel_route_to_peer(message_founder)
                 elif msg_type == "UpdateChannel":
@@ -183,7 +184,8 @@ class Gateway:
                             asset_type=asset_type,
                             node=update_data,
                             broadcast=True,
-                            excepts=[fid, rid]
+                            # excepts=[fid, rid]
+                            excepts = list(net_topo.nids)
                         )
                         self.sync_channel_route_to_peer(message)
                 elif msg_type == "DeleteChannel":
@@ -196,7 +198,8 @@ class Gateway:
                             asset_type=asset_type,
                             source=channel_founder,
                             target=channel_receiver,
-                            excepts=[fid, rid]
+                            # excepts=[fid, rid]
+                            excepts = list(net_topo.nids)
                         )
                         self.sync_channel_route_to_peer(message)
             else:
@@ -214,7 +217,8 @@ class Gateway:
                         asset_type=asset_type,
                         route_graph=net_topo,
                         broadcast=True,
-                        excepts=[sid, tid]
+                        # excepts=[sid, tid]
+                        excepts = [tid] + list(net_topo.nids)
                     )
                     message["Receiver"] = channel_peer
                     Network.send_msg_with_tcp(channel_peer, message)
@@ -233,7 +237,8 @@ class Gateway:
                             asset_type=asset_type,
                             node=source_node,
                             broadcast=True,
-                            excepts=[sid, tid]
+                            # excepts=[sid, tid]
+                            excepts = [tid] + list(net_topo.nids)
                         )
                         self.sync_channel_route_to_peer(message)
                 elif msg_type == "DeleteChannel":
@@ -246,7 +251,8 @@ class Gateway:
                             asset_type=asset_type,
                             source=channel_source,
                             target=channel_peer,
-                            excepts=[sid, tid]
+                            # excepts=[sid, tid]
+                            excepts = [tid] + list(net_topo.nids)
                         )
                         self.sync_channel_route_to_peer(message)
 
@@ -272,29 +278,35 @@ class Gateway:
         if message.get("SyncType") == "add_whole_graph":
             message["MessageBody"] = net_topo.to_json()
         # wallets in the same gateway first call(call in handle_wallet_request)
-        if type(sender) == list:
-            uid = utils.get_public_key(sender[0])
-            vid = utils.get_public_key(sender[1])
-            set_u_neighbors = net_topo.get_neighbors_set(uid)
-            set_v_neighbors = net_topo.get_neighbors_set(vid)
-            set_neighbors = set_u_neighbors.union(set_v_neighbors)
-            set_neighbors.remove(uid)
-            set_neighbors.remove(vid)
-        else:
-            # sync_channel msg passon
-            nid = message.get("Receiver")
-            # wallet in diffrent gateways first call(call in handle_wallet_request)
-            if not nid:
-                nid = message.get("Source")
-            nid = utils.get_public_key(nid)
-            set_neighbors = net_topo.get_neighbors_set(nid)
-        set_excepts = set(message["Excepts"])
+        set_neighbors = set()
+        for nid in net_topo.nids:
+            set_nid_neighbors = net_topo.get_neighbors_set(nid)
+            set_neighbors = set_neighbors.union(set_nid_neighbors)
+        set_neighbors = set_neighbors.difference(net_topo.nids)
+        # if type(sender) == list:
+        #     uid = utils.get_public_key(sender[0])
+        #     vid = utils.get_public_key(sender[1])
+        #     set_u_neighbors = net_topo.get_neighbors_set(uid)
+        #     set_v_neighbors = net_topo.get_neighbors_set(vid)
+        #     set_neighbors = set_u_neighbors.union(set_v_neighbors)
+        #     set_neighbors.remove(uid)
+        #     set_neighbors.remove(vid)
+        # else:
+        #     # sync_channel msg passon
+        #     nid = message.get("Receiver")
+        #     # wallet in diffrent gateways first call(call in handle_wallet_request)
+        #     if not nid:
+        #         nid = message.get("Source")
+        #     nid = utils.get_public_key(nid)
+        #     set_neighbors = net_topo.get_neighbors_set(nid)
+        set_excepts = set(message.get("Excepts"))
+        set_excepts = set_excepts.union(net_topo.nids)
         union_excepts = set_excepts.union(set_neighbors)
         if message.get("Receiver"):
             union_excepts.add(utils.get_public_key(message["Receiver"]))
         print("set_neighbors: ",set_neighbors, "set_excepts: ", set_excepts)
         for ner in set_neighbors:
-            if ner not in set_excepts.union(net_topo.nids):
+            if ner not in set_excepts:
                 receiver = ner + "@" + net_topo.get_node_dict(ner)["Ip"]
                 print("===============sync to the neighbors: {}=============".format(ner))
                 message["Excepts"] = list(union_excepts)

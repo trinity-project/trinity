@@ -177,8 +177,10 @@ class Nettopo:
         """
         :param data: type dict
         """
-        sender_nid = utils.get_public_key(data["Sender"])
-        receiver_nid = utils.get_public_key(data["Receiver"])
+        # sender_nid = utils.get_public_key(data["Sender"])
+        # receiver_nid = utils.get_public_key(data["Receiver"])
+        sender_nid = utils.get_public_key(data["Source"])
+        receiver_nid = utils.get_public_key(data["Target"])
         sync_graph = self.to_graph(data["MessageBody"])
         self._graph = nx.algorithms.operators.binary.compose(self._graph, sync_graph)
         if not self._graph.has_edge(sender_nid, receiver_nid):

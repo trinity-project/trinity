@@ -268,6 +268,17 @@ class Gateway():
             channel_founder = data["MessageBody"]["Founder"]
             channel_receiver = data["MessageBody"]["Receiver"]
             channel_peer = channel_receiver if channel_founder == self_url else channel_founder
+            if utils.check_is_spv(channel_peer):
+                if msg_type == "AddChannel":
+                    peer_pk = utils.get_public_key(channel_peer)
+                    connection = self.ws_pk_dict.get(peer_pk)
+                    if connection:
+                        Network.send_msg_with_wsocket(connection, data)
+                    else:
+                        wst_logger.info("the spv is disconnected")
+                    route_graph = node["route_graph"]
+                    route_graph.node["SPVList"].append(peer_pk)
+                return
             if msg_type == "AddChannel":
                 route_graph = node["route_graph"]
                 # only channel receiver as the broadcast source
