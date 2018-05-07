@@ -22,10 +22,6 @@ class Nep6Wallet(object):
     Version = "1.0"
     Scrypt={"n":16384,"r":8,"p":8}
 
-
-
-
-
     def __init__(self, path, passwordKey, create):
         """
 

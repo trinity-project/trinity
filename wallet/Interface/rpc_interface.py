@@ -26,8 +26,8 @@ import json
 from json.decoder import JSONDecodeError
 from klein import Klein
 from wallet.Interface.rpc_utils import json_response, cors_header
-from wallet.ChannelManagement import channel
-from wallet.TransactionManagement import transaction
+from wallet.ChannelManagement.channel import get_channel_via_name, close_channel
+from wallet.TransactionManagement import transaction, message
 from log import LOG
 from wallet.configure import Configure
 from wallet.BlockChain.interface import get_balance
@@ -179,3 +179,24 @@ class RpcInteraceApi(object):
             return {"MessageType":"SyncWallet",
                "MessageBody": wallet_info
                }
+
+        elif method == 'GetChannelState':
+            return {'MessageType': 'GetChannelState',
+                    'MessageBody': get_channel_via_name(params)}
+
+        elif method == 'CloseChannel':
+            class TestWallet():
+                def __init__(self):
+                    self.url = params[1]
+            close_channel(params[0], TestWallet())
+
+        elif method == 'GenerateRSMCMessage':
+            tx_nonce = transaction.TrinityTransaction(params[0], None).get_latest_nonceid()
+            try:
+                row_index = params[6]
+            except:
+                row_index = 0
+
+            return message.RsmcMessage.create(params[0], None, params[1], params[3], params[5], params[4], params[2] ,
+                                                    tx_nonce, asset_type="TNC",cli =False,router = None, next_router=None,
+                                                    role_index=row_index, comments=None)

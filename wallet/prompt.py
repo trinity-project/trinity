@@ -42,6 +42,7 @@ from wallet.TransactionManagement.payment import Payment
 import requests
 import qrcode_terminal
 from wallet.BlockChain.interface import get_balance
+from configure import Configure
 
 
 GateWayIP = Configure.get("GatewayIP")
@@ -175,7 +176,7 @@ class UserPromptInterface(PromptInterface):
                 "params": ["AGgZna4kbTXPm16yYZyG6RyrQz2Sqotno6",self.Wallet.address],
                 "id": 1
                 }
-        result = requests.post(url="http://47.88.35.235:21332",json=request)
+        result = requests.post(url=Configure['BlockChain']['NeoUrl'], json=request)
         txid = result.json().get("result")
         if txid:
             print(txid)
