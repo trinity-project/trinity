@@ -43,6 +43,41 @@ from log import LOG
 import json
 from wallet.TransactionManagement.payment import Payment
 
+
+class TrinityNumber(object):
+    def __init__(self, value: int or float):
+        self.integer_part = None
+        self.decimal_part = None
+        self.precision = 8
+        self.precision_coef = 100000000   # pow(10, self.precision)
+
+        if isinstance(value, int):
+            self.integer_part = value
+            self.decimal_part = 0
+            self.decimal_length = 0
+        elif isinstance(value, float):
+            value_list = '{:8.8f}'.format(value).strip().split('.')
+
+            if 2 == len(value_list):
+                decimal_part = value_list[1]
+                if 8 < len(decimal_part):
+                    decimal_part = decimal_part[0:self.precision]
+                self.integer_part
+            else: # should never run here
+                decimal_part = 0
+
+            self.integer_part = int(value_list[0])
+            self.decimal_part = int(decimal_part)
+            pass
+        else: # should never run here
+            raise Exception('Should never run here!!! Error number<{}>, terminate the trade.'.format(value))
+
+    @staticmethod
+    def wraper_decimal_part(decimal_part:int):
+        decimal = str(decimal_part)
+        return '0' * (8-len(decimal)) + decimal;
+
+
 class Message(object):
     """
 
@@ -689,19 +724,17 @@ class RsmcMessage(TransactionMessage):
         else:
             balance_value = 0
             receiver_balance_value = 0
-        
-        if role_index in [0,2]:
-            check_blance_ok = (0 < value <= balance_value)
-            sender_balance = float(balance_value) - float(value)
-            receiver_balance = float(receiver_balance_value) + float(value)
-        elif role_index in [1,3]:
-            check_blance_ok = (0 < value <= receiver_balance_value)
-            sender_balance = float(balance_value) + float(value)
-            receiver_balance = float(receiver_balance_value) - float(value)
-        else:
-            check_blance_ok = False
 
-        if not check_blance_ok:
+        if role_index in [0,2]:
+            check_balance_ok, sender_balance, receiver_balance, value = \
+                RsmcMessage._calculate_and_check_balance(balance_value, receiver_balance_value, value)
+        elif role_index in [1,3]:
+            check_balance_ok, receiver_balance, sender_balance, value = \
+                RsmcMessage._calculate_and_check_balance(receiver_balance_value, balance_value, value)
+        else:
+            check_balance_ok = False
+
+        if not check_balance_ok:
             return CreateTranscation.ack(channel_name, receiver_pubkey, partner_ip, "No Balance or Exceed the balance", cli)
         elif 'pending' == tx_state:
             return CreateTranscation.ack(channel_name, receiver_pubkey, partner_ip, "TX is pending", cli)
@@ -774,6 +807,46 @@ class RsmcMessage(TransactionMessage):
 
     def _check_balance(self, balance):
         pass
+
+    @staticmethod
+    def _calculate_and_check_balance(sender_balance, receiver_balance, amount):
+        try:
+            if not (0 < amount <= sender_balance):
+                return False, sender_balance, receiver_balance, amount
+
+            # To avoid the precision problems, here we use the class to do some calculation
+            # Note: if the value exceed the default precision, the value will be re-organized
+            total_sender_balance = TrinityNumber(sender_balance)
+            total_receiver_balance = TrinityNumber(receiver_balance)
+            pay_or_get = TrinityNumber(amount)
+
+            sender_balance_list = []
+            if pay_or_get.decimal_part > total_sender_balance.decimal_part:
+                sender_balance_list.append(str(total_sender_balance.integer_part-pay_or_get.integer_part - 1))
+                sender_balance_list.append(TrinityNumber.wraper_decimal_part(total_sender_balance.precision_coef + total_sender_balance.decimal_part - pay_or_get.decimal_part))
+            else:
+                sender_balance_list.append(str(total_sender_balance.integer_part-pay_or_get.integer_part))
+                sender_balance_list.append(TrinityNumber.wraper_decimal_part(total_sender_balance.decimal_part - pay_or_get.decimal_part))
+
+            sender_balance_after_payment = float('.'.join(sender_balance_list))
+
+            receiver_balance_list = []
+            judgement_balance = total_receiver_balance.decimal_part + pay_or_get.decimal_part
+            if judgement_balance >= total_receiver_balance.precision_coef:
+                receiver_balance_list.append(str(total_receiver_balance.integer_part + pay_or_get.integer_part + 1))
+                receiver_balance_list.append(TrinityNumber.wraper_decimal_part(judgement_balance - total_receiver_balance.precision_coef))
+            else:
+                receiver_balance_list.append(str(total_receiver_balance.integer_part + pay_or_get.integer_part))
+                receiver_balance_list.append(TrinityNumber.wraper_decimal_part(judgement_balance))
+
+            receiver_balance_after_payment = float('.'.join(receiver_balance_list))
+            payment_mount = float('.'.join([str(pay_or_get.integer_part), TrinityNumber.wraper_decimal_part(pay_or_get.decimal_part)]))
+
+            return True, sender_balance_after_payment, receiver_balance_after_payment, payment_mount
+        except Exception as exp_info:
+            LOG.exception('Exception occured. Exception Info: {}'.format(exp_info))
+
+        return False, sender_balance, receiver_balance, amount
 
     def verify(self):
         return True, None
