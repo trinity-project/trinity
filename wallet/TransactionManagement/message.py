@@ -194,6 +194,18 @@ class CreateTranscation(Message):
         RsmcMessage.create(self.channel_name, self.wallet, self.wallet.pubkey,
                            self.receiver_pubkey, self.value, self.receiver_ip, self.gateway_ip,str(tx_nonce))
 
+    @staticmethod
+    def ack(channel_name, receiver_pubkey, receiver_ip, error_code, cli = False):
+        if cli:
+            print (error_code)
+        else:
+            return {
+                "MessageType":"CreateTransactionACK",
+                "Receiver":"{}@{}".format(receiver_pubkey,receiver_ip),
+                "ChannelName":channel_name,
+                "Error": error_code
+            }
+
 
 class TransactionMessage(Message):
     """
@@ -677,24 +689,23 @@ class RsmcMessage(TransactionMessage):
         else:
             balance_value = 0
             receiver_balance_value = 0
-
-        if float(balance_value) < value or tx_state == "pending":
-            if cli:
-                print("No Balance")
-            else:
-                message = { "MessageType":"CreateTransactionACK",
-                            "Receiver":"{}@{}".format(receiver_pubkey,partner_ip),
-                            "ChannelName":channel_name,
-                            "Error": "No Balance"
-                            }
-                return message
-
+        
         if role_index in [0,2]:
+            check_blance_ok = (0 < value <= balance_value)
             sender_balance = float(balance_value) - float(value)
             receiver_balance = float(receiver_balance_value) + float(value)
         elif role_index in [1,3]:
+            check_blance_ok = (0 < value <= receiver_balance_value)
             sender_balance = float(balance_value) + float(value)
             receiver_balance = float(receiver_balance_value) - float(value)
+        else:
+            check_blance_ok = False
+
+        if not check_blance_ok:
+            return CreateTranscation.ack(channel_name, receiver_pubkey, partner_ip, "No Balance or Exceed the balance", cli)
+        elif 'pending' == tx_state:
+            return CreateTranscation.ack(channel_name, receiver_pubkey, partner_ip, "TX is pending", cli)
+
         message = {}
         if role_index == 0 or role_index == 1:
             commitment = createCTX(founder["originalData"]["addressFunding"], sender_balance, receiver_balance,
