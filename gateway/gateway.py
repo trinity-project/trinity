@@ -44,7 +44,7 @@ class Gateway:
         spv_pk = utils.get_public_key(sender)
         self.ws_pk_dict[spv_pk] = websocket
         # first check the receiver is self or not
-        if msg_type in ["RegisterChannel", "PaymentLink"]:
+        if msg_type == "PaymentLink":
             if not utils.check_is_owned_wallet(receiver): return
             wallet_addr = utils.get_wallet_addr(receiver, asset_type, self.net_topos)
             Network.send_msg_with_jsonrpc("TransactionMessage", wallet_addr, data)
@@ -101,7 +101,6 @@ class Gateway:
                         print("!!!!!! the receiver and asset_type not provied in the sync channel msg !!!!!!")
                         return
                 
-
     def handle_wallet_request(self, method, params):
         data = params
         if type(data) == str:
@@ -286,6 +285,9 @@ class Gateway:
         if self.net_topos.get("TNC"):
             message =  MessageMake.make_node_list_msg(self.net_topos["TNC"])
             Network.send_msg_with_wsocket(websocket, message)
+
+    def handle_spv_lost_connection(self, websocket):
+        pass
 
     def sync_channel_route_to_peer(self, message):
         """
