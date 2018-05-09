@@ -49,10 +49,6 @@ GateWayIP = Configure.get("GatewayIP")
 Version = Configure.get("Version")
 
 
-
-
-
-
 class UserPromptInterface(PromptInterface):
     Channel = False
 
