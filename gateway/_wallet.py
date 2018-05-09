@@ -133,7 +133,8 @@ class WalletClient:
         ip = kwargs.get("ip")
         public_key = kwargs.get("public_key")
         if not ip or not public_key:
-            raise Exception("ip and public_key must provide")
+            print("!!!!!! ip and public_key must provide !!!!!! set the wallet ip to 0.0.0.0")
+            ip = "0.0.0.0"
         if clients.get(ip):
             client = clients[ip]
         else:
