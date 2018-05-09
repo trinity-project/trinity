@@ -36,7 +36,7 @@ class Gateway:
 
     def handle_spv_request(self, websocket, strdata):
         data = utils.json_to_dict(strdata)
-        sender = data.get("MessageType")
+        sender = data.get("Sender")
         if not utils.check_is_spv(sender): return
         receiver = data.get("Receiver")
         msg_type = data.get("MessageType")
