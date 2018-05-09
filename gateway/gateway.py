@@ -12,6 +12,7 @@ from glog import tcp_logger, wst_logger
 from config import cg_public_ip_port
 
 node_list = set()
+addr = ("0.0.0.0", 20556)
 node = {
     "wallet_info": None,
     "route_graph": RouterGraph(),
@@ -36,7 +37,7 @@ class Gateway():
     def start(self):
         """ start gateway"""
         Network.create_servers()
-        Network.send_msg_with_jsonrpc("SyncWallet",data={})
+        Network.send_msg_with_jsonrpc("SyncWallet", addr, data={})
         # self.resume_channel_from_db()
         print("###### Trinity Gateway Start Successfully! ######")
         Network.run_servers_forever()
@@ -93,7 +94,7 @@ class Gateway():
                         # not self's wallet address
                         pass
                     else:
-                        Network.send_msg_with_jsonrpc("CreateChannle", data)
+                        Network.send_msg_with_jsonrpc("CreateChannle", addr, data)
 
                 elif msg_type in Message.get_tx_msg_types():
                     self.handle_transaction_message(data)
@@ -141,12 +142,12 @@ class Gateway():
         # build map bettween spv pk_key with websocket connection
         if msg_type == "RegisterChannel":
             # pass the message to wallet to handle
-            Network.send_msg_with_jsonrpc("TransactionMessage", data)
+            Network.send_msg_with_jsonrpc("TransactionMessage", addr, data)
         elif msg_type == "CombinationTransaction":
             pass
         elif msg_type == "PaymentLink":
             # to send to wallet
-            Network.send_msg_with_jsonrpc("TransactionMessage", data)
+            Network.send_msg_with_jsonrpc("TransactionMessage", addr, data)
         elif msg_type in Message.get_tx_msg_types():
             self.handle_transaction_message(data)
         elif msg_type == "GetRouterInfo":
@@ -447,7 +448,7 @@ class Gateway():
                             asset_type="TNC",
                             amount=data["MessageBody"]["Value"] - node["wallet_info"]["fee"]
                         )
-                        Network.send_msg_with_jsonrpc("TransactionMessage", message)
+                        Network.send_msg_with_jsonrpc("TransactionMessage", addr, message)
                     # xx--node--node--..--xx siuation
                     else:
                         # to self's spv
@@ -477,7 +478,7 @@ class Gateway():
                             asset_type="TNC",
                             amount=data["MessageBody"]["Value"]
                         )
-                        Network.send_msg_with_jsonrpc("TransactionMessage", message)
+                        Network.send_msg_with_jsonrpc("TransactionMessage", addr, message)
                     # pxxx---node----exxx for node
                     else:
                         # pxxx is spv
@@ -496,8 +497,8 @@ class Gateway():
                                 asset_type="TNC",
                                 amount=data["MessageBody"]["Value"]- node["wallet_info"]["fee"]
                             )
-                            Network.send_msg_with_jsonrpc("TransactionMessage", left_message)
-                            Network.send_msg_with_jsonrpc("TransactionMessage", right_message)
+                            Network.send_msg_with_jsonrpc("TransactionMessage", addr, left_message)
+                            Network.send_msg_with_jsonrpc("TransactionMessage", addr, right_message)
                         # pxxx is node
                         else:
                             message = MessageMake.make_trigger_transaction_msg(
@@ -506,7 +507,7 @@ class Gateway():
                                 asset_type="TNC",
                                 amount=data["MessageBody"]["Value"]- node["wallet_info"]["fee"]
                             )
-                            Network.send_msg_with_jsonrpc("TransactionMessage", message)
+                            Network.send_msg_with_jsonrpc("TransactionMessage", addr, message)
                     # addr = utils.get_addr(new_next_jump)
                     Network.send_msg_with_tcp(new_next_jump, data)
             # invalid msg
@@ -521,7 +522,7 @@ class Gateway():
                     Network.send_msg_with_wsocket(self.ws_pk_dict[receiver_pk], data)
                 # to self's wallet
                 else:
-                    Network.send_msg_with_jsonrpc("TransactionMessage", data)
+                    Network.send_msg_with_jsonrpc("TransactionMessage", addr, data)
             # to self's peer
             else:
                 # addr = utils.get_addr(data["Receiver"])
