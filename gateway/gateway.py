@@ -84,7 +84,8 @@ class Gateway():
                     # node_list.add(data["Receiver"])
                     node_list = node_list | data["NodeList"]
                 elif msg_type == "RegisterChannel":
-                    Network.send_msg_with_jsonrpc("TransactionMessage", data)
+                    addr = ("0.0.0.0", 20556)
+                    Network.send_msg_with_jsonrpc("TransactionMessage", addr, data)
                 elif msg_type == "AddChannel":
                     # basic check
                     # request wallet to handle 
@@ -243,12 +244,10 @@ class Gateway():
                 return json.dumps(MessageMake.make_ack_router_info_msg(router))
         elif method == "TransactionMessage":
             if msg_type == "RegisterChannel":
-                rev_ip_port = utils.get_ip_port(data.get("Receiver"))
                 rev_pk = utils.get_public_key(data.get("Receiver"))
-                if rev_ip_port == cg_public_ip_port:
+                if utils.check_is_spv(data.get("Receiver")):
                     con = self.ws_pk_dict.get(rev_pk)
-                    if con:
-                        Network.send_msg_with_wsocket(con, data)
+                    Network.send_msg_with_wsocket(con, data)
                 else:
                     Network.send_msg_with_tcp(data.get("Receiver"), data)
             elif msg_type in Message.get_tx_msg_types():

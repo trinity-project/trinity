@@ -5,7 +5,7 @@ gateway utils
 import json
 import re
 from config import cg_end_mark, cg_bytes_encoding, cg_wsocket_addr,\
- cg_tcp_addr, cg_public_ip_port
+ cg_tcp_addr, cg_public_ip_port, cg_remote_jsonrpc_port
 import os
 import sys
 path = os.getcwd().replace("/gateway", "")
@@ -58,6 +58,19 @@ def encode_bytes(data):
     return header_pack + bdata
     # return data.encode(cg_bytes_encoding)
 
+def get_wallet_addr(current_url, asset_type, net_tops):
+    """
+    get the server addr which wallet start on
+    """
+    return (get_wallet_attribute("WalletIp", current_url, asset_type, net_tops), cg_remote_jsonrpc_port)
+
+def get_wallet_attribute(attr_name, current_url, asset_type, net_tops):
+    """
+    return wallet attr by attr_name
+    """
+    pk = get_public_key(current_url)
+    return net_tops[asset_type].get_node_dict(pk).get(attr_name)
+
 def check_is_spv(url):
     """
     check the sender or receiver is spv
@@ -67,6 +80,14 @@ def check_is_spv(url):
         return True
     else:
         return False
+
+def check_is_owned_wallet(url):
+    """
+    check the sender or receiver is the wallet \n
+    which attached this gateway
+    """
+    ip_port = get_ip_port(url)
+    return ip_port == cg_public_ip_port
 
 def check_is_same_gateway(founder, receiver):
     """
@@ -93,14 +114,6 @@ def check_end_mark(bdata):
     text = decode_bytes(bdata, target="str")
     return len(re.findall(cg_end_mark + "$", text))
 
-def check_is_owned_wallet(receiver_url, local_url):
-    # check ip_port first
-    receiver_url_split = receiver_url.split("@")
-    local_url_split = local_url.split("@")
-    if not len(receiver_url_split) or receiver_url_split[0] != local_url_split[0]:
-        return False
-    else:
-        return True
 
 def get_public_key(url):
     return url.split("@")[0]
@@ -188,3 +201,80 @@ def add_or_update_wallet_to_db(wallet):
             "alive"
         )
 
+def _make_router(path, full_path, net_topo):
+    total_fee = 0
+    for nid in path:
+        node = net_topo.get_node_dict(nid)
+        url = nid + "@" + node.get("Ip")
+        fee = node.get("Fee")
+        full_path.append((url, fee))
+        index = path.index(nid)
+        if index > 0 and index < len(nids) - 1:
+            total_fee = total_fee + fee
+    if not len(full_path):
+        router = None
+    else:
+        next_jump = full_path[0][0]
+        router = {
+            "FullPath": full_path,
+            "Next": next_jump
+        }
+    return router
+
+def search_route_for_spv(sender, receiver, net_topo, spv_table):
+
+    """
+    :param sender: spv self url
+    :param receiver: tx target url
+    :param net_topo:
+    :param spv_table: 
+    """
+    receiver_pk = get_public_key(receiver)
+    spv_pk = get_public_key(spv_pk)
+    source_wallet_pks = spv_table.find_keys(spv_pk)
+    path = []
+    full_path = []
+    # spv-wallet-..-spv tx 
+    if check_is_spv(receiver):
+        target_wallet_pks = spv_table.find_keys(receiver_pk)
+        common_wallet_set = set(source_wallet_pks).intersection(set(target_wallet_pks))
+        # spv-wallet-spv
+        if len(common_wallet_set):
+            wallet_pk = list(common_wallet_set)[0]
+            path = [wallet_pk]
+        # spv-wallet-..-wallet-spv
+        else:
+            for s_pk in source_wallet_pks:
+                if len(path): break
+                for t_pk in target_wallet_pks:
+                    path = net_topo.find_shortest_path_decide_by_fee(s_pk, t_pk)
+                    if len(path): break
+    # spv-wallet-..-wallet tx
+    else:
+        for s_pk in source_wallet_pks:
+            path = net_topo.find_shortest_path_decide_by_fee(s_pk, receiver_pk)
+            if len(path): break
+    return _make_router(path, full_path, net_topo)
+
+def search_route_for_wallet(sender, receiver, net_topo, spv_table):
+    
+    """
+    :param sender: spv self url
+    :param receiver: tx target url
+    :param net_topo:
+    :param spv_table: 
+    """
+    rev_pk = get_public_key(receiver)
+    sed_pk = get_public_key(sender)
+    path = []
+    full_path = []
+    # wallet-wallet-..-spv
+    if check_is_spv(receiver):
+        target_wallet_pks = spv_table.find_keys(receiver_pk)
+        for t_pk in target_wallet_pks:
+            path = net_topo.find_shortest_path_decide_by_fee(sed_pk, t_pk)
+            if len(path): break
+    # wallet-wallet-..-wallet
+    else:
+        path = net_topo.find_shortest_path_decide_by_fee(sed_pk, rev_pk)
+    return _make_router(path, full_path, net_topo)

@@ -29,7 +29,7 @@ def sync_wallet_data():
             "MessageBody": {
                 "Publickey": "pk{}".format(ips.index(ip) + 1),
                 "CommitMinDeposit": 1,
-                "Ip": "0.0.0.0",
+                "Ip_port": "0.0.0.0",
                 "Fee": random.randint(1,10),
                 "Balance": {"TNC": 10},
                 "alias": "trinity1"

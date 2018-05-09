@@ -149,10 +149,22 @@ class SPVHashTable(object):
     def maps(self):
         return self.__maps
 
+    def find_keys(self, spv_key):
+        """
+
+        :param spv_key: The public key string of the spv\n
+        :return: list type. [wallet-1-public-key , wallet-2-public-key, ...]
+        """
+        keys = []
+        for key self.maps:
+            if spv_key in self.find(key):
+                keys.append(key)
+        return keys
+
     def find(self, key):
         """
 
-        :param key: The public key string of the wallet
+        :param key: The public key string of the wallet\n
         :return: list type. [spv-1-public-key , spv-2-public-key, ...]
         """
         return self.maps.get(key)
