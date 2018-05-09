@@ -156,7 +156,7 @@ class SPVHashTable(object):
         :return: list type. [wallet-1-public-key , wallet-2-public-key, ...]
         """
         keys = []
-        for key self.maps:
+        for key in self.maps:
             if spv_key in self.find(key):
                 keys.append(key)
         return keys
