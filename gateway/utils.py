@@ -5,7 +5,7 @@ gateway utils
 import json
 import re
 from config import cg_end_mark, cg_bytes_encoding, cg_wsocket_addr,\
- cg_tcp_addr, cg_public_ip_port, cg_remote_jsonrpc_port
+ cg_tcp_addr, cg_public_ip_port, cg_remote_jsonrpc_port, cg_remote_jsonrpc_addr
 import os
 import sys
 path = os.getcwd().replace("/gateway", "")
@@ -62,7 +62,11 @@ def get_wallet_addr(current_url, asset_type, net_tops):
     """
     get the server addr which wallet start on
     """
-    return (get_wallet_attribute("WalletIp", current_url, asset_type, net_tops), cg_remote_jsonrpc_port)
+    wallet_ip = get_wallet_attribute("WalletIp", current_url, asset_type, net_tops)
+    if wallet_ip:
+        return (wallet_ip, cg_remote_jsonrpc_port)
+    else:
+        return cg_remote_jsonrpc_addr
 
 def get_wallet_attribute(attr_name, current_url, asset_type, net_tops):
     """
