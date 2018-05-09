@@ -212,13 +212,21 @@ if __name__ == "__main__":
             "alias": "trinity1"
         }
     }
-    jsonrpcclient.request("http://localhost:8077", 'SyncWalletData', json.dumps(message_1))
-    jsonrpcclient.request("http://localhost:8077", 'SyncWalletData', json.dumps(message_2))
-    jsonrpcclient.request("http://localhost:8077", 'SyncWalletData', json.dumps(message_3))
-    time.sleep(5)
-    jsonrpcclient.request("http://localhost:8077", 'SyncChannel', json.dumps(message1))
-    time.sleep(5)
-    jsonrpcclient.request("http://localhost:8077", 'SyncChannel', json.dumps(message2))
+    message = {
+        "MessageType": "Founder", 
+        "Sender": "03c9c849a0bb84284b4cbc2a67ee3cc9523e050c48aa9aedf9998972bd44c7b826@localhost:8089", 
+        "Receiver": "037e164ccc6b7e9db6d6c2d421c8ac13d4399e5408d27c017a6c871219899cb251@localhost:8766",
+        "MessageBody": {
+            "AssetType": "TNC"
+        }
+    }
+    # jsonrpcclient.request("http://localhost:8077", 'SyncWalletData', json.dumps(message_1))
+    # jsonrpcclient.request("http://localhost:8077", 'SyncWalletData', json.dumps(message_2))
+    # jsonrpcclient.request("http://localhost:8077", 'SyncWalletData', json.dumps(message_3))
+    # time.sleep(5)
+    # jsonrpcclient.request("http://localhost:8077", 'SyncChannel', json.dumps(message1))
+    # time.sleep(5)
+    jsonrpcclient.request("http://localhost:8077", 'TransactionMessage', json.dumps(message))
     # time.sleep(5)
     # jsonrpcclient.request("http://localhost:8077", 'SyncChannel', json.dumps(message1))
 

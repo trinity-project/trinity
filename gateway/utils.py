@@ -76,7 +76,7 @@ def check_is_spv(url):
     check the sender or receiver is spv
     """
     port = get_addr(url)[1]
-    if port == cg_wsocket_addr[1]):
+    if port == cg_wsocket_addr[1]:
         return True
     else:
         return False
