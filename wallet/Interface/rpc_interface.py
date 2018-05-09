@@ -192,11 +192,8 @@ class RpcInteraceApi(object):
 
         elif method == 'GenerateRSMCMessage':
             tx_nonce = transaction.TrinityTransaction(params[0], None).get_latest_nonceid()
-            try:
-                row_index = params[6]
-            except:
-                row_index = 0
+            tx_nonce = int(tx_nonce)
 
             return message.RsmcMessage.create(params[0], None, params[1], params[3], params[5], params[4], params[2] ,
-                                                    tx_nonce, asset_type="TNC",cli =False,router = None, next_router=None,
-                                                    role_index=row_index, comments=None)
+                                                    tx_nonce+1, asset_type="TNC",cli =False,router = None, next_router=None,
+                                                    role_index=0, comments=None)
