@@ -43,6 +43,10 @@ class Gateway:
         asset_type = data.get("MessageBody").get("AssetType")
         spv_pk = utils.get_public_key(sender)
         self.ws_pk_dict[spv_pk] = websocket
+        if msg_type == "RegisterChannel":
+            # pass the message to wallet to handle
+            wallet_addr = utils.get_wallet_addr(receiver, asset_type, self.net_topos)
+            Network.send_msg_with_jsonrpc("TransactionMessage", addr, data)
         # first check the receiver is self or not
         if msg_type == "PaymentLink":
             if not asset_type:
