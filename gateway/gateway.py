@@ -40,11 +40,13 @@ class Gateway:
         if not utils.check_is_spv(sender): return
         receiver = data.get("Receiver")
         msg_type = data.get("MessageType")
-        asset_type = data.get("MessageBody")["AssetType"]
+        asset_type = data.get("MessageBody").get("AssetType")
         spv_pk = utils.get_public_key(sender)
         self.ws_pk_dict[spv_pk] = websocket
         # first check the receiver is self or not
         if msg_type == "PaymentLink":
+            if not asset_type:
+                asset_type = data.get("MessageBody").get("Parameter").get("Assets")
             if not utils.check_is_owned_wallet(receiver): return
             wallet_addr = utils.get_wallet_addr(receiver, asset_type, self.net_topos)
             Network.send_msg_with_jsonrpc("TransactionMessage", wallet_addr, data)
