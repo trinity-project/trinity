@@ -2,9 +2,7 @@
 """
 module for multi wallets and asset
 """
-from routertree import SPVHashTable
-from routergraph import RouterGraph
-from config import cg_public_ip_port
+from config import cg_public_ip_port, cg_remote_jsonrpc_addr
 
 class _Asset:
     def __init__(self, **kwargs):
@@ -96,19 +94,33 @@ class _Wallet:
             wallets[public_key] = wallet
         return wallet
 
+def _get_default_ip():
+    ip = "{}:{}".format(cg_remote_jsonrpc_addr[0], cg_remote_jsonrpc_addr[1])
+    return ip
+
 class WalletClient:
     
     def __init__(self, ip):
+        try:
+            addr = (ip.split(":")[0], int(ip.split(":")[1]))
+        except Exception:
+            ip = _get_default_ip()
+            addr = (ip.split(":")[0], int(ip.split(":")[1]))
+            print("!!! ip format error, use the default ip: {} !!!".format(ip))
+        finally:
+            self.addr = addr
+        # status 1: online; 0: offline 
         self.ip = ip
+        self.status = 1
         self.opened_wallet = None
         self.wallets = {}
-
     def __str__(self):
-        return "WalletClient(wallets: {})".\
-            format(self.wallets)
+        return "WalletClient(wallets: {}, status: {})".\
+            format(self.wallets, self.status)
 
     def __repr__(self):
         return self.__str__()
+
 
     def _update_opened_wallet(self, wallet):
         """
@@ -128,33 +140,47 @@ class WalletClient:
             self.opened_wallet = None
         del self.wallets[public_key]
 
+    def off_line(self):
+        self.status = 0
+        if self.opened_wallet:
+            pk = self.opened_wallet.public_key
+            self.opened_wallet.status = 0
+            self.opened_wallet = None
+        else:
+            pk = None
+        return pk
+
+    def on_line(self):
+        self.status = 1
+
     @classmethod
     def add_or_update(cls, clients, **kwargs):
         ip = kwargs.get("ip")
         public_key = kwargs.get("public_key")
         if not ip or not public_key:
-            print("!!!!!! ip and public_key must provide !!!!!! set the wallet ip to 0.0.0.0")
-            ip = "0.0.0.0"
+            ip = _get_default_ip()
+            print("!!!!!! ip and public_key must provide !!!!!! use the default wallet ip: {}".format(ip))
         if clients.get(ip):
             client = clients[ip]
         else:
             client = cls(ip)
-            clients[ip] = client
+            clients[client.ip] = client
+        kwargs["ip"] = client.ip
         wallet = _Wallet.add_or_update(client.wallets, **kwargs)
         client._update_opened_wallet(wallet)
-        return wallet
+        return wallet 
 
 if __name__ == "__main__":
     from pprint import pprint
-    data1 = {"fee": 1, "public_key": "pk1", "balance":8, "deposit":3, "asset_type": "GAS", "name": "test1", "ip": "0.0.0.0"}
-    data2 = {"fee": 2, "public_key": "pk2", "balance":9, "deposit":3, "asset_type": "GAS", "name": "test2", "ip": "0.0.0.1"}
+    data1 = {"fee": 1, "public_key": "pk1", "balance":8, "deposit":3, "asset_type": "GAS", "name": "test1", "ip": "0.0.0.0:20556"}
+    data2 = {"fee": 2, "public_key": "pk2", "balance":9, "deposit":3, "asset_type": "GAS", "name": "test2", "ip": "0.0.0.1:20556"}
     clients = {}
     WalletClient.add_or_update(clients, **data1)
     WalletClient.add_or_update(clients, **data2)
     pprint(clients)
     # wallets = {}
     # print(wallets)
-    data = {"fee": 100, "public_key": "pk3", "asset_type": "NEO", "name": "test", "ip": "0.0.0.0"}
+    data = {"fee": 100, "public_key": "pk3", "asset_type": "NEO", "name": "test", "ip": "0.0.0.0:20556"}
     WalletClient.add_or_update(clients, **data)
     print(clients["0.0.0.0"].opened_wallet)
     pprint(clients)

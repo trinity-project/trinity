@@ -114,6 +114,31 @@ class MessageMake:
         return message
 
     @staticmethod
+    def make_search_target_wallet(spv_pk, asset_type):
+        message= {
+            "MessageType": "SearchWallet",
+            "AssetType": asset_type,
+            "Publickey": spv_pk
+        }
+        return message
+
+    @staticmethod
+    def make_ack_search_target_wallet(wallet_pks):
+        message= {
+            "MessageType": "AckSearchWallet",
+            "Wallets": wallet_pks
+        }
+        return message
+
+    @staticmethod
+    def make_ack_search_spv(data):
+        message= {
+            "MessageType": "AckSearchSpv",
+            "Wallets": data
+        }
+        return message
+
+    @staticmethod
     def make_join_net_msg(sender):
         message = {
             "MessageType": "JoinNet",

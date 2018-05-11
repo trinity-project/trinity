@@ -3,6 +3,7 @@ from functools import wraps
 import time
 import json
 import networkx as nx
+from spvtable import SPVHashTable
 from networkx.readwrite import json_graph
 from config import cg_public_ip_port
 import utils
@@ -70,9 +71,10 @@ def timethis(func):
 
 class Nettopo:
     def __init__(self):
-        # save wallet pk set that attached this gateway
+        # save wallet (with same asset type) pk set that attached this gateway
         self.nids = set()
         self._graph = nx.Graph()
+        self.spv_table = SPVHashTable()
 
     def __str__(self):
         return "Nettopo(nodes: {}, links: {})".format(
@@ -231,6 +233,9 @@ class Nettopo:
 
     def get_node_dict(self, nid):
         return self._graph.nodes[nid]
+
+    def get_nodes(self):
+        return self._graph.nodes
 
     def get_neighbors_set(self, nid):
         return set(self._graph.neighbors(nid))
