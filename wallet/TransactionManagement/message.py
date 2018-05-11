@@ -30,13 +30,53 @@ from TX.interface import *
 from wallet.ChannelManagement import channel as ch
 from model.base_enum import EnumChannelState
 from wallet.Interface.gate_way import send_message
-from wallet.utils import sign
+from wallet.utils import sign,\
+    check_onchain_balance, \
+    check_max_deposit,\
+    check_mix_deposit,\
+    check_deposit
 from TX.utils import blockheight_to_script
-from wallet.BlockChain.monior import register_block, register_monitor
+from wallet.BlockChain.monior import register_block, \
+    register_monitor
 from model import APIChannel
 from log import LOG
 import json
 from wallet.TransactionManagement.payment import Payment
+
+
+class TrinityNumber(object):
+    def __init__(self, value: int or float):
+        self.integer_part = None
+        self.decimal_part = None
+        self.precision = 8
+        self.precision_coef = 100000000   # pow(10, self.precision)
+
+        if isinstance(value, int):
+            self.integer_part = value
+            self.decimal_part = 0
+            self.decimal_length = 0
+        elif isinstance(value, float):
+            value_list = '{:8.8f}'.format(value).strip().split('.')
+
+            if 2 == len(value_list):
+                decimal_part = value_list[1]
+                if 8 < len(decimal_part):
+                    decimal_part = decimal_part[0:self.precision]
+                self.integer_part
+            else: # should never run here
+                decimal_part = 0
+
+            self.integer_part = int(value_list[0])
+            self.decimal_part = int(decimal_part)
+            pass
+        else: # should never run here
+            raise Exception('Should never run here!!! Error number<{}>, terminate the trade.'.format(value))
+
+    @staticmethod
+    def wraper_decimal_part(decimal_part:int):
+        decimal = str(decimal_part)
+        return '0' * (8-len(decimal)) + decimal;
+
 
 class Message(object):
     """
@@ -82,7 +122,17 @@ class RegisterMessage(Message):
         LOG.info("Handle RegisterMessage: {}".format(json.dumps(self.message)))
         verify, error = self.verify()
         if not verify:
-            return error
+            message = {
+                "MessageType": "RegisterChannelFail",
+                "Sender": self.receiver,
+                "Receiver": self.sender,
+                "ChannelName": self.channel_name,
+                "MessageBody": {
+                    "OrigianlMessage": self.message
+                },
+                "Error": error
+            }
+            Message.send(message)
         founder_pubkey, founder_ip = self.sender.split("@")
         partner_pubkey, partner_ip = self.receiver.split("@")
         founder_address = pubkey_to_address(founder_pubkey)
@@ -101,10 +151,45 @@ class RegisterMessage(Message):
         if self.sender == self.receiver:
             return False, "Not Support Sender is Receiver"
         if self.receiver != self.wallet.url:
-            return False, "The Endpoint is Not Me"
+            return False, "The Endpoint is Not Me, I am {}".format(self.wallet.url)
+        state, error = self.check_balance()
+        if not state:
+            return state, error
+        state, error = self.check_depoist()
+        if not state:
+            return state, error
+
         return True, None
 
+    def check_depoist(self):
+        state, de = check_deposit(self.deposit)
+        if not state:
+            if isinstance(de,float):
+                return False,"Deposit should be larger than 0 , but give {}".format(str(de))
+            else:
+                return False,"Deposit Formate error {}".format(de)
 
+        state, maxd = check_max_deposit(self.deposit)
+        if not state:
+            if isinstance(maxd,float):
+                return False, "Deposit is larger than the max, max is {}".format(str(maxd))
+            else:
+                return False, "Max deposit configure error {}".format(maxd)
+
+        state , mixd = check_mix_deposit(self.deposit)
+        if not state:
+            if isinstance(mixd,float):
+                return False, "Deposit is less than the min, min is {}".format(str(mixd))
+            else:
+                return False, "Mix deposit configure error {}".format(mixd)
+
+        return True,None
+
+    def check_balance(self):
+        if check_onchain_balance(self.wallet.pubkey, self.asset_type, self.deposit):
+            return True, None
+        else:
+            return False, "No Balance OnChain to support the deposit"
 
 
 class TestMessage(Message):
@@ -143,6 +228,18 @@ class CreateTranscation(Message):
         LOG.info("CreateTransaction: {}".format(str(tx_nonce)))
         RsmcMessage.create(self.channel_name, self.wallet, self.wallet.pubkey,
                            self.receiver_pubkey, self.value, self.receiver_ip, self.gateway_ip,str(tx_nonce))
+
+    @staticmethod
+    def ack(channel_name, receiver_pubkey, receiver_ip, error_code, cli = False):
+        if cli:
+            print (error_code)
+        else:
+            return {
+                "MessageType":"CreateTransactionACK",
+                "Receiver":"{}@{}".format(receiver_pubkey,receiver_ip),
+                "ChannelName":channel_name,
+                "Error": error_code
+            }
 
 
 class TransactionMessage(Message):
@@ -216,7 +313,7 @@ class FounderMessage(TransactionMessage):
         role_index = int(self.role_index) + 1
         FounderMessage.create(self.channel_name, self.receiver_pubkey,
                               self.sender_pubkey, self.asset_type.upper(), self.deposit, self.sender_ip,
-                              self.receiver_ip, role_index=role_index, wallet=self.wallet)
+                              self.receiver_ip, role_index=role_index, wallet=self.wallet, comments=self.comments)
 
     def _handle_1_message(self):
         txid = self.founder.get("txId")
@@ -309,6 +406,40 @@ class FounderMessage(TransactionMessage):
         if self.receiver != self.wallet.url:
             return False, "The Endpoint is Not Me"
         return True, None
+
+    def create_verify_tx(self):
+        if self.role_index == 0:
+            walletfounder = {
+                "pubkey": self.receiver_pubkey,
+                "deposit": float(self.deposit)
+            }
+            walletpartner = {
+                "pubkey": self.sender_pubkey,
+                "deposit": float(self.deposit)
+            }
+            Txfounder = createFundingTx(walletpartner,walletfounder)
+        elif self.role_index == 1:
+            walletfounder = {
+                "pubkey": self.sender_pubkey,
+                "deposit": float(self.deposit)
+            }
+            walletpartner = {
+                "pubkey": self.receiver_pubkey,
+                "deposit": float(self.deposit)
+            }
+            Txfounder = createFundingTx(walletpartner, walletfounder)
+
+        commitment = createCTX(Txfounder.get("addressFunding"), self.deposit, self.deposit, self.sender_pubkey,
+                           self.receiver_pubkey, Txfounder.get("scriptFunding"))
+
+        address_self = pubkey_to_address(self.sender_pubkey)
+
+        revocabledelivery = createRDTX(commitment.get("addressRSMC"), address_self, self.deposit, commitment.get("txId"),
+                                   commitment.get("scriptRSMC"))
+        return {"Founder":Txfounder,
+                "CTx":commitment,
+                "RTx":revocabledelivery}
+
 
     def send_responses(self, role_index, error = None):
         founder_sig = {"txDataSign": self.sign_message(self.founder.get("txData")),
@@ -419,7 +550,8 @@ class FounderResponsesMessage(TransactionMessage):
         ch.Channel.channel(self.channel_name).delete_channel()
         #ToDo  Just walk around
         if self.comments == "retry":
-            ch.create_channel(self.wallet.url, self.sender, self.asset_type,self.deposit, comments=self.comments)
+            ch.create_channel(self.wallet.url, self.sender, self.asset_type,self.deposit, comments=self.comments,
+                              channel_name=self.channel_name)
 
     def send_founder_raw_transaction(self):
         signdata = self.founder.get("txDataSign")
@@ -463,6 +595,8 @@ class FounderResponsesMessage(TransactionMessage):
         if self.receiver != self.wallet.url:
             return False, "The Endpoint is Not Me"
         return True, None
+
+
 
 
 class RsmcMessage(TransactionMessage):
@@ -542,6 +676,35 @@ class RsmcMessage(TransactionMessage):
         :param comments:
         :return:
         """
+        message = RsmcMessage.generateRSMC(channel_name, wallet, sender_pubkey, receiver_pubkey, value, partner_ip,
+                                           gateway_ip, tx_nonce, asset_type, cli, router, next_router, role_index, comments)
+        LOG.info("Send RsmcMessage role index 1 message  ")
+        RsmcMessage.send(message)
+
+
+    @staticmethod
+    def generateRSMC(channel_name, wallet, sender_pubkey, receiver_pubkey, value, partner_ip, gateway_ip ,
+               tx_nonce, asset_type="TNC",cli =False,router = None, next_router=None,
+               role_index=0, comments=None):
+        """
+
+        :param channel_name:
+        :param wallet:
+        :param sender_pubkey:
+        :param receiver_pubkey:
+        :param value:
+        :param partner_ip:
+        :param gateway_ip:
+        :param tx_nonce:
+        :param asset_type:
+        :param breachremedy:
+        :param cli:
+        :param router:
+        :param next_router:
+        :param role_index:
+        :param comments:
+        :return:
+        """
 
         transaction = TrinityTransaction(channel_name, wallet)
         founder = transaction.get_founder()
@@ -562,23 +725,20 @@ class RsmcMessage(TransactionMessage):
             balance_value = 0
             receiver_balance_value = 0
 
-        if float(balance_value) < value or tx_state == "pending":
-            if cli:
-                print("No Balance")
-            else:
-                message = { "MessageType":"CreateTransactionACK",
-                            "Receiver":"{}@{}".format(receiver_pubkey,partner_ip),
-                            "ChannelName":channel_name,
-                            "Error": "No Balance"
-                           }
-                Message.send(message)
-                return
         if role_index in [0,2]:
-            sender_balance = float(balance_value) - float(value)
-            receiver_balance = float(receiver_balance_value) + float(value)
+            check_balance_ok, sender_balance, receiver_balance, value = \
+                RsmcMessage._calculate_and_check_balance(balance_value, receiver_balance_value, value)
         elif role_index in [1,3]:
-            sender_balance = float(balance_value) + float(value)
-            receiver_balance = float(receiver_balance_value) - float(value)
+            check_balance_ok, receiver_balance, sender_balance, value = \
+                RsmcMessage._calculate_and_check_balance(receiver_balance_value, balance_value, value)
+        else:
+            check_balance_ok = False
+
+        if not check_balance_ok:
+            return CreateTranscation.ack(channel_name, receiver_pubkey, partner_ip, "No Balance or Exceed the balance", cli)
+        elif 'pending' == tx_state:
+            return CreateTranscation.ack(channel_name, receiver_pubkey, partner_ip, "TX is pending", cli)
+
         message = {}
         if role_index == 0 or role_index == 1:
             commitment = createCTX(founder["originalData"]["addressFunding"], sender_balance, receiver_balance,
@@ -641,12 +801,52 @@ class RsmcMessage(TransactionMessage):
                            "Comments":comments
                            }
                        }
-        LOG.info("Send RsmcMessage role index 1 message  ")
-        RsmcMessage.send(message)
+
+        return message
 
 
     def _check_balance(self, balance):
         pass
+
+    @staticmethod
+    def _calculate_and_check_balance(sender_balance, receiver_balance, amount):
+        try:
+            if not (0 < amount <= sender_balance):
+                return False, sender_balance, receiver_balance, amount
+
+            # To avoid the precision problems, here we use the class to do some calculation
+            # Note: if the value exceed the default precision, the value will be re-organized
+            total_sender_balance = TrinityNumber(sender_balance)
+            total_receiver_balance = TrinityNumber(receiver_balance)
+            pay_or_get = TrinityNumber(amount)
+
+            sender_balance_list = []
+            if pay_or_get.decimal_part > total_sender_balance.decimal_part:
+                sender_balance_list.append(str(total_sender_balance.integer_part-pay_or_get.integer_part - 1))
+                sender_balance_list.append(TrinityNumber.wraper_decimal_part(total_sender_balance.precision_coef + total_sender_balance.decimal_part - pay_or_get.decimal_part))
+            else:
+                sender_balance_list.append(str(total_sender_balance.integer_part-pay_or_get.integer_part))
+                sender_balance_list.append(TrinityNumber.wraper_decimal_part(total_sender_balance.decimal_part - pay_or_get.decimal_part))
+
+            sender_balance_after_payment = float('.'.join(sender_balance_list))
+
+            receiver_balance_list = []
+            judgement_balance = total_receiver_balance.decimal_part + pay_or_get.decimal_part
+            if judgement_balance >= total_receiver_balance.precision_coef:
+                receiver_balance_list.append(str(total_receiver_balance.integer_part + pay_or_get.integer_part + 1))
+                receiver_balance_list.append(TrinityNumber.wraper_decimal_part(judgement_balance - total_receiver_balance.precision_coef))
+            else:
+                receiver_balance_list.append(str(total_receiver_balance.integer_part + pay_or_get.integer_part))
+                receiver_balance_list.append(TrinityNumber.wraper_decimal_part(judgement_balance))
+
+            receiver_balance_after_payment = float('.'.join(receiver_balance_list))
+            payment_mount = float('.'.join([str(pay_or_get.integer_part), TrinityNumber.wraper_decimal_part(pay_or_get.decimal_part)]))
+
+            return True, sender_balance_after_payment, receiver_balance_after_payment, payment_mount
+        except Exception as exp_info:
+            LOG.exception('Exception occured. Exception Info: {}'.format(exp_info))
+
+        return False, sender_balance, receiver_balance, amount
 
     def verify(self):
         return True, None

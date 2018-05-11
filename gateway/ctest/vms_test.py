@@ -11,8 +11,10 @@ import jsonrpcclient
 
 def sync_wallet_data():
     ips = [
-            "192.168.204.112",
-            "192.168.205.181"
+            "192.168.205.221",
+            "192.168.202.163",
+            "192.168.202.162",
+            "192.168.202.145"
             # "192.168.205.217",
             # "192.168.205.181",
             # "192.168.205.180",
@@ -27,6 +29,7 @@ def sync_wallet_data():
             "MessageBody": {
                 "Publickey": "pk{}".format(ips.index(ip) + 1),
                 "CommitMinDeposit": 1,
+                "Ip_port": "0.0.0.0",
                 "Fee": random.randint(1,10),
                 "Balance": {"TNC": 10},
                 "alias": "trinity1"
@@ -41,7 +44,15 @@ def sync_channel(founder, receiver):
         "MessageType":"AddChannel",
         "MessageBody": {
             "Founder": founder,
-            "Receiver": receiver
+            "Receiver": receiver,
+            "Balance": {
+                founder: {
+                    "TNC": 10
+                },
+                receiver: {
+                    "TNC": 10
+                }
+            }
         }
     }
     f_url = founder.split("@")[1].split(":")[0]
@@ -83,7 +94,7 @@ def log_process_memory_cpu_used(process, pids):
 
 if __name__ == "__main__":
     # start_ip = "192.168.205.217"
-    sync_wallet_data()
+    # sync_wallet_data()
     # # # ############ 4、5、6 ############
     # sync_channel("pk4@192.168.205.179:8089", "pk5@192.168.205.182:8089")
     # time.sleep(5)
@@ -92,13 +103,33 @@ if __name__ == "__main__":
     # sync_channel("pk5@192.168.205.182:8089", "pk6@192.168.205.178:8089")
     # time.sleep(5)
     # # # # ############ 1、2、3 ############
+    #  "192.168.205.221",
+    #         "192.168.202.163",
+    #         "192.168.202.162",
+    #         "192.168.202.145"
+    # time.sleep(5)
+    # sync_channel("pk1@192.168.205.221:8089", "pk2@192.168.202.163:8089")
+    # time.sleep(5)
+    # sync_channel("pk1@192.168.205.221:8089", "pk3@192.168.202.162:8089")
+    # time.sleep(5)
+    # sync_channel("pk4@192.168.202.145:8089", "pk2@192.168.202.163:8089")
+    # sync_channel("pk4@192.168.202.145:8089", "pk3@192.168.202.162:8089")
+    # sync_channel("pk1@192.168.205.221:8089", "pk4@192.168.202.145:8089")
+    sync_channel("pk2@192.168.202.163:8089", "pk3@192.168.202.162:8089")
+    # time.sleep(5)
     # # # # sync_wallet_data(6)
     # time.sleep(5)
-    # sync_channel("pk1@192.168.205.217:8089", "pk3@192.168.205.180:8089")
-    time.sleep(5)
-    sync_channel("pk1@192.168.204.112:8089", "pk2@192.168.205.181:8089")
+    # sync_channel("pk1@192.168.205.221:8089", "pk3@192.168.205.221:8089")
     # time.sleep(5)
-    # sync_channel("pk3@192.168.205.180:8089", "pk2@192.168.205.181:8089")
+    # sync_channel("pk1@192.168.205.221:8089", "pk2@192.168.205.221:8089")
+    # time.sleep(5)
+    # sync_channel("pk2@192.168.205.221:8089", "pk3@192.168.205.221:8089")
+    # time.sleep(5)
+    # sync_channel("pk3@192.168.205.221:8089", "pk4@192.168.202.163:8089")
+    # sync_channel("pk5@192.168.202.162:8089", "pk4@192.168.202.163:8089")
+    # sync_channel("pk5@192.168.202.162:8089", "pk3@192.168.205.221:8089")
+    # sync_channel("pk1@192.168.205.221:8089", "pk4@192.168.202.163:8089")
+    # sync_channel("pk1@192.168.205.221:8089", "pk5@192.168.202.162:8089")
     # time.sleep(5)
     
     ############2、4 ############

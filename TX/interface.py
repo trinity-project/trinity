@@ -149,7 +149,7 @@ def createRefundTX(addressFunding,balanceSelf,balanceOther,pubkeySelf,pubkeyOthe
     return {
         "txData":tx.get_tx_data(),
         "txId":createTxid(tx.get_tx_data()),
-        "witness":"018240{signSelf}40{signOther}47"+fundingScript
+        "witness":"018240{signSelf}40{signOther}da"+fundingScript
     }
 
 #sender HTLC
