@@ -30,7 +30,7 @@ from wallet.BlockChain.interface import get_balance
 import re
 import hashlib
 
-SupportAssetType = ["TNC"] #Todo multi-asset will come soon, before that hardcode here
+SupportAssetType = ["TNC", "NEO", "GAS"] #Todo multi-asset will come soon, before that hardcode here
 
 
 def to_aes_key(password):

@@ -115,6 +115,8 @@ class RegisterMessage(Message):
         super().__init__(message)
         self.deposit = self.message_body.get("Deposit")
         self.asset_type = self.message_body.get("AssetType")
+        if self.asset_type:
+            self.asset_type = self.asset_type.upper()
         self.channel_name = self.message.get("ChannelName")
         self.wallet = wallet
 
@@ -297,6 +299,8 @@ class FounderMessage(TransactionMessage):
         self.sender_address = pubkey_to_address(self.sender_pubkey)
         self.receiver_address = pubkey_to_address(self.receiver_pubkey)
         self.asset_type = self.message_body.get("AssetType")
+        if self.asset_type:
+            self.asset_type = self.asset_type.upper()
         self.deposit = self.message_body.get("Deposit")
         self.role_index = self.message_body.get("RoleIndex")
         self.rdtxid = self.revocable_delivery.get("txId")
@@ -369,19 +373,20 @@ class FounderMessage(TransactionMessage):
     }
 
         transaction = TrinityTransaction(channel_name, wallet)
+        asset_id = get_asset_type_id(asset_type)
 
         if role_index == 0:
-            founder = createFundingTx(walletpartner, walletfounder)
+            founder = createFundingTx(walletpartner, walletfounder, asset_id)
         else:
             founder = transaction.get_founder()
 
         commitment = createCTX(founder.get("addressFunding"), deposit, deposit, self_pubkey,
-                               partner_pubkey, founder.get("scriptFunding"))
+                               partner_pubkey, founder.get("scriptFunding"), asset_id)
 
         address_self = pubkey_to_address(self_pubkey)
 
         revocabledelivery = createRDTX(commitment.get("addressRSMC"),address_self, deposit, commitment.get("txId"),
-                                       commitment.get("scriptRSMC"))
+                                       commitment.get("scriptRSMC"), asset_id)
 
         message = { "MessageType":"Founder",
                     "Sender": "{}@{}".format(self_pubkey, gateway_ip),
@@ -407,7 +412,7 @@ class FounderMessage(TransactionMessage):
             return False, "The Endpoint is Not Me"
         return True, None
 
-    def create_verify_tx(self):
+    def create_verify_tx(self, asset_id):
         if self.role_index == 0:
             walletfounder = {
                 "pubkey": self.receiver_pubkey,
@@ -417,7 +422,7 @@ class FounderMessage(TransactionMessage):
                 "pubkey": self.sender_pubkey,
                 "deposit": float(self.deposit)
             }
-            Txfounder = createFundingTx(walletpartner,walletfounder)
+            Txfounder = createFundingTx(walletpartner,walletfounder, asset_id)
         elif self.role_index == 1:
             walletfounder = {
                 "pubkey": self.sender_pubkey,
@@ -427,15 +432,15 @@ class FounderMessage(TransactionMessage):
                 "pubkey": self.receiver_pubkey,
                 "deposit": float(self.deposit)
             }
-            Txfounder = createFundingTx(walletpartner, walletfounder)
+            Txfounder = createFundingTx(walletpartner, walletfounder, asset_id)
 
         commitment = createCTX(Txfounder.get("addressFunding"), self.deposit, self.deposit, self.sender_pubkey,
-                           self.receiver_pubkey, Txfounder.get("scriptFunding"))
+                           self.receiver_pubkey, Txfounder.get("scriptFunding"), asset_id)
 
         address_self = pubkey_to_address(self.sender_pubkey)
 
         revocabledelivery = createRDTX(commitment.get("addressRSMC"), address_self, self.deposit, commitment.get("txId"),
-                                   commitment.get("scriptRSMC"))
+                                   commitment.get("scriptRSMC"), asset_id)
         return {"Founder":Txfounder,
                 "CTx":commitment,
                 "RTx":revocabledelivery}
@@ -739,14 +744,16 @@ class RsmcMessage(TransactionMessage):
         elif 'pending' == tx_state:
             return CreateTranscation.ack(channel_name, receiver_pubkey, partner_ip, "TX is pending", cli)
 
+        asset_id = get_asset_type_id(asset_type)
+
         message = {}
         if role_index == 0 or role_index == 1:
             commitment = createCTX(founder["originalData"]["addressFunding"], sender_balance, receiver_balance,
-                               sender_pubkey, receiver_pubkey, founder["originalData"]["scriptFunding"])
+                               sender_pubkey, receiver_pubkey, founder["originalData"]["scriptFunding"], asset_id)
 
             revocabledelivery = createRDTX(commitment.get("addressRSMC"), pubkey_to_address(sender_pubkey), sender_balance,
                                        commitment.get("txId"),
-                                       commitment.get("scriptRSMC"))
+                                       commitment.get("scriptRSMC"), asset_id)
             message = { "MessageType":"Rsmc",
                     "Sender": "{}@{}".format(sender_pubkey, gateway_ip),
                     "Receiver":"{}@{}".format(receiver_pubkey, partner_ip),
@@ -783,7 +790,7 @@ class RsmcMessage(TransactionMessage):
                 rscmcscript = commitment["RSMCscript"]
 
             breachremedy = createBRTX(founder["originalData"]["addressFunding"], pubkey_to_address(receiver_pubkey), sender_balance,
-                                      rscmcscript)
+                                      rscmcscript, asset_id)
             breachremedy_sign = sign(wallet, breachremedy.get("txData"))
             breachremedy_info = {"txDataSign": breachremedy_sign,
                                  "originalData":breachremedy}
@@ -1235,11 +1242,12 @@ class HtlcMessage(TransactionMessage):
         sender_balance = balance.get(senderpubkey).get(asset_type)
         receiver_balance = balance.get(receiverpubkey).get(asset_type)
         founder = transaction.get_founder()
+        asset_id = get_asset_type_id(asset_type.upper())
         if role_index == 0:
 
             hctx = create_sender_HTLC_TXS(senderpubkey, receiverpubkey, HTLCvalue, sender_balance,
                                       receiver_balance, hashR, founder["originalData"]["addressFunding"],
-                                      founder["originalData"]["scriptFunding"])
+                                      founder["originalData"]["scriptFunding"], asset_id)
             transaction.update_transaction(str(tx_nonce), HR=hashR, TxType="HTLC",
                                            Count=HTLCvalue, State="pending")
 
@@ -1251,7 +1259,7 @@ class HtlcMessage(TransactionMessage):
         elif role_index == 1:
             hctx = create_receiver_HTLC_TXS(senderpubkey, receiverpubkey, HTLCvalue, sender_balance,
                                       receiver_balance, hashR, founder["originalData"]["addressFunding"],
-                                      founder["originalData"]["scriptFunding"])
+                                      founder["originalData"]["scriptFunding"], asset_id=asset_id)
 
             hetx_sign = wallet.SignContent(hctx["HETX"]["txData"])
             hetx = {"txDataSign": hetx_sign,
@@ -1497,8 +1505,9 @@ class SettleMessage(TransactionMessage):
         receiver_pubkey = receiver.split("@")[0].strip()
         sender_balance = balance.get(sender_pubkey).get(asset_type.upper())
         receiver_balance = balance.get(receiver_pubkey).get(asset_type.upper())
+        asset_id = get_asset_type_id(asset_type.upper)
         settlement_tx = createRefundTX(address_founder,float(sender_balance),receiver_balance,sender_pubkey,receiver_pubkey,
-                                    founder_script)
+                                    founder_script, asset_id)
 
         message = { "MessageType":"Settle",
           "Sender": sender,

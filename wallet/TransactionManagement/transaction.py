@@ -29,7 +29,7 @@ from neocore.Cryptography.Crypto import Crypto
 import os
 import pickle
 from TX.interface import *
-from wallet.utils import sign
+from wallet.utils import sign, get_asset_type_id
 from wallet.BlockChain import interface as Binterface
 from log import LOG
 import json
@@ -219,42 +219,54 @@ def funder_trans(params):
     :param params:
     :return:
     """
+    if 6 > len(params):
+        LOG.error('funder_trans: Invalid params {}!'.format(params))
+        return None
+
     selfpubkey = params[0]
     otherpubkey = params[1]
     addressFunding = params[2]
     scriptFunding = params[3]
     deposit = params[4]
 
+    asset_id = get_asset_type_id(params[5].upper())
+
     C_tx = createCTX(addressFunding=addressFunding, balanceSelf=deposit,
                           balanceOther=deposit, pubkeySelf=selfpubkey,
-                          pubkeyOther=otherpubkey, fundingScript=scriptFunding)
+                          pubkeyOther=otherpubkey, fundingScript=scriptFunding, asset_id=asset_id)
 
     RD_tx = createRDTX(addressRSMC=C_tx["addressRSMC"], addressSelf=pubkeyToAddress(selfpubkey),
                             balanceSelf=deposit, CTxId=C_tx["txId"],
-                            RSMCScript=C_tx["scriptRSMC"])
+                            RSMCScript=C_tx["scriptRSMC"], asset_id=asset_id)
 
     return {"C_TX":C_tx,"R_TX":RD_tx}
 
 
 def funder_create(params):
+        if 4 > len(params):
+            LOG.error('founder_create: Invalid params {}'.format(params))
+            return None
+
         walletfounder = {
             "pubkey":params[0],
             "deposit":float(params[2])
-    }
+        }
         walletpartner = {
             "pubkey":params[1],
             "deposit":float(params[2])
-    }
+        }
 
-        founder = createFundingTx(walletpartner, walletfounder)
+        asset_id = get_asset_type_id(params[3].upper())
+
+        founder = createFundingTx(walletpartner, walletfounder, asset_id)
 
         commitment = createCTX(founder.get("addressFunding"), float(params[2]), float(params[2]), params[0],
-                               params[1], founder.get("scriptFunding"))
+                               params[1], founder.get("scriptFunding"), asset_id)
 
         address_self = pubkeyToAddress(params[0])
 
         revocabledelivery = createRDTX(commitment.get("addressRSMC"),address_self, float(params[2]), commitment.get("txId"),
-                                       commitment.get("scriptRSMC"))
+                                       commitment.get("scriptRSMC"), asset_id)
         return {"Founder":founder,"C_TX":commitment,"R_TX":revocabledelivery}
 
 def rsmc_trans(params):
@@ -263,20 +275,24 @@ def rsmc_trans(params):
     :param params:
     :return:
     """
+    if 5 > len(params):
+        LOG.error('funder_trans: Invalid params {}!'.format(params))
+        return None
+
     script_funding = params[0]
     balanceself = params[1]
     balanceother = params[2]
     pubkeyself = params[3]
     pubkeyother = params[4]
-
+    asset_id = get_asset_type_id(params[5].upper())
 
     C_tx = createCTX(addressFunding=scriptToAddress(script_funding), balanceSelf=balanceself,
                           balanceOther=balanceother, pubkeySelf=pubkeyself,
-                          pubkeyOther=pubkeyother, fundingScript=script_funding)
+                          pubkeyOther=pubkeyother, fundingScript=script_funding, asset_id=asset_id)
 
     RD_tx = createRDTX(addressRSMC=C_tx["addressRSMC"], addressSelf=pubkeyToAddress(walletSelf["pubkey"]),
                             balanceSelf=walletSelf["deposit"], CTxId=C_tx["txId"],
-                            RSMCScript=C_tx["scriptRSMC"])
+                            RSMCScript=C_tx["scriptRSMC"], asset_id=asset_id)
 
     return {"C_TX": C_tx, "R_TX": RD_tx}
 
@@ -287,12 +303,17 @@ def br_trans(params):
     :param params:
     :return:
     """
+    if 4 > len(params):
+        LOG.error('br_trans: Invalid params {}!'.format(params))
+        return None
+
     script_rsmc = params[0]
     selfpubkey = params[1]
     balanceself = params[2]
+    asset_id = get_asset_type_id(params[3].upper())
 
     BR_tx = createBRTX(addressRSMC=scriptToAddress(script_rsmc), addressOther=pubkeyToAddress(selfpubkey),
-                            balanceSelf=balanceself, RSMCScript=script_rsmc)
+                            balanceSelf=balanceself, RSMCScript=script_rsmc, asset_id=asset_id)
 
     return {"BR_tx": BR_tx}
 
@@ -302,6 +323,10 @@ def hltc_trans(params):
     :param params:
     :return:
     """
+    if 9 > len(params):
+        LOG.error('hltc_trans: Invalid params {}!'.format(params))
+        return None
+
     pubkeySender = params[0]
     pubkeyReceiver = params[1]
     HTLCValue = params[2]
@@ -310,10 +335,11 @@ def hltc_trans(params):
     hashR = params[5]
     addressFunding = params[6]
     fundingScript = params[7]
+    asset_id = get_asset_type_id(params[5].upper())
 
 
     return create_sender_HCTX(pubkeySender, pubkeyReceiver, HTLCValue, balanceSender, balanceReceiver, hashR,
-                       addressFunding, fundingScript)
+                       addressFunding, fundingScript, asset_id)
 
 
 

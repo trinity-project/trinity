@@ -255,9 +255,16 @@ def chose_channel(channels, publick_key, tx_count, asset_type):
 def close_channel(channel_name, wallet):
     ch = Channel.channel(channel_name)
     peer = ch.get_peer(wallet.url)
+    balance = ch.get_balance()
+    if channel_name in balance.keys():
+        asset_type = balance[channel_name].keys()[0].upper()
+    else:
+        asset_type = None
+        LOG.error('Channel <{}> not found!'.format(channel_name))
+        return
     #tx = trans.TrinityTransaction(channel_name, wallet)
     #tx.realse_transaction()
-    mg.SettleMessage.create(channel_name,wallet,wallet.url, peer, "TNC") #ToDo
+    mg.SettleMessage.create(channel_name,wallet,wallet.url, peer, asset_type) #ToDo
 
 
 def sync_channel_info_to_gateway(channel_name, type):

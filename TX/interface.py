@@ -9,7 +9,7 @@ from TX.utils import hex_reverse, ToAddresstHash, createTxid, createMultiSigCont
 
 #RSMC
 
-def createFundingTx(walletSelf,walletOther): #self sign is behind
+def createFundingTx(walletSelf,walletOther,  asset_id=TNC): #self sign is behind
     '''
 
     :param walletSelf: dict {
@@ -33,9 +33,9 @@ def createFundingTx(walletSelf,walletOther): #self sign is behind
     txAttributes = [address_hash_self, address_hash_other, time_stamp]
 
     op_dataSelf = create_opdata(address_from=pubkeyToAddress(walletSelf["pubkey"]), address_to=contractAddress,
-                                value=walletSelf["deposit"],contract_hash=TNC)
+                                value=walletSelf["deposit"],contract_hash=asset_id)
     op_dataOther = create_opdata(address_from=pubkeyToAddress(walletOther["pubkey"]), address_to=contractAddress,
-                                 value=walletOther["deposit"],contract_hash=TNC)
+                                 value=walletOther["deposit"],contract_hash=asset_id)
 
     tx = InvocationTransaction()
     tx.Version = 1
@@ -51,7 +51,7 @@ def createFundingTx(walletSelf,walletOther): #self sign is behind
         # "witness":"024140{sign1}2321{pubkey1}ac4140{sign2}2321{pubkey2}ac"
     }
 
-def createCTX(addressFunding,balanceSelf,balanceOther,pubkeySelf,pubkeyOther,fundingScript):
+def createCTX(addressFunding,balanceSelf,balanceOther,pubkeySelf,pubkeyOther,fundingScript, asset_id=TNC):
     RSMCContract=createRSMCContract(hashSelf=pubkeyToAddressHash(pubkeySelf.strip()),pubkeySelf=pubkeySelf.strip(),
                        hashOther=pubkeyToAddressHash(pubkeyOther.strip()),pubkeyOther=pubkeyOther.strip(),magicTimestamp=time.time())
     time_stamp = TransactionAttribute(usage=TransactionAttributeUsage.Remark,
@@ -60,8 +60,8 @@ def createCTX(addressFunding,balanceSelf,balanceOther,pubkeySelf,pubkeyOther,fun
                                          data=ToAddresstHash(addressFunding).Data)
     txAttributes = [address_hash_funding, time_stamp]
 
-    op_data_to_RSMC = create_opdata(address_from=addressFunding, address_to=RSMCContract["address"], value=balanceSelf,contract_hash=TNC)
-    op_data_to_other = create_opdata(address_from=addressFunding, address_to=pubkeyToAddress(pubkeyOther), value=balanceOther,contract_hash=TNC)
+    op_data_to_RSMC = create_opdata(address_from=addressFunding, address_to=RSMCContract["address"], value=balanceSelf,contract_hash=asset_id)
+    op_data_to_other = create_opdata(address_from=addressFunding, address_to=pubkeyToAddress(pubkeyOther), value=balanceOther,contract_hash=asset_id)
 
     tx = InvocationTransaction()
     tx.Version = 1
@@ -76,7 +76,7 @@ def createCTX(addressFunding,balanceSelf,balanceOther,pubkeySelf,pubkeyOther,fun
         "witness":"018240{signSelf}40{signOther}da"+fundingScript
     }
 
-def createRDTX(addressRSMC,addressSelf,balanceSelf,CTxId,RSMCScript):
+def createRDTX(addressRSMC,addressSelf,balanceSelf,CTxId,RSMCScript, asset_id=TNC):
 
     time_stamp = TransactionAttribute(usage=TransactionAttributeUsage.Remark,
                                       data=bytearray.fromhex(hex(int(time.time()))[2:]))
@@ -89,7 +89,7 @@ def createRDTX(addressRSMC,addressSelf,balanceSelf,CTxId,RSMCScript):
 
     txAttributes = [address_hash_RSMC, time_stamp,pre_txid,outputTo]
 
-    op_data_to_self = create_opdata(address_from=addressRSMC, address_to=addressSelf, value=balanceSelf,contract_hash=TNC)
+    op_data_to_self = create_opdata(address_from=addressRSMC, address_to=addressSelf, value=balanceSelf,contract_hash=asset_id)
 
 
     tx = InvocationTransaction()
@@ -104,7 +104,7 @@ def createRDTX(addressRSMC,addressSelf,balanceSelf,CTxId,RSMCScript):
         "witness":"01{blockheight_script}40{signOther}40{signSelf}fd"+createVerifyScript(RSMCScript)
     }
 
-def createBRTX(addressRSMC,addressOther,balanceSelf,RSMCScript):
+def createBRTX(addressRSMC,addressOther,balanceSelf,RSMCScript, asset_id=TNC):
 
     time_stamp = TransactionAttribute(usage=TransactionAttributeUsage.Remark,
                                       data=bytearray.fromhex(hex(int(time.time()))[2:]))
@@ -113,7 +113,7 @@ def createBRTX(addressRSMC,addressOther,balanceSelf,RSMCScript):
     outputTo = TransactionAttribute(usage=TransactionAttributeUsage.Remark1, data=ToAddresstHash(addressOther).Data)
     txAttributes = [address_hash_RSMC, time_stamp,outputTo]
 
-    op_data_to_other = create_opdata(address_from=addressRSMC, address_to=addressOther, value=balanceSelf,contract_hash=TNC)
+    op_data_to_other = create_opdata(address_from=addressRSMC, address_to=addressOther, value=balanceSelf,contract_hash=asset_id)
 
 
     tx = InvocationTransaction()
@@ -128,7 +128,7 @@ def createBRTX(addressRSMC,addressOther,balanceSelf,RSMCScript):
         "witness": "01{blockheight_script}40{signOther}40{signSelf}fd" + createVerifyScript(RSMCScript)
     }
 
-def createRefundTX(addressFunding,balanceSelf,balanceOther,pubkeySelf,pubkeyOther,fundingScript):
+def createRefundTX(addressFunding,balanceSelf,balanceOther,pubkeySelf,pubkeyOther,fundingScript, asset_id=TNC):
 
     time_stamp = TransactionAttribute(usage=TransactionAttributeUsage.Remark,
                                       data=bytearray.fromhex(hex(int(time.time()))[2:]))
@@ -136,8 +136,8 @@ def createRefundTX(addressFunding,balanceSelf,balanceOther,pubkeySelf,pubkeyOthe
                                          data=ToAddresstHash(addressFunding).Data)
     txAttributes = [address_hash_funding, time_stamp]
 
-    op_data_to_self = create_opdata(address_from=addressFunding, address_to=pubkeyToAddress(pubkeySelf), value=balanceSelf,contract_hash=TNC)
-    op_data_to_other = create_opdata(address_from=addressFunding, address_to=pubkeyToAddress(pubkeyOther), value=balanceOther,contract_hash=TNC)
+    op_data_to_self = create_opdata(address_from=addressFunding, address_to=pubkeyToAddress(pubkeySelf), value=balanceSelf,contract_hash=asset_id)
+    op_data_to_other = create_opdata(address_from=addressFunding, address_to=pubkeyToAddress(pubkeyOther), value=balanceOther,contract_hash=asset_id)
 
     tx = InvocationTransaction()
     tx.Version = 1
@@ -152,7 +152,7 @@ def createRefundTX(addressFunding,balanceSelf,balanceOther,pubkeySelf,pubkeyOthe
 
 #sender HTLC
 def create_sender_HCTX(pubkeySender, pubkeyReceiver, HTLCValue, balanceSender, balanceReceiver, hashR,
-                   addressFunding, fundingScript):
+                   addressFunding, fundingScript, asset_id=TNC):
     RSMCContract = createRSMCContract(hashSelf=pubkeyToAddressHash(pubkeySender), pubkeySelf=pubkeySender,
                                       hashOther=pubkeyToAddressHash(pubkeyReceiver), pubkeyOther=pubkeyReceiver,
                                       magicTimestamp=time.time())
@@ -167,11 +167,11 @@ def create_sender_HCTX(pubkeySender, pubkeyReceiver, HTLCValue, balanceSender, b
     txAttributes = [address_hash_funding, time_stamp]
 
     op_data_to_HTLC = create_opdata(address_from=addressFunding, address_to=HTLCContract["address"], value=HTLCValue,
-                                    contract_hash=TNC)
+                                    contract_hash=asset_id)
     op_data_to_RSMC = create_opdata(address_from=addressFunding, address_to=RSMCContract["address"],
-                                    value=balanceSender, contract_hash=TNC)
+                                    value=balanceSender, contract_hash=asset_id)
     op_data_to_receiver = create_opdata(address_from=addressFunding, address_to=pubkeyToAddress(pubkeyReceiver),
-                                     value=balanceReceiver, contract_hash=TNC)
+                                     value=balanceReceiver, contract_hash=asset_id)
 
     tx = InvocationTransaction()
     tx.Version = 1
@@ -188,7 +188,7 @@ def create_sender_HCTX(pubkeySender, pubkeyReceiver, HTLCValue, balanceSender, b
         "witness": "018240{signSelf}40{signOther}da" + fundingScript
     }
 
-def create_sender_RDTX(addressRSMC, addressSender, balanceSender, senderHCTxId, RSMCScript):
+def create_sender_RDTX(addressRSMC, addressSender, balanceSender, senderHCTxId, RSMCScript, asset_id=TNC):
     time_stamp = TransactionAttribute(usage=TransactionAttributeUsage.Remark,
                                       data=bytearray.fromhex(hex(int(time.time()))[2:]))
     address_hash_RSMC = TransactionAttribute(usage=TransactionAttributeUsage.Script,
@@ -201,7 +201,7 @@ def create_sender_RDTX(addressRSMC, addressSender, balanceSender, senderHCTxId, 
     txAttributes = [address_hash_RSMC, time_stamp, pre_txid, outputTo]
 
     op_data_to_sender = create_opdata(address_from=addressRSMC, address_to=addressSender, value=balanceSender,
-                                    contract_hash=TNC)
+                                    contract_hash=asset_id)
 
     tx = InvocationTransaction()
     tx.Version = 1
@@ -214,7 +214,7 @@ def create_sender_RDTX(addressRSMC, addressSender, balanceSender, senderHCTxId, 
         "witness": "01{blockheight_script}40{signReceiver}40{signSender}fd"+createVerifyScript(RSMCScript)
     }
 
-def createHEDTX(addressHTLC, addressReceiver, HTLCValue, HTLCScript):
+def createHEDTX(addressHTLC, addressReceiver, HTLCValue, HTLCScript, asset_id=TNC):
     time_stamp = TransactionAttribute(usage=TransactionAttributeUsage.Remark,
                                       data=bytearray.fromhex(hex(int(time.time()))[2:]))
     address_hash_HTLC = TransactionAttribute(usage=TransactionAttributeUsage.Script,
@@ -222,7 +222,7 @@ def createHEDTX(addressHTLC, addressReceiver, HTLCValue, HTLCScript):
     txAttributes = [address_hash_HTLC, time_stamp]
 
     op_data_to_receiver = create_opdata(address_from=addressHTLC, address_to=addressReceiver, value=HTLCValue,
-                                     contract_hash=TNC)
+                                     contract_hash=asset_id)
 
     tx = InvocationTransaction()
     tx.Version = 1
@@ -235,7 +235,7 @@ def createHEDTX(addressHTLC, addressReceiver, HTLCValue, HTLCScript):
         "witness": "01{R_script}40{signOther}40{signSelf}fd"+createVerifyScript(HTLCScript)
     }
 
-def createHTTX(addressHTLC, pubkeySender, pubkeyReceiver, HTLCValue, HTLCScript):
+def createHTTX(addressHTLC, pubkeySender, pubkeyReceiver, HTLCValue, HTLCScript, asset_id=TNC):
     RSMCContract = createRSMCContract(hashSelf=pubkeyToAddressHash(pubkeySender), pubkeySelf=pubkeySender,
                                       hashOther=pubkeyToAddressHash(pubkeyReceiver), pubkeyOther=pubkeyReceiver,
                                       magicTimestamp=time.time())
@@ -247,7 +247,7 @@ def createHTTX(addressHTLC, pubkeySender, pubkeyReceiver, HTLCValue, HTLCScript)
     txAttributes = [address_hash_HTLC, time_stamp]
 
     op_data_to_RSMC = create_opdata(address_from=addressHTLC, address_to=RSMCContract["address"], value=HTLCValue,
-                                    contract_hash=TNC)
+                                    contract_hash=asset_id)
 
     tx = InvocationTransaction()
     tx.Version = 1
@@ -262,7 +262,7 @@ def createHTTX(addressHTLC, pubkeySender, pubkeyReceiver, HTLCValue, HTLCScript)
         "witness": "01{R_script}40{signOther}40{signSelf}fd"+createVerifyScript(HTLCScript)
     }
 
-def createHTRDTX(addressRSMC, addressSender, HTLCValue, HTTxId, RSMCScript):
+def createHTRDTX(addressRSMC, addressSender, HTLCValue, HTTxId, RSMCScript, asset_id=TNC):
     time_stamp = TransactionAttribute(usage=TransactionAttributeUsage.Remark,
                                       data=bytearray.fromhex(hex(int(time.time()))[2:]))
     address_hash_RSMC = TransactionAttribute(usage=TransactionAttributeUsage.Script,
@@ -275,7 +275,7 @@ def createHTRDTX(addressRSMC, addressSender, HTLCValue, HTTxId, RSMCScript):
     txAttributes = [address_hash_RSMC, time_stamp, pre_txid, outputTo]
 
     op_data_to_sender = create_opdata(address_from=addressRSMC, address_to=addressSender, value=HTLCValue,
-                                    contract_hash=TNC)
+                                    contract_hash=asset_id)
 
     tx = InvocationTransaction()
     tx.Version = 1
@@ -291,7 +291,7 @@ def createHTRDTX(addressRSMC, addressSender, HTLCValue, HTTxId, RSMCScript):
 
 #receiver HTLC
 def create_receiver_HCTX(pubkeySender, pubkeyReceiver, HTLCValue, balanceSender, balanceReceiver, hashR, addressFunding,
-                    fundingScript):
+                    fundingScript, asset_id=TNC):
     RSMCContract = createRSMCContract(hashSelf=pubkeyToAddressHash(pubkeyReceiver), pubkeySelf=pubkeyReceiver,
                                       hashOther=pubkeyToAddressHash(pubkeySender), pubkeyOther=pubkeySender,
                                       magicTimestamp=time.time())
@@ -306,11 +306,11 @@ def create_receiver_HCTX(pubkeySender, pubkeyReceiver, HTLCValue, balanceSender,
     txAttributes = [address_hash_funding, time_stamp]
 
     op_data_to_HTLC = create_opdata(address_from=addressFunding, address_to=HTLCContract["address"], value=HTLCValue,
-                                    contract_hash=TNC)
+                                    contract_hash=asset_id)
     op_data_to_RSMC = create_opdata(address_from=addressFunding, address_to=RSMCContract["address"], value=balanceReceiver,
-                                    contract_hash=TNC)
+                                    contract_hash=asset_id)
     op_data_to_sender = create_opdata(address_from=addressFunding, address_to=pubkeyToAddress(pubkeySender),
-                                     value=balanceSender, contract_hash=TNC)
+                                     value=balanceSender, contract_hash=asset_id)
 
     tx = InvocationTransaction()
     tx.Version = 1
@@ -327,7 +327,7 @@ def create_receiver_HCTX(pubkeySender, pubkeyReceiver, HTLCValue, balanceSender,
         "witness": "018240{signSelf}40{signOther}da" + fundingScript
     }
 
-def create_receiver_RDTX(addressRSMC, addressReceiver, balanceReceiver, receiver_HCTxId, RSMCScript):
+def create_receiver_RDTX(addressRSMC, addressReceiver, balanceReceiver, receiver_HCTxId, RSMCScript, asset_id=TNC):
     time_stamp = TransactionAttribute(usage=TransactionAttributeUsage.Remark,
                                       data=bytearray.fromhex(hex(int(time.time()))[2:]))
     address_hash_RSMC = TransactionAttribute(usage=TransactionAttributeUsage.Script,
@@ -340,7 +340,7 @@ def create_receiver_RDTX(addressRSMC, addressReceiver, balanceReceiver, receiver
     txAttributes = [address_hash_RSMC, time_stamp, pre_txid, outputTo]
 
     op_data_to_receiver = create_opdata(address_from=addressRSMC, address_to=addressReceiver, value=balanceReceiver,
-                                    contract_hash=TNC)
+                                    contract_hash=asset_id)
 
     tx = InvocationTransaction()
     tx.Version = 1
@@ -353,7 +353,7 @@ def create_receiver_RDTX(addressRSMC, addressReceiver, balanceReceiver, receiver
         "witness": "01{blockheight_script}40{signOther}40{signSelf}fd"+createVerifyScript(RSMCScript)
     }
 
-def createHTDTX(addressHTLC, pubkeySender,HTLCValue, HTLCScript):
+def createHTDTX(addressHTLC, pubkeySender,HTLCValue, HTLCScript, asset_id=TNC):
 
     time_stamp = TransactionAttribute(usage=TransactionAttributeUsage.Remark,
                                       data=bytearray.fromhex(hex(int(time.time()))[2:]))
@@ -362,7 +362,7 @@ def createHTDTX(addressHTLC, pubkeySender,HTLCValue, HTLCScript):
     txAttributes = [address_hash_HTLC, time_stamp]
 
     op_data_to_sender = create_opdata(address_from=addressHTLC, address_to=pubkeyToAddress(pubkeySender), value=HTLCValue,
-                                    contract_hash=TNC)
+                                    contract_hash=asset_id)
 
     tx = InvocationTransaction()
     tx.Version = 1
@@ -375,7 +375,7 @@ def createHTDTX(addressHTLC, pubkeySender,HTLCValue, HTLCScript):
         "witness": "01{R_script}40{signOther}40{signSelf}fd"+createVerifyScript(HTLCScript)
     }
 
-def createHETX(addressHTLC, pubkeySender,pubkeyReceiver,HTLCValue, HTLCScript):
+def createHETX(addressHTLC, pubkeySender,pubkeyReceiver,HTLCValue, HTLCScript, asset_id=TNC):
     RSMCContract = createRSMCContract(hashSelf=pubkeyToAddressHash(pubkeyReceiver), pubkeySelf=pubkeyReceiver,
                                       hashOther=pubkeyToAddressHash(pubkeySender), pubkeyOther=pubkeySender,
                                       magicTimestamp=time.time())
@@ -387,7 +387,7 @@ def createHETX(addressHTLC, pubkeySender,pubkeyReceiver,HTLCValue, HTLCScript):
     txAttributes = [address_hash_HTLC, time_stamp]
 
     op_data_to_RSMC = create_opdata(address_from=addressHTLC, address_to=RSMCContract["address"], value=HTLCValue,
-                                    contract_hash=TNC)
+                                    contract_hash=asset_id)
 
     tx = InvocationTransaction()
     tx.Version = 1
@@ -402,7 +402,7 @@ def createHETX(addressHTLC, pubkeySender,pubkeyReceiver,HTLCValue, HTLCScript):
         "witness": "01{R_script}40{signOther}40{signSelf}fd"+createVerifyScript(HTLCScript)
     }
 
-def createHERDTX(addressRSMC, addressReceiver, HTLCValue, HETxId, RSMCScript):
+def createHERDTX(addressRSMC, addressReceiver, HTLCValue, HETxId, RSMCScript, asset_id=TNC):
     time_stamp = TransactionAttribute(usage=TransactionAttributeUsage.Remark,
                                       data=bytearray.fromhex(hex(int(time.time()))[2:]))
     address_hash_RSMC = TransactionAttribute(usage=TransactionAttributeUsage.Script,
@@ -415,7 +415,7 @@ def createHERDTX(addressRSMC, addressReceiver, HTLCValue, HETxId, RSMCScript):
     txAttributes = [address_hash_RSMC, time_stamp, pre_txid, outputTo]
 
     op_data_to_receiver = create_opdata(address_from=addressRSMC, address_to=addressReceiver, value=HTLCValue,
-                                    contract_hash=TNC)
+                                    contract_hash=asset_id)
 
     tx = InvocationTransaction()
     tx.Version = 1
@@ -431,25 +431,25 @@ def createHERDTX(addressRSMC, addressReceiver, HTLCValue, HETxId, RSMCScript):
 
 
 def create_sender_HTLC_TXS(pubkeySender, pubkeyReceiver, HTLCValue, balanceSender,
-                           balanceReceiver, hashR, addressFunding, fundingScript):
+                           balanceReceiver, hashR, addressFunding, fundingScript, asset_id=TNC):
     sender_HCTX = create_sender_HCTX(pubkeySender=pubkeySender, pubkeyReceiver=pubkeyReceiver,
                                      HTLCValue=HTLCValue, balanceSender=balanceSender,
                                      balanceReceiver=balanceReceiver, hashR=hashR,
-                                     addressFunding=addressFunding, fundingScript=fundingScript)
+                                     addressFunding=addressFunding, fundingScript=fundingScript, asset_id=asset_id)
 
     sender_RDTX = create_sender_RDTX(addressRSMC=sender_HCTX["addressRSMC"], addressSender=pubkeyToAddress(pubkeySender),
                                      balanceSender=balanceSender, senderHCTxId=sender_HCTX["txId"],
-                                     RSMCScript=sender_HCTX["RSMCscript"])
+                                     RSMCScript=sender_HCTX["RSMCscript"], asset_id=asset_id)
 
     HEDTX = createHEDTX(addressHTLC=sender_HCTX["addressHTLC"], addressReceiver=pubkeyToAddress(pubkeyReceiver),
-                        HTLCValue=HTLCValue, HTLCScript=sender_HCTX["HTLCscript"])
+                        HTLCValue=HTLCValue, HTLCScript=sender_HCTX["HTLCscript"], asset_id=asset_id)
 
     HTTX = createHTTX(addressHTLC=sender_HCTX["addressHTLC"], pubkeySender=pubkeySender,
                       pubkeyReceiver=pubkeyReceiver, HTLCValue=HTLCValue,
-                      HTLCScript=sender_HCTX["HTLCscript"])
+                      HTLCScript=sender_HCTX["HTLCscript"], asset_id=asset_id)
 
     HTRDTX = createHTRDTX(addressRSMC=HTTX["addressRSMC"], addressSender=pubkeyToAddress(pubkeySender),
-                          HTLCValue=HTLCValue, HTTxId=HTTX["txId"], RSMCScript=HTTX["RSMCscript"])
+                          HTLCValue=HTLCValue, HTTxId=HTTX["txId"], RSMCScript=HTTX["RSMCscript"], asset_id=asset_id)
 
     return {
         "HCTX":sender_HCTX,
@@ -461,26 +461,26 @@ def create_sender_HTLC_TXS(pubkeySender, pubkeyReceiver, HTLCValue, balanceSende
 
 
 def create_receiver_HTLC_TXS(pubkeySender, pubkeyReceiver, HTLCValue, balanceSender,
-                           balanceReceiver, hashR, addressFunding, fundingScript):
+                           balanceReceiver, hashR, addressFunding, fundingScript, asset_id=TNC):
     receiver_HCTX = create_receiver_HCTX(pubkeySender=pubkeySender, pubkeyReceiver=pubkeyReceiver,
                                      HTLCValue=HTLCValue, balanceSender=balanceSender,
                                      balanceReceiver=balanceReceiver, hashR=hashR,
-                                     addressFunding=addressFunding, fundingScript=fundingScript)
+                                     addressFunding=addressFunding, fundingScript=fundingScript, asset_id=asset_id)
 
     receiver_RDTX = create_receiver_RDTX(addressRSMC=receiver_HCTX["addressRSMC"],
                                          addressReceiver=pubkeyToAddress(pubkeyReceiver),
                                          balanceReceiver=balanceReceiver, receiver_HCTxId=receiver_HCTX["txId"],
-                                         RSMCScript=receiver_HCTX["RSMCscript"])
+                                         RSMCScript=receiver_HCTX["RSMCscript"], asset_id=asset_id)
 
     HTDTX = createHTDTX(addressHTLC=receiver_HCTX["addressHTLC"], pubkeySender=pubkeySender,
-                        HTLCValue=HTLCValue, HTLCScript=receiver_HCTX["HTLCscript"])
+                        HTLCValue=HTLCValue, HTLCScript=receiver_HCTX["HTLCscript"], asset_id=asset_id)
 
     HETX = createHETX(addressHTLC=receiver_HCTX["addressHTLC"], pubkeySender=pubkeySender,
                       pubkeyReceiver=pubkeyReceiver, HTLCValue=HTLCValue,
-                      HTLCScript=receiver_HCTX["HTLCscript"])
+                      HTLCScript=receiver_HCTX["HTLCscript"], asset_id=asset_id)
 
     HERDTX = createHERDTX(addressRSMC=HETX["addressRSMC"], addressReceiver=pubkeyToAddress(pubkeyReceiver),
-                          HTLCValue=HTLCValue, HETxId=HETX["txId"], RSMCScript=HETX["RSMCscript"])
+                          HTLCValue=HTLCValue, HETxId=HETX["txId"], RSMCScript=HETX["RSMCscript"], asset_id=asset_id)
 
     return {
         "HCTX": receiver_HCTX,
@@ -494,6 +494,6 @@ def create_receiver_HTLC_TXS(pubkeySender, pubkeyReceiver, HTLCValue, balanceSen
 
 if __name__ == "__main__":
     result= createFundingTx({"pubkey":"03c0aaf3e23ee4d38ca99f16248d93f6b0d439b638586dce56503941b321d94108","deposit":1.0},
-                            {"pubkey":"02d28d2314f0920ddee218e863bc1a50d492787a1198570a8db549e651949b205f","deposit":1.0}
-                            )
+                            {"pubkey":"02d28d2314f0920ddee218e863bc1a50d492787a1198570a8db549e651949b205f","deposit":1.0},
+                            TNC)
     print(result)

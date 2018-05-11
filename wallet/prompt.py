@@ -256,6 +256,8 @@ class UserPromptInterface(PromptInterface):
                 raise Exception("Please Open The Wallet First")
             partner = get_arg(arguments, 1)
             asset_type = get_arg(arguments, 2)
+            if asset_type:
+                asset_type = asset_type.upper()
             deposit = float(get_arg(arguments, 3).strip())
             if not check_support_asset_type(asset_type):
                 print("Now we just support TNC, mulit-asset will coming soon")
@@ -303,6 +305,9 @@ class UserPromptInterface(PromptInterface):
                 count = get_arg(arguments, 3)
                 hr = None
 
+            if asset_type:
+                asset_type = asset_type.upper()
+
             receiverpubkey, receiverip= receiver.split("@")
             channels = filter_channel_via_address(self.Wallet.url,receiver, EnumChannelState.OPENED.name)
             LOG.debug("Channels {}".format(str(channels)))
@@ -317,7 +322,7 @@ class UserPromptInterface(PromptInterface):
                 tx_nonce = trinitytx.TrinityTransaction(channel_name, self.Wallet).get_latest_nonceid()
                 mg.RsmcMessage.create(channel_name,self.Wallet,self.Wallet.pubkey,
                                       receiverpubkey, float(count), receiverip, gate_way_ip, str(tx_nonce+1),
-                                      asset_type="TNC", comments=hr)
+                                      asset_type=asset_type, comments=hr)
             else:
                 message = {"MessageType":"GetRouterInfo",
                            "Sender":self.Wallet.url,
