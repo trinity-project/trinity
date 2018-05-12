@@ -172,7 +172,7 @@ class UserPromptInterface(PromptInterface):
                 "params": ["AGgZna4kbTXPm16yYZyG6RyrQz2Sqotno6",self.Wallet.address],
                 "id": 1
                 }
-        result = requests.post(url=Configure['BlockChain']['NeoUrl'], json=request)
+        result = requests.post(url=Configure['BlockChain']['NeoUrlEnhance'], json=request)
         txid = result.json().get("result")
         if txid:
             print(txid)

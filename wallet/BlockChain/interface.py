@@ -24,9 +24,13 @@ SOFTWARE."""
 import requests
 from TX.utils import pubkeyToAddressHash
 from wallet.configure import Configure
+from log import LOG
+
+
 AssetType=Configure["AssetType"]
 
-TestNetUrl = Configure['BlockChain']['NeoTestNetUrl']
+
+NetUrl = Configure['BlockChain']['NeoNetUrl']
 
 
 def get_block_count():
@@ -37,7 +41,7 @@ def get_block_count():
   "id": 1
 }
 
-    result = requests.post(url = TestNetUrl, json = request)
+    result = requests.post(url = NetUrl, json = request)
     return result.json()["result"]
 
 
@@ -47,7 +51,7 @@ def send_raw(raw):
   "params": [raw],
   "id": 1}
 
-    result = requests.post(url=TestNetUrl, json=request)
+    result = requests.post(url=NetUrl, json=request)
     if result.json().get("result") is not None:
         return result.json()["result"]
     else:
@@ -61,7 +65,7 @@ def get_bolck(index):
   "params": [int(index), 1],
   "id": 1
 }
-    result = requests.post(url=TestNetUrl, json=request)
+    result = requests.post(url=NetUrl, json=request)
     return result.json()["result"]
 
 
@@ -89,13 +93,35 @@ def get_balance(pubkey, asset_type):
         ],
         "id": 3
     }
-    result = requests.post(url=TestNetUrl, json=request)
+    result = requests.post(url=NetUrl, json=request)
     if result.json().get("result"):
         value = result.json().get("result").get("stack")[0].get("value")
         if value:
             return hex2interger(value)
     return 0
 
+
+
+def get_application_log(tx_id):
+    request = {
+        "jsonrpc": "2.0",
+        "method": "getapplicationlog",
+        "params": [tx_id],
+        "id": 3
+    }
+
+    result = requests.post(url=NetUrl, json=request)
+    LOG.debug(result)
+    return result.json()["result"]
+
+
+def check_vmstate(tx_id):
+    try:
+        result = get_application_log(tx_id)
+        return "FAULT" not in result["vmstate"]
+    except KeyError as e:
+        LOG.error(str(e))
+        return False
 
 
 def hex2interger(input):

@@ -85,9 +85,12 @@ def monitorblock():
         Monitor.update_block_height(blockheight_onchain)
 
         blockheight = Monitor.get_wallet_block_height()
+
+        block_delta = int(blockheight_onchain) - int(blockheight)
+
         if blockheight:
             try:
-                if blockheight > 130000:
+                if block_delta < 2000:
                     block = get_bolck(int(blockheight))
                     handle_message(int(blockheight),block)
                     blockheight += 1

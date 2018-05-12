@@ -38,6 +38,7 @@ from wallet.utils import sign,\
 from TX.utils import blockheight_to_script
 from wallet.BlockChain.monior import register_block, \
     register_monitor
+from wallet.BlockChain.interface import check_vmstate
 from model import APIChannel
 from log import LOG
 import json
@@ -1635,8 +1636,12 @@ class PaymentAck(TransactionMessage):
         Message.send(message)
 
 
-def monitor_founding(height, channel_name, state):
+def monitor_founding(tx_id, channel_name, state):
     channel = ch.Channel.channel(channel_name)
+    if not check_vmstate(tx_id):
+        LOG.error("tx_id vm state error")
+        channel.delete()
+        return None
     deposit = channel.get_deposit()
     channel.update_channel(state=state, balance = deposit)
     ch.sync_channel_info_to_gateway(channel_name,"AddChannel")
