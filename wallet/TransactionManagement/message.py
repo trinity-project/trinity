@@ -29,7 +29,7 @@ from wallet.utils import pubkey_to_address, get_asset_type_id
 from TX.interface import *
 from wallet.ChannelManagement import channel as ch
 from model.base_enum import EnumChannelState
-from wallet.Interface.gate_way import send_message
+from wallet.Interface.gate_way import send_message, join_gateway
 from wallet.utils import sign,\
     check_onchain_balance, \
     check_max_deposit,\
@@ -37,7 +37,8 @@ from wallet.utils import sign,\
     check_deposit
 from TX.utils import blockheight_to_script
 from wallet.BlockChain.monior import register_block, \
-    register_monitor
+    register_monitor,\
+    Monitor
 from wallet.BlockChain.interface import check_vmstate
 from model import APIChannel
 from log import LOG
@@ -83,6 +84,7 @@ class Message(object):
     """
 
     """
+    Connection = True
 
     def __init__(self, message):
         self.message = message
@@ -94,7 +96,15 @@ class Message(object):
 
     @staticmethod
     def send(message):
-        send_message(message)
+        if Message.Connection:
+            try:
+                result = send_message(message)
+                return True, result
+            except ConnectionError as e:
+                LOG.error(str(e))
+                Message.Connection=False
+                Monitor.BlockPause = True
+        return False, "Connection Lose"
 
 
 class RegisterMessage(Message):
@@ -404,7 +414,7 @@ class FounderMessage(TransactionMessage):
                                       },
                     "Comments": comments
                  }
-        FounderMessage.send(message)
+        Message.send(message)
 
     def verify(self):
         if self.sender == self.receiver:
@@ -485,7 +495,7 @@ class FounderMessage(TransactionMessage):
                                                 },
                                  "Comments": self.comments
                                 }
-        FounderMessage.send(message_response)
+        Message.send(message_response)
         LOG.info("Send FounderMessage Response:  {}".format(json.dumps(message_response )))
         return None
 
@@ -1635,6 +1645,37 @@ class PaymentAck(TransactionMessage):
                 }
         Message.send(message)
 
+
+class SyncBlockMessage(Message):
+    """
+
+    """
+    @staticmethod
+    def send_block_sync(block_number, txids_list):
+        message = {"MessageType": "PaymentAck",
+                   "Sender":None,
+                   "Receiver": None,
+                   "MessageBody": {
+                         "BlockNumber": block_number,
+                         "txids": txids_list
+                         }
+                   }
+        SyncBlockMessage.send(message)
+
+    @staticmethod
+    def send(message):
+        from wallet.Interface.rpc_interface import CurrentLiveWallet
+        try:
+            result =send_message(message)
+            if Message.Connection is False:
+                join_gateway(CurrentLiveWallet.Wallet.pubkey)
+                Monitor.BlockPause = False
+                Message.Connection = True
+        except ConnectionError as e:
+            LOG.error(str(e))
+            Message.Connection = False
+            Monitor.BlockPause = True
+        return None
 
 def monitor_founding(tx_id, channel_name, state):
     channel = ch.Channel.channel(channel_name)

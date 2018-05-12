@@ -32,13 +32,21 @@ AssetType=Configure["AssetType"]
 
 NetUrl = Configure['BlockChain']['NeoNetUrl']
 
+class InterfaceRpc(object):
+    RequetsID = 0
+
+    @classmethod
+    def ID(cls):
+        cls.RequetsID +=1
+        return cls.RequetsID
+
 
 def get_block_count():
     request = {
   "jsonrpc": "2.0",
   "method": "getblockcount",
   "params": [],
-  "id": 1
+  "id": InterfaceRpc.ID()
 }
 
     result = requests.post(url = NetUrl, json = request)
@@ -49,7 +57,7 @@ def send_raw(raw):
     request =  { "jsonrpc": "2.0",
   "method": "sendrawtransaction",
   "params": [raw],
-  "id": 1}
+  "id": InterfaceRpc.ID()}
 
     result = requests.post(url=NetUrl, json=request)
     if result.json().get("result") is not None:
@@ -63,15 +71,20 @@ def get_bolck(index):
   "jsonrpc": "2.0",
   "method": "getblock",
   "params": [int(index), 1],
-  "id": 1
+  "id": InterfaceRpc.ID()
 }
     result = requests.post(url=NetUrl, json=request)
     return result.json()["result"]
 
 
 def get_balance(pubkey, asset_type):
-    asset_script = AssetType.get(asset_type.upper()).replace("0x","")
+    if len(asset_type) >10:
+        asset_script = asset_type
+    else:
+        asset_script = AssetType.get(asset_type.upper())
+    asset_script = asset_script.replace("0x","")
     address_hash = pubkeyToAddressHash(pubkey)
+
     def convert_hash(hash):
         t = hash[-2::-2]
         t1 = hash[::-2]
@@ -91,7 +104,7 @@ def get_balance(pubkey, asset_type):
                 }
             ]
         ],
-        "id": 3
+        "id": InterfaceRpc.ID()
     }
     result = requests.post(url=NetUrl, json=request)
     if result.json().get("result"):
@@ -107,7 +120,7 @@ def get_application_log(tx_id):
         "jsonrpc": "2.0",
         "method": "getapplicationlog",
         "params": [tx_id],
-        "id": 3
+        "id": InterfaceRpc.ID()
     }
 
     result = requests.post(url=NetUrl, json=request)

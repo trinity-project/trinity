@@ -15,6 +15,7 @@ from lightwallet.Utils import get_from_addr, get_arg, get_asset_id, get_balance,
     privtKey_to_publicKey, send_raw_tx
 
 
+
 class Nep6Wallet(object):
     AddressVersion = None
 
@@ -237,6 +238,15 @@ class Nep6Wallet(object):
                     "TNC":res["result"]["tncBalance"]
                 }
             }
+            try:
+                from wallet.BlockChain.interface import get_balance as gb
+                wallet_info = self.fromJsonFile(self._path)
+                for n_key,n_hash in wallet_info.items():
+                    balance = gb(tmp_dict.get("pubkey"), n_hash)
+                    tmp_dict["assets"][n_key] = balance
+            except Exception as e:
+                print(str(e))
+                pass
             jsn['accounts'].append(tmp_dict)
         return jsn
 
@@ -244,6 +254,7 @@ class Nep6Wallet(object):
         jsn={}
         jsn["extra"]={"passwordHash":self._passwordHash.decode()}
         jsn["name"]=self.Name
+        jsn["nep5"] ={}
         jsn["version"]=self.Version
         jsn["scrypt"]=self.Scrypt
         jsn['accounts'] = [
@@ -256,10 +267,15 @@ class Nep6Wallet(object):
 
         with open(path,"wb") as f:
             f.write(json.dumps(jsn).encode())
-
-
-
         return None
+
+    def AddNEP5Token(self, symbol, script_hash):
+        wallet_info = self.fromJsonFile(self._path)
+        tokens = wallet_info.get("nep5")
+        script_hash = script_hash.lower() if script_hash.lower().startswith("0x") else "{}{}".format("0x",script_hash)
+        tokens.setdefault(symbol.upper(),script_hash)
+        with open(self._path,"wb") as f:
+            f.write(json.dumps(wallet_info).encode())
 
     def fromJsonFile(self,path):
         with open(path,"rb") as f:

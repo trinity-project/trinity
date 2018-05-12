@@ -40,6 +40,7 @@ class Monitor(object):
     Wallet = None
     Wallet_Change = None
     BlockHeight = None
+    BlockPause = False
 
     @classmethod
     def stop_monitor(cls):
@@ -93,11 +94,13 @@ def monitorblock():
                 if block_delta < 2000:
                     block = get_bolck(int(blockheight))
                     handle_message(int(blockheight),block)
-                    blockheight += 1
+                    if Monitor.BlockPause:
+                        pass
+                    else:
+                        blockheight += 1
                 else:
                     blockheight +=1000
                     pass
-
                 Monitor.update_wallet_block_height(blockheight)
             except Exception as e:
                 pass
@@ -139,6 +142,7 @@ def handle_message(height,jsn):
     for i in match_list:
         TxIDRegister.remove(i)
     return
+
 
 
 def register_monitor(*args):
