@@ -29,6 +29,8 @@ Configure = {
     "CommitMinDeposit": 0,  # the min commit deposit
     "CommitMaxDeposit":1000, # the max commit deposit
      "MaxChannel":100,# the max number to create channel, if 0 , no limited
+    "NetAddress":"0.0.0.0",
+    "NetPort":"20556",
     "AssetType":{
         "TNC": "0x849d095d07950b9e56d0c895ec48ec5100cfdff1"
     },

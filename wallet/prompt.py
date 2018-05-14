@@ -499,9 +499,18 @@ def main():
 
 
     UserPrompt = UserPromptInterface()
-    api_server_rpc = RpcInteraceApi("20556")
-    endpoint_rpc = "tcp:port={0}:interface={1}".format("20556", "0.0.0.0")
-    endpoints.serverFromString(reactor, endpoint_rpc).listen(Site(api_server_rpc.app.resource()))
+    port = Configure.get("NetPort")
+    address = Configure.get("NetAddress")
+    port = port if port else "20556"
+    address = address if address else "0.0.0.0"
+    try:
+        api_server_rpc = RpcInteraceApi(port)
+        endpoint_rpc = "tcp:port={0}:interface={1}".format(port, address)
+        endpoints.serverFromString(reactor, endpoint_rpc).listen(Site(api_server_rpc.app.resource()))
+    except Exception as e:
+        LOG.error(str(e))
+        print("Setup jsonRpc server error, please check if the port {} already opend".format(port))
+
 
 
     reactor.suggestThreadPoolSize(15)
