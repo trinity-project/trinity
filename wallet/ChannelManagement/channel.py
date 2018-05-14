@@ -92,6 +92,7 @@ class Channel(object):
             return None
         ch =cls(channel_info.src_addr, channel_info.dest_addr)
         ch.channel_name = channelname
+        ch.channel_info = channel_info
         return ch
 
 

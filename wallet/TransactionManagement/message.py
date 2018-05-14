@@ -873,7 +873,11 @@ class RsmcMessage(TransactionMessage):
         return False, sender_balance, receiver_balance, amount
 
     def verify(self):
-        return True, None
+        channel = ch.Channel.channel(self.channel_name)
+        if channel and channel.channel_info.state == EnumChannelState.OPENED.name:
+            return True, None
+
+        return False, None
 
     def store_monitor_commitement(self):
         ctxid = self.commitment.get("txID")
@@ -1183,7 +1187,11 @@ class HtlcMessage(TransactionMessage):
             self.send_responses(self.role_index,error = error)
 
     def verify(self):
-        return True, None
+        channel = ch.Channel.channel(self.channel_name)
+        if channel and channel.channel_info.state == EnumChannelState.OPENED.name:
+            return True, None
+
+        return False, None
 
     def check_if_the_last_router(self):
         return self.wallet.url == self.router[-1][0]
