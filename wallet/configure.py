@@ -25,10 +25,10 @@ Configure = {
     "alias":"TrinityNode",# you can rename your node
     "GatewayURL":"http://localhost:8077",
     "Fee": 0.01,
-     "AutoCreate": True, # if the wallet accept the create channel request automatically
-    "CommitMinDeposit": 0,  # the min commit deposit
-    "CommitMaxDeposit":1000, # the max commit deposit
-     "MaxChannel":100,# the max number to create channel, if 0 , no limited
+    "AutoCreate": True, # if the wallet accept the create channel request automatically
+    "CommitMinDeposit": 10000,   # the min commit deposit
+    "CommitMaxDeposit": 1000000, # the max commit deposit
+    "MaxChannel":100, # the max number to create channel, if 0 , no limited
     "NetAddress":"0.0.0.0",
     "NetPort":"20556",
     "AssetType":{

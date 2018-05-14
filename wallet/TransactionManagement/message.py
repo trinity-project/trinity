@@ -33,8 +33,9 @@ from wallet.Interface.gate_way import send_message, join_gateway
 from wallet.utils import sign,\
     check_onchain_balance, \
     check_max_deposit,\
-    check_mix_deposit,\
-    check_deposit
+    check_min_deposit,\
+    check_deposit, \
+    is_valid_deposit
 from TX.utils import blockheight_to_script
 from wallet.BlockChain.monior import register_block, \
     register_monitor,\
@@ -168,41 +169,46 @@ class RegisterMessage(Message):
         state, error = self.check_balance()
         if not state:
             return state, error
-        state, error = self.check_depoist()
+        state, error = self.check_deposit()
         if not state:
             return state, error
 
         return True, None
 
-    def check_depoist(self):
+    def check_deposit(self):
         state, de = check_deposit(self.deposit)
         if not state:
-            if isinstance(de,float):
+            if isinstance(de, float):
                 return False,"Deposit should be larger than 0 , but give {}".format(str(de))
             else:
-                return False,"Deposit Formate error {}".format(de)
+                return False,"Deposit Format error {}".format(de)
 
-        state, maxd = check_max_deposit(self.deposit)
-        if not state:
-            if isinstance(maxd,float):
-                return False, "Deposit is larger than the max, max is {}".format(str(maxd))
-            else:
-                return False, "Max deposit configure error {}".format(maxd)
-
-        state , mixd = check_mix_deposit(self.deposit)
-        if not state:
-            if isinstance(mixd,float):
-                return False, "Deposit is less than the min, min is {}".format(str(mixd))
-            else:
-                return False, "Mix deposit configure error {}".format(mixd)
-
-        return True,None
+        is_spv = self.is_spv_wallet()
+        return is_valid_deposit(self.deposit, is_spv), None
+        # state, maxd = check_max_deposit(self.deposit)
+        # if not state:
+        #     if isinstance(maxd, float):
+        #         return False, "Deposit is larger than the max, max is {}".format(str(maxd))
+        #     else:
+        #         return False, "Max deposit configure error {}".format(maxd)
+        #
+        # state , mind = check_min_deposit(self.deposit)
+        # if not state:
+        #     if isinstance(mind, float):
+        #         return False, "Deposit is less than the min, min is {}".format(str(mind))
+        #     else:
+        #         return False, "Mix deposit configure error {}".format(mind)
+        #
+        # return True,None
 
     def check_balance(self):
         if check_onchain_balance(self.wallet.pubkey, self.asset_type, self.deposit):
             return True, None
         else:
             return False, "No Balance OnChain to support the deposit"
+
+    def is_spv_wallet(self):
+        return self.sender.strip().endswith('8766') or self.receiver.strip().endswith('8766')
 
 
 class TestMessage(Message):
