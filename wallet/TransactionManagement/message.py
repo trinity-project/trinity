@@ -1680,7 +1680,7 @@ class SyncBlockMessage(Message):
     def send(message):
         from wallet.Interface.rpc_interface import CurrentLiveWallet
         try:
-            result =send_message(message)
+            result = send_message(message,"SyncBlock")
             if Message.Connection is False:
                 join_gateway(CurrentLiveWallet.Wallet.pubkey)
                 Monitor.BlockPause = False

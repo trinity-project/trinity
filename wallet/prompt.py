@@ -510,9 +510,6 @@ def main():
     except Exception as e:
         LOG.error(str(e))
         print("Setup jsonRpc server error, please check if the port {} already opend".format(port))
-
-
-
     reactor.suggestThreadPoolSize(15)
     reactor.callInThread(UserPrompt.run)
     reactor.callInThread(UserPrompt.handlemaessage)
