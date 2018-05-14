@@ -29,8 +29,9 @@ from wallet.configure import Configure
 from wallet.BlockChain.interface import get_balance
 import re
 import hashlib
+from log import LOG
 
-SupportAssetType = ["TNC"] #Todo multi-asset will come soon, before that hardcode here
+SupportAssetType = ["TNC", "NEO", "GAS"] #Todo multi-asset will come soon, before that hardcode here
 
 
 def to_aes_key(password):
@@ -131,7 +132,7 @@ def check_onchain_balance(pubkey,asset_type,depoist):
     :return:
     """
     balance = get_balance(pubkey, asset_type)
-    if float(depoist) <= float(balance):
+    if 0 < float(depoist) <= float(balance):
         return True
     else:
         return False
@@ -150,7 +151,7 @@ def check_max_deposit(deposit):
         return float(deposit) <= maxd, maxd
 
 
-def check_mix_deposit(deposit):
+def check_min_deposit(deposit):
     mixd = Configure.get("CommitMinDeposit")
     if mixd is None or float(mixd) == 0:
         return True, None
@@ -168,6 +169,33 @@ def check_deposit(deposit):
     except ValueError as e:
         return False, str(e)
     return de > 0, de
+
+
+def convert_to_int(deposit):
+    try:
+        return int(deposit)
+    except Exception as error:
+        return 0
+
+
+def is_valid_deposit(deposit, spv_wallet=False):
+    max_deposit = convert_to_int(Configure.get("CommitMaxDeposit"))
+    min_deposit = convert_to_int(Configure.get("CommitMinDeposit"))
+
+    if spv_wallet:
+        return 0 < deposit
+
+    # node wallet
+    if 0 >= min_deposit:
+        LOG.error('CommitMinDeposit is set as an illegal value<{}>.'.format(min_deposit))
+        return False
+
+    if 0 >= max_deposit:
+        LOG.warn('Set CommitMaxDeposit as default value 1,000,000')
+        max_deposit = 1000000
+
+    return min_deposit <= deposit <= max_deposit
+
 
 def check_partner(wallet, partner):
     """

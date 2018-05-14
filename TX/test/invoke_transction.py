@@ -21,7 +21,7 @@ walletOther= {
 
 
 
-funding_tx = createFundingTx(walletSelf=walletSelf, walletOther=walletOther)
+funding_tx = createFundingTx(walletSelf=walletSelf, walletOther=walletOther, asset_id=TNC)
 
 # self_C_tx = createCTX(addressFunding=funding_tx["addressFunding"], balanceSelf=walletSelf["deposit"],
 #                       balanceOther=walletOther["deposit"], pubkeySelf=walletSelf["pubkey"],

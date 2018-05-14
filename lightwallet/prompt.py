@@ -32,6 +32,7 @@ class PromptInterface(object):
                 'send {asset} {address} {amount}',
                 'export wif {address}',
                 'export nep2 {address}',
+                'import token {token symbol}, {script hash}'
                 'tx {txid}',
                 ]
     go_on = True
@@ -215,6 +216,20 @@ class PromptInterface(object):
 
             return
 
+        elif item == 'token':
+            if not self.Wallet:
+                print("Please open a wallet first")
+                return
+            symbol= get_arg(arguments, 1)
+            if not symbol:
+                print("Please give symbol")
+                return
+            script_hash = get_arg(arguments,2)
+            if not script_hash:
+                print("Please give symbol")
+                return
+            self.Wallet.AddNEP5Token()
+
         else:
             print("Import of '%s' not implemented" % item)
 
@@ -362,6 +377,9 @@ class PromptInterface(object):
                         self.do_send(arguments)
                     elif command == 'tx':
                         self.show_tx(arguments)
+
+                    elif command == 'import':
+                        self.do_import(arguments)
 
                     else:
                         print("command %s not found" % command)

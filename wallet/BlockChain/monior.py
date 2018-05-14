@@ -31,6 +31,7 @@ import os
 from wallet.Interface.gate_way import send_message
 import copy
 from .interface import get_block_count, get_bolck, send_raw
+from wallet.TransactionManagement import message as ms
 
 BlockHeightRecord = os.path.join(TxDataDir,"block.data")
 
@@ -40,6 +41,7 @@ class Monitor(object):
     Wallet = None
     Wallet_Change = None
     BlockHeight = None
+    BlockPause = False
 
     @classmethod
     def stop_monitor(cls):
@@ -85,16 +87,21 @@ def monitorblock():
         Monitor.update_block_height(blockheight_onchain)
 
         blockheight = Monitor.get_wallet_block_height()
+
+        block_delta = int(blockheight_onchain) - int(blockheight)
+
         if blockheight:
             try:
-                if blockheight > 130000:
+                if block_delta < 2000:
                     block = get_bolck(int(blockheight))
                     handle_message(int(blockheight),block)
-                    blockheight += 1
+                    if Monitor.BlockPause:
+                        pass
+                    else:
+                        blockheight += 1
                 else:
                     blockheight +=1000
                     pass
-
                 Monitor.update_wallet_block_height(blockheight)
             except Exception as e:
                 pass
@@ -117,6 +124,7 @@ def handle_message(height,jsn):
     match_list=[]
     block_txids = [i.get("txid") for i in jsn.get("tx")]
     blockheight = copy.deepcopy(BlockHeightRecord)
+    ms.SyncBlockMessage.send_block_sync(Monitor.Wallet,blockheight,block_txids)
     for index,value in enumerate(blockheight):
         if value[0] == height:
             value[1](*value[1:])
@@ -136,6 +144,7 @@ def handle_message(height,jsn):
     for i in match_list:
         TxIDRegister.remove(i)
     return
+
 
 
 def register_monitor(*args):
