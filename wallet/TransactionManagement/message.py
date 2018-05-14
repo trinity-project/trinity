@@ -1651,9 +1651,9 @@ class SyncBlockMessage(Message):
 
     """
     @staticmethod
-    def send_block_sync(block_number, txids_list):
-        message = {"MessageType": "PaymentAck",
-                   "Sender":None,
+    def send_block_sync(wallet, block_number, txids_list):
+        message = {"MessageType": "SyncBlock",
+                   "Sender":wallet.url,
                    "Receiver": None,
                    "MessageBody": {
                          "BlockNumber": block_number,
@@ -1677,10 +1677,11 @@ class SyncBlockMessage(Message):
             Monitor.BlockPause = True
         return None
 
+
 def monitor_founding(tx_id, channel_name, state):
     channel = ch.Channel.channel(channel_name)
     if not check_vmstate(tx_id):
-        LOG.error("tx_id vm state error")
+        LOG.error("{} vm state error".format(tx_id))
         channel.delete()
         return None
     deposit = channel.get_deposit()
