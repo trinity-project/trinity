@@ -66,8 +66,8 @@ class _Wallet:
     def __str__(self):
         # return "Wallet(name: {}, asset_type: {}, fee: {}, deposit: {}, balance: {}, status: {})".\
         #     format(self.name, self.asset_type, self.fee, self.deposit, self.balance, self.status)
-        return "Wallet(name: {}, asset_type: {}, status: {})".\
-            format(self.name, self.asset_type, self.status)
+        return "Wallet(name: {}, status: {})".\
+            format(self.name, self.status)
 
     def __repr__(self):
         return self.__str__()

@@ -324,6 +324,12 @@ class Gateway:
             )
             self.resume_channel_from_db()
 
+    def handle_wallet_make_connection(self, protocol):
+        pass
+    
+    def handle_wallet_lost_connection(self, protocol):
+        pass
+        
     def handle_spv_make_connection(self, websocket):
         if self.net_topos.get("TNC"):
             message =  MessageMake.make_node_list_msg(self.net_topos["TNC"])
