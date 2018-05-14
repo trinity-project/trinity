@@ -31,10 +31,23 @@ class TBLNode(DBManager):
         Created         : 2018-02-13
         Modified        : 2018-03-21
     """
-    def add_one(self, address: str, public_key:str, ip: str, balance: int, deposit: dict, fee: int,
-                name:str, state: str, tti=0, type=''):
-        return super(TBLNode, self).add(address=address, public_key=public_key, ip=ip, balance=balance,
-                                        deposit=deposit, fee=fee, name=name, state=state, tti=tti, type='')
+    # def add_one(self, address: str, public_key:str, ip: str, balance: int, deposit: dict, fee: int,
+    #             name:str, state: str, tti=0, type=''):
+    #     return super(TBLNode, self).add(address=address, public_key=public_key, ip=ip, balance=balance,
+    #                                     deposit=deposit, fee=fee, name=name, state=state, tti=tti, type='')
+    def add_one(self, **kwargs):
+        return super(TBLNode, self).add(
+            public_key=kwargs.get("public_key"),
+            cli_ip=kwargs.get("cli_ip"),
+            ip=kwargs.get("ip"),
+            balance={},
+            deposit=kwargs.get("deposit"),
+            fee=kwargs.get("fee"), 
+            name=kwargs.get("name"), 
+            status=kwargs.get("status"), 
+            tti=kwargs.get("tti"), 
+            type=kwargs.get("type")
+        )
 
     @property
     @connection_singleton
@@ -47,15 +60,16 @@ class TBLNode(DBManager):
 
     @property
     def primary_key(self):
-        return 'address'
+        # return 'address'
+        return "public_key"
 
     @property
     def required_item(self):
-        return ['address', 'public_key', 'ip', 'port', 'deposit', 'fee', 'state', 'tti']
+        return ['public_key', 'ip', 'cli_ip', 'deposit', 'name', 'fee', 'status', 'tti']
 
     @property
     def optional_item(self):
-        return ['node_name', 'type']
+        return ['name', 'type']
 
 
 class APINode(object):
@@ -63,8 +77,8 @@ class APINode(object):
 
     @classmethod
     @rpc_response('AddNode')
-    def add_ransaction(cls, *args):
-        return cls.table.add_one(*args)
+    def add_ransaction(cls, **kwargs):
+        return cls.table.add_one(**kwargs)
 
     @classmethod
     @rpc_response('DeleteNode')

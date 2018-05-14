@@ -17,7 +17,7 @@ class Gateway:
     """
     def __init__(self):
         self.wallet_detect_timestamp = int(time.time())
-        self.wallet_detect_interval = 0
+        self.wallet_detect_interval = 60
         self.wallet_clients = {}
         self.net_topos = {}
         self.ws_pk_dict = {}
@@ -57,6 +57,8 @@ class Gateway:
             Network.send_msg_with_jsonrpc("TransactionMessage", wallet_addr, data)
         elif msg_type in Message.get_tx_msg_types():
             self.handle_transaction_message(data)
+        elif msg_type == "CombinationTransaction":
+            pass
         elif msg_type == "GetRouterInfo":
             net_topo = self.net_topos.get(asset_type)
             source = data.get("MessageBody").get("NodeList")
@@ -64,7 +66,6 @@ class Gateway:
             message = MessageMake.make_ack_router_info_msg(route)
             Network.send_msg_with_wsocket(websocket, message)
                     
-
     def handle_node_request(self, protocol, bdata):
         try:
             data = utils.decode_bytes(bdata)
@@ -132,24 +133,23 @@ class Gateway:
                 data = net_topo.spv_table.to_json()
                 message = Message.make_ack_search_spv(data)
             return json.dumps(message)
-
         if method == "SyncWalletData":
             rpc_logger.debug("Get the wallet sync data:\n{}".format(data))
             body = data.get("MessageBody")
-            wallet = WalletClient.add_or_update(
+            wallet, last_opened_wallet_pk = WalletClient.add_or_update(
                 self.wallet_clients,
                 **utils.make_kwargs_for_wallet(body)
             )
             print(self.wallet_clients)
             self.handle_wallet_cli_on_line(wallet)
             response = MessageMake.make_ack_sync_wallet_msg(wallet.url)
-            self.detect_wallet_client_status()
+            # self.detect_wallet_client_status()
             return json.dumps(response)
         elif method == "SyncBlock":
             sender = data.get("Sender")
             if utils.check_is_owned_wallet(sender):
                 Network.add_event_push_web_task(data)
-                self.detect_wallet_client_status()
+                # self.detect_wallet_client_status()
             return "OK"
         elif method == "GetRouterInfo":
             sender = data.get("Sender")
@@ -181,15 +181,20 @@ class Gateway:
             channel_receiver = data["MessageBody"]["Receiver"]
             asset_type = list(data["MessageBody"]["Balance"][channel_founder].items())[0][0]
             net_topo = self.net_topos.get(asset_type)
-            if not net_topo: return "Invalid message!"
+            # if not net_topo: return "Invalid message!"
             # founder and receiver are attached the same gateway
             if utils.check_is_same_gateway(channel_founder, channel_receiver):
                 fid = utils.get_public_key(channel_founder)
                 rid = utils.get_public_key(channel_receiver)
                 if msg_type == "AddChannel":
+                    wallets = utils.get_all_active_wallet_dict(self.wallet_clients)
+                    channel_wallet = wallets[rid]
+                    founder_wallet = wallets[fid]
+                    Nettopo.add_or_update(self.net_topos, asset_type, founder_wallet)
+                    Nettopo.add_or_update(self.net_topos, asset_type, channel_wallet)
+                    net_topo = self.net_topos[asset_type]
                     net_topo.add_edge(fid, rid)
-                    print(self.net_topos)
-                    message_founder = MessageMake.make_sync_graph_msg(
+                    message = MessageMake.make_sync_graph_msg(
                         "add_whole_graph",
                         [channel_founder, channel_receiver],
                         source=channel_founder,
@@ -200,7 +205,7 @@ class Gateway:
                         # excepts=[fid, rid]
                         excepts = list(net_topo.nids)
                     )
-                    self.sync_channel_route_to_peer(message_founder)
+                    self.sync_channel_route_to_peer(message)
                 elif msg_type == "UpdateChannel":
                     founder_balance = data["MessageBody"]["Balance"][channel_founder][asset_type]
                     founder_node = net_topo.get_node_dict(fid)
@@ -242,6 +247,11 @@ class Gateway:
                 channel_peer, channel_source = utils.select_channel_peer_source(channel_founder, channel_receiver)
                 sid = utils.get_public_key(channel_source)
                 tid = utils.get_public_key(channel_peer)
+                if msg_type == "AddChannel":
+                    wallets = utils.get_all_active_wallet_dict(self.wallet_clients)
+                    s_wallet = wallets[sid]
+                    Nettopo.add_or_update(self.net_topos, asset_type, s_wallet)
+                    net_topo = self.net_topos[asset_type]
                 # peer is spv
                 if utils.check_is_spv(channel_peer):
                     if msg_type == "AddChannel":
@@ -337,22 +347,6 @@ class Gateway:
             set_nid_neighbors = net_topo.get_neighbors_set(nid)
             set_neighbors = set_neighbors.union(set_nid_neighbors)
         set_neighbors = set_neighbors.difference(net_topo.nids)
-        # if type(sender) == list:
-        #     uid = utils.get_public_key(sender[0])
-        #     vid = utils.get_public_key(sender[1])
-        #     set_u_neighbors = net_topo.get_neighbors_set(uid)
-        #     set_v_neighbors = net_topo.get_neighbors_set(vid)
-        #     set_neighbors = set_u_neighbors.union(set_v_neighbors)
-        #     set_neighbors.remove(uid)
-        #     set_neighbors.remove(vid)
-        # else:
-        #     # sync_channel msg passon
-        #     nid = message.get("Receiver")
-        #     # wallet in diffrent gateways first call(call in handle_wallet_request)
-        #     if not nid:
-        #         nid = message.get("Source")
-        #     nid = utils.get_public_key(nid)
-        #     set_neighbors = net_topo.get_neighbors_set(nid)
         set_excepts = set(message.get("Excepts"))
         set_excepts = set_excepts.union(net_topo.nids)
         union_excepts = set_excepts.union(set_neighbors)
@@ -497,27 +491,39 @@ class Gateway:
         # wallet cli on-line
         cli_ip = wallet.ip
         pk = wallet.public_key
-        if self.wallet_clients[cli_ip].status: return
+        # if self.wallet_clients[cli_ip].status: return
         self.wallet_clients[cli_ip].on_line()
         for key in self.net_topos:
             net_topo = self.net_topos[key]
-            if pk in net_topo.nids and not pk_node["Status"]:
-                pk_node["Status"] = 1
+            if pk in net_topo.nids:
+                node = net_topo.get_node_dict(pk)
+                if node["Status"]: return
+                node["Status"] = 1
                 print("#todo sync wallet status to peers")
-                sync_node_data_to_peer(pk_node, net_topo)
+                sync_node_data_to_peer(node, net_topo)
         print(self.wallet_clients)
 
     def handle_wallet_cli_off_line(self, cli_ip):
+        """
+        pk is the public key of wallet_client's (off-line) opened wallet\n
+        and the pk may in multi net_topo(every opened wallet has multi asset_type)\n
+        so traversal the net_topos and check the wallet is in there or not\n
+        """
+        # if the client is off-line do nothing
+        if not self.wallet_clients[cli_ip].status: return
         pk = self.wallet_clients[cli_ip].off_line()
+        # if the client not yet opened wallet do nothing
         if not pk: return
-        wallet = self.wallet_clients[cli_ip].wallets[pk]
         for key in self.net_topos:
             net_topo = self.net_topos[key]
-            if pk in net_topo.nids and pk_node["Status"]:
-                pk_node["Status"] = 0
-                print("#todo sync wallet status to peers")
-                sync_node_data_to_peer(pk_node)
-
+            # first check the wallet in the net_topo
+            if pk in net_topo.nids:
+                node = net_topo.get_node_dict(pk)
+                # check the wallet status is active
+                if node["Status"]:
+                    node["Status"] = 0
+                    print("#todo sync wallet status to peers")
+                    sync_node_data_to_peer(node, net_topo)
         print("the wallet cli at {} off-line".format(cli_ip))
         print(self.wallet_clients)
 
@@ -553,5 +559,3 @@ def sync_node_data_to_peer(node, net_topo):
         excepts = list(net_topo.nids)
     )
     self.sync_channel_route_to_peer(message)
-
-        

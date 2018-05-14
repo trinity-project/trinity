@@ -83,7 +83,8 @@ def get_all_active_wallet_dict(clients):
     wallets = {}
     for key in clients:
         active_wallet = clients[key].opened_wallet
-        wallets[active_wallet.public_key] = active_wallet
+        if active_wallet:
+            wallets[active_wallet.public_key] = active_wallet
     return wallets
 
 def get_all_active_wallet_keys_iterator(clients):
@@ -93,7 +94,8 @@ def get_all_active_wallet_keys_iterator(clients):
     """
     for key in clients:
         active_wallet = clients[key].opened_wallet
-        yield active_wallet.public_key
+        if active_wallet:
+            yield active_wallet.public_key
 
 def check_is_spv(url):
     """
@@ -173,24 +175,23 @@ def make_kwargs_for_wallet(data):
         "public_key": data.get("Publickey"),
         "name": data.get("alias"),
         "deposit": data.get("CommitMinDeposit"),
-        "fee": data.get("Fee")
-        # "asset_type": list(data.get("Balance").items())[0][0],
-        # "balance": list(data.get("Balance").items())[0][1]
+        "fee": data.get("Fee"),
+        "balance": data.get("Balance")
     }
 
-def make_topo_node_data(wallet):
+def make_topo_node_data(wallet, asset_type):
     """
     :param wallet: _Wallet instance
     """
     return {
         "Publickey": wallet.public_key,
         "Name": wallet.name,
-        "AssetType": wallet.asset_type,
+        "AssetType": asset_type,
         "Deposit": wallet.deposit,
         "Fee": wallet.fee,
-        "Balance": wallet.balance,
+        "Balance": wallet.balance[asset_type],
         "Ip": cg_public_ip_port,
-        "WalletIp": wallet.ip,
+        "WalletIp": wallet.cli_ip,
         "Status": wallet.status,
     }
 
@@ -207,29 +208,31 @@ def get_wallet_from_db(ip):
     # print(nodes)
     return nodes.get("content")
 
-def add_or_update_wallet_to_db(wallet):
+def add_or_update_wallet_to_db(wallet, last_opened_pk):
     if not wallet:
         return
-    addr = wallet["url"]
-    if APINode.query_node(addr).get("content"):
+    public_key = wallet.public_key
+    if APINode.query_node(public_key).get("content"):
         APINode.update_node(
-            addr,
-            balance=wallet["balance"],
-            deposit=wallet["deposit"],
-            fee=wallet["fee"],
-            name=wallet["name"]
+            public_key,
+            balance=wallet.balance,
+            deposit=wallet.deposit,
+            fee=wallet.fee,
+            name=wallet.name
         )
     else:
         APINode.add_ransaction(
-            wallet["url"],
-            get_public_key(wallet["url"]),
-            get_ip_port(wallet["url"]),
-            wallet["balance"],
-            wallet["deposit"],
-            wallet["fee"],
-            wallet["name"],
-            "alive"
+            public_key=wallet.public_key,
+            cli_ip=wallet.cli_ip,
+            ip=wallet.ip,
+            balance=wallet.balance,
+            deposit=wallet.deposit,
+            fee=wallet.fee,
+            name=wallet.name,
+            status=wallet.status
         )
+    if last_opened_pk:
+        APINode.update_node(last_opened_pk, status=0)
 
 def _make_router(path, full_path, net_topo):
     total_fee = 0

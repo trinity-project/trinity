@@ -112,7 +112,8 @@ class Nettopo:
             self._graph.remove_edge(sid, tid)
             return True
             # for nid in [sid, tid]:
-            #     if self._isolated(nid) and nid != self.nid:
+            #     has_spv = True if len(self.spv_table.find(nid)) else False
+            #     if self._isolated(nid) and not spv_len:
             #         self._graph.remove_node(nid)
         else:
             return False
@@ -244,14 +245,17 @@ class Nettopo:
         return self._graph.number_of_edges()
 
     @classmethod
-    def add_or_update(cls, topos, wallet):
+    def add_or_update(cls, topos, asset_type, wallet):
+        """
+        add wallet node to topo
+        """
         pk = wallet.public_key
-        asset_type = wallet.asset_type
-        data = utils.make_topo_node_data(wallet)
+        data = utils.make_topo_node_data(wallet, asset_type)
         if topos.get(asset_type):
             topo = topos[asset_type]
             if topo.has_node(pk):
-                topo.update_data(data)
+                # topo.update_data(data)
+                pass
             else:
                 topo.add_node(data, pk=pk)
         else:

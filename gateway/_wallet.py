@@ -51,14 +51,15 @@ class _Wallet:
     def __init__(self, **kwargs):
         # basic attributes
         self.public_key = kwargs.get("public_key")
+        self.ip = cg_public_ip_port
         self.fee = kwargs.get("fee")
         self.deposit = kwargs.get("deposit")
+        # balance is dict  eg: {"TNC": 100,"NEO": 300}
         self.balance = kwargs.get("balance")
-        self.asset_type = kwargs.get("asset_type")
         self.url = "{}@{}".format(self.public_key, cg_public_ip_port)
         self.name = kwargs.get("name")
         # save wallet_client ip
-        self.ip = kwargs.get("ip")
+        self.cli_ip = kwargs.get("cli_ip")
         # wallet status 1: opened;0:closed
         self.status = 1
 
@@ -127,11 +128,15 @@ class WalletClient:
         update the opened wallet instance\n
         and change the old opened wallet status
         """
-        if self.opened_wallet == wallet:
-            return
-        if self.opened_wallet:
-            self.opened_wallet.status = 0
-        self.opened_wallet = wallet
+        last_opened_wallet = self.opened_wallet
+        last_pk = None
+        if last_opened_wallet and last_opened_wallet != wallet:
+            last_opened_wallet.status = 0
+            last_pk = last_opened_wallet.public_key
+            last_opened_wallet = wallet
+        else:
+            last_opened_wallet = wallet
+        return last_pk
     
     def remove_wallet(self, public_key):
         if not self.wallets.get(public_key):
@@ -167,8 +172,8 @@ class WalletClient:
             clients[client.ip] = client
         kwargs["ip"] = client.ip
         wallet = _Wallet.add_or_update(client.wallets, **kwargs)
-        client._update_opened_wallet(wallet)
-        return wallet 
+        last_pk = client._update_opened_wallet(wallet)
+        return wallet, last_pk
 
 if __name__ == "__main__":
     from pprint import pprint
