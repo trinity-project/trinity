@@ -45,9 +45,11 @@ class Gateway:
         spv_pk = utils.get_public_key(sender)
         self.ws_pk_dict[spv_pk] = websocket
         if msg_type == "RegisterChannel":
-            # pass the message to wallet to handle
-            wallet_addr = utils.get_wallet_addr(receiver, asset_type, self.net_topos)
-            Network.send_msg_with_jsonrpc("TransactionMessage", wallet_addr, data)
+            pk = utils.get_public_key(receiver)
+            wallet = utils.get_all_active_wallet_dict(self.clients).get(pk)
+            if wallet:
+                wallet_addr = (wallet.cli_ip.split(":")[0], int(wallet.cli_ip.split(":")[1]))
+                Network.send_msg_with_jsonrpc("TransactionMessage", wallet_addr, data)
         # first check the receiver is self or not
         if msg_type == "PaymentLink":
             if not asset_type:
@@ -75,6 +77,12 @@ class Gateway:
             if not Message.check_message_is_valid(data):
                 return utils.request_handle_result.get("invalid")
             else:
+                msg_type = data.get("MessageType")
+                if msg_type == "RegisterKeepAlive":
+                    protocol.is_wallet_cli = True
+                    protocol.wallet_ip = data.get("Ip")
+                    # self.handle_wallet_cli_on_line(protocol)
+                    return
                 peername = protocol.transport.get_extra_info('peername')
                 peer_ip = "{}".format(peername[0])
                 # check sender is peer or not
@@ -83,11 +91,13 @@ class Gateway:
                     sed_pk = utils.get_public_key(data["Sender"])
                     self.tcp_pk_dict[sed_pk] = protocol
                 pprint.pprint(self.tcp_pk_dict)
-                msg_type = data.get("MessageType")
                 if msg_type == "RegisterChannel":
-                    asset_type = data.get("AssetType")
-                    wallet_addr = utils.get_wallet_addr(data["Receiver"], asset_type, self.net_topos)
-                    Network.send_msg_with_jsonrpc("TransactionMessage", wallet_addr, data)
+                    pk = utils.get_public_key(data["Receiver"])
+                    wallet = utils.get_all_active_wallet_dict(self.clients).get(pk)
+                    print(wallet)
+                    if wallet:
+                        wallet_addr = (wallet.cli_ip.split(":")[0], int(wallet.cli_ip.split(":")[1]))
+                        Network.send_msg_with_jsonrpc("TransactionMessage", wallet_addr, data)
                 elif msg_type in Message.get_tx_msg_types():
                     self.handle_transaction_message(data)
                     return utils.request_handle_result.get("correct")
@@ -181,7 +191,6 @@ class Gateway:
             channel_receiver = data["MessageBody"]["Receiver"]
             asset_type = list(data["MessageBody"]["Balance"][channel_founder].items())[0][0]
             net_topo = self.net_topos.get(asset_type)
-            # if not net_topo: return "Invalid message!"
             # founder and receiver are attached the same gateway
             if utils.check_is_same_gateway(channel_founder, channel_receiver):
                 fid = utils.get_public_key(channel_founder)
@@ -324,12 +333,6 @@ class Gateway:
             )
             self.resume_channel_from_db()
 
-    def handle_wallet_make_connection(self, protocol):
-        pass
-    
-    def handle_wallet_lost_connection(self, protocol):
-        pass
-        
     def handle_spv_make_connection(self, websocket):
         if self.net_topos.get("TNC"):
             message =  MessageMake.make_node_list_msg(self.net_topos["TNC"])
@@ -509,14 +512,15 @@ class Gateway:
                 sync_node_data_to_peer(node, net_topo)
         print(self.wallet_clients)
 
-    def handle_wallet_cli_off_line(self, cli_ip):
+    def handle_wallet_cli_off_line(self, protocol):
         """
         pk is the public key of wallet_client's (off-line) opened wallet\n
         and the pk may in multi net_topo(every opened wallet has multi asset_type)\n
         so traversal the net_topos and check the wallet is in there or not\n
         """
-        # if the client is off-line do nothing
-        if not self.wallet_clients[cli_ip].status: return
+        # if the cli_ip is none do nothing
+        cli_ip = protocol.wallet_ip
+        if not self.wallet_clients.get(cli_ip): return
         pk = self.wallet_clients[cli_ip].off_line()
         # if the client not yet opened wallet do nothing
         if not pk: return
@@ -533,25 +537,10 @@ class Gateway:
         print("the wallet cli at {} off-line".format(cli_ip))
         print(self.wallet_clients)
 
-    def detect_wallet_client_status(self):
-        now_timestamp = int(time.time())
-        if (now_timestamp - self.wallet_detect_timestamp) >= self.wallet_detect_interval:
-            self.wallet_detect_timestamp = now_timestamp
-            for key in self.wallet_clients:
-                client = self.wallet_clients[key]
-                Network.send_msg_with_jsonrpc(
-                    "Heartbeat", 
-                    client.addr, 
-                    {},
-                    callback=detect_wallet_client_status_callback
-                )
-        
+    def handle_channel_list_message(self, data):
+        pass
+    
 gateway_singleton = Gateway()
-
-def detect_wallet_client_status_callback(task, addr=None):
-    if task.exception() and task.exception().args[1] == "Connection refused":
-        ip = "{}:{}".format(addr[0], addr[1])
-        gateway_singleton.handle_wallet_cli_off_line(ip)
 
 def sync_node_data_to_peer(node, net_topo):
     url = node["Publickey"] + "@" + cg_public_ip_port
