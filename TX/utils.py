@@ -1,12 +1,17 @@
 import binascii
 
 import time
+
+import requests
 from base58 import b58decode
 from neocore.KeyPair import KeyPair
 from neocore.UInt160 import UInt160
 from neocore.UInt256 import UInt256
 from neocore.BigInteger import BigInteger
 from neocore.Cryptography.Crypto import Crypto
+
+from TX.config import headers, NODEURL
+
 
 def hex_reverse(input):
     tmp=binascii.unhexlify(input[2:])
@@ -205,10 +210,32 @@ def sign(txData,privtKey):
     rawData=txData+"01"+"41"+"40"+signature+"23"+"21"+publicKey+"ac"
     return rawData
 
+def get_neovout_by_address(address,amount):
+    data = {
+        "jsonrpc": "2.0",
+        "method": "getNeoVout",
+        "params": [address,amount],
+        "id": 1
+    }
+
+    res = requests.post(NODEURL, headers=headers, json=data).json()
+    return res["result"]
+
+def get_gasvout_by_address(address,amount):
+    data = {
+        "jsonrpc": "2.0",
+        "method": "getGasVout",
+        "params": [address,amount],
+        "id": 1
+    }
+
+    res = requests.post(NODEURL, headers=headers, json=data).json()
+    return res["result"]
+
 
 if __name__=="__main__":
     # print(b58decode("b58decode"))
-    # print (blockheight_to_script(1319028))
+    print (blockheight_to_script(541866))
     print (R_to_script("eefc152a46960a4d3092146ae8b27890c3a3d12db14f6f7309d3f5c41b4e456d"))
     print (createTxid("d101a00400e1f505149a3e51076c13aa3872372da125c9d6a3d3b64b0414d904f61978b83b706445d2c418e336de4d6261d453c1087472616e7366657267f1dfcf0051ec48ec95c8d0569e0b95075d099d84f10400e1f505149a3e51076c13aa3872372da125c9d6a3d3b64b04149f4ae7295ca9cf93a5bbad7fb715116c3adc55f753c1087472616e7366657267f1dfcf0051ec48ec95c8d0569e0b95075d099d84f100000000000000000320d904f61978b83b706445d2c418e336de4d6261d4209f4ae7295ca9cf93a5bbad7fb715116c3adc55f7f0045ae32bed0000"))
     # print (blockheight_to_script(1380761))
