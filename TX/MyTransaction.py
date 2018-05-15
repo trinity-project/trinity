@@ -1,14 +1,12 @@
 # -*- coding:utf-8 -*-
-
-
-
-
+import binascii
 from neocore.IO.BinaryWriter import BinaryWriter
 
 from neocore.Fixed8 import Fixed8
 from TX.MemoryStream import MemoryStream
 from neocore.UInt256 import UInt256
 
+from TX.utils import hex_reverse, ToAddresstHash
 
 
 class TransactionType(object):
@@ -277,6 +275,18 @@ class ContractTransaction(Transaction):
         """
         super(ContractTransaction, self).__init__(*args, **kwargs)
         self.Type = TransactionType.ContractTransaction
+
+
+    def createInput(self,preHash, preIndex):
+        pre_hash = UInt256(data=binascii.unhexlify(hex_reverse(preHash)))
+        return TransactionInput(prevHash=pre_hash, prevIndex=preIndex)
+
+
+    def createOutput(self,assetId, amount, address):
+        assetId = UInt256(data=binascii.unhexlify(hex_reverse(assetId)))
+        f8amount = Fixed8.TryParse(amount, require_positive=True)
+        address_hash = ToAddresstHash(address)
+        return TransactionOutput(AssetId=assetId, Value=f8amount, script_hash=address_hash)
 
 
 class InvocationTransaction(Transaction):
