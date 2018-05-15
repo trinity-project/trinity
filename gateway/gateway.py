@@ -157,7 +157,7 @@ class Gateway:
             return json.dumps(response)
         elif method == "SyncBlock":
             sender = data.get("Sender")
-            if utils.check_is_owned_wallet(sender):
+            if utils.check_is_owned_wallet(sender, self.wallet_clients):
                 Network.add_event_push_web_task(data)
                 # self.detect_wallet_client_status()
             return "OK"
