@@ -26,6 +26,7 @@ class Gateway:
     def start(self):
         Network.create_servers()
         print("###### Trinity Gateway Start Successfully! ######")
+        self.notifica_walelt_clis_on_line()
         Network.run_servers_forever()
 
     def clearn(self):
@@ -146,12 +147,13 @@ class Gateway:
         if method == "SyncWalletData":
             rpc_logger.debug("Get the wallet sync data:\n{}".format(data))
             body = data.get("MessageBody")
-            wallet, last_opened_wallet_pk = WalletClient.add_or_update(
+            wallet, last_opened_wallet_pk, add = WalletClient.add_or_update(
                 self.wallet_clients,
                 **utils.make_kwargs_for_wallet(body)
             )
             print(self.wallet_clients)
-            self.handle_wallet_cli_on_line(wallet)
+            if add: utils.save_wallet_cli(self.wallet_clients)
+            self.handle_wallet_cli_on_line(wallet, last_opened_wallet_pk)
             response = MessageMake.make_ack_sync_wallet_msg(wallet.url)
             # self.detect_wallet_client_status()
             return json.dumps(response)
@@ -496,24 +498,43 @@ class Gateway:
             else:
                 Network.send_msg_with_tcp(receiver, data)
 
-    def handle_wallet_cli_on_line(self, wallet):
-        # wallet cli on-line
-        cli_ip = wallet.ip
-        pk = wallet.public_key
-        # if self.wallet_clients[cli_ip].status: return
-        self.wallet_clients[cli_ip].on_line()
+    def _handle_switch_wallets(self, last_pk):
+        if not last_pk: return
         for key in self.net_topos:
             net_topo = self.net_topos[key]
-            if pk in net_topo.nids:
+            if last_pk in net_topo.nids:
+                node = net_topo.get_node_dict(last_pk)
+                if not node["Status"]: return
+                node["Status"] = 0
+                sync_node_data_to_peer(node, net_topo)
+
+    def handle_wallet_cli_on_line(self, wallet, last_opened_wallet_pk):
+        """
+        cli on_line just mean:\n
+        the cli call the `open wallet xxx` command\n
+        as it may `switch in diffrent wallets` so need check and handle that case\n 
+        """
+        # wallet cli on-line
+        cli_ip = wallet.cli_ip
+        pk = wallet.public_key
+        self.wallet_clients[cli_ip].on_line()
+        self._handle_switch_wallets(last_opened_wallet_pk)
+        for key in self.net_topos:
+            net_topo = self.net_topos[key]
+            if net_topo.has_node(pk):
                 node = net_topo.get_node_dict(pk)
                 if node["Status"]: return
+                net_topo.nids.add(pk)
                 node["Status"] = 1
+                node["Ip"] = cg_public_ip_port
                 print("#todo sync wallet status to peers")
                 sync_node_data_to_peer(node, net_topo)
-        print(self.wallet_clients)
 
     def handle_wallet_cli_off_line(self, protocol):
         """
+        cli off_line include these cases:\n
+        no.1: the cli program close\n
+        no.2: the cli call the `close` command\n
         pk is the public key of wallet_client's (off-line) opened wallet\n
         and the pk may in multi net_topo(every opened wallet has multi asset_type)\n
         so traversal the net_topos and check the wallet is in there or not\n
@@ -522,24 +543,37 @@ class Gateway:
         cli_ip = protocol.wallet_ip
         if not self.wallet_clients.get(cli_ip): return
         pk = self.wallet_clients[cli_ip].off_line()
+        del self.wallet_clients[cli_ip]
         # if the client not yet opened wallet do nothing
         if not pk: return
         for key in self.net_topos:
             net_topo = self.net_topos[key]
             # first check the wallet in the net_topo
             if pk in net_topo.nids:
+                net_topo.nids.remove(pk)
                 node = net_topo.get_node_dict(pk)
                 # check the wallet status is active
-                if node["Status"]:
-                    node["Status"] = 0
-                    print("#todo sync wallet status to peers")
-                    sync_node_data_to_peer(node, net_topo)
+                if not node["Status"]: return
+                node["Status"] = 0
+                print("#todo sync wallet status to peers")
+                sync_node_data_to_peer(node, net_topo)
         print("the wallet cli at {} off-line".format(cli_ip))
         print(self.wallet_clients)
 
     def handle_channel_list_message(self, data):
         pass
     
+    def notifica_walelt_clis_on_line(self):
+        clis = utils.get_wallet_clis()
+        for cli in clis:
+            try:
+                ip, port = cli.split(":")
+                addr = (ip, int(port))
+            except Exception:
+                continue
+            else:
+                Network.send_msg_with_jsonrpc("NotificaOnLine", addr, {})
+
 gateway_singleton = Gateway()
 
 def sync_node_data_to_peer(node, net_topo):
@@ -549,7 +583,7 @@ def sync_node_data_to_peer(node, net_topo):
         url,
         source=url,
         asset_type=node["AssetType"],
-        node=node["Name"],
+        node=node,
         broadcast=True,
         excepts = list(net_topo.nids)
     )

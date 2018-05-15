@@ -19,6 +19,7 @@ cg_remote_jsonrpc_addr = ("0.0.0.0", 20556)
 cg_public_ip_port = "localhost:8089"
 # cg_public_ip_port = "p1"
 cg_node_name = "trinity1"
+cg_max_wallet_cli = 10
 ###### Gateway ######
 
 # only for debug control
