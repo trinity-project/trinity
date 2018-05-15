@@ -223,7 +223,8 @@ def create_sender_HCTX(pubkeySender, pubkeyReceiver, HTLCValue, balanceSender, b
 
     output_to_RSMC= tx.createOutput(assetId=asset_id, amount=balanceSender,address=RSMCContract["address"])
     output_to_HTLC= tx.createOutput(assetId=asset_id, amount=HTLCValue,address=HTLCContract["address"])
-    output_to_receiver= tx.createOutput(assetId=asset_id, amount=balanceReceiver,address=pubkeyToAddress(pubkeyReceiver))
+    output_to_receiver= tx.createOutput(assetId=asset_id, amount=balanceReceiver,
+                                        address=pubkeyToAddress(pubkeyReceiver))
 
     tx.inputs = funding_inputs
     tx.outputs = [output_to_RSMC,output_to_receiver,output_to_HTLC]
@@ -344,8 +345,8 @@ def createHTRDTX(addressSender, HTLCValue, HTTxId, RSMCScript,asset_id):
 
 
 #receiver HTLC
-def create_receiver_HCTX(pubkeySender, pubkeyReceiver, HTLCValue, balanceSender, balanceReceiver, hashR, addressFunding,
-                    fundingScript,asset_id):
+def create_receiver_HCTX(pubkeySender, pubkeyReceiver, HTLCValue, balanceSender,
+                         balanceReceiver, hashR, addressFunding,fundingScript,asset_id):
     RSMCContract = createRSMCContract(hashSelf=pubkeyToAddressHash(pubkeyReceiver), pubkeySelf=pubkeyReceiver,
                                       hashOther=pubkeyToAddressHash(pubkeySender), pubkeyOther=pubkeySender,
                                       magicTimestamp=time.time())
@@ -501,7 +502,8 @@ def create_sender_HTLC_TXS(pubkeySender, pubkeyReceiver, HTLCValue, balanceSende
                                      RSMCScript=sender_HCTX["RSMCscript"],asset_id=asset_id)
 
     HEDTX = createHEDTX(addressReceiver=pubkeyToAddress(pubkeyReceiver),
-                        HTLCValue=HTLCValue, HTLCScript=sender_HCTX["HTLCscript"],senderHCTxId=sender_HCTX["txId"],asset_id=asset_id)
+                        HTLCValue=HTLCValue, HTLCScript=sender_HCTX["HTLCscript"],
+                        senderHCTxId=sender_HCTX["txId"],asset_id=asset_id)
 
     HTTX = createHTTX(pubkeySender=pubkeySender,
                       pubkeyReceiver=pubkeyReceiver, HTLCValue=HTLCValue,

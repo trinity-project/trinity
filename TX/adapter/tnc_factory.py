@@ -54,15 +54,18 @@ def createFundingTx(walletSelf,walletOther,asset_id):
 
 def createCTX(addressFunding,balanceSelf,balanceOther,pubkeySelf,pubkeyOther,fundingScript,asset_id):
     RSMCContract=createRSMCContract(hashSelf=pubkeyToAddressHash(pubkeySelf.strip()),pubkeySelf=pubkeySelf.strip(),
-                       hashOther=pubkeyToAddressHash(pubkeyOther.strip()),pubkeyOther=pubkeyOther.strip(),magicTimestamp=time.time())
+                                    hashOther=pubkeyToAddressHash(pubkeyOther.strip()),pubkeyOther=pubkeyOther.strip(),
+                                    magicTimestamp=time.time())
     time_stamp = TransactionAttribute(usage=TransactionAttributeUsage.Remark,
                                       data=bytearray.fromhex(hex(int(time.time()))[2:]))
     address_hash_funding = TransactionAttribute(usage=TransactionAttributeUsage.Script,
                                          data=ToAddresstHash(addressFunding).Data)
     txAttributes = [address_hash_funding, time_stamp]
 
-    op_data_to_RSMC = create_opdata(address_from=addressFunding, address_to=RSMCContract["address"], value=balanceSelf,contract_hash=asset_id)
-    op_data_to_other = create_opdata(address_from=addressFunding, address_to=pubkeyToAddress(pubkeyOther), value=balanceOther,contract_hash=asset_id)
+    op_data_to_RSMC = create_opdata(address_from=addressFunding, address_to=RSMCContract["address"],
+                                    value=balanceSelf,contract_hash=asset_id)
+    op_data_to_other = create_opdata(address_from=addressFunding, address_to=pubkeyToAddress(pubkeyOther),
+                                     value=balanceOther,contract_hash=asset_id)
 
     tx = InvocationTransaction()
     tx.Version = 1
@@ -83,14 +86,16 @@ def createRDTX(addressRSMC,addressSelf,balanceSelf,CTxId,RSMCScript,asset_id):
                                       data=bytearray.fromhex(hex(int(time.time()))[2:]))
     address_hash_RSMC = TransactionAttribute(usage=TransactionAttributeUsage.Script,
                                          data=ToAddresstHash(addressRSMC).Data)
-    pre_txid = TransactionAttribute(usage=TransactionAttributeUsage.Remark1, data=bytearray.fromhex(
-        hex_reverse(CTxId)))
+    pre_txid = TransactionAttribute(usage=TransactionAttributeUsage.Remark1,
+                                    data=bytearray.fromhex(hex_reverse(CTxId)))
 
-    outputTo= TransactionAttribute(usage=TransactionAttributeUsage.Remark2, data=ToAddresstHash(addressSelf).Data)
+    outputTo= TransactionAttribute(usage=TransactionAttributeUsage.Remark2,
+                                   data=ToAddresstHash(addressSelf).Data)
 
     txAttributes = [address_hash_RSMC, time_stamp,pre_txid,outputTo]
 
-    op_data_to_self = create_opdata(address_from=addressRSMC, address_to=addressSelf, value=balanceSelf,contract_hash=asset_id)
+    op_data_to_self = create_opdata(address_from=addressRSMC, address_to=addressSelf,
+                                    value=balanceSelf,contract_hash=asset_id)
 
 
     tx = InvocationTransaction()
@@ -111,10 +116,12 @@ def createBRTX(addressRSMC,addressOther,balanceSelf,RSMCScript,asset_id):
                                       data=bytearray.fromhex(hex(int(time.time()))[2:]))
     address_hash_RSMC = TransactionAttribute(usage=TransactionAttributeUsage.Script,
                                          data=ToAddresstHash(addressRSMC).Data)
-    outputTo = TransactionAttribute(usage=TransactionAttributeUsage.Remark1, data=ToAddresstHash(addressOther).Data)
+    outputTo = TransactionAttribute(usage=TransactionAttributeUsage.Remark1,
+                                    data=ToAddresstHash(addressOther).Data)
     txAttributes = [address_hash_RSMC, time_stamp,outputTo]
 
-    op_data_to_other = create_opdata(address_from=addressRSMC, address_to=addressOther, value=balanceSelf,contract_hash=asset_id)
+    op_data_to_other = create_opdata(address_from=addressRSMC, address_to=addressOther,
+                                     value=balanceSelf,contract_hash=asset_id)
 
 
     tx = InvocationTransaction()
@@ -137,8 +144,10 @@ def createRefundTX(addressFunding,balanceSelf,balanceOther,pubkeySelf,pubkeyOthe
                                          data=ToAddresstHash(addressFunding).Data)
     txAttributes = [address_hash_funding, time_stamp]
 
-    op_data_to_self = create_opdata(address_from=addressFunding, address_to=pubkeyToAddress(pubkeySelf), value=balanceSelf,contract_hash=asset_id)
-    op_data_to_other = create_opdata(address_from=addressFunding, address_to=pubkeyToAddress(pubkeyOther), value=balanceOther,contract_hash=asset_id)
+    op_data_to_self = create_opdata(address_from=addressFunding, address_to=pubkeyToAddress(pubkeySelf),
+                                    value=balanceSelf,contract_hash=asset_id)
+    op_data_to_other = create_opdata(address_from=addressFunding, address_to=pubkeyToAddress(pubkeyOther),
+                                     value=balanceOther,contract_hash=asset_id)
 
     tx = InvocationTransaction()
     tx.Version = 1
@@ -308,8 +317,8 @@ def create_receiver_HCTX(pubkeySender, pubkeyReceiver, HTLCValue, balanceSender,
 
     op_data_to_HTLC = create_opdata(address_from=addressFunding, address_to=HTLCContract["address"], value=HTLCValue,
                                     contract_hash=asset_id)
-    op_data_to_RSMC = create_opdata(address_from=addressFunding, address_to=RSMCContract["address"], value=balanceReceiver,
-                                    contract_hash=asset_id)
+    op_data_to_RSMC = create_opdata(address_from=addressFunding, address_to=RSMCContract["address"],
+                                    value=balanceReceiver,contract_hash=asset_id)
     op_data_to_sender = create_opdata(address_from=addressFunding, address_to=pubkeyToAddress(pubkeySender),
                                      value=balanceSender, contract_hash=asset_id)
 
@@ -362,8 +371,8 @@ def createHTDTX(addressHTLC, pubkeySender,HTLCValue, HTLCScript,asset_id):
                                              data=ToAddresstHash(addressHTLC).Data)
     txAttributes = [address_hash_HTLC, time_stamp]
 
-    op_data_to_sender = create_opdata(address_from=addressHTLC, address_to=pubkeyToAddress(pubkeySender), value=HTLCValue,
-                                    contract_hash=asset_id)
+    op_data_to_sender = create_opdata(address_from=addressHTLC, address_to=pubkeyToAddress(pubkeySender),
+                                      value=HTLCValue,contract_hash=asset_id)
 
     tx = InvocationTransaction()
     tx.Version = 1
@@ -411,7 +420,8 @@ def createHERDTX(addressRSMC, addressReceiver, HTLCValue, HETxId, RSMCScript,ass
     pre_txid = TransactionAttribute(usage=TransactionAttributeUsage.Remark1, data=bytearray.fromhex(
         hex_reverse(HETxId)))
 
-    outputTo = TransactionAttribute(usage=TransactionAttributeUsage.Remark2, data=ToAddresstHash(addressReceiver).Data)
+    outputTo = TransactionAttribute(usage=TransactionAttributeUsage.Remark2,
+                                    data=ToAddresstHash(addressReceiver).Data)
 
     txAttributes = [address_hash_RSMC, time_stamp, pre_txid, outputTo]
 
