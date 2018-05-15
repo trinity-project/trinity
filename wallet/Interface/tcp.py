@@ -34,6 +34,7 @@ from log import LOG
 
 class GatwayClientProtocol(protocol.Protocol):
     """Once connected, send a message, then print the result."""
+    printlog = True
 
     def connectionMade(self):
         message = {
@@ -47,6 +48,7 @@ class GatwayClientProtocol(protocol.Protocol):
             join_gateway(CurrentLiveWallet.Wallet.pubkey)
         else:
             pass
+        GatwayClientProtocol.printlog = True
 
     def senddata(self, message):
         self.transport.write(message.encode())
@@ -56,21 +58,28 @@ class GatwayClientProtocol(protocol.Protocol):
 class GatwayClientFactory(protocol.ClientFactory):
     protocol = GatwayClientProtocol
 
+
     def _handle_connection_lose(self, connector):
         Message.Connection = False
         Monitor.BlockPause = True
         connector.connect()
+        GatwayClientProtocol.printlog=False
+
 
     def clientConnectionLost(self, connector, reason):
-        print('Lost Gateway')
+        if GatwayClientProtocol.printlog:
+            print('Lost Gateway')
         LOG.error(reason)
         self._handle_connection_lose(connector)
+
 
 
     def clientConnectionFailed(self, connector, reason):
-        print('Can Not connect Gateway, Please Check the gateway')
+        if GatwayClientProtocol.printlog:
+            print('Can Not connect Gateway, Please Check the gateway')
         LOG.error(reason)
         self._handle_connection_lose(connector)
+
 
 
 def encode_bytes(data):
