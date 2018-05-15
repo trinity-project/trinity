@@ -241,11 +241,11 @@ class Nep6Wallet(object):
             try:
                 from wallet.BlockChain.interface import get_balance as gb
                 wallet_info = self.fromJsonFile(self._path)
-                for n_key,n_hash in wallet_info.items():
+                for n_key,n_hash in wallet_info["nep5"].items():
                     balance = gb(tmp_dict.get("pubkey"), n_hash)
                     tmp_dict["assets"][n_key] = balance
             except Exception as e:
-                print(str(e))
+                print("wallet tojson",str(e))
                 pass
             jsn['accounts'].append(tmp_dict)
         return jsn
