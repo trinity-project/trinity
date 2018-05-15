@@ -46,7 +46,7 @@ class Gateway:
         self.ws_pk_dict[spv_pk] = websocket
         if msg_type == "RegisterChannel":
             pk = utils.get_public_key(receiver)
-            wallet = utils.get_all_active_wallet_dict(self.clients).get(pk)
+            wallet = utils.get_all_active_wallet_dict(self.wallet_clients).get(pk)
             if wallet:
                 wallet_addr = (wallet.cli_ip.split(":")[0], int(wallet.cli_ip.split(":")[1]))
                 Network.send_msg_with_jsonrpc("TransactionMessage", wallet_addr, data)
@@ -93,7 +93,7 @@ class Gateway:
                 pprint.pprint(self.tcp_pk_dict)
                 if msg_type == "RegisterChannel":
                     pk = utils.get_public_key(data["Receiver"])
-                    wallet = utils.get_all_active_wallet_dict(self.clients).get(pk)
+                    wallet = utils.get_all_active_wallet_dict(self.wallet_clients).get(pk)
                     print(wallet)
                     if wallet:
                         wallet_addr = (wallet.cli_ip.split(":")[0], int(wallet.cli_ip.split(":")[1]))
