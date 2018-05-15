@@ -4,9 +4,11 @@ from TX.config import *
 
 
 
+
 # RSMC
 
 def createFundingTx(walletSelf, walletOther, asset_id):
+
     '''
 
     :param walletSelf: dict {
@@ -18,6 +20,7 @@ def createFundingTx(walletSelf, walletOther, asset_id):
             "deposit":0
     :return:
     '''
+
     if asset_id == TNC:
         return tnc_factory.createFundingTx(walletSelf, walletOther, asset_id)
 
@@ -648,3 +651,5 @@ def create_receiver_HTLC_TXS(
 #     rawData = txData + "01" + "41" + "40" + \
 #         signature + "23" + "21" + publicKey + "ac"
 #     return rawData
+
+

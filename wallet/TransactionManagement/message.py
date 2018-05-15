@@ -29,15 +29,18 @@ from wallet.utils import pubkey_to_address, get_asset_type_id
 from TX.interface import *
 from wallet.ChannelManagement import channel as ch
 from model.base_enum import EnumChannelState
-from wallet.Interface.gate_way import send_message
+from wallet.Interface.gate_way import send_message, join_gateway
 from wallet.utils import sign,\
     check_onchain_balance, \
     check_max_deposit,\
-    check_mix_deposit,\
-    check_deposit
+    check_min_deposit,\
+    check_deposit, \
+    is_valid_deposit
 from TX.utils import blockheight_to_script
 from wallet.BlockChain.monior import register_block, \
-    register_monitor
+    register_monitor,\
+    Monitor
+from wallet.BlockChain.interface import check_vmstate
 from model import APIChannel
 from log import LOG
 import json
@@ -82,6 +85,7 @@ class Message(object):
     """
 
     """
+    Connection = True
 
     def __init__(self, message):
         self.message = message
@@ -93,7 +97,15 @@ class Message(object):
 
     @staticmethod
     def send(message):
-        send_message(message)
+        if Message.Connection:
+            try:
+                result = send_message(message)
+                return True, result
+            except ConnectionError as e:
+                LOG.error(str(e))
+                Message.Connection=False
+                Monitor.BlockPause = True
+        return False, "Connection Lose"
 
 
 class RegisterMessage(Message):
@@ -115,6 +127,8 @@ class RegisterMessage(Message):
         super().__init__(message)
         self.deposit = self.message_body.get("Deposit")
         self.asset_type = self.message_body.get("AssetType")
+        if self.asset_type:
+            self.asset_type = self.asset_type.upper()
         self.channel_name = self.message.get("ChannelName")
         self.wallet = wallet
 
@@ -155,41 +169,46 @@ class RegisterMessage(Message):
         state, error = self.check_balance()
         if not state:
             return state, error
-        state, error = self.check_depoist()
+        state, error = self.check_deposit()
         if not state:
             return state, error
 
         return True, None
 
-    def check_depoist(self):
+    def check_deposit(self):
         state, de = check_deposit(self.deposit)
         if not state:
-            if isinstance(de,float):
+            if isinstance(de, float):
                 return False,"Deposit should be larger than 0 , but give {}".format(str(de))
             else:
-                return False,"Deposit Formate error {}".format(de)
+                return False,"Deposit Format error {}".format(de)
 
-        state, maxd = check_max_deposit(self.deposit)
-        if not state:
-            if isinstance(maxd,float):
-                return False, "Deposit is larger than the max, max is {}".format(str(maxd))
-            else:
-                return False, "Max deposit configure error {}".format(maxd)
-
-        state , mixd = check_mix_deposit(self.deposit)
-        if not state:
-            if isinstance(mixd,float):
-                return False, "Deposit is less than the min, min is {}".format(str(mixd))
-            else:
-                return False, "Mix deposit configure error {}".format(mixd)
-
-        return True,None
+        is_spv = self.is_spv_wallet()
+        return is_valid_deposit(self.deposit, is_spv), None
+        # state, maxd = check_max_deposit(self.deposit)
+        # if not state:
+        #     if isinstance(maxd, float):
+        #         return False, "Deposit is larger than the max, max is {}".format(str(maxd))
+        #     else:
+        #         return False, "Max deposit configure error {}".format(maxd)
+        #
+        # state , mind = check_min_deposit(self.deposit)
+        # if not state:
+        #     if isinstance(mind, float):
+        #         return False, "Deposit is less than the min, min is {}".format(str(mind))
+        #     else:
+        #         return False, "Mix deposit configure error {}".format(mind)
+        #
+        # return True,None
 
     def check_balance(self):
         if check_onchain_balance(self.wallet.pubkey, self.asset_type, self.deposit):
             return True, None
         else:
             return False, "No Balance OnChain to support the deposit"
+
+    def is_spv_wallet(self):
+        return self.sender.strip().endswith('8766') or self.receiver.strip().endswith('8766')
 
 
 class TestMessage(Message):
@@ -297,6 +316,8 @@ class FounderMessage(TransactionMessage):
         self.sender_address = pubkey_to_address(self.sender_pubkey)
         self.receiver_address = pubkey_to_address(self.receiver_pubkey)
         self.asset_type = self.message_body.get("AssetType")
+        if self.asset_type:
+            self.asset_type = self.asset_type.upper()
         self.deposit = self.message_body.get("Deposit")
         self.role_index = self.message_body.get("RoleIndex")
         self.rdtxid = self.revocable_delivery.get("txId")
@@ -369,19 +390,20 @@ class FounderMessage(TransactionMessage):
     }
 
         transaction = TrinityTransaction(channel_name, wallet)
+        asset_id = get_asset_type_id(asset_type)
 
         if role_index == 0:
-            founder = createFundingTx(walletpartner, walletfounder)
+            founder = createFundingTx(walletpartner, walletfounder, asset_id)
         else:
             founder = transaction.get_founder()
 
         commitment = createCTX(founder.get("addressFunding"), deposit, deposit, self_pubkey,
-                               partner_pubkey, founder.get("scriptFunding"))
+                               partner_pubkey, founder.get("scriptFunding"), asset_id)
 
         address_self = pubkey_to_address(self_pubkey)
 
         revocabledelivery = createRDTX(commitment.get("addressRSMC"),address_self, deposit, commitment.get("txId"),
-                                       commitment.get("scriptRSMC"))
+                                       commitment.get("scriptRSMC"), asset_id)
 
         message = { "MessageType":"Founder",
                     "Sender": "{}@{}".format(self_pubkey, gateway_ip),
@@ -398,7 +420,7 @@ class FounderMessage(TransactionMessage):
                                       },
                     "Comments": comments
                  }
-        FounderMessage.send(message)
+        Message.send(message)
 
     def verify(self):
         if self.sender == self.receiver:
@@ -407,7 +429,7 @@ class FounderMessage(TransactionMessage):
             return False, "The Endpoint is Not Me"
         return True, None
 
-    def create_verify_tx(self):
+    def create_verify_tx(self, asset_id):
         if self.role_index == 0:
             walletfounder = {
                 "pubkey": self.receiver_pubkey,
@@ -417,7 +439,7 @@ class FounderMessage(TransactionMessage):
                 "pubkey": self.sender_pubkey,
                 "deposit": float(self.deposit)
             }
-            Txfounder = createFundingTx(walletpartner,walletfounder)
+            Txfounder = createFundingTx(walletpartner,walletfounder, asset_id)
         elif self.role_index == 1:
             walletfounder = {
                 "pubkey": self.sender_pubkey,
@@ -427,15 +449,15 @@ class FounderMessage(TransactionMessage):
                 "pubkey": self.receiver_pubkey,
                 "deposit": float(self.deposit)
             }
-            Txfounder = createFundingTx(walletpartner, walletfounder)
+            Txfounder = createFundingTx(walletpartner, walletfounder, asset_id)
 
         commitment = createCTX(Txfounder.get("addressFunding"), self.deposit, self.deposit, self.sender_pubkey,
-                           self.receiver_pubkey, Txfounder.get("scriptFunding"))
+                           self.receiver_pubkey, Txfounder.get("scriptFunding"), asset_id)
 
         address_self = pubkey_to_address(self.sender_pubkey)
 
         revocabledelivery = createRDTX(commitment.get("addressRSMC"), address_self, self.deposit, commitment.get("txId"),
-                                   commitment.get("scriptRSMC"))
+                                   commitment.get("scriptRSMC"), asset_id)
         return {"Founder":Txfounder,
                 "CTx":commitment,
                 "RTx":revocabledelivery}
@@ -479,7 +501,7 @@ class FounderMessage(TransactionMessage):
                                                 },
                                  "Comments": self.comments
                                 }
-        FounderMessage.send(message_response)
+        Message.send(message_response)
         LOG.info("Send FounderMessage Response:  {}".format(json.dumps(message_response )))
         return None
 
@@ -739,14 +761,16 @@ class RsmcMessage(TransactionMessage):
         elif 'pending' == tx_state:
             return CreateTranscation.ack(channel_name, receiver_pubkey, partner_ip, "TX is pending", cli)
 
+        asset_id = get_asset_type_id(asset_type)
+
         message = {}
         if role_index == 0 or role_index == 1:
             commitment = createCTX(founder["originalData"]["addressFunding"], sender_balance, receiver_balance,
-                               sender_pubkey, receiver_pubkey, founder["originalData"]["scriptFunding"])
+                               sender_pubkey, receiver_pubkey, founder["originalData"]["scriptFunding"], asset_id)
 
             revocabledelivery = createRDTX(commitment.get("addressRSMC"), pubkey_to_address(sender_pubkey), sender_balance,
                                        commitment.get("txId"),
-                                       commitment.get("scriptRSMC"))
+                                       commitment.get("scriptRSMC"), asset_id)
             message = { "MessageType":"Rsmc",
                     "Sender": "{}@{}".format(sender_pubkey, gateway_ip),
                     "Receiver":"{}@{}".format(receiver_pubkey, partner_ip),
@@ -783,7 +807,7 @@ class RsmcMessage(TransactionMessage):
                 rscmcscript = commitment["RSMCscript"]
 
             breachremedy = createBRTX(founder["originalData"]["addressFunding"], pubkey_to_address(receiver_pubkey), sender_balance,
-                                      rscmcscript)
+                                      rscmcscript, asset_id)
             breachremedy_sign = sign(wallet, breachremedy.get("txData"))
             breachremedy_info = {"txDataSign": breachremedy_sign,
                                  "originalData":breachremedy}
@@ -849,7 +873,11 @@ class RsmcMessage(TransactionMessage):
         return False, sender_balance, receiver_balance, amount
 
     def verify(self):
-        return True, None
+        channel = ch.Channel.channel(self.channel_name)
+        if channel and channel.channel_info.state == EnumChannelState.OPENED.name:
+            return True, None
+
+        return False, None
 
     def store_monitor_commitement(self):
         ctxid = self.commitment.get("txID")
@@ -1159,7 +1187,11 @@ class HtlcMessage(TransactionMessage):
             self.send_responses(self.role_index,error = error)
 
     def verify(self):
-        return True, None
+        channel = ch.Channel.channel(self.channel_name)
+        if channel and channel.channel_info.state == EnumChannelState.OPENED.name:
+            return True, None
+
+        return False, None
 
     def check_if_the_last_router(self):
         return self.wallet.url == self.router[-1][0]
@@ -1235,11 +1267,12 @@ class HtlcMessage(TransactionMessage):
         sender_balance = balance.get(senderpubkey).get(asset_type)
         receiver_balance = balance.get(receiverpubkey).get(asset_type)
         founder = transaction.get_founder()
+        asset_id = get_asset_type_id(asset_type.upper())
         if role_index == 0:
 
             hctx = create_sender_HTLC_TXS(senderpubkey, receiverpubkey, HTLCvalue, sender_balance,
                                       receiver_balance, hashR, founder["originalData"]["addressFunding"],
-                                      founder["originalData"]["scriptFunding"])
+                                      founder["originalData"]["scriptFunding"], asset_id)
             transaction.update_transaction(str(tx_nonce), HR=hashR, TxType="HTLC",
                                            Count=HTLCvalue, State="pending")
 
@@ -1251,7 +1284,7 @@ class HtlcMessage(TransactionMessage):
         elif role_index == 1:
             hctx = create_receiver_HTLC_TXS(senderpubkey, receiverpubkey, HTLCvalue, sender_balance,
                                       receiver_balance, hashR, founder["originalData"]["addressFunding"],
-                                      founder["originalData"]["scriptFunding"])
+                                      founder["originalData"]["scriptFunding"], asset_id=asset_id)
 
             hetx_sign = wallet.SignContent(hctx["HETX"]["txData"])
             hetx = {"txDataSign": hetx_sign,
@@ -1497,8 +1530,9 @@ class SettleMessage(TransactionMessage):
         receiver_pubkey = receiver.split("@")[0].strip()
         sender_balance = balance.get(sender_pubkey).get(asset_type.upper())
         receiver_balance = balance.get(receiver_pubkey).get(asset_type.upper())
+        asset_id = get_asset_type_id(asset_type.upper)
         settlement_tx = createRefundTX(address_founder,float(sender_balance),receiver_balance,sender_pubkey,receiver_pubkey,
-                                    founder_script)
+                                    founder_script, asset_id)
 
         message = { "MessageType":"Settle",
           "Sender": sender,
@@ -1626,8 +1660,44 @@ class PaymentAck(TransactionMessage):
         Message.send(message)
 
 
-def monitor_founding(height, channel_name, state):
+class SyncBlockMessage(Message):
+    """
+
+    """
+    @staticmethod
+    def send_block_sync(wallet, block_number, txids_list):
+        message = {"MessageType": "SyncBlock",
+                   "Sender":wallet.url,
+                   "Receiver": None,
+                   "MessageBody": {
+                         "BlockNumber": block_number,
+                         "txids": txids_list
+                         }
+                   }
+        SyncBlockMessage.send(message)
+
+    @staticmethod
+    def send(message):
+        from wallet.Interface.rpc_interface import CurrentLiveWallet
+        try:
+            result = send_message(message,"SyncBlock")
+            if Message.Connection is False:
+                join_gateway(CurrentLiveWallet.Wallet.pubkey)
+                Monitor.BlockPause = False
+                Message.Connection = True
+        except ConnectionError as e:
+            LOG.error(str(e))
+            Message.Connection = False
+            Monitor.BlockPause = True
+        return None
+
+
+def monitor_founding(tx_id, channel_name, state):
     channel = ch.Channel.channel(channel_name)
+    if not check_vmstate(tx_id):
+        LOG.error("{} vm state error".format(tx_id))
+        channel.delete()
+        return None
     deposit = channel.get_deposit()
     channel.update_channel(state=state, balance = deposit)
     ch.sync_channel_info_to_gateway(channel_name,"AddChannel")

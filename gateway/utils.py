@@ -5,7 +5,7 @@ gateway utils
 import json
 import re
 from config import cg_end_mark, cg_bytes_encoding, cg_wsocket_addr,\
- cg_tcp_addr, cg_public_ip_port, cg_remote_jsonrpc_port, cg_remote_jsonrpc_addr
+ cg_tcp_addr, cg_public_ip_port, cg_remote_jsonrpc_addr, cg_local_jsonrpc_addr
 import os
 import sys
 path = os.getcwd().replace("/gateway", "")
@@ -64,7 +64,7 @@ def get_wallet_addr(current_url, asset_type, net_tops):
     """
     wallet_ip = get_wallet_attribute("WalletIp", current_url, asset_type, net_tops)
     if wallet_ip:
-        return (wallet_ip, cg_remote_jsonrpc_port)
+        return (wallet_ip, int(wallet_ip.split(":")[1]))
     else:
         return cg_remote_jsonrpc_addr
 
@@ -74,6 +74,28 @@ def get_wallet_attribute(attr_name, current_url, asset_type, net_tops):
     """
     pk = get_public_key(current_url)
     return net_tops[asset_type].get_node_dict(pk).get(attr_name)
+
+def get_all_active_wallet_dict(clients):
+
+    """
+    :param clients: wallet client dict
+    """
+    wallets = {}
+    for key in clients:
+        active_wallet = clients[key].opened_wallet
+        if active_wallet:
+            wallets[active_wallet.public_key] = active_wallet
+    return wallets
+
+def get_all_active_wallet_keys_iterator(clients):
+
+    """
+    :param clients: wallet client dict
+    """
+    for key in clients:
+        active_wallet = clients[key].opened_wallet
+        if active_wallet:
+            yield active_wallet.public_key
 
 def check_is_spv(url):
     """
@@ -85,13 +107,18 @@ def check_is_spv(url):
     else:
         return False
 
-def check_is_owned_wallet(url):
+def check_is_owned_wallet(url, clients):
     """
     check the sender or receiver is the wallet \n
     which attached this gateway
     """
-    ip_port = get_ip_port(url)
-    return ip_port == cg_public_ip_port
+    result = True
+    pk, ip_port = parse_url(url)
+    if ip_port != cg_public_ip_port:
+        result = False
+    if pk not in get_all_active_wallet_keys_iterator(clients):
+        result = False
+    return result
 
 def check_is_same_gateway(founder, receiver):
     """
@@ -149,23 +176,23 @@ def make_kwargs_for_wallet(data):
         "name": data.get("alias"),
         "deposit": data.get("CommitMinDeposit"),
         "fee": data.get("Fee"),
-        "asset_type": list(data.get("Balance").items())[0][0],
-        "balance": list(data.get("Balance").items())[0][1]
+        "balance": data.get("Balance")
     }
 
-def make_topo_node_data(wallet):
+def make_topo_node_data(wallet, asset_type):
     """
     :param wallet: _Wallet instance
     """
     return {
         "Publickey": wallet.public_key,
         "Name": wallet.name,
+        "AssetType": asset_type,
         "Deposit": wallet.deposit,
         "Fee": wallet.fee,
-        "Balance": wallet.balance,
+        "Balance": wallet.balance[asset_type],
         "Ip": cg_public_ip_port,
-        "WalletIp": wallet.ip,
-        "SpvList": []
+        "WalletIp": wallet.cli_ip,
+        "Status": wallet.status,
     }
 
 def get_channels_form_db(address):
@@ -181,29 +208,31 @@ def get_wallet_from_db(ip):
     # print(nodes)
     return nodes.get("content")
 
-def add_or_update_wallet_to_db(wallet):
+def add_or_update_wallet_to_db(wallet, last_opened_pk):
     if not wallet:
         return
-    addr = wallet["url"]
-    if APINode.query_node(addr).get("content"):
+    public_key = wallet.public_key
+    if APINode.query_node(public_key).get("content"):
         APINode.update_node(
-            addr,
-            balance=wallet["balance"],
-            deposit=wallet["deposit"],
-            fee=wallet["fee"],
-            name=wallet["name"]
+            public_key,
+            balance=wallet.balance,
+            deposit=wallet.deposit,
+            fee=wallet.fee,
+            name=wallet.name
         )
     else:
         APINode.add_ransaction(
-            wallet["url"],
-            get_public_key(wallet["url"]),
-            get_ip_port(wallet["url"]),
-            wallet["balance"],
-            wallet["deposit"],
-            wallet["fee"],
-            wallet["name"],
-            "alive"
+            public_key=wallet.public_key,
+            cli_ip=wallet.cli_ip,
+            ip=wallet.ip,
+            balance=wallet.balance,
+            deposit=wallet.deposit,
+            fee=wallet.fee,
+            name=wallet.name,
+            status=wallet.status
         )
+    if last_opened_pk:
+        APINode.update_node(last_opened_pk, status=0)
 
 def _make_router(path, full_path, net_topo):
     total_fee = 0
@@ -225,34 +254,58 @@ def _make_router(path, full_path, net_topo):
         }
     return router
 
-def search_route_for_spv(sender, receiver, net_topo, spv_table):
+def _search_target_wallets(receiver, asset_type):
+    from network import Network
+    from message import MessageMake
+    addr = (get_addr(receiver)[0], cg_local_jsonrpc_addr[1])
+    message = MessageMake.make_search_target_wallet(get_public_key(receiver), asset_type)
+    response = Network.send_msg_with_jsonrpc_sync("Search", addr, message)
+    if response:
+        target = response.get("Wallets")
+    else:
+        target = []
+    return target
+
+def search_route_for_spv(sender, source_list, receiver, net_topo, asset_type):
 
     """
     :param sender: spv self url
+    :param source_list: spv channel_peers
     :param receiver: tx target url
     :param net_topo:
-    :param spv_table: 
+    :param asset_type: 
     """
-    receiver_pk = get_public_key(receiver)
-    spv_pk = get_public_key(spv_pk)
-    source_wallet_pks = spv_table.find_keys(spv_pk)
+    receiver_pk, rev_ip = parse_url(receiver)
+    spv_pk, sed_ip = parse_url(sender)
+    source_wallet_pks = []
+    target_wallet_pks = []
     path = []
     full_path = []
+    for source in source_list:
+        source_pk = get_public_key(source)
+        if net_topo.get_node_dict(source_pk)["Status"]:
+            source_wallet_pks.append(source_pk)
     # spv-wallet-..-spv tx 
     if check_is_spv(receiver):
-        target_wallet_pks = spv_table.find_keys(receiver_pk)
+        # first think about sender and receiver attached in same gateway
+        for key in net_topo.spv_table.find_keys(receiver_pk):
+            if net_topo.get_node_dict(key)["Status"]:
+                target_wallet_pks.append(key)
         common_wallet_set = set(source_wallet_pks).intersection(set(target_wallet_pks))
         # spv-wallet-spv
         if len(common_wallet_set):
             wallet_pk = list(common_wallet_set)[0]
             path = [wallet_pk]
-        # spv-wallet-..-wallet-spv
-        else:
-            for s_pk in source_wallet_pks:
-                if len(path): break
-                for t_pk in target_wallet_pks:
-                    path = net_topo.find_shortest_path_decide_by_fee(s_pk, t_pk)
+        # spv-wallet-..-wallet-spv not attached in same gateway
+        # search target wallet from remote gateway
+        if not len(path) and sed_ip != rev_ip:
+            target_wallet_pks = _search_target_wallets(receiver, asset_type)
+            if len(target_wallet_pks):
+                for s_pk in source_wallet_pks:
                     if len(path): break
+                    for t_pk in target_wallet_pks:
+                        path = net_topo.find_shortest_path_decide_by_fee(s_pk, t_pk)
+                        if len(path): break
     # spv-wallet-..-wallet tx
     else:
         for s_pk in source_wallet_pks:
@@ -260,13 +313,12 @@ def search_route_for_spv(sender, receiver, net_topo, spv_table):
             if len(path): break
     return _make_router(path, full_path, net_topo)
 
-def search_route_for_wallet(sender, receiver, net_topo, spv_table):
+def search_route_for_wallet(sender, receiver, net_topo, asset_type):
     
     """
     :param sender: spv self url
     :param receiver: tx target url
     :param net_topo:
-    :param spv_table: 
     """
     rev_pk = get_public_key(receiver)
     sed_pk = get_public_key(sender)
@@ -274,7 +326,17 @@ def search_route_for_wallet(sender, receiver, net_topo, spv_table):
     full_path = []
     # wallet-wallet-..-spv
     if check_is_spv(receiver):
-        target_wallet_pks = spv_table.find_keys(receiver_pk)
+        target_wallet_pks = []
+        # sender and receiver is attached same gateway(same ip)
+        # search target wallet from local spv table
+        if get_addr(sender)[0] == get_addr(receiver)[0]:
+            for key in net_topo.spv_table.find_keys(receiver_pk):
+                # check wallet is on-line
+                if net_topo.get_node_dict(key)["Status"]:
+                    target_wallet_pks.append(key)
+        # search target wallet from remote spv table
+        else:
+            target_wallet_pks = _search_target_wallets(receiver, asset_type)
         for t_pk in target_wallet_pks:
             path = net_topo.find_shortest_path_decide_by_fee(sed_pk, t_pk)
             if len(path): break
@@ -282,3 +344,17 @@ def search_route_for_wallet(sender, receiver, net_topo, spv_table):
     else:
         path = net_topo.find_shortest_path_decide_by_fee(sed_pk, rev_pk)
     return _make_router(path, full_path, net_topo)
+
+if __name__ == "__main__":
+    d = {"a":1,"b":2}
+    def get_keys_iterator(clients):
+        """
+        :param clients: wallet client dict
+        """
+        for key in clients:
+            # active_wallet = clients[key].opened_wallet
+            yield clients[key]
+    print(get_keys_iterator(d))
+    print(1 in get_keys_iterator(d))
+    print(3 in get_keys_iterator(d))
+    print(2 in get_keys_iterator(d))

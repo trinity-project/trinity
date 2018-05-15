@@ -3,6 +3,7 @@ from functools import wraps
 import time
 import json
 import networkx as nx
+from spvtable import SPVHashTable
 from networkx.readwrite import json_graph
 from config import cg_public_ip_port
 import utils
@@ -70,9 +71,10 @@ def timethis(func):
 
 class Nettopo:
     def __init__(self):
-        # save wallet pk set that attached this gateway
+        # save wallet (with same asset type) pk set that attached this gateway
         self.nids = set()
         self._graph = nx.Graph()
+        self.spv_table = SPVHashTable()
 
     def __str__(self):
         return "Nettopo(nodes: {}, links: {})".format(
@@ -110,7 +112,8 @@ class Nettopo:
             self._graph.remove_edge(sid, tid)
             return True
             # for nid in [sid, tid]:
-            #     if self._isolated(nid) and nid != self.nid:
+            #     has_spv = True if len(self.spv_table.find(nid)) else False
+            #     if self._isolated(nid) and not spv_len:
             #         self._graph.remove_node(nid)
         else:
             return False
@@ -232,6 +235,9 @@ class Nettopo:
     def get_node_dict(self, nid):
         return self._graph.nodes[nid]
 
+    def get_nodes(self):
+        return self._graph.nodes
+
     def get_neighbors_set(self, nid):
         return set(self._graph.neighbors(nid))
 
@@ -239,14 +245,17 @@ class Nettopo:
         return self._graph.number_of_edges()
 
     @classmethod
-    def add_or_update(cls, topos, wallet):
+    def add_or_update(cls, topos, asset_type, wallet):
+        """
+        add wallet node to topo
+        """
         pk = wallet.public_key
-        asset_type = wallet.asset_type
-        data = utils.make_topo_node_data(wallet)
+        data = utils.make_topo_node_data(wallet, asset_type)
         if topos.get(asset_type):
             topo = topos[asset_type]
             if topo.has_node(pk):
-                topo.update_data(data)
+                # topo.update_data(data)
+                pass
             else:
                 topo.add_node(data, pk=pk)
         else:

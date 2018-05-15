@@ -185,7 +185,7 @@ if __name__ == "__main__":
     message_1 = {
             "MessageBody": {
             "Publickey": "pk1",
-            "Ip": "0.0.0.0",
+            "Ip": "0.0.0.0:20556",
             "CommitMinDeposit": 3,
             "Fee": 2,
             "Balance": {"NEO": 10},
@@ -195,7 +195,7 @@ if __name__ == "__main__":
     message_2 = {
             "MessageBody": {
             "Publickey": "pk2",
-            "Ip": "0.0.0.0",
+            "Ip": "0.0.0.0:20556",
             "CommitMinDeposit": 3,
             "Fee": 1,
             "Balance": {"NEO": 10},
@@ -226,7 +226,7 @@ if __name__ == "__main__":
     # time.sleep(5)
     # jsonrpcclient.request("http://localhost:8077", 'SyncChannel', json.dumps(message1))
     # time.sleep(5)
-    jsonrpcclient.request("http://localhost:8077", 'TransactionMessage', json.dumps(message))
+    jsonrpcclient.request("http://localhost:8077", 'SyncWalletData', json.dumps(message_2))
     # time.sleep(5)
     # jsonrpcclient.request("http://localhost:8077", 'SyncChannel', json.dumps(message1))
 

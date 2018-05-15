@@ -100,7 +100,7 @@ class Network:
             wst_logger.info("the spv is disconnected")
 
     @staticmethod
-    def send_msg_with_jsonrpc(method, addr, data, loop=None):
+    def send_msg_with_jsonrpc(method, addr, data, loop=None, callback=None):
         """
         :param method: the method that request to the remote server\n
         :param addr: wallet rpc server addr type\n
@@ -111,6 +111,15 @@ class Network:
         future = asyncio.ensure_future(
             AsyncJsonRpc.jsonrpc_request(method, data, addr)
         )
-        future.add_done_callback(lambda t: t.exception())
+        if callback:
+            import functools
+            wrapped = functools.partial(callback, addr=addr)
+            future.add_done_callback(wrapped)
+        else:
+            future.add_done_callback(lambda t: t.exception())
 
+    @staticmethod
+    def send_msg_with_jsonrpc_sync(method, addr, data):
+        data = json.dumps(data)
+        return AsyncJsonRpc.send_msg_with_jsonrpc_sync(method, addr, data)
   

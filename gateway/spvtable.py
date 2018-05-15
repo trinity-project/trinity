@@ -178,8 +178,22 @@ class SPVHashTable(object):
         """
         if key not in self.maps.keys():
             self.maps.update({key:[value]})
-        elif value not in self.maps.get(key):
+        else:
             self.maps[key].append(value)
+        # elif value not in self.maps.get(key):
+        #     self.maps[key].append(value)
+
+    def remove(self, key, value):
+        """
+
+        :param key:     The public key string of the wallet
+        :param value:   the public key of the spv
+        :return:
+        """
+        if key in self.maps.keys():
+            spv_list = self.maps[key]
+            if value in spv_list:
+                spv_list.remove(value)
 
     def sync_table(self, hash_table):
         """

@@ -91,15 +91,17 @@ def get_router_info(message):
     return result.json()
 
 
-def send_message(message):
+def send_message(message, method="TransactionMessage" ):
     LOG.info("GateWay Send Message: {}".format(json.dumps(message)))
     request= {
             "jsonrpc": "2.0",
-            "method": "TransactionMessage",
+            "method": method,
             "params": [message],
             "id": 1
     }
     result = requests.post(Configure["GatewayURL"], json=request)
     return result.json()
+
+
 
 

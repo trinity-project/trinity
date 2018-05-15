@@ -41,6 +41,9 @@ class TProtocol(Protocol):
         self.header_size = 12
         self.transport = None
         self.state = None
+        # for wallet cli
+        self.is_wallet_cli = False
+        self.wallet_ip = None
     
     def connection_made(self, transport):
         self.state = "connected"
@@ -99,10 +102,13 @@ class TProtocol(Protocol):
             tcp_logger.info("the connection %s was closed", peername)
         from gateway import gateway_singleton
         from utils import del_dict_item_by_value
+        if self.is_wallet_cli:
+            gateway_singleton.handle_wallet_cli_off_line(self)
         tcp_manager.unregister(self)
         self.transport.close()
         del_dict_item_by_value(gateway_singleton.tcp_pk_dict, self)
         del self
+
 
     def pause_writing(self):
         print(self.transport.get_write_buffer_size())
