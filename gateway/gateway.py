@@ -324,16 +324,20 @@ class Gateway:
                         self.sync_channel_route_to_peer(message)
 
     def handle_wallet_response(self, method, response):
-        if method == "SyncWallet":
+        if method == "GetChannelList":
             if type(response) == str:
                 response = json.loads(response)
-            if not response.get("MessageBody"):
-                return
-            Wallet.add_or_update_wallet(
-                self.wallets,
-                **utils.make_kwargs_for_wallet(response.get("MessageBody"))
-            )
-            self.resume_channel_from_db()
+            self.handle_channel_list_message(response)
+        # if method == "SyncWallet":
+        #     if type(response) == str:
+        #         response = json.loads(response)
+        #     if not response.get("MessageBody"):
+        #         return
+        #     Wallet.add_or_update_wallet(
+        #         self.wallets,
+        #         **utils.make_kwargs_for_wallet(response.get("MessageBody"))
+        #     )
+        #     self.resume_channel_from_db()
 
     def handle_spv_make_connection(self, websocket):
         if self.net_topos.get("TNC"):
@@ -561,13 +565,13 @@ class Gateway:
         print(self.wallet_clients)
 
     def handle_channel_list_message(self, data):
-        wallet_data = data.get("Wallet")
-        channel_peers = data.get("Peers")
-        WalletClient.add_or_update(
-            self.wallet_clients,
-            **utils.make_kwargs_for_wallet(wallet_data)
-        )
-        for peer in channel_peers:
+        # wallet_data = data.get("Wallet")
+        # channel_peers = data.get("Peers")
+        # WalletClient.add_or_update(
+        #     self.wallet_clients,
+        #     **utils.make_kwargs_for_wallet(wallet_data)
+        # )
+        # for peer in channel_peers:
             pass
             
 
@@ -585,7 +589,7 @@ class Gateway:
             except Exception:
                 continue
             else:
-                Network.send_msg_with_jsonrpc("NotificaOnLine", addr, {})
+                Network.send_msg_with_jsonrpc("GetChannelList", addr, {})
 
 gateway_singleton = Gateway()
 
