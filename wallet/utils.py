@@ -233,7 +233,8 @@ def get_wallet_info(pubkey):
                    "alias": Configure["alias"],
                    "AutoCreate": Configure["AutoCreate"],
                    "MaxChannel": Configure["MaxChannel"],
-                   "Balance": balance
+                   "Balance": balance,
+                   "Ip":"{}:{}".format(Configure.get("NetAddress"),Configure.get("NetPort"))
                }
     return message
 
