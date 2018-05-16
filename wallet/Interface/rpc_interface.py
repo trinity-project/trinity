@@ -26,7 +26,7 @@ import json
 from json.decoder import JSONDecodeError
 from klein import Klein
 from wallet.Interface.rpc_utils import json_response, cors_header
-from wallet.ChannelManagement.channel import get_channel_via_name, close_channel
+from wallet.ChannelManagement.channel import get_channel_via_name, close_channel, udpate_channel_when_setup
 from wallet.TransactionManagement import transaction, message
 from log import LOG
 from wallet.configure import Configure
@@ -180,17 +180,17 @@ class RpcInteraceApi(object):
                "MessageBody": wallet_info
                }
 
-        elif method == 'GetChannelState':
+        elif method == "GetChannelState":
             return {'MessageType': 'GetChannelState',
                     'MessageBody': get_channel_via_name(params)}
 
-        elif method == 'CloseChannel':
+        elif method == "CloseChannel":
             class TestWallet():
                 def __init__(self):
                     self.url = params[1]
             close_channel(params[0], TestWallet())
 
-        elif method == 'GenerateRSMCMessage':
+        elif method == "GenerateRSMCMessage":
             tx_nonce = transaction.TrinityTransaction(params[0], None).get_latest_nonceid()
             tx_nonce = int(tx_nonce)
 
@@ -198,7 +198,7 @@ class RpcInteraceApi(object):
                                                     tx_nonce+1, asset_type="TNC",cli =False,router = None, next_router=None,
                                                     role_index=0, comments=None)
 
-        elif method == 'GetRSMCMessage':
+        elif method == "GetRSMCMessage":
             if not params:
                 LOG.error('Parameters <{}> is used for GetRSMCMessage')
                 return {'MessageType': 'GetRSMCAck',
@@ -212,3 +212,18 @@ class RpcInteraceApi(object):
                                                        role_index=int(params[6]))
 
             return rsmc_message
+
+        elif method == "GetChannelList":
+            from wallet.utils import get_wallet_info
+            if CurrentLiveWallet.Wallet:
+                channel_list = udpate_channel_when_setup(CurrentLiveWallet.Wallet.address)
+                wallet_info = get_wallet_info(CurrentLiveWallet.Wallet.pubkey)
+
+                return {"MessageType":"GetChannelList",
+                        "MessageBody":{"Channel":channel_list,
+                                       "Wallet":wallet_info}}
+            else:
+                return {"MessageType": "GetChannelList",
+                        "MessageBody": {"Error":"Wallet No Open"}
+                }
+
