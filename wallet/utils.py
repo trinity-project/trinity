@@ -87,7 +87,7 @@ def get_arg(arguments, index=0, convert_to_int=False):
     return None
 
 
-def get_asset_type_name(asset_type):
+def  get_asset_type_name(asset_type):
     """
 
     :param asset_type:
@@ -171,30 +171,59 @@ def check_deposit(deposit):
     return de > 0, de
 
 
-def convert_to_int(deposit):
+def convert_to_float(deposit):
     try:
-        return int(deposit)
+        return float(deposit)
     except Exception as error:
         return 0
 
 
-def is_valid_deposit(deposit, spv_wallet=False):
-    max_deposit = convert_to_int(Configure.get("CommitMaxDeposit"))
-    min_deposit = convert_to_int(Configure.get("CommitMinDeposit"))
+
+def is_valid_deposit(asset_type, deposit, spv_wallet=False):
+    """
+
+    :param asset_type:
+    :param deposit:
+    :param spv_wallet:
+    :return:
+    """
+    if len(asset_type) >10:
+        asset_type = get_asset_type_name()
+    else:
+        asset_type = asset_type.upper()
 
     if spv_wallet:
-        return 0 < deposit
+        try:
+            max_deposit_configure = Configure.get("Channel").get(asset_type).get("CommitMaxDeposit")
+        except Exception as e:
+            LOG.warn(str(e))
+            max_deposit_configure = 0
+        try:
+            min_deposit_configure = Configure.get("Channel").get(asset_type.upper()).get("CommitMinDeposit")
+        except Exception as e:
+            LOG.warn(str(e))
+            min_deposit_configure = 0
 
-    # node wallet
-    if 0 >= min_deposit:
-        LOG.error('CommitMinDeposit is set as an illegal value<{}>.'.format(min_deposit))
-        return False
+        max_deposit = convert_to_float(max_deposit_configure)
+        min_deposit = convert_to_float(min_deposit_configure)
 
-    if 0 >= max_deposit:
-        LOG.warn('Set CommitMaxDeposit as default value 1,000,000')
-        max_deposit = 1000000
+        if min_deposit > 0 and max_deposit > 0:
+            return min_deposit <= deposit <= max_deposit, None
 
-    return min_deposit <= deposit <= max_deposit
+        elif 0 >= min_deposit:
+            LOG.warn('CommitMinDeposit is set as an illegal value<{}>.'.format(str(min_deposit)))
+            return deposit <= max_deposit, None
+        elif 0 >= max_deposit:
+            LOG.warn('CommitMaxDeposit is set as an illegal value<{}>.'.format(str(max_deposit)))
+            return deposit >= min_deposit, None
+    else:
+        if asset_type == "TNC":
+            if deposit < 5000:
+                return False, "Node wallet channel deposit should larger than 5000, " \
+                              "but now is {}".format(str(deposit))
+        return True, None
+
+
 
 
 def check_partner(wallet, partner):

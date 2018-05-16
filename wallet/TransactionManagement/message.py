@@ -147,6 +147,7 @@ class RegisterMessage(Message):
                 "Error": error
             }
             Message.send(message)
+            return
         founder_pubkey, founder_ip = self.sender.split("@")
         partner_pubkey, partner_ip = self.receiver.split("@")
         founder_address = pubkey_to_address(founder_pubkey)
@@ -184,22 +185,22 @@ class RegisterMessage(Message):
                 return False,"Deposit Format error {}".format(de)
 
         is_spv = self.is_spv_wallet()
-        return is_valid_deposit(self.deposit, is_spv), None
+        return is_valid_deposit(self.asset_type, self.deposit, is_spv), None
         # state, maxd = check_max_deposit(self.deposit)
-        # if not state:
-        #     if isinstance(maxd, float):
-        #         return False, "Deposit is larger than the max, max is {}".format(str(maxd))
-        #     else:
-        #         return False, "Max deposit configure error {}".format(maxd)
-        #
-        # state , mind = check_min_deposit(self.deposit)
-        # if not state:
-        #     if isinstance(mind, float):
-        #         return False, "Deposit is less than the min, min is {}".format(str(mind))
-        #     else:
-        #         return False, "Mix deposit configure error {}".format(mind)
-        #
-        # return True,None
+        #         # if not state:
+        #         #     if isinstance(maxd, float):
+        #         #         return False, "Deposit is larger than the max, max is {}".format(str(maxd))
+        #         #     else:
+        #         #         return False, "Max deposit configure error {}".format(maxd)
+        #         #
+        #         # state , mind = check_min_deposit(self.deposit)
+        #         # if not state:
+        #         #     if isinstance(mind, float):
+        #         #         return False, "Deposit is less than the min, min is {}".format(str(mind))
+        #         #     else:
+        #         #         return False, "Mix deposit configure error {}".format(mind)
+        #         #
+        #         # return True,None
 
     def check_balance(self):
         if check_onchain_balance(self.wallet.pubkey, self.asset_type, self.deposit):
