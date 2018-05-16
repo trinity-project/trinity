@@ -112,7 +112,7 @@ class Gateway:
                         if not net_topo:
                             tpk = utils.get_public_key(data.get("Target"))
                             wallet = utils.get_all_active_wallet_dict(self.wallet_clients).get(tpk)
-                            Nettopo.add_or_update(self.net_topos, asset_type, walle)
+                            Nettopo.add_or_update(self.net_topos, asset_type, wallet)
                             net_topo = self.net_topos.get(asset_type)
                         net_topo.sync_channel_graph(data)
                         tcp_logger.debug("sync graph from peer successful")
