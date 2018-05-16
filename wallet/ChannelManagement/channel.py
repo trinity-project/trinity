@@ -273,28 +273,32 @@ def sync_channel_info_to_gateway(channel_name, type):
 
 
 def udpate_channel_when_setup(address):
-    channels = APIChannel.batch_query_channel(filters={"src_addr":address})
+    """
+
+    :param address: wallet url
+    :return:
+    """
+
+    channels = APIChannel.batch_query_channel(filters={"src_addr":address, "state":EnumChannelState.OPENED.name})
     channel_list =[]
     if channels.get("content"):
         for ch in channels["content"]:
-            if ch.state == EnumChannelState.OPENED.name:
-                channel_info = {"ChannelName": ch.channel_name,
-                   "Founder": ch.founder,
-                   "Receiver": ch.partner,
-                   "Balance": ch.get_balance()}
-                channel_list.append(channel_info)
-
-
-    channeld = APIChannel.batch_query_channel(filters={"dest_addr":address})
+            c = Channel.channel(ch.channel)
+            channel_info = {"ChannelName": ch.channel,
+                            "Founder": ch.src_addr,
+                             "Receiver": ch.dest_addr,
+                             "Balance": c.get_balance()}
+            channel_list.append(channel_info)
+    channeld = APIChannel.batch_query_channel(filters={"dest_addr":address,"state":EnumChannelState.OPENED.name})
     if channeld.get("content"):
         for ch in channeld["content"]:
-            if ch.state == EnumChannelState.OPENED.name:
-                channel_info = {"ChannelName": ch.channel_name,
-                                "Founder": ch.founder,
-                                "Receiver": ch.partner,
-                                "Balance": ch.get_balance()}
-                channel_list.append(channel_info)
-
+            c = Channel.channel(ch.channel)
+            channel_info = {"ChannelName": ch.channel,
+                            "Founder": ch.src_addr,
+                            "Receiver": ch.dest_addr,
+                            "Balance": c.get_balance()}
+            channel_list.append(channel_info)
+    return channel_list
 
 if __name__ == "__main__":
     result = APIChannel.query_channel(channel="1BE0FCD56A27AD46C22B8EEDC4E835EA")
