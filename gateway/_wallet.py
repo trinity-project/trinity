@@ -66,8 +66,8 @@ class _Wallet:
     def __str__(self):
         # return "Wallet(name: {}, asset_type: {}, fee: {}, deposit: {}, balance: {}, status: {})".\
         #     format(self.name, self.asset_type, self.fee, self.deposit, self.balance, self.status)
-        return "Wallet(name: {}, status: {}, ip: {}, cli_ip: {})".\
-            format(self.name, self.status, self.ip, self.cli_ip)
+        return "Wallet(status: {}, cli_ip: {}, pk: {})".\
+            format(self.status, self.cli_ip, self.public_key)
 
     def __repr__(self):
         return self.__str__()
@@ -128,14 +128,13 @@ class WalletClient:
         update the opened wallet instance\n
         and change the old opened wallet status
         """
-        last_opened_wallet = self.opened_wallet
         last_pk = None
-        if last_opened_wallet and last_opened_wallet != wallet:
-            last_opened_wallet.status = 0
-            last_pk = last_opened_wallet.public_key
-            last_opened_wallet = wallet
+        if self.opened_wallet and self.opened_wallet != wallet:
+            self.opened_wallet.status = 0
+            last_pk = self.opened_wallet.public_key
+            self.opened_wallet = wallet
         else:
-            last_opened_wallet = wallet
+            self.opened_wallet = wallet
         return last_pk
     
     def remove_wallet(self, public_key):

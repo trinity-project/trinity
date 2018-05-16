@@ -72,11 +72,10 @@ if __name__ == "__main__":
     # client.send(addr, header_pack + b"helloddddddddddddfffffffpk1")
     # bdata = b"worldgggggggggggggggggggggpk2"
     message = {
-        "MessageType":"AddChannel",
-        "MessageBody": {
-            "Founder": "pk1",
-            "Receiver": "pk2"
-        }
+        "MessageType":"RegisterChannel",
+        "Sender": "pk2@xxxx",
+        "Receiver": "pk3@xxxx",
+        "MessageBody": {}
     }
     import json
     bdata = json.dumps(message).encode("utf-8")
@@ -84,8 +83,8 @@ if __name__ == "__main__":
     header_pack = struct.pack("!3I", *header)
     
     
-    # client.send(addr, header_pack + bdata)
-    client._connect(addr)
+    client.send(addr, header_pack + bdata)
+    # client._connect(addr)
     # time.sleep(0.4)
     # client.send(addr, bdata[10:])
 

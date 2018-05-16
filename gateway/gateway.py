@@ -91,7 +91,7 @@ class Gateway:
                 if peer_ip == utils.get_ip_port(data["Sender"]).split(":")[0]:
                     sed_pk = utils.get_public_key(data["Sender"])
                     self.tcp_pk_dict[sed_pk] = protocol
-                pprint.pprint(self.tcp_pk_dict)
+                # pprint.pprint(self.tcp_pk_dict)
                 if msg_type == "RegisterChannel":
                     pk = utils.get_public_key(data["Receiver"])
                     wallet = utils.get_all_active_wallet_dict(self.wallet_clients).get(pk)
