@@ -84,7 +84,8 @@ if __name__ == "__main__":
     header_pack = struct.pack("!3I", *header)
     
     
-    client.send(addr, header_pack + bdata)
+    # client.send(addr, header_pack + bdata)
+    client._connect(addr)
     # time.sleep(0.4)
     # client.send(addr, bdata[10:])
 

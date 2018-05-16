@@ -218,6 +218,7 @@ class Gateway:
                     )
                     self.sync_channel_route_to_peer(message)
                 elif msg_type == "UpdateChannel":
+                    return
                     founder_balance = data["MessageBody"]["Balance"][channel_founder][asset_type]
                     founder_node = net_topo.get_node_dict(fid)
                     receiver_balance = data["MessageBody"]["Balance"][channel_receiver][asset_type]
@@ -290,6 +291,7 @@ class Gateway:
                     message["Receiver"] = channel_peer
                     Network.send_msg_with_tcp(channel_peer, message)
                 elif msg_type == "UpdateChannel":
+                    return
                     source_balance = data["MessageBody"]["Balance"][channel_source][asset_type]
                     peer_balance = data["MessageBody"]["Balance"][channel_peer][asset_type]
                     source_node = net_topo.get_node_dict(nid)
