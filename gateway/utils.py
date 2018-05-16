@@ -65,10 +65,7 @@ def save_wallet_cli(clients):
 
 def get_wallet_clis():
     with open("wcli.json", "r") as fs:
-        try:
-            return json.loads(fs.read())
-        except Exception:
-            return []
+        return json.loads(fs.read())
 
 def get_wallet_addr(current_url, asset_type, net_tops):
     """

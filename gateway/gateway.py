@@ -561,10 +561,23 @@ class Gateway:
         print(self.wallet_clients)
 
     def handle_channel_list_message(self, data):
-        pass
+        wallet_data = data.get("Wallet")
+        channel_peers = data.get("Peers")
+        WalletClient.add_or_update(
+            self.wallet_clients,
+            **utils.make_kwargs_for_wallet(wallet_data)
+        )
+        for peer in channel_peers:
+            pass
+            
+
+
     
     def notifica_walelt_clis_on_line(self):
-        clis = utils.get_wallet_clis()
+        try:
+            clis = utils.get_wallet_clis()
+        except Exception:
+            clis = []
         for cli in clis:
             try:
                 ip, port = cli.split(":")
