@@ -109,6 +109,11 @@ class Gateway:
                     asset_type = data.get("AssetType")
                     if receiver and asset_type:
                         net_topo = self.net_topos.get(asset_type)
+                        if not net_topo:
+                            tpk = utils.get_public_key(data.get("Target"))
+                            wallet = utils.get_all_active_wallet_dict(self.wallet_clients).get(tpk)
+                            Nettopo.add_or_update(self.net_topos, asset_type, walle)
+                            net_topo = self.net_topos.get(asset_type)
                         net_topo.sync_channel_graph(data)
                         tcp_logger.debug("sync graph from peer successful")
                         print("**********number of edges is: ",net_topo.get_number_of_edges(),"**********")
