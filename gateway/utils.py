@@ -179,12 +179,17 @@ def make_kwargs_for_wallet(data):
     """
     :param data: dict type
     """
+    fee_dict = {}
+    channel_config = data.get("Channel")
+    if channel_config:
+        for key in channel_config:
+            fee_dict[key] = channel_config[key].get("Fee")
     return {
         "ip": data.get("Ip"),
         "public_key": data.get("Publickey"),
         "name": data.get("alias"),
-        "deposit": data.get("CommitMinDeposit"),
-        "fee": data.get("Fee"),
+        # "deposit": data.get("CommitMinDeposit"),
+        "fee": fee_dict,
         "balance": data.get("Balance")
     }
 
@@ -196,9 +201,9 @@ def make_topo_node_data(wallet, asset_type):
         "Publickey": wallet.public_key,
         "Name": wallet.name,
         "AssetType": asset_type,
-        "Deposit": wallet.deposit,
-        "Fee": wallet.fee,
-        "Balance": wallet.balance[asset_type],
+        # "Deposit": wallet.deposit,
+        "Fee": wallet.fee[asset_type],
+        "Balance": wallet.channel_balance,
         "Ip": cg_public_ip_port,
         "WalletIp": wallet.cli_ip,
         "Status": wallet.status

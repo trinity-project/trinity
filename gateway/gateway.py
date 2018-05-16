@@ -9,7 +9,7 @@ from topo import Nettopo
 from network import Network
 from message import Message, MessageMake
 from glog import tcp_logger, wst_logger, rpc_logger
-from config import cg_public_ip_port
+from config import cg_public_ip_port, cg_wsocket_addr
 
 class Gateway:
     """
@@ -154,7 +154,8 @@ class Gateway:
             print(self.wallet_clients)
             if add: utils.save_wallet_cli(self.wallet_clients)
             self.handle_wallet_cli_on_line(wallet, last_opened_wallet_pk)
-            response = MessageMake.make_ack_sync_wallet_msg(wallet.url)
+            spv_ip_port = "{}:{}".format(cg_wsocket_addr[0], cg_wsocket_addr[1])
+            response = MessageMake.make_ack_sync_wallet_msg(wallet.url, spv_ip_port)
             # self.detect_wallet_client_status()
             return json.dumps(response)
         elif method == "SyncBlock":
@@ -199,10 +200,12 @@ class Gateway:
                 rid = utils.get_public_key(channel_receiver)
                 if msg_type == "AddChannel":
                     wallets = utils.get_all_active_wallet_dict(self.wallet_clients)
-                    channel_wallet = wallets[rid]
+                    receiver_wallet = wallets[rid]
                     founder_wallet = wallets[fid]
+                    receiver_wallet.channel_balance = data["MessageBody"]["Balance"][channel_receiver][asset_type]
+                    founder_wallet.channel_balance = data["MessageBody"]["Balance"][channel_founder][asset_type]
                     Nettopo.add_or_update(self.net_topos, asset_type, founder_wallet)
-                    Nettopo.add_or_update(self.net_topos, asset_type, channel_wallet)
+                    Nettopo.add_or_update(self.net_topos, asset_type, receiver_wallet)
                     net_topo = self.net_topos[asset_type]
                     net_topo.add_edge(fid, rid)
                     message = MessageMake.make_sync_graph_msg(
@@ -262,6 +265,7 @@ class Gateway:
                 if msg_type == "AddChannel":
                     wallets = utils.get_all_active_wallet_dict(self.wallet_clients)
                     s_wallet = wallets[sid]
+                    s_wallet.channel_balance = data["MessageBody"]["Balance"][channel_source][asset_type]
                     Nettopo.add_or_update(self.net_topos, asset_type, s_wallet)
                     net_topo = self.net_topos[asset_type]
                 # peer is spv
@@ -498,8 +502,11 @@ class Gateway:
                 Network.send_msg_with_wsocket(self.ws_pk_dict.get(receiver_pk), data)
             # to self's wallet(wallets that attached this gateway)
             elif utils.check_is_owned_wallet(receiver, self.wallet_clients):
-                wallet_addr = utils.get_wallet_addr(receiver, asset_type, self.net_topos)
-                Network.send_msg_with_jsonrpc("TransactionMessage", wallet_addr, data)
+                # pk = utils.get_public_key(receiver)
+                wallet = utils.get_all_active_wallet_dict(self.wallet_clients).get(receiver_pk)
+                if wallet:
+                    wallet_addr = (wallet.cli_ip.split(":")[0], int(wallet.cli_ip.split(":")[1]))
+                    Network.send_msg_with_jsonrpc("TransactionMessage", wallet_addr, data)
             # to peer
             else:
                 Network.send_msg_with_tcp(receiver, data)
