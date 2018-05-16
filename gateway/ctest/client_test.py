@@ -196,8 +196,14 @@ if __name__ == "__main__":
             "MessageBody": {
             "Publickey": "pk2",
             "Ip": "0.0.0.0:20556",
-            "CommitMinDeposit": 3,
-            "Fee": 1,
+            "Channel":{
+                "TNC":
+                {
+                    "CommitMinDeposit": 1,   # the min commit deposit
+                    "CommitMaxDeposit": 5000,# the max commit deposit
+                    "Fee": 0.01 # gateway fee
+                }
+            },
             "Balance": {"NEO": 10},
             "alias": "trinity1"
         }
@@ -206,8 +212,14 @@ if __name__ == "__main__":
             "MessageBody": {
             "Publickey": "pk3",
             "Ip": "0.0.0.0:20554",
-            "CommitMinDeposit": 3,
-            "Fee": 1.5,
+            "Channel":{
+                "TNC":
+                {
+                    "CommitMinDeposit": 1,   # the min commit deposit
+                    "CommitMaxDeposit": 5000,# the max commit deposit
+                    "Fee": 0.01 # gateway fee
+                }
+            },
             "Balance": {"NEO": 10},
             "alias": "trinity1"
         }

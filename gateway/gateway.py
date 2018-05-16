@@ -200,10 +200,12 @@ class Gateway:
                 rid = utils.get_public_key(channel_receiver)
                 if msg_type == "AddChannel":
                     wallets = utils.get_all_active_wallet_dict(self.wallet_clients)
-                    channel_wallet = wallets[rid]
+                    receiver_wallet = wallets[rid]
                     founder_wallet = wallets[fid]
+                    receiver_wallet.channel_balance = data["MessageBody"]["Balance"][channel_receiver][asset_type]
+                    founder_wallet.channel_balance = data["MessageBody"]["Balance"][channel_founder][asset_type]
                     Nettopo.add_or_update(self.net_topos, asset_type, founder_wallet)
-                    Nettopo.add_or_update(self.net_topos, asset_type, channel_wallet)
+                    Nettopo.add_or_update(self.net_topos, asset_type, receiver_wallet)
                     net_topo = self.net_topos[asset_type]
                     net_topo.add_edge(fid, rid)
                     message = MessageMake.make_sync_graph_msg(
@@ -263,6 +265,7 @@ class Gateway:
                 if msg_type == "AddChannel":
                     wallets = utils.get_all_active_wallet_dict(self.wallet_clients)
                     s_wallet = wallets[sid]
+                    s_wallet.channel_balance = data["MessageBody"]["Balance"][channel_source][asset_type]
                     Nettopo.add_or_update(self.net_topos, asset_type, s_wallet)
                     net_topo = self.net_topos[asset_type]
                 # peer is spv
