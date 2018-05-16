@@ -257,13 +257,13 @@ def get_wallet_info(pubkey):
         balance[i] = b
     message = {
                    "Publickey": pubkey,
-                   "CommitMinDeposit": Configure["CommitMinDeposit"],
-                   "Fee": Configure["Fee"],
-                   "alias": Configure["alias"],
-                   "AutoCreate": Configure["AutoCreate"],
-                   "MaxChannel": Configure["MaxChannel"],
+                    "alias": Configure["alias"],
+                    "AutoCreate": Configure["AutoCreate"],
+                    "Ip": "{}:{}".format(Configure.get("NetAddress"),
+                                         Configure.get("NetPort")),
+                    "MaxChannel": Configure["MaxChannel"],
+                   "Channel": Configure["Channel"],
                    "Balance": balance,
-                   "Ip":"{}:{}".format(Configure.get("NetAddress"),Configure.get("NetPort"))
                }
     return message
 

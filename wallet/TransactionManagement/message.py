@@ -29,7 +29,7 @@ from wallet.utils import pubkey_to_address, get_asset_type_id
 from TX.interface import *
 from wallet.ChannelManagement import channel as ch
 from model.base_enum import EnumChannelState
-from wallet.Interface.gate_way import send_message, join_gateway
+from wallet.Interface.gate_way import send_message, join_gateway, GatewayInfo
 from wallet.utils import sign,\
     check_onchain_balance, \
     check_max_deposit,\
@@ -209,7 +209,9 @@ class RegisterMessage(Message):
             return False, "No Balance OnChain to support the deposit"
 
     def is_spv_wallet(self):
-        return self.sender.strip().endswith('8766') or self.receiver.strip().endswith('8766')
+        spv_port = GatewayInfo.get_spv_port()
+        spv_port = spv_port if spv_port else "8766"
+        return self.sender.strip().endswith(spv_port) or self.receiver.strip().endswith(spv_port)
 
 
 class TestMessage(Message):
