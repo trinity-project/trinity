@@ -231,6 +231,13 @@ class UserPromptInterface(PromptInterface):
             result = gate_way.join_gateway(self.Wallet.pubkey).get("result")
             if result:
                 self.Wallet.url = json.loads(result).get("MessageBody").get("Url")
+
+                try:
+                    spv = json.loads(result).get("MessageBody").get("Spv")
+                    spv_port = spv.strip().split(":")[1]
+                except:
+                    spv_port = "8766"
+                gate_way.GatewayInfo.update_spv_port(spv_port)
                 self.Channel = True
                 print("Channel Function Enabled")
                 return True
