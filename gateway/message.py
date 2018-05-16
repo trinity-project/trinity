@@ -155,11 +155,12 @@ class MessageMake:
         return message
     
     @staticmethod
-    def make_ack_sync_wallet_msg(url):
+    def make_ack_sync_wallet_msg(url, spv_ip_port):
         message = {
             "MessageType": "AckSyncWallet",
             "MessageBody": {
-                "Url": url
+                "Url": url,
+                "Spv": spv_ip_port
             }
         }
         return message

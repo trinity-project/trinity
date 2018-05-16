@@ -58,6 +58,15 @@ def encode_bytes(data):
     return header_pack + bdata
     # return data.encode(cg_bytes_encoding)
 
+def save_wallet_cli(clients):
+    with open("wcli.json", "w") as fs:
+        text = json.dumps(list(clients.keys()))
+        fs.write(text)
+
+def get_wallet_clis():
+    with open("wcli.json", "r") as fs:
+        return json.loads(fs.read())
+
 def get_wallet_addr(current_url, asset_type, net_tops):
     """
     get the server addr which wallet start on
@@ -192,7 +201,7 @@ def make_topo_node_data(wallet, asset_type):
         "Balance": wallet.balance[asset_type],
         "Ip": cg_public_ip_port,
         "WalletIp": wallet.cli_ip,
-        "Status": wallet.status,
+        "Status": wallet.status
     }
 
 def get_channels_form_db(address):

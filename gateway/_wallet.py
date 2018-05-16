@@ -66,8 +66,8 @@ class _Wallet:
     def __str__(self):
         # return "Wallet(name: {}, asset_type: {}, fee: {}, deposit: {}, balance: {}, status: {})".\
         #     format(self.name, self.asset_type, self.fee, self.deposit, self.balance, self.status)
-        return "Wallet(name: {}, status: {})".\
-            format(self.name, self.status)
+        return "Wallet(status: {}, cli_ip: {}, pk: {})".\
+            format(self.status, self.cli_ip, self.public_key)
 
     def __repr__(self):
         return self.__str__()
@@ -128,14 +128,13 @@ class WalletClient:
         update the opened wallet instance\n
         and change the old opened wallet status
         """
-        last_opened_wallet = self.opened_wallet
         last_pk = None
-        if last_opened_wallet and last_opened_wallet != wallet:
-            last_opened_wallet.status = 0
-            last_pk = last_opened_wallet.public_key
-            last_opened_wallet = wallet
+        if self.opened_wallet and self.opened_wallet != wallet:
+            self.opened_wallet.status = 0
+            last_pk = self.opened_wallet.public_key
+            self.opened_wallet = wallet
         else:
-            last_opened_wallet = wallet
+            self.opened_wallet = wallet
         return last_pk
     
     def remove_wallet(self, public_key):
@@ -146,11 +145,8 @@ class WalletClient:
         del self.wallets[public_key]
 
     def off_line(self):
-        self.status = 0
         if self.opened_wallet:
             pk = self.opened_wallet.public_key
-            self.opened_wallet.status = 0
-            self.opened_wallet = None
         else:
             pk = None
         return pk
@@ -167,13 +163,15 @@ class WalletClient:
             print("!!!!!! ip and public_key must provide !!!!!! use the default wallet ip: {}".format(ip))
         if clients.get(ip):
             client = clients[ip]
+            add = False
         else:
+            add = True
             client = cls(ip)
             clients[client.ip] = client
-        kwargs["ip"] = client.ip
+        kwargs["cli_ip"] = client.ip
         wallet = _Wallet.add_or_update(client.wallets, **kwargs)
         last_pk = client._update_opened_wallet(wallet)
-        return wallet, last_pk
+        return wallet, last_pk, add
 
 if __name__ == "__main__":
     from pprint import pprint

@@ -86,7 +86,7 @@ class TProtocol(Protocol):
             result = gateway_singleton.handle_node_request(self, body)
             # package splicing or clan the data_buffer:self.received
             self.received = self.received[self.header_size+body_size:]
-            print(self.received)
+            # print(self.received)
             
             
 

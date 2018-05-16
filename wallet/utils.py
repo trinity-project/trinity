@@ -216,7 +216,27 @@ def check_partner(wallet, partner):
 
 
 
+def get_wallet_info(pubkey):
+    """
 
+    :param pubkey:
+    :return: message dict
+    """
+    balance = {}
+    for i in Configure["AssetType"].keys():
+        b = get_balance(pubkey, i.upper())
+        balance[i] = b
+    message = {
+                   "Publickey": pubkey,
+                   "CommitMinDeposit": Configure["CommitMinDeposit"],
+                   "Fee": Configure["Fee"],
+                   "alias": Configure["alias"],
+                   "AutoCreate": Configure["AutoCreate"],
+                   "MaxChannel": Configure["MaxChannel"],
+                   "Balance": balance,
+                   "Ip":"{}:{}".format(Configure.get("NetAddress"),Configure.get("NetPort"))
+               }
+    return message
 
 
 if __name__ == "__main__":
