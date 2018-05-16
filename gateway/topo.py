@@ -245,7 +245,7 @@ class Nettopo:
         return self._graph.number_of_edges()
 
     @classmethod
-    def add_or_update(cls, topos, asset_type, wallet):
+    def add_or_update(cls, topos, asset_type, walle):
         """
         add wallet node to topo
         """
@@ -254,8 +254,8 @@ class Nettopo:
         if topos.get(asset_type):
             topo = topos[asset_type]
             if topo.has_node(pk):
-                # topo.update_data(data)
-                pass
+                topo.update_data(data)
+                # pass
             else:
                 topo.add_node(data, pk=pk)
         else:
