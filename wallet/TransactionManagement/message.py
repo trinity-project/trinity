@@ -29,7 +29,7 @@ from wallet.utils import pubkey_to_address, get_asset_type_id
 from TX.interface import *
 from wallet.ChannelManagement import channel as ch
 from model.base_enum import EnumChannelState
-from wallet.Interface.gate_way import send_message, join_gateway
+from wallet.Interface.gate_way import send_message, join_gateway, GatewayInfo
 from wallet.utils import sign,\
     check_onchain_balance, \
     check_max_deposit,\
@@ -186,22 +186,22 @@ class RegisterMessage(Message):
                 return False,"Deposit Format error {}".format(de)
 
         is_spv = self.is_spv_wallet()
-        return is_valid_deposit(self.deposit, is_spv), None
+        return is_valid_deposit(self.asset_type, self.deposit, is_spv), None
         # state, maxd = check_max_deposit(self.deposit)
-        # if not state:
-        #     if isinstance(maxd, float):
-        #         return False, "Deposit is larger than the max, max is {}".format(str(maxd))
-        #     else:
-        #         return False, "Max deposit configure error {}".format(maxd)
-        #
-        # state , mind = check_min_deposit(self.deposit)
-        # if not state:
-        #     if isinstance(mind, float):
-        #         return False, "Deposit is less than the min, min is {}".format(str(mind))
-        #     else:
-        #         return False, "Mix deposit configure error {}".format(mind)
-        #
-        # return True,None
+        #         # if not state:
+        #         #     if isinstance(maxd, float):
+        #         #         return False, "Deposit is larger than the max, max is {}".format(str(maxd))
+        #         #     else:
+        #         #         return False, "Max deposit configure error {}".format(maxd)
+        #         #
+        #         # state , mind = check_min_deposit(self.deposit)
+        #         # if not state:
+        #         #     if isinstance(mind, float):
+        #         #         return False, "Deposit is less than the min, min is {}".format(str(mind))
+        #         #     else:
+        #         #         return False, "Mix deposit configure error {}".format(mind)
+        #         #
+        #         # return True,None
 
     def check_balance(self):
         if check_onchain_balance(self.wallet.pubkey, self.asset_type, self.deposit):
@@ -210,7 +210,9 @@ class RegisterMessage(Message):
             return False, "No Balance OnChain to support the deposit"
 
     def is_spv_wallet(self):
-        return self.sender.strip().endswith('8766') or self.receiver.strip().endswith('8766')
+        spv_port = GatewayInfo.get_spv_port()
+        spv_port = spv_port if spv_port else "8766"
+        return self.sender.strip().endswith(spv_port) or self.receiver.strip().endswith(spv_port)
 
 
 class TestMessage(Message):
