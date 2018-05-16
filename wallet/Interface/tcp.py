@@ -70,7 +70,7 @@ class GatwayClientFactory(protocol.ClientFactory):
     def clientConnectionLost(self, connector, reason):
         if GatwayClientProtocol.printlog:
             print('Lost Gateway')
-        LOG.error(reason)
+            LOG.error(reason)
         self._handle_connection_lose(connector)
 
 
@@ -78,7 +78,7 @@ class GatwayClientFactory(protocol.ClientFactory):
     def clientConnectionFailed(self, connector, reason):
         if GatwayClientProtocol.printlog:
             print('Can Not connect Gateway, Please Check the gateway')
-        LOG.error(reason)
+            LOG.error(reason)
         self._handle_connection_lose(connector)
 
 
