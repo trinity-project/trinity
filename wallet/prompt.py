@@ -11,7 +11,7 @@ import traceback
 from prompt_toolkit import prompt
 from prompt_toolkit.shortcuts import print_tokens
 from prompt_toolkit.token import Token
-from twisted.internet import reactor, endpoints
+from twisted.internet import reactor, endpoints, protocol
 from log import LOG
 from lightwallet.Settings import settings
 from wallet.utils import get_arg, \
@@ -74,7 +74,7 @@ class UserPromptInterface(PromptInterface):
         """
         wallet = self.Wallet.ToJson()
         try:
-            account =  wallet.get("accounts")[0]
+            account = wallet.get("accounts")[0]
             return account["address"], account["pubkey"]
         except AttributeError:
             return None,None
@@ -476,8 +476,6 @@ class UserPromptInterface(PromptInterface):
         return m_instance.handle_message()
 
 
-
-
 def main():
     parser = argparse.ArgumentParser()
     # Show the  version
@@ -500,7 +498,7 @@ def main():
 
     UserPrompt = UserPromptInterface()
     port = Configure.get("NetPort")
-    address = Configure.get("NetAddress")
+    address = Configure.get("RpcListenAddress")
     port = port if port else "20556"
     address = address if address else "0.0.0.0"
     try:
@@ -510,6 +508,14 @@ def main():
     except Exception as e:
         LOG.error(str(e))
         print("Setup jsonRpc server error, please check if the port {} already opend".format(port))
+
+    from wallet.Interface.tcp import GatwayClientFactory
+    gateway_ip, gateway_port = Configure.get("GatewayTCP").split(":")
+    print(gateway_ip, gateway_port)
+    f = GatwayClientFactory()
+    reactor.connectTCP(gateway_ip.strip(), int(gateway_port.strip()), f)
+
+
     reactor.suggestThreadPoolSize(15)
     reactor.callInThread(UserPrompt.run)
     reactor.callInThread(UserPrompt.handlemaessage)

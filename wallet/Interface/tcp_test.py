@@ -1,4 +1,4 @@
-"""Author: Trinity Core Team
+"""Author: Trinity Core Team 
 
 MIT License
 
@@ -21,32 +21,25 @@ AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
 LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE."""
-Configure = {
-    "alias":"TrinityNode",# you can rename your node
-    "GatewayURL":"http://localhost:8077",
-    "Fee": 0.01,
-    "AutoCreate": True, # if the wallet accept the create channel request automatically
-    "CommitMinDeposit": 10000,   # the min commit deposit
-    "CommitMaxDeposit": 1000000, # the max commit deposit
-    "MaxChannel":100, # the max number to create channel, if 0 , no limited
-    "NetAddress":"localhost",
-    "RpcListenAddress":"0.0.0.0",
-    "NetPort":"20556",
-    "GatewayTCP":"localhost:8000",
-    "AssetType":{
-        "TNC": "0x849d095d07950b9e56d0c895ec48ec5100cfdff1"
-    },
-    "BlockChain":{
-        "RPCClient":"http://localhost:20332", # neocli client json-rpc
-        "NeoProtocol":"/home/will/neocli/protocol.json",
-        "NeoUrlEnhance": "http://47.254.64.251:21332",
-        "NeoNetUrl" : "http://47.254.64.251:20332"
-    },
-    "DataBase":{"url": "http://localhost:20554"
-    },
-    "Version":"v0.2.1",
-    "Magic":{
-        "Block":1953787457,
-        "Trinity":19990331
-    }
-}
+
+from twisted.internet import reactor,protocol
+
+class QuickClient(protocol.Protocol):
+      def connectionMade(self):
+          print(dir(self.transport.getPeer()))
+          print("port:%s type:%s "%(self.transport.getPeer().port, self.transport.getPeer().type))
+          print("connection to ",self.transport.getPeer().host)
+
+
+class BasicClientFactory(protocol.ClientFactory):
+     protocol = QuickClient
+     def clientConnectionLost(self, connector, reason):
+         print("connection lost ",reason.getErrorMessage())
+         reactor.stop()
+     def clientConnectionFailed(self, connector, reason):
+         print("connection failed ",reason.getErrorMessage())
+         reactor.stop()
+
+
+reactor.connectTCP('www.baidu.com', 80, BasicClientFactory())
+reactor.run()

@@ -55,6 +55,7 @@ def sync_channel(message_type, channel_name,founder, receiver, balance):
 
 
 def join_gateway(publickey):
+    LOG.info("JoinGateway {}".format(publickey))
     balance = {}
     for i in Configure["AssetType"].keys():
         b = get_balance(publickey, i.upper())
