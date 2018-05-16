@@ -147,6 +147,8 @@ class RegisterMessage(Message):
                 "Error": error
             }
             Message.send(message)
+            LOG.error("RegisterChannelFail because of wrong verification")
+            return
         founder_pubkey, founder_ip = self.sender.split("@")
         partner_pubkey, partner_ip = self.receiver.split("@")
         founder_address = pubkey_to_address(founder_pubkey)
