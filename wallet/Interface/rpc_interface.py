@@ -216,7 +216,7 @@ class RpcInteraceApi(object):
         elif method == "GetChannelList":
             from wallet.utils import get_wallet_info
             if CurrentLiveWallet.Wallet:
-                channel_list = udpate_channel_when_setup(CurrentLiveWallet.Wallet.address)
+                channel_list = udpate_channel_when_setup(CurrentLiveWallet.Wallet.url)
                 wallet_info = get_wallet_info(CurrentLiveWallet.Wallet.pubkey)
 
                 return {"MessageType":"GetChannelList",
