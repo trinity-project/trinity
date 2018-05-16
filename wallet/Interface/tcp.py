@@ -48,6 +48,7 @@ class GatwayClientProtocol(protocol.Protocol):
             join_gateway(CurrentLiveWallet.Wallet.pubkey)
         else:
             pass
+        print("Connect the Gateway")
         GatwayClientProtocol.printlog = True
 
     def senddata(self, message):
