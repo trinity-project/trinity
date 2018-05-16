@@ -32,16 +32,6 @@ from log import LOG
 import json
 
 
-def get_gateway_ip():
-    return "127.0.0.1:20554"
-
-def query_ip(address):
-    return "127.0.0.1:20554"
-
-
-GateWayUrl = get_gateway_ip()
-
-
 class Channel(object):
     """
 
@@ -284,16 +274,26 @@ def sync_channel_info_to_gateway(channel_name, type):
 
 def udpate_channel_when_setup(address):
     channels = APIChannel.batch_query_channel(filters={"src_addr":address})
+    channel_list =[]
     if channels.get("content"):
         for ch in channels["content"]:
             if ch.state == EnumChannelState.OPENED.name:
-                sync_channel_info_to_gateway(ch.channel, "UpdateChannel")
+                channel_info = {"ChannelName": ch.channel_name,
+                   "Founder": ch.founder,
+                   "Receiver": ch.partner,
+                   "Balance": ch.get_balance()}
+                channel_list.append(channel_info)
+
 
     channeld = APIChannel.batch_query_channel(filters={"dest_addr":address})
     if channeld.get("content"):
         for ch in channeld["content"]:
             if ch.state == EnumChannelState.OPENED.name:
-                sync_channel_info_to_gateway(ch.channel, "UpdateChannel")
+                channel_info = {"ChannelName": ch.channel_name,
+                                "Founder": ch.founder,
+                                "Receiver": ch.partner,
+                                "Balance": ch.get_balance()}
+                channel_list.append(channel_info)
 
 
 if __name__ == "__main__":

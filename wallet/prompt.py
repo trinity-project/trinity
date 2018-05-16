@@ -193,16 +193,18 @@ class UserPromptInterface(PromptInterface):
     def do_open(self, arguments):
         super().do_open(arguments)
         if self.Wallet:
+            self.Wallet.address, self.Wallet.pubkey = self.get_address()
             CurrentLiveWallet.update_current_wallet(self.Wallet)
             self.Wallet.BlockHeight = self.Wallet.LoadStoredData("BlockHeight")
             Monitor.start_monitor(self.Wallet)
             result = self.retry_channel_enable()
-            if result:
-                udpate_channel_when_setup(self.Wallet.url)
+            # if result:
+            #     udpate_channel_when_setup(self.Wallet.url)
 
     def do_create(self, arguments):
         super().do_create(arguments)
         if self.Wallet:
+            self.Wallet.address, self.Wallet.pubkey = self.get_address()
             CurrentLiveWallet.update_current_wallet(self.Wallet)
             blockheight = get_block_count()
             self.Wallet.BlockHeight = blockheight
@@ -224,7 +226,7 @@ class UserPromptInterface(PromptInterface):
         reactor.stop()
 
     def enable_channel(self):
-        self.Wallet.address, self.Wallet.pubkey = self.get_address()
+
         try:
             result = gate_way.join_gateway(self.Wallet.pubkey).get("result")
             if result:
