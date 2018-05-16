@@ -498,8 +498,11 @@ class Gateway:
                 Network.send_msg_with_wsocket(self.ws_pk_dict.get(receiver_pk), data)
             # to self's wallet(wallets that attached this gateway)
             elif utils.check_is_owned_wallet(receiver, self.wallet_clients):
-                wallet_addr = utils.get_wallet_addr(receiver, asset_type, self.net_topos)
-                Network.send_msg_with_jsonrpc("TransactionMessage", wallet_addr, data)
+                # pk = utils.get_public_key(receiver)
+                wallet = utils.get_all_active_wallet_dict(self.wallet_clients).get(receiver_pk)
+                if wallet:
+                    wallet_addr = (wallet.cli_ip.split(":")[0], int(wallet.cli_ip.split(":")[1]))
+                    Network.send_msg_with_jsonrpc("TransactionMessage", wallet_addr, data)
             # to peer
             else:
                 Network.send_msg_with_tcp(receiver, data)
