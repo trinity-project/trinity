@@ -188,7 +188,7 @@ def is_valid_deposit(asset_type, deposit, spv_wallet=False):
     :return:
     """
     if len(asset_type) >10:
-        asset_type = get_asset_type_name()
+        asset_type = get_asset_type_name(asset_type)
     else:
         asset_type = asset_type.upper()
 
