@@ -9,7 +9,7 @@ from topo import Nettopo
 from network import Network
 from message import Message, MessageMake
 from glog import tcp_logger, wst_logger, rpc_logger
-from config import cg_public_ip_port
+from config import cg_public_ip_port, cg_wsocket_addr
 
 class Gateway:
     """
@@ -154,7 +154,8 @@ class Gateway:
             print(self.wallet_clients)
             if add: utils.save_wallet_cli(self.wallet_clients)
             self.handle_wallet_cli_on_line(wallet, last_opened_wallet_pk)
-            response = MessageMake.make_ack_sync_wallet_msg(wallet.url)
+            spv_ip_port = "{}:{}".format(cg_wsocket_addr[0], cg_wsocket_addr[1])
+            response = MessageMake.make_ack_sync_wallet_msg(wallet.url, spv_ip_port)
             # self.detect_wallet_client_status()
             return json.dumps(response)
         elif method == "SyncBlock":
