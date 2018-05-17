@@ -598,14 +598,18 @@ class Gateway:
         if data.get("MessageType") != "GetChannelList": return
         wallet_data = data.get("MessageBody").get("Wallet")
         channel_list = data.get("MessageBody").get("Channel")
+        # pprint.pprint(wallet_data)
+        # pprint.pprint(channel_list)
         if not wallet_data or not channel_list: return
+        print("********** start recover topo*********")
         wallet, last_opened_wallet_pk, add = WalletClient.add_or_update(
             self.wallet_clients,
             **utils.make_kwargs_for_wallet(wallet_data)
         )
+        print(wallet)
         asset_peers = {}
-        for key in wallet.fee:
-            asset_peers[key] = []
+        for k in wallet.fee:
+            asset_peers[k] = []
         for channel in channel_list:
             founder = channel.get("Founder")
             receiver = channel.get("Receiver")
@@ -613,15 +617,16 @@ class Gateway:
             channel_peer = founder if wallet.url == receiver else receiver
             assert_type, channel_balance = list(channel["Balance"][wallet.public_key].items())[0]
             asset_peers[assert_type].append((channel_peer, channel_name, channel_balance))
+        print(asset_peers)
         for key in asset_peers:
-            # peer_balance_list = asset_peers[key]
+            print(key)
             spv_list = []
             for channel_tuple in asset_peers[key]:
                 channel_peer, channel_name, channel_balance= channel_tuple
                 wallet.channel_balance[channel_name] = channel_balance
                 if utils.check_is_spv(channel_peer):
                     spv_list.append(utils.get_public_key(channel_peer))
-                elif not utils.check_is_owned_wallet(channel_peer):
+                elif not utils.check_is_owned_wallet(channel_peer, self.wallet_clients):
                     message = MessageMake.make_recover_channel_msg(wallet.url, channel_peer, key)
                     Network.send_msg_with_tcp(channel_peer, message)
             if len(wallet.channel_balance.keys()):
@@ -636,6 +641,7 @@ class Gateway:
             clis = utils.get_wallet_clis()
         except Exception:
             clis = []
+        clis.append("47.254.39.10:20556")
         for cli in clis:
             try:
                 ip, port = cli.split(":")
