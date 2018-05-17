@@ -65,6 +65,8 @@ class DepositAuth(object):
             LOG.error(str(e))
             return cls.DefaultDeposit
 
+
+
     @classmethod
     def deposit_limit(cls):
         if not cls.LastGetTime or datetime.date.today() != cls.LastGetTime:
