@@ -351,6 +351,7 @@ class Gateway:
                         self.sync_channel_route_to_peer(message)
 
     def handle_wallet_response(self, method, response):
+        print(method)
         if method == "GetChannelList":
             if type(response) == str:
                 response = json.loads(response)
