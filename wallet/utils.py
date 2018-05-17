@@ -63,7 +63,7 @@ class DepositAuth(object):
             btc_price = depoist_info["quotes"]["USD"]["price"]
             tnc_price = depoist_info["quotes"]["TNC"]["price"]
             tnc_price_usdt = btc_price/tnc_price
-            depoist_limit = int(cls.caculate_depoist()/tnc_price_usdt)
+            depoist_limit = int(cls.caculate_depoistusd()/tnc_price_usdt)
             return depoist_limit if depoist_limit >0 else 1
         except Exception as e:
             LOG.error(str(e))
@@ -74,6 +74,7 @@ class DepositAuth(object):
     @classmethod
     def deposit_limit(cls):
         if not cls.LastGetTime or datetime.date.today() != cls.LastGetTime:
+            print("here")
             deposit = cls.caculate_depoist()
             cls.DefaultDeposit = deposit
             cls.LastGetTime = datetime.date.today()
