@@ -18,8 +18,7 @@ from wallet.utils import get_arg, \
     get_asset_type_name,\
     check_support_asset_type,\
     check_onchain_balance,\
-    check_partner, \
-    DepositAuth
+    check_partner
 from wallet.Interface.rpc_interface import RpcInteraceApi,CurrentLiveWallet
 from twisted.web.server import Site
 from lightwallet.prompt import PromptInterface
@@ -63,8 +62,7 @@ class UserPromptInterface(PromptInterface):
                               "channel payment {asset}, {count}, [{comments}]",
                               "channel qrcode {on/off}",
                               "channel trans",
-                              "channel show uri",
-                              "channel depoist_limit"
+                              "channel show uri"
                               ]
         self.commands.extend(self.user_commands)
         self.qrcode = False
@@ -252,16 +250,12 @@ class UserPromptInterface(PromptInterface):
             print("Please open a wallet")
             return
 
-
         command = get_arg(arguments)
         channel_command = [i.split()[1] for i in self.user_commands]
         if command not in channel_command:
             print("no support command, please check the help")
             self.help()
             return
-
-        if command not in ["enable"] and not self.Channel:
-            self._channel_noopen()
 
         if command == 'create':
             if not self.Channel:
@@ -407,7 +401,6 @@ class UserPromptInterface(PromptInterface):
                 self._channel_noopen()
             get_channel_via_address(self.Wallet.url)
             return
-        
         elif command == "payment":
             asset_type = get_arg(arguments, 1)
             if not asset_type:
@@ -422,14 +415,12 @@ class UserPromptInterface(PromptInterface):
                 qrcode_terminal.draw(paycode, version=4)
             print(paycode)
             return None
-
         elif command == "trans":
             channel_name = get_arg(arguments, 1)
             tx= trinitytx.TrinityTransaction(channel_name,self.Wallet)
             result = tx.read_transaction()
             print(json.dumps(result,indent=4))
             return None
-
         elif command == "show":
             subcommand  = get_arg(arguments,1)
             if subcommand.upper() == "URI":
@@ -437,11 +428,6 @@ class UserPromptInterface(PromptInterface):
             else:
                 self.help()
             return None
-
-        elif command == "depoist_limit":
-            print("Note the deposit limit will be changed every day.")
-            print("Today is {}".format(str(DepositAuth.deposit_limit())))
-            return
 
     def _channel_noopen(self):
         print("Channel Function Can Not be Opened at Present, You can try again via channel enable")
@@ -504,6 +490,10 @@ def main():
     # Show the  version
     parser.add_argument("--version", action="version",
                         version=Version)
+    parser.add_argument("-m", "--mainnet", action="store_true", default=False,
+                        help="Use MainNet instead of the default TestNet")
+    parser.add_argument("-p", "--privnet", action="store_true", default=False,
+                        help="Use PrivNet instead of the default TestNet")
 
     args = parser.parse_args()
 
