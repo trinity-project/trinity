@@ -53,13 +53,17 @@ class DepositAuth(object):
             return None
 
     @classmethod
+    def caculate_depoistusd(cls):
+        return 800*1.3**(abs((datetime.date.today()-datetime.date(2018,6,1)).days)//365)
+
+    @classmethod
     def caculate_depoist(cls):
         depoist_info = cls.query_depoist()
         try:
             btc_price = depoist_info["quotes"]["USD"]["price"]
             tnc_price = depoist_info["quotes"]["TNC"]["price"]
             tnc_price_usdt = btc_price/tnc_price
-            depoist_limit = int(800/tnc_price_usdt)
+            depoist_limit = int(cls.caculate_depoistusd()/tnc_price_usdt)
             return depoist_limit if depoist_limit >0 else 1
         except Exception as e:
             LOG.error(str(e))
@@ -70,6 +74,7 @@ class DepositAuth(object):
     @classmethod
     def deposit_limit(cls):
         if not cls.LastGetTime or datetime.date.today() != cls.LastGetTime:
+            print("here")
             deposit = cls.caculate_depoist()
             cls.DefaultDeposit = deposit
             cls.LastGetTime = datetime.date.today()
