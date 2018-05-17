@@ -56,8 +56,14 @@ class Gateway:
             if not asset_type:
                 asset_type = data.get("MessageBody").get("Parameter").get("Assets")
             if not utils.check_is_owned_wallet(receiver, self.wallet_clients): return
-            wallet_addr = utils.get_wallet_addr(receiver, asset_type, self.net_topos)
-            Network.send_msg_with_jsonrpc("TransactionMessage", wallet_addr, data)
+            rev_pk = utils.get_public_key(receiver)
+            wallet = utils.get_all_active_wallet_dict(self.wallet_clients).get(rev_pk)
+            print(wallet)
+            if wallet:
+                wallet_addr = (wallet.cli_ip.split(":")[0], int(wallet.cli_ip.split(":")[1]))
+                Network.send_msg_with_jsonrpc("TransactionMessage", wallet_addr, data)
+            # wallet_addr = utils.get_wallet_addr(receiver, asset_type, self.net_topos)
+            # Network.send_msg_with_jsonrpc("TransactionMessage", wallet_addr, data)
         elif msg_type in Message.get_tx_msg_types():
             self.handle_transaction_message(data)
         elif msg_type == "CombinationTransaction":
