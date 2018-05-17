@@ -245,14 +245,21 @@ def chose_channel(channels, publick_key, tx_count, asset_type):
 
 def close_channel(channel_name, wallet):
     ch = Channel.channel(channel_name)
-    peer = ch.get_peer(wallet.url)
-    balance = ch.get_balance()
-    if channel_name in balance.keys():
-        asset_type = balance[channel_name].keys()[0].upper()
+    if ch:
+        balance = ch.get_balance()
     else:
-        asset_type = None
         LOG.error('Channel <{}> not found!'.format(channel_name))
         return
+
+    public_key = wallet.url.split('@')[0]
+    if balance and balance.get(public_key):
+        asset_type = list(list(balance.values())[0].keys())[0].upper()
+    else:
+        LOG.error('Illegal balance<{}> of channel<{}>'.format(balance, channel_name))
+        return
+
+    peer = ch.get_peer(wallet.url)
+
     #tx = trans.TrinityTransaction(channel_name, wallet)
     #tx.realse_transaction()
     mg.SettleMessage.create(channel_name,wallet,wallet.url, peer, asset_type) #ToDo
