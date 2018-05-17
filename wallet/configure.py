@@ -35,7 +35,7 @@ Configure = {
     "NetAddress":"localhost",
     "RpcListenAddress":"0.0.0.0",
     "NetPort":"20556",
-    "GatewayTCP":"localhost:8000",
+    "GatewayTCP":"localhost:8089",
     "AssetType":{
         "TNC": "0x849d095d07950b9e56d0c895ec48ec5100cfdff1"
     },
