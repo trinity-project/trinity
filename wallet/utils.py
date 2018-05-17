@@ -263,9 +263,10 @@ def is_valid_deposit(asset_type, deposit, spv_wallet=False):
             return deposit >= min_deposit, None
     else:
         if asset_type == "TNC":
-            if deposit < DepositAuth.deposit_limit():
-                return False, "Node wallet channel deposit should larger than 5000, " \
-                              "but now is {}".format(str(deposit))
+            deposit_l = DepositAuth.deposit_limit()
+            if deposit <= deposit_l:
+                return False, "Node wallet channel deposit should larger than {}, " \
+                              "but now is {}".format(str(deposit_l),str(deposit))
         return True, None
 
 
