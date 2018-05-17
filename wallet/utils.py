@@ -40,6 +40,7 @@ class DepositAuth(object):
     DefaultDeposit = 5000
     LastGetTime = None
     DateSource = "https://api.coinmarketcap.com/v2/ticker/1/?convert=TNC"
+    DepositUSD = 800*1.3**(abs((datetime.date.today()-datetime.date(2018,6,1)).days)//365)
 
     @classmethod
     def query_depoist(cls):
@@ -59,7 +60,7 @@ class DepositAuth(object):
             btc_price = depoist_info["quotes"]["USD"]["price"]
             tnc_price = depoist_info["quotes"]["TNC"]["price"]
             tnc_price_usdt = btc_price/tnc_price
-            depoist_limit = int(800/tnc_price_usdt)
+            depoist_limit = int(cls.DepositUSD/tnc_price_usdt)
             return depoist_limit if depoist_limit >0 else 1
         except Exception as e:
             LOG.error(str(e))
