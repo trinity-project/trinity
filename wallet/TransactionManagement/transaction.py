@@ -334,8 +334,9 @@ def hltc_trans(params):
     asset_id = get_asset_type_id(params[8])
 
 
-    return create_sender_HCTX(pubkeySender, pubkeyReceiver, HTLCValue, balanceSender, balanceReceiver, hashR,
-                       addressFunding, fundingScript, asset_id)
+    return create_sender_HTLC_TXS(pubkeySender, pubkeyReceiver, HTLCValue, balanceSender,
+                                  balanceReceiver, hashR, addressFunding,
+                                  fundingScript, asset_id)
 
 
 
