@@ -80,7 +80,7 @@ class AsyncJsonRpc():
             # ttl = time.time() - start_time
             # print("++++++++gateway<----->wallet spend time{}+++++++++".format(ttl))
             from gateway import gateway_singleton
-            gateway_singleton.handle_jsonrpc_response(method, response)
+            gateway_singleton.handle_wallet_response(method, response)
 
     @staticmethod
     def jsonrpc_request_sync(method, params, addr):
