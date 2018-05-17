@@ -21,7 +21,7 @@ def createFundingTx(walletSelf, walletOther, asset_id):
     :return:
     '''
 
-    if asset_id in [TNC, TESTNET_TNC, MAINNET_TNC]:
+    if asset_id not in [NEO, GAS]:
         return tnc_factory.createFundingTx(walletSelf, walletOther, asset_id)
 
     elif asset_id == NEO:
@@ -39,7 +39,7 @@ def createCTX(
         pubkeyOther,
         fundingScript,
         asset_id):
-    if asset_id in [TNC, TESTNET_TNC, MAINNET_TNC]:
+    if asset_id not in [NEO, GAS]:
         return tnc_factory.createCTX(
             addressFunding,
             balanceSelf,
@@ -78,7 +78,7 @@ def createRDTX(
         RSMCScript,
         asset_id):
 
-    if asset_id in [TNC, TESTNET_TNC, MAINNET_TNC]:
+    if asset_id not in [NEO, GAS]:
         return tnc_factory.createRDTX(
             addressRSMC,
             addressSelf,
@@ -98,7 +98,7 @@ def createRDTX(
 
 def createBRTX(addressRSMC, addressOther, balanceSelf, RSMCScript, CTxId, asset_id):
 
-    if asset_id in [TNC, TESTNET_TNC, MAINNET_TNC]:
+    if asset_id not in [NEO, GAS]:
         return tnc_factory.createBRTX(
             addressRSMC,
             addressOther,
@@ -124,7 +124,7 @@ def createRefundTX(
         fundingScript,
         asset_id):
 
-    if asset_id in [TNC, TESTNET_TNC, MAINNET_TNC]:
+    if asset_id in [NEO,GAS]:
         return tnc_factory.createRefundTX(
             addressFunding,
             balanceSelf,
@@ -167,7 +167,7 @@ def create_sender_HCTX(
         addressFunding,
         fundingScript,
         asset_id):
-    if asset_id in [TNC, TESTNET_TNC, MAINNET_TNC]:
+    if asset_id not in [NEO,GAS]:
         return tnc_factory.create_sender_HCTX(
             pubkeySender,
             pubkeyReceiver,
@@ -211,7 +211,7 @@ def create_sender_RDTX(
         senderHCTxId,
         RSMCScript,
         asset_id):
-    if asset_id in [TNC, TESTNET_TNC, MAINNET_TNC]:
+    if asset_id not in [NEO, GAS]:
         return tnc_factory.create_sender_RDTX(
             addressRSMC,
             addressSender,
@@ -236,7 +236,7 @@ def createHEDTX(
         HTLCScript,
         senderHCTxId,
         asset_id):
-    if asset_id in [TNC, TESTNET_TNC, MAINNET_TNC]:
+    if asset_id not in [NEO, GAS]:
         return tnc_factory.createHEDTX(
             addressHTLC,
             addressReceiver,
@@ -269,7 +269,7 @@ def createHTTX(
         HTLCScript,
         senderHCTxId,
         asset_id):
-    if asset_id in [TNC, TESTNET_TNC, MAINNET_TNC]:
+    if asset_id not in [NEO, GAS]:
         return tnc_factory.createHTTX(
             addressHTLC,
             pubkeySender,
@@ -304,7 +304,7 @@ def createHTRDTX(
         HTTxId,
         RSMCScript,
         asset_id):
-    if asset_id in [TNC, TESTNET_TNC, MAINNET_TNC]:
+    if asset_id not in [NEO, GAS]:
         return tnc_factory.createHTRDTX(
             addressRSMC,
             addressSender,
@@ -333,7 +333,7 @@ def create_receiver_HCTX(
         addressFunding,
         fundingScript,
         asset_id):
-    if asset_id in [TNC, TESTNET_TNC, MAINNET_TNC]:
+    if asset_id not in [NEO, GAS]:
         return tnc_factory.create_receiver_HCTX(
             pubkeySender,
             pubkeyReceiver,
@@ -377,7 +377,7 @@ def create_receiver_RDTX(
         receiver_HCTxId,
         RSMCScript,
         asset_id):
-    if asset_id in [TNC, TESTNET_TNC, MAINNET_TNC]:
+    if asset_id not in [NEO, GAS]:
         return tnc_factory.create_receiver_RDTX(
             addressRSMC,
             addressReceiver,
@@ -411,7 +411,7 @@ def createHTDTX(
         receiver_HCTxId,
         asset_id):
 
-    if asset_id in [TNC, TESTNET_TNC, MAINNET_TNC]:
+    if asset_id not in [NEO, GAS]:
         return tnc_factory.createHTDTX(
             addressHTLC,
             pubkeySender,
@@ -444,7 +444,7 @@ def createHETX(
         HTLCScript,
         receiver_HCTxId,
         asset_id):
-    if asset_id in [TNC, TESTNET_TNC, MAINNET_TNC]:
+    if asset_id not in [NEO, GAS]:
         return tnc_factory.createHETX(
             addressHTLC,
             pubkeySender,
@@ -479,7 +479,7 @@ def createHERDTX(
         HETxId,
         RSMCScript,
         asset_id):
-    if asset_id in [TNC, TESTNET_TNC, MAINNET_TNC]:
+    if asset_id not in [NEO, GAS]:
         return tnc_factory.createHERDTX(
             addressRSMC,
             addressReceiver,
@@ -507,7 +507,7 @@ def create_sender_HTLC_TXS(
         addressFunding,
         fundingScript,
         asset_id):
-    if asset_id in [TNC, TESTNET_TNC, MAINNET_TNC]:
+    if asset_id not in [NEO, GAS]:
         return tnc_factory.create_sender_HTLC_TXS(
             pubkeySender,
             pubkeyReceiver,
@@ -554,7 +554,7 @@ def create_receiver_HTLC_TXS(
         addressFunding,
         fundingScript,
         asset_id):
-    if asset_id in [TNC, TESTNET_TNC, MAINNET_TNC]:
+    if asset_id not in [NEO, GAS]:
         return tnc_factory.create_receiver_HTLC_TXS(
             pubkeySender,
             pubkeyReceiver,
