@@ -30,8 +30,45 @@ from wallet.BlockChain.interface import get_balance
 import re
 import hashlib
 from log import LOG
+import requests
+import datetime
 
 SupportAssetType = ["TNC", "NEO", "GAS"] #Todo multi-asset will come soon, before that hardcode here
+
+
+class DepositAuth(object):
+    DefaultDeposit = 5000
+    LastGetTime = None
+    DateSource = "https://api.coinmarketcap.com/v2/ticker/1/?convert=TNC"
+
+    @classmethod
+    def query_depoist(cls):
+        try:
+            result = requests.get(cls.DateSource)
+            if not result.ok:
+                return None
+            return result.json()["data"]
+        except Exception as e:
+            LOG.error(str(e))
+            return None
+
+    @classmethod
+    def caculate_depoist(cls):
+        depoist_info = cls.query_depoist()
+        try:
+            btc_price = depoist_info["quotes"]["USD"]["price"]
+            tnc_price = depoist_info["quotes"]["TNC"]["price"]
+            tnc_price_usdt = btc_price/tnc_price
+            depoist_limit = int(800/tnc_price_usdt)
+            return depoist_limit if depoist_limit >0 else 1
+        except Exception as e:
+            LOG.error(str(e))
+            return cls.DefaultDeposit
+        
+
+
+
+
 
 
 def to_aes_key(password):
@@ -87,7 +124,7 @@ def get_arg(arguments, index=0, convert_to_int=False):
     return None
 
 
-def  get_asset_type_name(asset_type):
+def get_asset_type_name(asset_type):
     """
 
     :param asset_type:
@@ -108,7 +145,11 @@ def get_asset_type_id(asset_name):
     :param asset_name:
     :return:
     """
-    return Configure.get("AssetType").get(asset_name.upper())
+
+    if len(asset_name) > 10:
+        return asset_name
+    else:
+        return Configure.get("AssetType").get(asset_name.upper())
 
 
 def check_support_asset_type(asset_type):
@@ -222,6 +263,9 @@ def is_valid_deposit(asset_type, deposit, spv_wallet=False):
                 return False, "Node wallet channel deposit should larger than 5000, " \
                               "but now is {}".format(str(deposit))
         return True, None
+
+
+
 
 
 

@@ -186,7 +186,11 @@ class RegisterMessage(Message):
                 return False,"Deposit Format error {}".format(de)
 
         is_spv = self.is_spv_wallet()
-        return is_valid_deposit(self.asset_type, self.deposit, is_spv), None
+        state, error = is_valid_deposit(self.asset_type, self.deposit, is_spv)
+        if not state:
+            return False, "Deposit Not correct, please check the depoist"
+        else:
+            return True, None
         # state, maxd = check_max_deposit(self.deposit)
         #         # if not state:
         #         #     if isinstance(maxd, float):
