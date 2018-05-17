@@ -30,8 +30,49 @@ from wallet.BlockChain.interface import get_balance
 import re
 import hashlib
 from log import LOG
+import requests
+import datetime
 
 SupportAssetType = ["TNC", "NEO", "GAS"] #Todo multi-asset will come soon, before that hardcode here
+
+
+class DepositAuth(object):
+    DefaultDeposit = 5000
+    LastGetTime = None
+    DateSource = "https://api.coinmarketcap.com/v2/ticker/1/?convert=TNC"
+
+    @classmethod
+    def query_depoist(cls):
+        try:
+            result = requests.get(cls.DateSource)
+            if not result.ok:
+                return None
+            return result.json()["data"]
+        except Exception as e:
+            LOG.error(str(e))
+            return None
+
+    @classmethod
+    def caculate_depoist(cls):
+        depoist_info = cls.query_depoist()
+        try:
+            btc_price = depoist_info["quotes"]["USD"]["price"]
+            tnc_price = depoist_info["quotes"]["TNC"]["price"]
+            tnc_price_usdt = btc_price/tnc_price
+            depoist_limit = int(800/tnc_price_usdt)
+            return depoist_limit if depoist_limit >0 else 1
+        except Exception as e:
+            LOG.error(str(e))
+            return cls.DefaultDeposit
+
+    @classmethod
+    def deposit_limit(cls):
+        if not cls.LastGetTime or datetime.date.today() != cls.LastGetTime:
+            deposit = cls.caculate_depoist()
+            cls.DefaultDeposit = deposit
+            cls.LastGetTime = datetime.date.today()
+
+        return cls.DefaultDeposit
 
 
 def to_aes_key(password):
@@ -87,7 +128,7 @@ def get_arg(arguments, index=0, convert_to_int=False):
     return None
 
 
-def  get_asset_type_name(asset_type):
+def get_asset_type_name(asset_type):
     """
 
     :param asset_type:
@@ -108,7 +149,11 @@ def get_asset_type_id(asset_name):
     :param asset_name:
     :return:
     """
-    return Configure.get("AssetType").get(asset_name.upper())
+
+    if len(asset_name) > 10:
+        return asset_name
+    else:
+        return Configure.get("AssetType").get(asset_name.upper())
 
 
 def check_support_asset_type(asset_type):
@@ -218,12 +263,11 @@ def is_valid_deposit(asset_type, deposit, spv_wallet=False):
             return deposit >= min_deposit, None
     else:
         if asset_type == "TNC":
-            if deposit < 5000:
-                return False, "Node wallet channel deposit should larger than 5000, " \
-                              "but now is {}".format(str(deposit))
+            deposit_l = DepositAuth.deposit_limit()
+            if deposit <= deposit_l:
+                return False, "Node wallet channel deposit should larger than {}, " \
+                              "but now is {}".format(str(deposit_l),str(deposit))
         return True, None
-
-
 
 
 def check_partner(wallet, partner):
@@ -269,5 +313,6 @@ def get_wallet_info(pubkey):
 
 
 if __name__ == "__main__":
-    print(pubkey_to_address("03a6fcaac0e13dfbd1dd48a964f92b8450c0c81c28ce508107bc47ddc511d60e75"))
-    print(Crypto.Hash160("02cebf1fbde4786f031d6aa0eaca2f5acd9627f54ff1c0510a18839946397d3633".encode()))
+    import time
+    while True:
+        print(DepositAuth.deposit_limit())

@@ -25,7 +25,7 @@ SOFTWARE."""
 #coding=utf-8
 
 from wallet.TransactionManagement.transaction import TrinityTransaction
-from wallet.utils import pubkey_to_address, get_asset_type_id
+from wallet.utils import pubkey_to_address, get_asset_type_id,DepositAuth
 from TX.interface import *
 from wallet.ChannelManagement import channel as ch
 from model.base_enum import EnumChannelState
@@ -186,7 +186,11 @@ class RegisterMessage(Message):
                 return False,"Deposit Format error {}".format(de)
 
         is_spv = self.is_spv_wallet()
-        return is_valid_deposit(self.asset_type, self.deposit, is_spv), None
+        state, error = is_valid_deposit(self.asset_type, self.deposit, is_spv)
+        if not state:
+            return False, "Deposit Not correct, please check the depoist"
+        else:
+            return True, None
         # state, maxd = check_max_deposit(self.deposit)
         #         # if not state:
         #         #     if isinstance(maxd, float):
@@ -806,12 +810,17 @@ class RsmcMessage(TransactionMessage):
             if tx.get("Commitment"):
                 commitment = tx.get("Commitment").get("originalData")
                 rscmcscript = commitment["scriptRSMC"]
+                tx_id = commitment.get('tx_Id')
             elif tx.get("HCTX"):
                 commitment = tx.get("HCTX").get("originalData")
                 rscmcscript = commitment["RSMCscript"]
+                tx_id = commitment.get('tx_Id')
+            else:
+                LOG.error('Unsupported tx type currently! tx_nounce: {}'.format(tx_nonce))
+                return
 
             breachremedy = createBRTX(founder["originalData"]["addressFunding"], pubkey_to_address(receiver_pubkey), sender_balance,
-                                      rscmcscript, asset_id)
+                                      rscmcscript, tx_id, asset_id) #TODO: None should be replaced by tx id
             breachremedy_sign = sign(wallet, breachremedy.get("txData"))
             breachremedy_info = {"txDataSign": breachremedy_sign,
                                  "originalData":breachremedy}
@@ -1534,7 +1543,7 @@ class SettleMessage(TransactionMessage):
         receiver_pubkey = receiver.split("@")[0].strip()
         sender_balance = balance.get(sender_pubkey).get(asset_type.upper())
         receiver_balance = balance.get(receiver_pubkey).get(asset_type.upper())
-        asset_id = get_asset_type_id(asset_type.upper)
+        asset_id = get_asset_type_id(asset_type.upper())
         settlement_tx = createRefundTX(address_founder,float(sender_balance),receiver_balance,sender_pubkey,receiver_pubkey,
                                     founder_script, asset_id)
 

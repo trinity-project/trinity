@@ -154,11 +154,8 @@ class RpcInteraceApi(object):
         if method == "SendRawtransaction":
             return transaction.TrinityTransaction.sendrawtransaction(params[0])
 
-        #Todo
-        #elif method ==  "QueryHistory":
-            #return transaction.querytransaction(params)
-
         elif method == "TransactionMessage":
+            LOG.info("<-- {}".format(params))
             return MessageList.append(params)
 
         elif method == "FunderTransaction":
