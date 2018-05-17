@@ -33,6 +33,7 @@ from wallet.utils import sign, get_asset_type_id
 from wallet.BlockChain import interface as Binterface
 from log import LOG
 import json
+from TX.utils import pubkeyToAddress
 
 BlockHightRegister=[]
 TxIDRegister= []
@@ -284,8 +285,8 @@ def rsmc_trans(params):
                           balanceOther=balanceother, pubkeySelf=pubkeyself,
                           pubkeyOther=pubkeyother, fundingScript=script_funding, asset_id=asset_id)
 
-    RD_tx = createRDTX(addressRSMC=C_tx["addressRSMC"], addressSelf=pubkeyToAddress(walletSelf["pubkey"]),
-                            balanceSelf=walletSelf["deposit"], CTxId=C_tx["txId"],
+    RD_tx = createRDTX(addressRSMC=C_tx["addressRSMC"], addressSelf=pubkeyToAddress(pubkeyself),
+                            balanceSelf=balanceself, CTxId=C_tx["txId"],
                             RSMCScript=C_tx["scriptRSMC"], asset_id=asset_id)
 
     return {"C_TX": C_tx, "R_TX": RD_tx}
@@ -304,10 +305,11 @@ def br_trans(params):
     script_rsmc = params[0]
     selfpubkey = params[1]
     balanceself = params[2]
-    asset_id = get_asset_type_id(params[3])
+    ctx_id = params[3]
+    asset_id = get_asset_type_id(params[4])
 
     BR_tx = createBRTX(addressRSMC=scriptToAddress(script_rsmc), addressOther=pubkeyToAddress(selfpubkey),
-                            balanceSelf=balanceself, RSMCScript=script_rsmc, asset_id=asset_id)
+                            balanceSelf=balanceself, RSMCScript=script_rsmc,  CTxId=ctx_id, asset_id=asset_id)
 
     return {"BR_tx": BR_tx}
 
