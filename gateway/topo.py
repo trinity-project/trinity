@@ -119,14 +119,20 @@ class Nettopo:
             return False
     
     def update_data(self, data):
-        nid = data.get("Publickey")
-        if not self._graph.has_node(nid):
-            return
-        node = self._graph.nodes[nid]
-        if data["Fee"] != node["Fee"]:
-            diff_fee = data["Fee"] - node["Fee"]
-            self._update_edge_data(nid, diff_fee)
-        self._update_node_data(node, data)
+        node_data = []
+        if isinstance(data, dict):
+            node_data.append(data)
+        elif isinstance(data, list):
+            node_data = data
+        else: return
+        for data in node_data:
+            nid = data.get("Publickey")
+            if not self._graph.has_node(nid): return
+            node = self._graph.nodes[nid]
+            if data["Fee"] != node["Fee"]:
+                diff_fee = data["Fee"] - node["Fee"]
+                self._update_edge_data(nid, diff_fee)
+            self._update_node_data(node, data)
 
     def _isolated(self, nid):
         isolated = False
