@@ -140,14 +140,15 @@ if __name__ == "__main__":
     message1 = {
         "MessageType":"AddChannel",
         "MessageBody": {
-            "Founder":  "pk1@localhost:8089",
+            "ChannelName": "adefyxz",
+            "Founder":  "pk3@localhost:8089",
             "Receiver": "pk2@localhost:8089",
             "Balance": {
                 "pk2@localhost:8089": {
-                    "NEO": 10
+                    "TNC": 10
                 },
-                "pk1@localhost:8089": {
-                    "NEO": 10
+                "pk3@localhost:8089": {
+                    "TNC": 10
                 }
             }
         }
@@ -238,13 +239,13 @@ if __name__ == "__main__":
     # time.sleep(5)
     # jsonrpcclient.request("http://localhost:8077", 'SyncChannel', json.dumps(message1))
     # time.sleep(5)
-    jsonrpcclient.request("http://localhost:8077", 'SyncWalletData', json.dumps(message_2))
-    jsonrpcclient.request("http://localhost:8077", 'SyncWalletData', json.dumps(message_3))
+    # jsonrpcclient.request("http://localhost:8077", 'SyncWalletData', json.dumps(message_2))
+    # jsonrpcclient.request("http://localhost:8077", 'SyncWalletData', json.dumps(message_3))
     # time.sleep(5)
     # jsonrpcclient.request("http://localhost:8077", 'SyncChannel', json.dumps(message1))
 
+    jsonrpcclient.request("http://localhost:8077", 'SyncChannel', json.dumps(message1))
     # jsonrpcclient.request("http://localhost:8077", 'SyncChannel', json.dumps(message1))
-    # jsonrpcclient.request("http://118.89.44.106:8077", 'SyncChannel', json.dumps(message1))
     # jsonrpcclient.request("http://localhost:8077", 'SyncWalletData', json.dumps(message))
 
 

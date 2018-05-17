@@ -179,10 +179,12 @@ class MessageMake:
 
     ###### message for node begin ########
     @staticmethod
-    def make_resume_channel_msg(sender):
+    def make_recover_channel_msg(sender, receiver, asset_type):
         message = {
             "MessageType": "ResumeChannel",
-            "Sender": sender
+            "AssetType": asset_type,
+            "Sender": sender,
+            "Receiver": receiver
         }
         return message
 

@@ -67,15 +67,19 @@ def get_wallet_clis():
     with open("wcli.json", "r") as fs:
         return json.loads(fs.read())
 
-def get_wallet_addr(current_url, asset_type, net_tops):
+def get_wallet_addr(url, clients):
     """
-    get the server addr which wallet start on
+    get the server addr which wallet cli rpc start on
     """
-    wallet_ip = get_wallet_attribute("WalletIp", current_url, asset_type, net_tops)
-    if wallet_ip:
-        return (wallet_ip, int(wallet_ip.split(":")[1]))
+    pk = utils.get_public_key(url)
+    wallet = get_all_active_wallet_dict(clients).get(pk)
+    if wallet:
+        ip, port = wallet.cli_ip.split(":")
+        wallet_addr = (ip, int(port))
     else:
-        return cg_remote_jsonrpc_addr
+        wallet_addr = ("0.0.0.0", 0)
+    # print(wallet)
+    return wallet_addr
 
 def get_wallet_attribute(attr_name, current_url, asset_type, net_tops):
     """
@@ -256,7 +260,7 @@ def _make_router(path, full_path, net_topo):
         fee = node.get("Fee")
         full_path.append((url, fee))
         index = path.index(nid)
-        if index > 0 and index < len(nids) - 1:
+        if index > 0 and index < len(path) - 1:
             total_fee = total_fee + fee
     if not len(full_path):
         router = None

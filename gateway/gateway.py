@@ -46,24 +46,18 @@ class Gateway:
         spv_pk = utils.get_public_key(sender)
         self.ws_pk_dict[spv_pk] = websocket
         if msg_type == "RegisterChannel":
-            pk = utils.get_public_key(receiver)
-            wallet = utils.get_all_active_wallet_dict(self.wallet_clients).get(pk)
-            if wallet:
-                wallet_addr = (wallet.cli_ip.split(":")[0], int(wallet.cli_ip.split(":")[1]))
-                Network.send_msg_with_jsonrpc("TransactionMessage", wallet_addr, data)
+            if not utils.check_is_owned_wallet(receiver, self.wallet_clients): return
+            wallet_addr = utils.get_wallet_addr(receiver, self.wallet_clients)
+            rpc_logger.debug("send msg to wallet_cli: {}".format(wallet_addr))
+            Network.send_msg_with_jsonrpc("TransactionMessage", wallet_addr, data)
         # first check the receiver is self or not
         if msg_type == "PaymentLink":
             if not asset_type:
                 asset_type = data.get("MessageBody").get("Parameter").get("Assets")
             if not utils.check_is_owned_wallet(receiver, self.wallet_clients): return
-            rev_pk = utils.get_public_key(receiver)
-            wallet = utils.get_all_active_wallet_dict(self.wallet_clients).get(rev_pk)
-            print(wallet)
-            if wallet:
-                wallet_addr = (wallet.cli_ip.split(":")[0], int(wallet.cli_ip.split(":")[1]))
-                Network.send_msg_with_jsonrpc("TransactionMessage", wallet_addr, data)
-            # wallet_addr = utils.get_wallet_addr(receiver, asset_type, self.net_topos)
-            # Network.send_msg_with_jsonrpc("TransactionMessage", wallet_addr, data)
+            wallet_addr = utils.get_wallet_addr(receiver, self.wallet_clients)
+            rpc_logger.debug("send msg to wallet_cli: {}".format(wallet_addr))
+            Network.send_msg_with_jsonrpc("TransactionMessage", wallet_addr, data)
         elif msg_type in Message.get_tx_msg_types():
             self.handle_transaction_message(data)
         elif msg_type == "CombinationTransaction":
@@ -99,17 +93,31 @@ class Gateway:
                     self.tcp_pk_dict[sed_pk] = protocol
                 # pprint.pprint(self.tcp_pk_dict)
                 if msg_type == "RegisterChannel":
-                    pk = utils.get_public_key(data["Receiver"])
-                    wallet = utils.get_all_active_wallet_dict(self.wallet_clients).get(pk)
-                    print(wallet)
-                    if wallet:
-                        wallet_addr = (wallet.cli_ip.split(":")[0], int(wallet.cli_ip.split(":")[1]))
-                        Network.send_msg_with_jsonrpc("TransactionMessage", wallet_addr, data)
+                    wallet_addr = utils.get_wallet_addr(receiver, self.wallet_clients)
+                    rpc_logger.debug("send msg to wallet_cli: {}".format(wallet_addr))
+                    Network.send_msg_with_jsonrpc("TransactionMessage", wallet_addr, data)
                 elif msg_type in Message.get_tx_msg_types():
                     self.handle_transaction_message(data)
                     return utils.request_handle_result.get("correct")
                 elif msg_type == "ResumeChannel":
-                    pass
+                    asset_type = data.get("AssetType")
+                    if not asset_type: return
+                    net_topo = self.net_topos.get(asset_type)
+                    if not net_topo: return
+                    sender = data.get("Sender")
+                    receiver = data.get("Receiver")
+                    if not sender or not receiver: return
+                    message = MessageMake.make_sync_graph_msg(
+                        "add_whole_graph",
+                        receiver,
+                        source=receiver,
+                        target=sender,
+                        asset_type=asset_type,
+                        route_graph=net_topo,
+                        broadcast=False
+                    )
+                    message["Receiver"] = sender
+                    Network.send_msg_with_tcp(sender, message)
                 elif msg_type == "SyncChannelState":
                     receiver = data.get("Receiver")
                     asset_type = data.get("AssetType")
@@ -204,6 +212,7 @@ class Gateway:
             channel_founder = data["MessageBody"]["Founder"]
             channel_receiver = data["MessageBody"]["Receiver"]
             asset_type = list(data["MessageBody"]["Balance"][channel_founder].items())[0][0]
+            channel_name = data["MessageBody"]["ChannelName"]
             net_topo = self.net_topos.get(asset_type)
             # founder and receiver are attached the same gateway
             if utils.check_is_same_gateway(channel_founder, channel_receiver):
@@ -213,8 +222,8 @@ class Gateway:
                     wallets = utils.get_all_active_wallet_dict(self.wallet_clients)
                     receiver_wallet = wallets[rid]
                     founder_wallet = wallets[fid]
-                    receiver_wallet.channel_balance = data["MessageBody"]["Balance"][channel_receiver][asset_type]
-                    founder_wallet.channel_balance = data["MessageBody"]["Balance"][channel_founder][asset_type]
+                    receiver_wallet.channel_balance[channel_name] = data["MessageBody"]["Balance"][channel_receiver][asset_type]
+                    founder_wallet.channel_balance[channel_name] = data["MessageBody"]["Balance"][channel_founder][asset_type]
                     Nettopo.add_or_update(self.net_topos, asset_type, founder_wallet)
                     Nettopo.add_or_update(self.net_topos, asset_type, receiver_wallet)
                     net_topo = self.net_topos[asset_type]
@@ -276,7 +285,7 @@ class Gateway:
                 if msg_type == "AddChannel":
                     wallets = utils.get_all_active_wallet_dict(self.wallet_clients)
                     s_wallet = wallets[sid]
-                    s_wallet.channel_balance = data["MessageBody"]["Balance"][channel_source][asset_type]
+                    s_wallet.channel_balance[channel_name] = data["MessageBody"]["Balance"][channel_source][asset_type]
                     Nettopo.add_or_update(self.net_topos, asset_type, s_wallet)
                     net_topo = self.net_topos[asset_type]
                 # peer is spv
@@ -397,7 +406,7 @@ class Gateway:
         for pk, wallet in self.wallets.items():
             channels = utils.get_channels_form_db(wallet.url)
             if channels:
-                message = MessageMake.make_resume_channel_msg(wallet.url)
+                message = MessageMake.make_recover_channel_msg(wallet.url)
                 for channel in channels:
                     peer = channel.dest_addr if channel.src_addr == wallet.url else channel.src_addr
                     if utils.get_ip_port(peer) != cg_public_ip_port:
@@ -418,8 +427,8 @@ class Gateway:
             current_node = router["Next"]
             # valid msg
             if utils.check_is_owned_wallet(current_node, self.wallet_clients):
-                wallet_addr = utils.get_wallet_addr(current_node, asset_type, self.net_topos)
-                wallet_fee = utils.get_wallet_attribute("Fee", data, self.net_topos)
+                wallet_addr = utils.get_wallet_addr(current_node, self.wallet_clients)
+                wallet_fee = utils.get_wallet_attribute("Fee", current_node, self.net_topos)
                 tx_value = data["MessageBody"]["Value"]
                 # arrive end
                 if full_path[len(full_path)-1][0] == current_node:
@@ -514,10 +523,9 @@ class Gateway:
             # to self's wallet(wallets that attached this gateway)
             elif utils.check_is_owned_wallet(receiver, self.wallet_clients):
                 # pk = utils.get_public_key(receiver)
-                wallet = utils.get_all_active_wallet_dict(self.wallet_clients).get(receiver_pk)
-                if wallet:
-                    wallet_addr = (wallet.cli_ip.split(":")[0], int(wallet.cli_ip.split(":")[1]))
-                    Network.send_msg_with_jsonrpc("TransactionMessage", wallet_addr, data)
+                wallet_addr = utils.get_wallet_addr(receiver, self.wallet_clients)
+                rpc_logger.debug("send msg to wallet_cli: {}".format(wallet_addr))
+                Network.send_msg_with_jsonrpc("TransactionMessage", wallet_addr, data)
             # to peer
             else:
                 Network.send_msg_with_tcp(receiver, data)
@@ -585,16 +593,40 @@ class Gateway:
         print(self.wallet_clients)
 
     def handle_channel_list_message(self, data):
-        # wallet_data = data.get("Wallet")
-        # channel_peers = data.get("Peers")
-        # WalletClient.add_or_update(
-        #     self.wallet_clients,
-        #     **utils.make_kwargs_for_wallet(wallet_data)
-        # )
-        # for peer in channel_peers:
-            pass
-            
-
+        if data.get("MessageType") != "GetChannelList": return
+        wallet_data = data.get("MessageBody").get("Wallet")
+        channel_list = data.get("MessageBody").get("Channel")
+        if not wallet_data or not channel_list: return
+        wallet, last_opened_wallet_pk, add = WalletClient.add_or_update(
+            self.wallet_clients,
+            **utils.make_kwargs_for_wallet(wallet_data)
+        )
+        asset_peers = {}
+        for key in wallet.fee:
+            asset_peers[key] = []
+        for channel in channel_list:
+            founder = channel.get("Founder")
+            receiver = channel.get("Receiver")
+            channel_name = channel.get("ChannelName")
+            channel_peer = founder if wallet.url == receiver else receiver
+            assert_type, channel_balance = list(channel["Balance"][wallet.public_key].items())[0]
+            asset_peers[assert_type].append((channel_peer, channel_name, channel_balance))
+        for key in asset_peers:
+            # peer_balance_list = asset_peers[key]
+            spv_list = []
+            for channel_tuple in asset_peers[key]:
+                channel_peer, channel_name, channel_balance= channel_tuple
+                wallet.channel_balance[channel_name] = channel_balance
+                if utils.check_is_spv(channel_peer):
+                    spv_list.append(utils.get_public_key(channel_peer))
+                elif not utils.check_is_owned_wallet(channel_peer):
+                    message = MessageMake.make_recover_channel_msg(wallet.url, channel_peer, key)
+                    Network.send_msg_with_tcp(channel_peer, message)
+            if len(wallet.channel_balance.keys()):
+                Nettopo.add_or_update(self.net_topos, key, wallet)
+                for spv in spv_list:
+                    self.net_topos[key].spv_table.add(wallet.public_key, spv)
+        print(self.net_topos)
 
     
     def notifica_walelt_clis_on_line(self):

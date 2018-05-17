@@ -58,8 +58,9 @@ class _Wallet:
         # balance is dict  eg: {"TNC": 100,"NEO": 300}
         # mean balance of blockchain
         self.balance = kwargs.get("balance")
-        # mean balance of every channel
-        self.channel_balance = 0
+        # mean balance of every channel dict: 
+        # eg: {"channel_name1": 100, "channel_name2": 30}
+        self.channel_balance = {}
         self.url = "{}@{}".format(self.public_key, cg_public_ip_port)
         self.name = kwargs.get("name")
         # save wallet_client ip
