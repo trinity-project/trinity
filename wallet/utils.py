@@ -87,7 +87,7 @@ def get_arg(arguments, index=0, convert_to_int=False):
     return None
 
 
-def  get_asset_type_name(asset_type):
+def get_asset_type_name(asset_type):
     """
 
     :param asset_type:
@@ -108,7 +108,11 @@ def get_asset_type_id(asset_name):
     :param asset_name:
     :return:
     """
-    return Configure.get("AssetType").get(asset_name.upper())
+
+    if len(asset_name) > 10:
+        return asset_name
+    else:
+        return Configure.get("AssetType").get(asset_name.upper())
 
 
 def check_support_asset_type(asset_type):
