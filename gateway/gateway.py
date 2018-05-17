@@ -93,6 +93,7 @@ class Gateway:
                     self.tcp_pk_dict[sed_pk] = protocol
                 # pprint.pprint(self.tcp_pk_dict)
                 if msg_type == "RegisterChannel":
+                    receiver = data.get("Receiver")
                     wallet_addr = utils.get_wallet_addr(receiver, self.wallet_clients)
                     rpc_logger.debug("send msg to wallet_cli: {}".format(wallet_addr))
                     Network.send_msg_with_jsonrpc("TransactionMessage", wallet_addr, data)
