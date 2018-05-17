@@ -71,7 +71,7 @@ def get_wallet_addr(url, clients):
     """
     get the server addr which wallet cli rpc start on
     """
-    pk = utils.get_public_key(url)
+    pk = get_public_key(url)
     wallet = get_all_active_wallet_dict(clients).get(pk)
     if wallet:
         ip, port = wallet.cli_ip.split(":")
