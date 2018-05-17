@@ -64,11 +64,15 @@ class DepositAuth(object):
         except Exception as e:
             LOG.error(str(e))
             return cls.DefaultDeposit
-        
 
+    @classmethod
+    def deposit_limit(cls):
+        if not cls.LastGetTime or datetime.date.today() != cls.LastGetTime:
+            deposit = cls.caculate_depoist()
+            cls.DefaultDeposit = deposit
+            cls.LastGetTime = datetime.date.today()
 
-
-
+        return cls.DefaultDeposit
 
 
 def to_aes_key(password):
@@ -259,7 +263,7 @@ def is_valid_deposit(asset_type, deposit, spv_wallet=False):
             return deposit >= min_deposit, None
     else:
         if asset_type == "TNC":
-            if deposit <= 5000:
+            if deposit < DepositAuth.deposit_limit():
                 return False, "Node wallet channel deposit should larger than 5000, " \
                               "but now is {}".format(str(deposit))
         return True, None
@@ -308,5 +312,6 @@ def get_wallet_info(pubkey):
 
 
 if __name__ == "__main__":
-    print(pubkey_to_address("03a6fcaac0e13dfbd1dd48a964f92b8450c0c81c28ce508107bc47ddc511d60e75"))
-    print(Crypto.Hash160("02cebf1fbde4786f031d6aa0eaca2f5acd9627f54ff1c0510a18839946397d3633".encode()))
+    import time
+    while True:
+        print(DepositAuth.deposit_limit())
