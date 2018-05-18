@@ -426,84 +426,16 @@ class Gateway:
                 tx_value = data["MessageBody"]["Value"]
                 # arrive end
                 if full_path[len(full_path)-1][0] == current_node:
-                    # spv---node---spv siuation
-                    if len(full_path) == 1:
-                        # right active
-                        message = MessageMake.make_trigger_transaction_msg(
-                            sender=current_node,
-                            receiver=receiver,
-                            asset_type=asset_type,
-                            amount=tx_value - wallet_fee
-                        )
-                        Network.send_msg_with_wsocket(self.ws_pk_dict.get(receiver_pk), message)
-                        # left active
-                        message = MessageMake.make_trigger_transaction_msg(
-                            sender=sender,
-                            receiver=current_node,
-                            asset_type=asset_type,
-                            # amount=tx_value - wallet_fee
-                            amount=tx_value
-                        )
-                        Network.send_msg_with_jsonrpc("TransactionMessage", wallet_addr, message)
-                    # xx--node--node--..--xx siuation
+                    # to self's spv
+                    if utils.check_is_spv(receiver):
+                        Network.send_msg_with_wsocket(self.ws_pk_dict.get(receiver_pk), data)
+                    # to self's wallet 
                     else:
-                        # to self's spv
-                        if utils.check_is_spv(receiver):
-                            message = MessageMake.make_trigger_transaction_msg(
-                                sender=current_node,
-                                receiver=receiver,
-                                asset_type=asset_type,
-                                amount=tx_value - wallet_fee
-                            )
-                            Network.send_msg_with_wsocket(self.ws_pk_dict.get(receiver_pk), message)
-                        # to self's wallet 
-                        # previs hased send the transactions to this node
-                        # do nothing to the origin mesg
-                        else:
-                            pass
+                        Network.send_msg_with_jsonrpc("TransactionMessage", wallet_addr, data)
                 # go on pass msg
                 else:
                     next_jump = full_path[full_path.index([current_node, wallet_fee]) + 1][0]
                     data["Next"] = next_jump
-                    # node1--node2--xxx this for node1 siuation
-                    if sender == current_node:
-                        message = MessageMake.make_trigger_transaction_msg(
-                            sender=current_node,
-                            receiver=next_jump,
-                            asset_type=asset_type,
-                            amount=tx_value
-                        )
-                        Network.send_msg_with_jsonrpc("TransactionMessage", wallet_addr ,message)
-                    # pxxx---node----exxx for node
-                    else:
-                        # pxxx is spv
-                        if utils.check_is_spv(sender):
-                            # left active
-                            left_message = MessageMake.make_trigger_transaction_msg(
-                                sender=sender,
-                                receiver=current_node,
-                                asset_type=asset_type,
-                                # amount=data["MessageBody"]["Value"]- wallet_fee
-                                amount=tx_value
-                            )
-                            # right active
-                            right_message = MessageMake.make_trigger_transaction_msg(
-                                sender=current_node,
-                                receiver=next_jump,
-                                asset_type=asset_type,
-                                amount=tx_value - wallet_fee
-                            )
-                            Network.send_msg_with_jsonrpc("TransactionMessage", wallet_addr, left_message)
-                            Network.send_msg_with_jsonrpc("TransactionMessage", wallet_addr, right_message)
-                        # pxxx is node
-                        else:
-                            message = MessageMake.make_trigger_transaction_msg(
-                                sender=current_node,
-                                receiver=next_jump,
-                                asset_type=asset_type,
-                                amount=tx_value - wallet_fee
-                            )
-                            Network.send_msg_with_jsonrpc("TransactionMessage", wallet_addr, message)
                     Network.send_msg_with_tcp(next_jump, data)
             # invalid msg
             else:
