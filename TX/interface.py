@@ -124,7 +124,7 @@ def createRefundTX(
         fundingScript,
         asset_id):
 
-    if asset_id in [NEO,GAS]:
+    if asset_id not in [NEO,GAS]:
         return tnc_factory.createRefundTX(
             addressFunding,
             balanceSelf,

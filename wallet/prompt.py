@@ -62,7 +62,8 @@ class UserPromptInterface(PromptInterface):
                               "channel payment {asset}, {count}, [{comments}]",
                               "channel qrcode {on/off}",
                               "channel trans",
-                              "channel show uri"
+                              "channel show uri",
+                              "channel depoist_limit"
                               ]
         self.commands.extend(self.user_commands)
         self.qrcode = False
@@ -428,6 +429,10 @@ class UserPromptInterface(PromptInterface):
             else:
                 self.help()
             return None
+        elif command == "depoist_limit":
+            from wallet.utils import DepositAuth
+            return DepositAuth.deposit_limit()
+
 
     def _channel_noopen(self):
         print("Channel Function Can Not be Opened at Present, You can try again via channel enable")
