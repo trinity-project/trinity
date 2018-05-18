@@ -163,10 +163,10 @@ class Gateway:
                         # check the wallet is on-line
                         if net_topo.get_node_dict(key)["Status"]:
                             wallet_pks.append(key)
-                message = Message.make_ack_search_target_wallet(wallet_pks)
+                message = MessageMake.make_ack_search_target_wallet(wallet_pks)
             elif msg_type == "SearchSpv":
                 data = net_topo.spv_table.to_json()
-                message = Message.make_ack_search_spv(data)
+                message = MessageMake.make_ack_search_spv(data)
             return json.dumps(message)
         if method == "SyncWalletData":
             rpc_logger.debug("Get the wallet sync data:\n{}".format(data))
@@ -416,9 +416,9 @@ class Gateway:
         receiver_pk = utils.get_public_key(receiver)
         # include router info situation
         if data.get("Router"):
-            router = data["Router"]
-            full_path = router["FullPath"]
-            current_node = router["Next"]
+            # router = data["Router"]
+            full_path = data["Router"]
+            current_node = data["Next"]
             # valid msg
             if utils.check_is_owned_wallet(current_node, self.wallet_clients):
                 wallet_addr = utils.get_wallet_addr(current_node, self.wallet_clients)
@@ -464,7 +464,7 @@ class Gateway:
                 # go on pass msg
                 else:
                     next_jump = full_path[full_path.index([current_node, wallet_fee]) + 1][0]
-                    data["Router"]["Next"] = next_jump
+                    data["Next"] = next_jump
                     # node1--node2--xxx this for node1 siuation
                     if sender == current_node:
                         message = MessageMake.make_trigger_transaction_msg(
