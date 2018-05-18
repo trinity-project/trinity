@@ -415,8 +415,8 @@ class Gateway:
         asset_type = data.get("MessageBody").get("AssetType")
         receiver_pk = utils.get_public_key(receiver)
         # include router info situation
-        if data.get("RouterInfo"):
-            router = data["RouterInfo"]
+        if data.get("Router"):
+            router = data["Router"]
             full_path = router["FullPath"]
             current_node = router["Next"]
             # valid msg
@@ -464,7 +464,7 @@ class Gateway:
                 # go on pass msg
                 else:
                     next_jump = full_path[full_path.index([current_node, wallet_fee]) + 1][0]
-                    data["RouterInfo"]["Next"] = next_jump
+                    data["Router"]["Next"] = next_jump
                     # node1--node2--xxx this for node1 siuation
                     if sender == current_node:
                         message = MessageMake.make_trigger_transaction_msg(

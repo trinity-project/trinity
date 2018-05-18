@@ -205,7 +205,7 @@ if __name__ == "__main__":
                     "Fee": 0.01 # gateway fee
                 }
             },
-            "Balance": {"NEO": 10},
+            "Balance": {"TNC": 10},
             "alias": "trinity1"
         }
     }
@@ -221,7 +221,7 @@ if __name__ == "__main__":
                     "Fee": 0.01 # gateway fee
                 }
             },
-            "Balance": {"NEO": 10},
+            "Balance": {"TNC": 10},
             "alias": "trinity1"
         }
     }
@@ -239,9 +239,9 @@ if __name__ == "__main__":
     # time.sleep(5)
     # jsonrpcclient.request("http://localhost:8077", 'SyncChannel', json.dumps(message1))
     # time.sleep(5)
-    # jsonrpcclient.request("http://localhost:8077", 'SyncWalletData', json.dumps(message_2))
-    # jsonrpcclient.request("http://localhost:8077", 'SyncWalletData', json.dumps(message_3))
-    # time.sleep(5)
+    jsonrpcclient.request("http://localhost:8077", 'SyncWalletData', json.dumps(message_2))
+    jsonrpcclient.request("http://localhost:8077", 'SyncWalletData', json.dumps(message_3))
+    time.sleep(5)
     # jsonrpcclient.request("http://localhost:8077", 'SyncChannel', json.dumps(message1))
 
     jsonrpcclient.request("http://localhost:8077", 'SyncChannel', json.dumps(message1))

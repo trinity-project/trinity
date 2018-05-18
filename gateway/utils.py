@@ -363,6 +363,15 @@ def search_route_for_wallet(sender, receiver, net_topo, asset_type):
         path = net_topo.find_shortest_path_decide_by_fee(sed_pk, rev_pk)
     return _make_router(path, full_path, net_topo)
 
+def make_edge_data(u_node, v_node):
+    if not u_node or not v_node: return {}
+    u_names = set(u_node["Balance"].keys())
+    v_names = set(v_node["Balance"].keys())
+    names = list(u_names.intersection(v_names))
+    return {
+        "weight": u_node["Fee"] + v_node["Fee"],
+        "name": names[len(names) -1] if len(names) else "None"
+    }
 if __name__ == "__main__":
     d = {"a":1,"b":2}
     def get_keys_iterator(clients):

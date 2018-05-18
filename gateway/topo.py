@@ -100,10 +100,10 @@ class Nettopo:
         # first sid must in the graph
         # otherwise local node will not receive this sync type msg
         if not self._graph.has_edge(sid, tid):
-            t_fee = self._graph.nodes[tid]["Fee"]
-            s_fee = self._graph.nodes[sid]["Fee"]
-            fee = t_fee + s_fee
-            self._graph.add_edge(sid, tid, weight=fee)
+            u_node = self._graph.nodes.get(sid)
+            v_node = self._graph.nodes.get(tid)
+            edge_data = utils.make_edge_data(u_node, v_node)
+            self._graph.add_edge(sid, tid, **edge_data)
         else:
             pass
 
@@ -144,7 +144,12 @@ class Nettopo:
 
     def _update_node_data(self, node, data):
         print("update node attributes")
-        node.update(data)
+        for key in node:
+            if key in data.keys():
+                if key == "Balance" and isinstance(data[key], dict):
+                    node[key].update(data[key])
+                else:
+                    node[key] = data[key]
 
     def _update_edge_data(self, nid, diff_fee):
         # update the edges's weight that include the nid
@@ -192,10 +197,7 @@ class Nettopo:
         receiver_nid = utils.get_public_key(data["Target"])
         sync_graph = self.to_graph(data["MessageBody"])
         self._graph = nx.algorithms.operators.binary.compose(self._graph, sync_graph)
-        if not self._graph.has_edge(sender_nid, receiver_nid):
-            u_fee = self._graph.nodes[sender_nid]["Fee"]
-            v_fee = self._graph.nodes[receiver_nid]["Fee"]
-            self._graph.add_edge(sender_nid, receiver_nid, weight=u_fee + v_fee)
+        self.add_edge(sender_nid, receiver_nid)
 
     def sync_channel_graph(self, data):
         """
