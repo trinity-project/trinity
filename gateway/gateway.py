@@ -415,46 +415,44 @@ class Gateway:
         asset_type = data.get("MessageBody").get("AssetType")
         receiver_pk = utils.get_public_key(receiver)
         # include router info situation
-        if data.get("Router"):
-            # router = data["Router"]
-            full_path = data["Router"]
-            current_node = data["Next"]
-            # valid msg
-            if utils.check_is_owned_wallet(current_node, self.wallet_clients):
-                wallet_addr = utils.get_wallet_addr(current_node, self.wallet_clients)
-                wallet_fee = utils.get_wallet_attribute("Fee", current_node, asset_type, self.net_topos)
-                tx_value = data["MessageBody"]["Value"]
-                # arrive end
-                if full_path[len(full_path)-1][0] == current_node:
-                    # to self's spv
-                    if utils.check_is_spv(receiver):
-                        Network.send_msg_with_wsocket(self.ws_pk_dict.get(receiver_pk), data)
-                    # to self's wallet 
-                    else:
-                        Network.send_msg_with_jsonrpc("TransactionMessage", wallet_addr, data)
-                # go on pass msg
-                else:
-                    next_jump = full_path[full_path.index([current_node, wallet_fee]) + 1][0]
-                    data["Next"] = next_jump
-                    Network.send_msg_with_tcp(next_jump, data)
-            # invalid msg
-            else:
-                pass
-        # no router info situation
-        # send the msg to receiver directly
-        else:
+        # if data.get("Router"):
+        #     full_path = data.get("Router")
+        #     current_node = data.get("Next")
+
+        #     # valid msg
+        #     if utils.check_is_owned_wallet(current_node, self.wallet_clients):
+        #         wallet_addr = utils.get_wallet_addr(current_node, self.wallet_clients)
+        #         # arrive end
+        #         if full_path[len(full_path)-1][0] == current_node:
+        #             # to self's spv
+        #             if utils.check_is_spv(receiver):
+        #                 Network.send_msg_with_wsocket(self.ws_pk_dict.get(receiver_pk), data)
+        #             # to self's wallet 
+        #             else:
+        #                 Network.send_msg_with_jsonrpc("TransactionMessage", wallet_addr, data)
+        #         # go on pass msg
+        #         else:
+        #             next_jump = full_path[full_path.index([current_node, wallet_fee]) + 1][0]
+        #             data["Next"] = next_jump
+        #             Network.send_msg_with_tcp(next_jump, data)
+        #     # invalid msg
+        #     else:
+        #         pass
+        # # no router info situation
+        # # send the msg to receiver directly
+        # else:
             # to spv
-            if utils.check_is_spv(receiver):
-                Network.send_msg_with_wsocket(self.ws_pk_dict.get(receiver_pk), data)
-            # to self's wallet(wallets that attached this gateway)
-            elif utils.check_is_owned_wallet(receiver, self.wallet_clients):
-                # pk = utils.get_public_key(receiver)
-                wallet_addr = utils.get_wallet_addr(receiver, self.wallet_clients)
-                rpc_logger.debug("send msg to wallet_cli: {}".format(wallet_addr))
-                Network.send_msg_with_jsonrpc("TransactionMessage", wallet_addr, data)
-            # to peer
-            else:
-                Network.send_msg_with_tcp(receiver, data)
+        if utils.check_is_spv(receiver):
+            Network.send_msg_with_wsocket(self.ws_pk_dict.get(receiver_pk), data)
+        # to self's wallet(wallets that attached this gateway)
+        elif utils.check_is_owned_wallet(receiver, self.wallet_clients):
+            # pk = utils.get_public_key(receiver)
+            wallet_addr = utils.get_wallet_addr(receiver, self.wallet_clients)
+            rpc_logger.debug("send msg to wallet_cli: {}".format(wallet_addr))
+            Network.send_msg_with_jsonrpc("TransactionMessage", wallet_addr, data)
+        # to peer
+        else:
+            Network.send_msg_with_tcp(receiver, data)
 
     def _handle_switch_wallets(self, last_pk):
         if not last_pk: return
