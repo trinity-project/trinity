@@ -119,6 +119,7 @@ def get_balance(pubkey, asset_type):
             return hex2interger(value)
     return 0
 
+
 def get_balance_extend(address, asset_name="NEO"):
     asset_type = {"NEO":"neoBalance",
                   "GAS":"gasBalance"}
@@ -140,6 +141,7 @@ def get_balance_extend(address, asset_name="NEO"):
             return 0
     LOG.error(json.dumps(result.json()))
     return 0
+
 
 def get_application_log(tx_id):
     request = {

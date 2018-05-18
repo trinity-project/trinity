@@ -1209,7 +1209,6 @@ class HtlcMessage(TransactionMessage):
     def check_if_the_last_router(self):
         return self.wallet.url == self.router[-1][0]
 
-
     def _handle_0_message(self):
         Payment.update_hash_history(self.hr, self.channel_name, self.count, "pending")
         self.send_responses(self.role_index)
