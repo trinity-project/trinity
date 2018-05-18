@@ -422,7 +422,7 @@ class Gateway:
             # valid msg
             if utils.check_is_owned_wallet(current_node, self.wallet_clients):
                 wallet_addr = utils.get_wallet_addr(current_node, self.wallet_clients)
-                wallet_fee = utils.get_wallet_attribute("Fee", current_node, self.net_topos)
+                wallet_fee = utils.get_wallet_attribute("Fee", current_node, asset_type, self.net_topos)
                 tx_value = data["MessageBody"]["Value"]
                 # arrive end
                 if full_path[len(full_path)-1][0] == current_node:
