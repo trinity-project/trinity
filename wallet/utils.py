@@ -54,7 +54,7 @@ class DepositAuth(object):
 
     @classmethod
     def caculate_depoistusd(cls):
-        return 800*1.3**(abs((datetime.date.today()-datetime.date(2018,6,1)).days)//365)
+        return 800*1.03**(abs((datetime.date.today()-datetime.date(2018,1,15)).days)//365)
 
     @classmethod
     def caculate_depoist(cls):
@@ -70,14 +70,12 @@ class DepositAuth(object):
             return cls.DefaultDeposit
 
 
-
     @classmethod
     def deposit_limit(cls):
-        if not cls.LastGetTime or datetime.date.today() != cls.LastGetTime:
-            print("here")
-            deposit = cls.caculate_depoist()
-            cls.DefaultDeposit = deposit
-            cls.LastGetTime = datetime.date.today()
+        # if not cls.LastGetTime or datetime.date.today() != cls.LastGetTime:
+        deposit = cls.caculate_depoist()
+        cls.DefaultDeposit = deposit
+        cls.LastGetTime = datetime.date.today()
 
         return cls.DefaultDeposit
 
