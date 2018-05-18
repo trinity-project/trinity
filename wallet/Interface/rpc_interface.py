@@ -224,3 +224,8 @@ class RpcInteraceApi(object):
                         "MessageBody": {"Error":"Wallet No Open"}
                 }
 
+        elif method == 'RefoundTrans':
+            return transaction.refound_trans(params)
+
+
+

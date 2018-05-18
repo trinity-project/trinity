@@ -338,6 +338,22 @@ def hltc_trans(params):
                                   balanceReceiver, hashR, addressFunding,
                                   fundingScript, asset_id)
 
+def refound_trans(params):
+    """
+
+    :param params:
+    :return:
+    """
+    addressFunding = params[0].strip()
+    balanceSelf = float(params[1].strip())
+    balanceOther = float(params[2].strip())
+    pubkeySelf = params[3].strip()
+    pubkeyOther = params[4].strip()
+    fundingScript = params[5].strip()
+    asset_id = get_asset_type_id(params[6].strip())
+    return createRefundTX(addressFunding, balanceSelf, balanceOther,
+                                           pubkeySelf, pubkeyOther, fundingScript, asset_id)
+
 
 
 
