@@ -345,8 +345,8 @@ def refound_trans(params):
     :return:
     """
     addressFunding = params[0].strip()
-    balanceSelf = float(params[1].strip())
-    balanceOther = float(params[2].strip())
+    balanceSelf = float(params[1])
+    balanceOther = float(params[2])
     pubkeySelf = params[3].strip()
     pubkeyOther = params[4].strip()
     fundingScript = params[5].strip()
