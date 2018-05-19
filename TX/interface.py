@@ -38,36 +38,37 @@ def createCTX(
         pubkeySelf,
         pubkeyOther,
         fundingScript,
-        asset_id):
+        asset_id,
+        fundingTxId):
     if asset_id not in [NEO, GAS]:
         return tnc_factory.createCTX(
-            addressFunding,
             balanceSelf,
             balanceOther,
             pubkeySelf,
             pubkeyOther,
             fundingScript,
-            asset_id)
+            asset_id,
+            fundingTxId)
 
     elif asset_id == NEO:
         return neo_factory.createCTX(
-            addressFunding,
             balanceSelf,
             balanceOther,
             pubkeySelf,
             pubkeyOther,
             fundingScript,
-            asset_id)
+            asset_id,
+            fundingTxId)
 
     elif asset_id == GAS:
         return gas_factory.createCTX(
-            addressFunding,
             balanceSelf,
             balanceOther,
             pubkeySelf,
             pubkeyOther,
             fundingScript,
-            asset_id)
+            asset_id,
+            fundingTxId)
 
 
 def createRDTX(
