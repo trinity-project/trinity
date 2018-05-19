@@ -1706,7 +1706,15 @@ class SyncBlockMessage(Message):
 
 def monitor_founding(tx_id, channel_name, state, channel_action = "AddChannel"):
     channel = ch.Channel.channel(channel_name)
-    if not check_vmstate(tx_id):
+    balance = channel.get_balance()
+    try:
+        asset_type = list(list(balance.values())[0].keys())[0].upper()
+    except Exception as error:
+        LOG.error('monitor_founding: no asset type is found. error: {}'.format(error))
+        channel.delete()
+        return None
+
+    if asset_type not in ['NEO', 'GAS'] and (not check_vmstate(tx_id)):
         LOG.error("{} vm state error".format(tx_id))
         channel.delete()
         return None

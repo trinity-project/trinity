@@ -26,11 +26,18 @@ Configure = {
     "GatewayURL":"http://localhost:8077",
     "AutoCreate": True, # if the wallet accept the create channel request automatically
     "Channel":{
-               "TNC":{"CommitMinDeposit": 1,   # the min commit deposit
-                       "CommitMaxDeposit": 5000,# the max commit deposit
-                      "Fee": 0.01 # gateway fee
-                      }
-                      },#
+        "TNC":{
+            "CommitMinDeposit": 1,   # the min commit deposit
+            "CommitMaxDeposit": 5000,# the max commit deposit
+            "Fee": 0.01 # gateway fee
+        },
+        "NEO": {
+            "Fee": 0.001
+        },
+        "GAS": {
+            "Fee": 0.001
+        }
+    },#
     "MaxChannel":100, # the max number to create channel, if 0 , no limited
     "NetAddress":"localhost",
     "RpcListenAddress":"0.0.0.0",
