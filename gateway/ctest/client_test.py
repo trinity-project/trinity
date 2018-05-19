@@ -140,14 +140,15 @@ if __name__ == "__main__":
     message1 = {
         "MessageType":"AddChannel",
         "MessageBody": {
-            "Founder":  "pk1@localhost:8089",
+            "ChannelName": "adefyxz",
+            "Founder":  "pk3@localhost:8089",
             "Receiver": "pk2@localhost:8089",
             "Balance": {
                 "pk2@localhost:8089": {
-                    "NEO": 10
+                    "TNC": 10
                 },
-                "pk1@localhost:8089": {
-                    "NEO": 10
+                "pk3@localhost:8089": {
+                    "TNC": 10
                 }
             }
         }
@@ -196,9 +197,15 @@ if __name__ == "__main__":
             "MessageBody": {
             "Publickey": "pk2",
             "Ip": "0.0.0.0:20556",
-            "CommitMinDeposit": 3,
-            "Fee": 1,
-            "Balance": {"NEO": 10},
+            "Channel":{
+                "TNC":
+                {
+                    "CommitMinDeposit": 1,   # the min commit deposit
+                    "CommitMaxDeposit": 5000,# the max commit deposit
+                    "Fee": 0.01 # gateway fee
+                }
+            },
+            "Balance": {"TNC": 10},
             "alias": "trinity1"
         }
     }
@@ -206,9 +213,15 @@ if __name__ == "__main__":
             "MessageBody": {
             "Publickey": "pk3",
             "Ip": "0.0.0.0:20554",
-            "CommitMinDeposit": 3,
-            "Fee": 1.5,
-            "Balance": {"NEO": 10},
+            "Channel":{
+                "TNC":
+                {
+                    "CommitMinDeposit": 1,   # the min commit deposit
+                    "CommitMaxDeposit": 5000,# the max commit deposit
+                    "Fee": 0.01 # gateway fee
+                }
+            },
+            "Balance": {"TNC": 10},
             "alias": "trinity1"
         }
     }
@@ -228,11 +241,11 @@ if __name__ == "__main__":
     # time.sleep(5)
     jsonrpcclient.request("http://localhost:8077", 'SyncWalletData', json.dumps(message_2))
     jsonrpcclient.request("http://localhost:8077", 'SyncWalletData', json.dumps(message_3))
-    # time.sleep(5)
+    time.sleep(5)
     # jsonrpcclient.request("http://localhost:8077", 'SyncChannel', json.dumps(message1))
 
+    jsonrpcclient.request("http://localhost:8077", 'SyncChannel', json.dumps(message1))
     # jsonrpcclient.request("http://localhost:8077", 'SyncChannel', json.dumps(message1))
-    # jsonrpcclient.request("http://118.89.44.106:8077", 'SyncChannel', json.dumps(message1))
     # jsonrpcclient.request("http://localhost:8077", 'SyncWalletData', json.dumps(message))
 
 

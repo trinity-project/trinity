@@ -33,6 +33,7 @@ from wallet.utils import sign, get_asset_type_id
 from wallet.BlockChain import interface as Binterface
 from log import LOG
 import json
+from TX.utils import pubkeyToAddress
 
 BlockHightRegister=[]
 TxIDRegister= []
@@ -228,9 +229,8 @@ def funder_trans(params):
     addressFunding = params[2]
     scriptFunding = params[3]
     deposit = params[4]
-
-    asset_id = get_asset_type_id(params[5].upper())
-
+    asset_type = params[5]
+    asset_id = get_asset_type_id(asset_type)
     C_tx = createCTX(addressFunding=addressFunding, balanceSelf=deposit,
                           balanceOther=deposit, pubkeySelf=selfpubkey,
                           pubkeyOther=otherpubkey, fundingScript=scriptFunding, asset_id=asset_id)
@@ -255,16 +255,11 @@ def funder_create(params):
             "pubkey":params[1],
             "deposit":float(params[2])
         }
-
-        asset_id = get_asset_type_id(params[3].upper())
-
+        asset_id = get_asset_type_id(params[3])
         founder = createFundingTx(walletpartner, walletfounder, asset_id)
-
         commitment = createCTX(founder.get("addressFunding"), float(params[2]), float(params[2]), params[0],
                                params[1], founder.get("scriptFunding"), asset_id)
-
         address_self = pubkeyToAddress(params[0])
-
         revocabledelivery = createRDTX(commitment.get("addressRSMC"),address_self, float(params[2]), commitment.get("txId"),
                                        commitment.get("scriptRSMC"), asset_id)
         return {"Founder":founder,"C_TX":commitment,"R_TX":revocabledelivery}
@@ -284,14 +279,14 @@ def rsmc_trans(params):
     balanceother = params[2]
     pubkeyself = params[3]
     pubkeyother = params[4]
-    asset_id = get_asset_type_id(params[5].upper())
+    asset_id = get_asset_type_id(params[5])
 
     C_tx = createCTX(addressFunding=scriptToAddress(script_funding), balanceSelf=balanceself,
                           balanceOther=balanceother, pubkeySelf=pubkeyself,
                           pubkeyOther=pubkeyother, fundingScript=script_funding, asset_id=asset_id)
 
-    RD_tx = createRDTX(addressRSMC=C_tx["addressRSMC"], addressSelf=pubkeyToAddress(walletSelf["pubkey"]),
-                            balanceSelf=walletSelf["deposit"], CTxId=C_tx["txId"],
+    RD_tx = createRDTX(addressRSMC=C_tx["addressRSMC"], addressSelf=pubkeyToAddress(pubkeyself),
+                            balanceSelf=balanceself, CTxId=C_tx["txId"],
                             RSMCScript=C_tx["scriptRSMC"], asset_id=asset_id)
 
     return {"C_TX": C_tx, "R_TX": RD_tx}
@@ -310,10 +305,11 @@ def br_trans(params):
     script_rsmc = params[0]
     selfpubkey = params[1]
     balanceself = params[2]
-    asset_id = get_asset_type_id(params[3].upper())
+    ctx_id = params[3]
+    asset_id = get_asset_type_id(params[4])
 
     BR_tx = createBRTX(addressRSMC=scriptToAddress(script_rsmc), addressOther=pubkeyToAddress(selfpubkey),
-                            balanceSelf=balanceself, RSMCScript=script_rsmc, asset_id=asset_id)
+                            balanceSelf=balanceself, RSMCScript=script_rsmc,  CTxId=ctx_id, asset_id=asset_id)
 
     return {"BR_tx": BR_tx}
 
@@ -335,11 +331,28 @@ def hltc_trans(params):
     hashR = params[5]
     addressFunding = params[6]
     fundingScript = params[7]
-    asset_id = get_asset_type_id(params[5].upper())
+    asset_id = get_asset_type_id(params[8])
 
 
-    return create_sender_HCTX(pubkeySender, pubkeyReceiver, HTLCValue, balanceSender, balanceReceiver, hashR,
-                       addressFunding, fundingScript, asset_id)
+    return create_sender_HTLC_TXS(pubkeySender, pubkeyReceiver, HTLCValue, balanceSender,
+                                  balanceReceiver, hashR, addressFunding,
+                                  fundingScript, asset_id)
+
+def refound_trans(params):
+    """
+
+    :param params:
+    :return:
+    """
+    addressFunding = params[0].strip()
+    balanceSelf = float(params[1])
+    balanceOther = float(params[2])
+    pubkeySelf = params[3].strip()
+    pubkeyOther = params[4].strip()
+    fundingScript = params[5].strip()
+    asset_id = get_asset_type_id(params[6].strip())
+    return createRefundTX(addressFunding, balanceSelf, balanceOther,
+                                           pubkeySelf, pubkeyOther, fundingScript, asset_id)
 
 
 

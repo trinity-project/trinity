@@ -28,7 +28,16 @@ from log import LOG
 import json
 from wallet.utils import get_wallet_info
 
+class GatewayInfo(object):
+    Spv_port = None
 
+    @classmethod
+    def update_spv_port(cls, port):
+        cls.Spv_port = port
+
+    @classmethod
+    def get_spv_port(cls):
+        return cls.Spv_port
 
 def sync_channel(message_type, channel_name,founder, receiver, balance):
     message = {"MessageType": message_type,

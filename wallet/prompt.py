@@ -62,7 +62,8 @@ class UserPromptInterface(PromptInterface):
                               "channel payment {asset}, {count}, [{comments}]",
                               "channel qrcode {on/off}",
                               "channel trans",
-                              "channel show uri"
+                              "channel show uri",
+                              "channel depoist_limit"
                               ]
         self.commands.extend(self.user_commands)
         self.qrcode = False
@@ -231,6 +232,13 @@ class UserPromptInterface(PromptInterface):
             result = gate_way.join_gateway(self.Wallet.pubkey).get("result")
             if result:
                 self.Wallet.url = json.loads(result).get("MessageBody").get("Url")
+
+                try:
+                    spv = json.loads(result).get("MessageBody").get("Spv")
+                    spv_port = spv.strip().split(":")[1]
+                except:
+                    spv_port = "8766"
+                gate_way.GatewayInfo.update_spv_port(spv_port)
                 self.Channel = True
                 print("Channel Function Enabled")
                 return True
@@ -421,6 +429,10 @@ class UserPromptInterface(PromptInterface):
             else:
                 self.help()
             return None
+        elif command == "depoist_limit":
+            from wallet.utils import DepositAuth
+            return DepositAuth.deposit_limit()
+
 
     def _channel_noopen(self):
         print("Channel Function Can Not be Opened at Present, You can try again via channel enable")

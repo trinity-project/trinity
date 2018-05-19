@@ -67,15 +67,19 @@ def get_wallet_clis():
     with open("wcli.json", "r") as fs:
         return json.loads(fs.read())
 
-def get_wallet_addr(current_url, asset_type, net_tops):
+def get_wallet_addr(url, clients):
     """
-    get the server addr which wallet start on
+    get the server addr which wallet cli rpc start on
     """
-    wallet_ip = get_wallet_attribute("WalletIp", current_url, asset_type, net_tops)
-    if wallet_ip:
-        return (wallet_ip, int(wallet_ip.split(":")[1]))
+    pk = get_public_key(url)
+    wallet = get_all_active_wallet_dict(clients).get(pk)
+    if wallet:
+        ip, port = wallet.cli_ip.split(":")
+        wallet_addr = (ip, int(port))
     else:
-        return cg_remote_jsonrpc_addr
+        wallet_addr = ("0.0.0.0", 0)
+    # print(wallet)
+    return wallet_addr
 
 def get_wallet_attribute(attr_name, current_url, asset_type, net_tops):
     """
@@ -179,12 +183,17 @@ def make_kwargs_for_wallet(data):
     """
     :param data: dict type
     """
+    fee_dict = {}
+    channel_config = data.get("Channel")
+    if channel_config:
+        for key in channel_config:
+            fee_dict[key] = channel_config[key].get("Fee")
     return {
         "ip": data.get("Ip"),
         "public_key": data.get("Publickey"),
         "name": data.get("alias"),
-        "deposit": data.get("CommitMinDeposit"),
-        "fee": data.get("Fee"),
+        # "deposit": data.get("CommitMinDeposit"),
+        "fee": fee_dict,
         "balance": data.get("Balance")
     }
 
@@ -196,9 +205,9 @@ def make_topo_node_data(wallet, asset_type):
         "Publickey": wallet.public_key,
         "Name": wallet.name,
         "AssetType": asset_type,
-        "Deposit": wallet.deposit,
-        "Fee": wallet.fee,
-        "Balance": wallet.balance[asset_type],
+        # "Deposit": wallet.deposit,
+        "Fee": wallet.fee[asset_type],
+        "Balance": wallet.channel_balance,
         "Ip": cg_public_ip_port,
         "WalletIp": wallet.cli_ip,
         "Status": wallet.status
@@ -251,7 +260,7 @@ def _make_router(path, full_path, net_topo):
         fee = node.get("Fee")
         full_path.append((url, fee))
         index = path.index(nid)
-        if index > 0 and index < len(nids) - 1:
+        if index > 0 and index < len(path) - 1:
             total_fee = total_fee + fee
     if not len(full_path):
         router = None
@@ -354,6 +363,15 @@ def search_route_for_wallet(sender, receiver, net_topo, asset_type):
         path = net_topo.find_shortest_path_decide_by_fee(sed_pk, rev_pk)
     return _make_router(path, full_path, net_topo)
 
+def make_edge_data(u_node, v_node):
+    if not u_node or not v_node: return {}
+    u_names = set(u_node["Balance"].keys())
+    v_names = set(v_node["Balance"].keys())
+    names = list(u_names.intersection(v_names))
+    return {
+        "weight": u_node["Fee"] + v_node["Fee"],
+        "name": names[len(names) -1] if len(names) else "None"
+    }
 if __name__ == "__main__":
     d = {"a":1,"b":2}
     def get_keys_iterator(clients):

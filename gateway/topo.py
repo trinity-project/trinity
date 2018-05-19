@@ -100,10 +100,10 @@ class Nettopo:
         # first sid must in the graph
         # otherwise local node will not receive this sync type msg
         if not self._graph.has_edge(sid, tid):
-            t_fee = self._graph.nodes[tid]["Fee"]
-            s_fee = self._graph.nodes[sid]["Fee"]
-            fee = t_fee + s_fee
-            self._graph.add_edge(sid, tid, weight=fee)
+            u_node = self._graph.nodes.get(sid)
+            v_node = self._graph.nodes.get(tid)
+            edge_data = utils.make_edge_data(u_node, v_node)
+            self._graph.add_edge(sid, tid, **edge_data)
         else:
             pass
 
@@ -119,14 +119,20 @@ class Nettopo:
             return False
     
     def update_data(self, data):
-        nid = data.get("Publickey")
-        if not self._graph.has_node(nid):
-            return
-        node = self._graph.nodes[nid]
-        if data["Fee"] != node["Fee"]:
-            diff_fee = data["Fee"] - node["Fee"]
-            self._update_edge_data(nid, diff_fee)
-        self._update_node_data(node, data)
+        node_data = []
+        if isinstance(data, dict):
+            node_data.append(data)
+        elif isinstance(data, list):
+            node_data = data
+        else: return
+        for data in node_data:
+            nid = data.get("Publickey")
+            if not self._graph.has_node(nid): return
+            node = self._graph.nodes[nid]
+            if data["Fee"] != node["Fee"]:
+                diff_fee = data["Fee"] - node["Fee"]
+                self._update_edge_data(nid, diff_fee)
+            self._update_node_data(node, data)
 
     def _isolated(self, nid):
         isolated = False
@@ -138,7 +144,12 @@ class Nettopo:
 
     def _update_node_data(self, node, data):
         print("update node attributes")
-        node.update(data)
+        for key in node:
+            if key in data.keys():
+                if key == "Balance" and isinstance(data[key], dict):
+                    node[key].update(data[key])
+                else:
+                    node[key] = data[key]
 
     def _update_edge_data(self, nid, diff_fee):
         # update the edges's weight that include the nid
@@ -186,10 +197,7 @@ class Nettopo:
         receiver_nid = utils.get_public_key(data["Target"])
         sync_graph = self.to_graph(data["MessageBody"])
         self._graph = nx.algorithms.operators.binary.compose(self._graph, sync_graph)
-        if not self._graph.has_edge(sender_nid, receiver_nid):
-            u_fee = self._graph.nodes[sender_nid]["Fee"]
-            v_fee = self._graph.nodes[receiver_nid]["Fee"]
-            self._graph.add_edge(sender_nid, receiver_nid, weight=u_fee + v_fee)
+        self.add_edge(sender_nid, receiver_nid)
 
     def sync_channel_graph(self, data):
         """
@@ -254,8 +262,8 @@ class Nettopo:
         if topos.get(asset_type):
             topo = topos[asset_type]
             if topo.has_node(pk):
-                # topo.update_data(data)
-                pass
+                topo.update_data(data)
+                # pass
             else:
                 topo.add_node(data, pk=pk)
         else:

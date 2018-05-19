@@ -52,10 +52,15 @@ class _Wallet:
         # basic attributes
         self.public_key = kwargs.get("public_key")
         self.ip = cg_public_ip_port
+        # fee is dict eg: {"TNC": 0.01, "NEO": 0.01}
         self.fee = kwargs.get("fee")
-        self.deposit = kwargs.get("deposit")
+        # self.deposit = kwargs.get("deposit")
         # balance is dict  eg: {"TNC": 100,"NEO": 300}
+        # mean balance of blockchain
         self.balance = kwargs.get("balance")
+        # mean balance of every channel dict: 
+        # eg: {"channel_name1": 100, "channel_name2": 30}
+        self.channel_balance = {}
         self.url = "{}@{}".format(self.public_key, cg_public_ip_port)
         self.name = kwargs.get("name")
         # save wallet_client ip
@@ -66,8 +71,8 @@ class _Wallet:
     def __str__(self):
         # return "Wallet(name: {}, asset_type: {}, fee: {}, deposit: {}, balance: {}, status: {})".\
         #     format(self.name, self.asset_type, self.fee, self.deposit, self.balance, self.status)
-        return "Wallet(status: {}, cli_ip: {}, pk: {})".\
-            format(self.status, self.cli_ip, self.public_key)
+        return "Wallet(status: {}, cli_ip: {}, pk: {}, fee: {})".\
+            format(self.status, self.cli_ip, self.public_key, self.fee)
 
     def __repr__(self):
         return self.__str__()

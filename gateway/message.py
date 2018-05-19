@@ -50,6 +50,7 @@ class Message:
         """
         valid_types = [
             "RegisterChannel",
+            "RegisterKeepAlive",
             "SyncChannelState",
             "ResumeChannel"
         ]
@@ -68,7 +69,7 @@ class Message:
             is_valid = False
         elif not msg_type:
             is_valid = False
-        if origin == "node":
+        if origin == "node" and msg_type != "RegisterKeepAlive":
             if msg_type not in cls.get_valid_msg_types():
                 is_valid = False
             elif not data.get("Sender"):
@@ -179,10 +180,12 @@ class MessageMake:
 
     ###### message for node begin ########
     @staticmethod
-    def make_resume_channel_msg(sender):
+    def make_recover_channel_msg(sender, receiver, asset_type):
         message = {
             "MessageType": "ResumeChannel",
-            "Sender": sender
+            "AssetType": asset_type,
+            "Sender": sender,
+            "Receiver": receiver
         }
         return message
 

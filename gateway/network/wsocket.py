@@ -50,11 +50,11 @@ class WsocketService:
                 break
             # except Exception:
             #     pass
-            else:
-                try:
-                    gateway_singleton.handle_spv_request(con, message)
-                except Exception:
-                    pass
+            else: gateway_singleton.handle_spv_request(con, message)
+                # try:
+                #     gateway_singleton.handle_spv_request(con, message)
+                # except Exception:
+                #     pass
 
     @staticmethod
     async def send_msg(con, msg):

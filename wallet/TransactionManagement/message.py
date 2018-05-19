@@ -25,11 +25,11 @@ SOFTWARE."""
 #coding=utf-8
 
 from wallet.TransactionManagement.transaction import TrinityTransaction
-from wallet.utils import pubkey_to_address, get_asset_type_id
+from wallet.utils import pubkey_to_address, get_asset_type_id,DepositAuth
 from TX.interface import *
 from wallet.ChannelManagement import channel as ch
 from model.base_enum import EnumChannelState
-from wallet.Interface.gate_way import send_message, join_gateway
+from wallet.Interface.gate_way import send_message, join_gateway, GatewayInfo
 from wallet.utils import sign,\
     check_onchain_balance, \
     check_max_deposit,\
@@ -147,6 +147,8 @@ class RegisterMessage(Message):
                 "Error": error
             }
             Message.send(message)
+            LOG.error("RegisterChannelFail because of wrong verification")
+            return
         founder_pubkey, founder_ip = self.sender.split("@")
         partner_pubkey, partner_ip = self.receiver.split("@")
         founder_address = pubkey_to_address(founder_pubkey)
@@ -184,22 +186,26 @@ class RegisterMessage(Message):
                 return False,"Deposit Format error {}".format(de)
 
         is_spv = self.is_spv_wallet()
-        return is_valid_deposit(self.deposit, is_spv), None
+        state, error = is_valid_deposit(self.asset_type, self.deposit, is_spv)
+        if not state:
+            return False, "Deposit Not correct, please check the depoist"
+        else:
+            return True, None
         # state, maxd = check_max_deposit(self.deposit)
-        # if not state:
-        #     if isinstance(maxd, float):
-        #         return False, "Deposit is larger than the max, max is {}".format(str(maxd))
-        #     else:
-        #         return False, "Max deposit configure error {}".format(maxd)
-        #
-        # state , mind = check_min_deposit(self.deposit)
-        # if not state:
-        #     if isinstance(mind, float):
-        #         return False, "Deposit is less than the min, min is {}".format(str(mind))
-        #     else:
-        #         return False, "Mix deposit configure error {}".format(mind)
-        #
-        # return True,None
+        #         # if not state:
+        #         #     if isinstance(maxd, float):
+        #         #         return False, "Deposit is larger than the max, max is {}".format(str(maxd))
+        #         #     else:
+        #         #         return False, "Max deposit configure error {}".format(maxd)
+        #         #
+        #         # state , mind = check_min_deposit(self.deposit)
+        #         # if not state:
+        #         #     if isinstance(mind, float):
+        #         #         return False, "Deposit is less than the min, min is {}".format(str(mind))
+        #         #     else:
+        #         #         return False, "Mix deposit configure error {}".format(mind)
+        #         #
+        #         # return True,None
 
     def check_balance(self):
         if check_onchain_balance(self.wallet.pubkey, self.asset_type, self.deposit):
@@ -208,7 +214,9 @@ class RegisterMessage(Message):
             return False, "No Balance OnChain to support the deposit"
 
     def is_spv_wallet(self):
-        return self.sender.strip().endswith('8766') or self.receiver.strip().endswith('8766')
+        spv_port = GatewayInfo.get_spv_port()
+        spv_port = spv_port if spv_port else "8766"
+        return self.sender.strip().endswith(spv_port) or self.receiver.strip().endswith(spv_port)
 
 
 class TestMessage(Message):
@@ -802,12 +810,17 @@ class RsmcMessage(TransactionMessage):
             if tx.get("Commitment"):
                 commitment = tx.get("Commitment").get("originalData")
                 rscmcscript = commitment["scriptRSMC"]
+                tx_id = commitment.get('tx_Id')
             elif tx.get("HCTX"):
                 commitment = tx.get("HCTX").get("originalData")
                 rscmcscript = commitment["RSMCscript"]
+                tx_id = commitment.get('tx_Id')
+            else:
+                LOG.error('Unsupported tx type currently! tx_nounce: {}'.format(tx_nonce))
+                return
 
             breachremedy = createBRTX(founder["originalData"]["addressFunding"], pubkey_to_address(receiver_pubkey), sender_balance,
-                                      rscmcscript, asset_id)
+                                      rscmcscript, tx_id, asset_id) #TODO: None should be replaced by tx id
             breachremedy_sign = sign(wallet, breachremedy.get("txData"))
             breachremedy_info = {"txDataSign": breachremedy_sign,
                                  "originalData":breachremedy}
@@ -1196,7 +1209,6 @@ class HtlcMessage(TransactionMessage):
     def check_if_the_last_router(self):
         return self.wallet.url == self.router[-1][0]
 
-
     def _handle_0_message(self):
         Payment.update_hash_history(self.hr, self.channel_name, self.count, "pending")
         self.send_responses(self.role_index)
@@ -1530,7 +1542,7 @@ class SettleMessage(TransactionMessage):
         receiver_pubkey = receiver.split("@")[0].strip()
         sender_balance = balance.get(sender_pubkey).get(asset_type.upper())
         receiver_balance = balance.get(receiver_pubkey).get(asset_type.upper())
-        asset_id = get_asset_type_id(asset_type.upper)
+        asset_id = get_asset_type_id(asset_type)
         settlement_tx = createRefundTX(address_founder,float(sender_balance),receiver_balance,sender_pubkey,receiver_pubkey,
                                     founder_script, asset_id)
 
@@ -1591,7 +1603,7 @@ class SettleResponseMessage(TransactionMessage):
                 raise Exception("Not Find the url")
             raw_data = witness.format(signSelf=tx_data_sign_self, signOther=tx_data_sign_other)
             TrinityTransaction.sendrawtransaction(TrinityTransaction.genarate_raw_data(tx_data, raw_data))
-            register_monitor(tx_id,monitor_founding,self.channel_name, EnumChannelState.CLOSED.name)
+            register_monitor(tx_id,monitor_founding,self.channel_name, EnumChannelState.CLOSED.name, "DeleteChannel")
 
     def verify(self):
         return True, None
@@ -1692,7 +1704,7 @@ class SyncBlockMessage(Message):
         return None
 
 
-def monitor_founding(tx_id, channel_name, state):
+def monitor_founding(tx_id, channel_name, state, channel_action = "AddChannel"):
     channel = ch.Channel.channel(channel_name)
     if not check_vmstate(tx_id):
         LOG.error("{} vm state error".format(tx_id))
@@ -1700,7 +1712,7 @@ def monitor_founding(tx_id, channel_name, state):
         return None
     deposit = channel.get_deposit()
     channel.update_channel(state=state, balance = deposit)
-    ch.sync_channel_info_to_gateway(channel_name,"AddChannel")
+    ch.sync_channel_info_to_gateway(channel_name,channel_action)
     print("Channel is {}".format(state))
     return None
 

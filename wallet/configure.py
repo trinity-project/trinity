@@ -24,15 +24,18 @@ SOFTWARE."""
 Configure = {
     "alias":"TrinityNode",# you can rename your node
     "GatewayURL":"http://localhost:8077",
-    "Fee": 0.01,
     "AutoCreate": True, # if the wallet accept the create channel request automatically
-    "CommitMinDeposit": 10000,   # the min commit deposit
-    "CommitMaxDeposit": 1000000, # the max commit deposit
+    "Channel":{
+               "TNC":{"CommitMinDeposit": 1,   # the min commit deposit
+                       "CommitMaxDeposit": 5000,# the max commit deposit
+                      "Fee": 0.01 # gateway fee
+                      }
+                      },#
     "MaxChannel":100, # the max number to create channel, if 0 , no limited
     "NetAddress":"localhost",
     "RpcListenAddress":"0.0.0.0",
     "NetPort":"20556",
-    "GatewayTCP":"localhost:8000",
+    "GatewayTCP":"localhost:8089",
     "AssetType":{
         "TNC": "0x849d095d07950b9e56d0c895ec48ec5100cfdff1"
     },

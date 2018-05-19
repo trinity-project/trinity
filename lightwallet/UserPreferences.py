@@ -12,7 +12,7 @@ import os
 import sys
 
 from json.decoder import JSONDecodeError
-from logzero import logger
+from log import LOG
 
 
 FILENAME_PREFERENCES="prefence.json"
@@ -60,7 +60,7 @@ class UserPreferencesHolder:
             pass
 
         except JSONDecodeError as e:
-            logger.error("JSONDecodeError: {} in {}".format(e.msg, self._preferences_filename))
+            LOG.error("JSONDecodeError: {} in {}".format(e.msg, self._preferences_filename))
             raise
 
     def _save_userprefs(self):
