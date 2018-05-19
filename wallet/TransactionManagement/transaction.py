@@ -258,7 +258,7 @@ def funder_create(params):
         asset_id = get_asset_type_id(params[3])
         founder = createFundingTx(walletpartner, walletfounder, asset_id)
         commitment = createCTX(founder.get("addressFunding"), float(params[2]), float(params[2]), params[0],
-                               params[1], founder.get("scriptFunding"), asset_id)
+                               params[1], founder.get("scriptFunding"), asset_id, founder.get('txId'))
         address_self = pubkeyToAddress(params[0])
         revocabledelivery = createRDTX(commitment.get("addressRSMC"),address_self, float(params[2]), commitment.get("txId"),
                                        commitment.get("scriptRSMC"), asset_id)

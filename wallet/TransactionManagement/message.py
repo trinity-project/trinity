@@ -406,7 +406,7 @@ class FounderMessage(TransactionMessage):
             founder = transaction.get_founder()
 
         commitment = createCTX(founder.get("addressFunding"), deposit, deposit, self_pubkey,
-                               partner_pubkey, founder.get("scriptFunding"), asset_id)
+                               partner_pubkey, founder.get("scriptFunding"), asset_id, founder.get('txId'))
 
         address_self = pubkey_to_address(self_pubkey)
 
@@ -460,7 +460,7 @@ class FounderMessage(TransactionMessage):
             Txfounder = createFundingTx(walletpartner, walletfounder, asset_id)
 
         commitment = createCTX(Txfounder.get("addressFunding"), self.deposit, self.deposit, self.sender_pubkey,
-                           self.receiver_pubkey, Txfounder.get("scriptFunding"), asset_id)
+                           self.receiver_pubkey, Txfounder.get("scriptFunding"), asset_id, Txfounder.get(('txId')))
 
         address_self = pubkey_to_address(self.sender_pubkey)
 
@@ -774,7 +774,7 @@ class RsmcMessage(TransactionMessage):
         message = {}
         if role_index == 0 or role_index == 1:
             commitment = createCTX(founder["originalData"]["addressFunding"], sender_balance, receiver_balance,
-                               sender_pubkey, receiver_pubkey, founder["originalData"]["scriptFunding"], asset_id)
+                               sender_pubkey, receiver_pubkey, founder["originalData"]["scriptFunding"], asset_id, founder.get('txId'))
 
             revocabledelivery = createRDTX(commitment.get("addressRSMC"), pubkey_to_address(sender_pubkey), sender_balance,
                                        commitment.get("txId"),
