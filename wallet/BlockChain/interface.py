@@ -22,9 +22,10 @@ LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE."""
 import requests
-from TX.utils import pubkeyToAddressHash
+from TX.utils import pubkeyToAddressHash,pubkeyToAddress
 from wallet.configure import Configure
 from log import LOG
+import json
 
 
 AssetType=Configure["AssetType"]
@@ -83,6 +84,11 @@ def get_balance(pubkey, asset_type):
     else:
         asset_script = AssetType.get(asset_type.upper())
     asset_script = asset_script.replace("0x","")
+    if asset_script == "c56f33fc6ecfcd0c225c4ab356fee59390af8560be0e930faebe74a6daff7c9b":
+        return get_balance_extend(pubkeyToAddress(pubkey),"NEO")
+    elif asset_script == "602c79718b16e442de58778e148d0b1084e3b2dffd5de6b7b16cee7969282de7":
+        return get_balance_extend(pubkeyToAddress(pubkey),"GAS")
+
     address_hash = pubkeyToAddressHash(pubkey)
 
     def convert_hash(hash):
@@ -113,6 +119,28 @@ def get_balance(pubkey, asset_type):
             return hex2interger(value)
     return 0
 
+
+def get_balance_extend(address, asset_name="NEO"):
+    asset_type = {"NEO":"neoBalance",
+                  "GAS":"gasBalance"}
+    headers = {
+        "Content-Type": "application/json"
+    }
+    data = {
+        "jsonrpc": "2.0",
+        "method": "getBalance",
+        "params": [address],
+        "id": 1
+    }
+    result = requests.post(Configure["BlockChain"]["NeoUrlEnhance"], headers=headers, json=data).json()
+    if result.get("result"):
+        try:
+            return result.get("result").get(asset_type.get(asset_name))
+        except Exception as e:
+            LOG.error(str(e))
+            return 0
+    LOG.error(json.dumps(result))
+    return 0
 
 
 def get_application_log(tx_id):

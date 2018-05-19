@@ -39,7 +39,7 @@ SupportAssetType = ["TNC", "NEO", "GAS"] #Todo multi-asset will come soon, befor
 class DepositAuth(object):
     DefaultDeposit = 5000
     LastGetTime = None
-    DateSource = "https://api.coinmarketcap.com/v2/ticker/1/?convert=TNC"
+    DateSource = "https://api.coinmarketcap.com/v2/ticker/2443/?convert=USD"
 
     @classmethod
     def query_depoist(cls):
@@ -60,9 +60,7 @@ class DepositAuth(object):
     def caculate_depoist(cls):
         depoist_info = cls.query_depoist()
         try:
-            btc_price = depoist_info["quotes"]["USD"]["price"]
-            tnc_price = depoist_info["quotes"]["TNC"]["price"]
-            tnc_price_usdt = btc_price/tnc_price
+            tnc_price_usdt = depoist_info["quotes"]["USD"]["price"]
             depoist_limit = int(cls.caculate_depoistusd()/tnc_price_usdt)
             return depoist_limit if depoist_limit >0 else 1
         except Exception as e:

@@ -73,7 +73,7 @@ def createFundingTx(walletSelf,walletOther,asset_id):
         # "witness":"024140{sign1}2321{pubkey1}ac4140{sign2}2321{pubkey2}ac"
     }
 
-def createCTX(addressFunding,balanceSelf,balanceOther,pubkeySelf,pubkeyOther,fundingScript,asset_id):
+def createCTX(balanceSelf,balanceOther,pubkeySelf,pubkeyOther,fundingScript,asset_id,fundingTxId):
     RSMCContract=createRSMCContract(hashSelf=pubkeyToAddressHash(pubkeySelf.strip()),pubkeySelf=pubkeySelf.strip(),
                                     hashOther=pubkeyToAddressHash(pubkeyOther.strip()),
                                     pubkeyOther=pubkeyOther.strip(),magicTimestamp=time.time())
@@ -83,13 +83,7 @@ def createCTX(addressFunding,balanceSelf,balanceOther,pubkeySelf,pubkeyOther,fun
     txAttributes = [time_stamp]
     tx = ContractTransaction()
 
-    funding_vouts=get_gasvout_by_address(addressFunding,balanceSelf+balanceOther)
-    if not funding_vouts:
-        return {"message":"{0} no enough balance".format(addressFunding)}
-
-
-
-    funding_inputs=[tx.createInput(preHash=item[0], preIndex=item[2]) for item in funding_vouts ]
+    funding_inputs=[tx.createInput(preHash=fundingTxId, preIndex=0)]
 
 
     output_to_RSMC= tx.createOutput(assetId=asset_id, amount=balanceSelf,address=RSMCContract["address"])

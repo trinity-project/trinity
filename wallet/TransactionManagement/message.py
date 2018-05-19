@@ -406,7 +406,7 @@ class FounderMessage(TransactionMessage):
             founder = transaction.get_founder()
 
         commitment = createCTX(founder.get("addressFunding"), deposit, deposit, self_pubkey,
-                               partner_pubkey, founder.get("scriptFunding"), asset_id)
+                               partner_pubkey, founder.get("scriptFunding"), asset_id, founder.get('txId'))
 
         address_self = pubkey_to_address(self_pubkey)
 
@@ -460,7 +460,7 @@ class FounderMessage(TransactionMessage):
             Txfounder = createFundingTx(walletpartner, walletfounder, asset_id)
 
         commitment = createCTX(Txfounder.get("addressFunding"), self.deposit, self.deposit, self.sender_pubkey,
-                           self.receiver_pubkey, Txfounder.get("scriptFunding"), asset_id)
+                           self.receiver_pubkey, Txfounder.get("scriptFunding"), asset_id, Txfounder.get(('txId')))
 
         address_self = pubkey_to_address(self.sender_pubkey)
 
@@ -774,7 +774,7 @@ class RsmcMessage(TransactionMessage):
         message = {}
         if role_index == 0 or role_index == 1:
             commitment = createCTX(founder["originalData"]["addressFunding"], sender_balance, receiver_balance,
-                               sender_pubkey, receiver_pubkey, founder["originalData"]["scriptFunding"], asset_id)
+                               sender_pubkey, receiver_pubkey, founder["originalData"]["scriptFunding"], asset_id, founder.get('txId'))
 
             revocabledelivery = createRDTX(commitment.get("addressRSMC"), pubkey_to_address(sender_pubkey), sender_balance,
                                        commitment.get("txId"),
@@ -1209,7 +1209,6 @@ class HtlcMessage(TransactionMessage):
     def check_if_the_last_router(self):
         return self.wallet.url == self.router[-1][0]
 
-
     def _handle_0_message(self):
         Payment.update_hash_history(self.hr, self.channel_name, self.count, "pending")
         self.send_responses(self.role_index)
@@ -1543,7 +1542,7 @@ class SettleMessage(TransactionMessage):
         receiver_pubkey = receiver.split("@")[0].strip()
         sender_balance = balance.get(sender_pubkey).get(asset_type.upper())
         receiver_balance = balance.get(receiver_pubkey).get(asset_type.upper())
-        asset_id = get_asset_type_id(asset_type.upper())
+        asset_id = get_asset_type_id(asset_type)
         settlement_tx = createRefundTX(address_founder,float(sender_balance),receiver_balance,sender_pubkey,receiver_pubkey,
                                     founder_script, asset_id)
 
@@ -1705,15 +1704,25 @@ class SyncBlockMessage(Message):
         return None
 
 
-def monitor_founding(tx_id, channel_name, state):
+def monitor_founding(tx_id, channel_name, state, channel_action = "AddChannel"):
     channel = ch.Channel.channel(channel_name)
-    if not check_vmstate(tx_id):
+    balance = channel.get_balance()
+    try:
+        asset_type = list(list(balance.values())[0].keys())[0].upper()
+    except Exception as error:
+        LOG.error('monitor_founding: no asset type is found. error: {}'.format(error))
+        channel.delete()
+        return None
+
+    if asset_type not in ['NEO', 'GAS'] and (not check_vmstate(tx_id)):
         LOG.error("{} vm state error".format(tx_id))
         channel.delete()
         return None
     deposit = channel.get_deposit()
     channel.update_channel(state=state, balance = deposit)
-    ch.sync_channel_info_to_gateway(channel_name,"AddChannel")
+    if state == EnumChannelState.CLOSED.name:
+        channel_action = "DeleteChannel"
+    ch.sync_channel_info_to_gateway(channel_name,channel_action)
     print("Channel is {}".format(state))
     return None
 
