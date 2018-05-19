@@ -12,6 +12,11 @@ if __name__ == "__main__":
     rpc_logger.setLevel(logging.DEBUG)
     tcp_logger.setLevel(logging.DEBUG)
     wst_logger.setLevel(logging.DEBUG)
+    logging.getLogger().disabled = True
+    logging.getLogger(name="jsonrpcclient.client.request").disabled = True
+    logging.getLogger(name="jsonrpcclient.client.response").disabled = True
+    logging.getLogger(name="jsonrpcserver.dispatcher.request").disabled = True
+    logging.getLogger(name="jsonrpcserver.dispatcher.response").disabled = True
     try:
         gateway_singleton.start()
     except KeyboardInterrupt:

@@ -75,10 +75,9 @@ class AsyncJsonRpc():
         async with ClientSession() as session:
             endpoint = 'http://' + addr[0] + ":" + str(addr[1])
             client = aiohttpClient(session, endpoint)
-            # start_time = time.time()
+            rpc_logger.info("--> sender to {} : {}".format(addr,params))
             response = await client.request(method, params)
-            # ttl = time.time() - start_time
-            # print("++++++++gateway<----->wallet spend time{}+++++++++".format(ttl))
+            rpc_logger.info("<-- receiver from {} : {}".format(addr,params))
             from gateway import gateway_singleton
             gateway_singleton.handle_wallet_response(method, response)
 
@@ -87,7 +86,9 @@ class AsyncJsonRpc():
         try:
             endpoint = 'http://' + addr[0] + ":" + str(addr[1])
             client = HTTPClient(endpoint)
+            rpc_logger.info("--> sender to {} : {}".format(addr,params))
             res = client.request(method, params)
+            rpc_logger.info("<-- receiver from {} : {}".format(addr,params))
         except Exception:
             res = None
         finally:
