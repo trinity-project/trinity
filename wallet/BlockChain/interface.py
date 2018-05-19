@@ -133,13 +133,13 @@ def get_balance_extend(address, asset_name="NEO"):
         "id": 1
     }
     result = requests.post(Configure["BlockChain"]["NeoUrlEnhance"], headers=headers, json=data).json()
-    if result.json().get("result"):
+    if result.get("result"):
         try:
             return result.json().get("result").get(asset_type.get(asset_name))
         except Exception as e:
             LOG.error(str(e))
             return 0
-    LOG.error(json.dumps(result.json()))
+    LOG.error(json.dumps(result))
     return 0
 
 
