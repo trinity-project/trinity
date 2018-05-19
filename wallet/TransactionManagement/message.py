@@ -1603,7 +1603,7 @@ class SettleResponseMessage(TransactionMessage):
                 raise Exception("Not Find the url")
             raw_data = witness.format(signSelf=tx_data_sign_self, signOther=tx_data_sign_other)
             TrinityTransaction.sendrawtransaction(TrinityTransaction.genarate_raw_data(tx_data, raw_data))
-            register_monitor(tx_id,monitor_founding,self.channel_name, EnumChannelState.CLOSED.name, "DeleteChannel")
+            register_monitor(tx_id,monitor_founding,self.channel_name, EnumChannelState.CLOSED.name)
 
     def verify(self):
         return True, None
@@ -1712,6 +1712,8 @@ def monitor_founding(tx_id, channel_name, state, channel_action = "AddChannel"):
         return None
     deposit = channel.get_deposit()
     channel.update_channel(state=state, balance = deposit)
+    if state == EnumChannelState.CLOSED.name:
+        channel_action = "DeleteChannel"
     ch.sync_channel_info_to_gateway(channel_name,channel_action)
     print("Channel is {}".format(state))
     return None
