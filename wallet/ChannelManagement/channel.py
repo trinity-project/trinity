@@ -261,7 +261,7 @@ def close_channel(channel_name, wallet):
     peer = ch.get_peer(wallet.url)
 
     #tx = trans.TrinityTransaction(channel_name, wallet)
-    #tx.realse_transaction()
+    #tx.release_transaction()
     mg.SettleMessage.create(channel_name,wallet,wallet.url, peer, asset_type) #ToDo
 
 

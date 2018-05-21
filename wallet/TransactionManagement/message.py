@@ -810,11 +810,11 @@ class RsmcMessage(TransactionMessage):
             if tx.get("Commitment"):
                 commitment = tx.get("Commitment").get("originalData")
                 rscmcscript = commitment["scriptRSMC"]
-                tx_id = commitment.get('tx_Id')
+                tx_id = commitment.get('txId')
             elif tx.get("HCTX"):
                 commitment = tx.get("HCTX").get("originalData")
                 rscmcscript = commitment["RSMCscript"]
-                tx_id = commitment.get('tx_Id')
+                tx_id = commitment.get('txId')
             else:
                 LOG.error('Unsupported tx type currently! tx_nounce: {}'.format(tx_nonce))
                 return
