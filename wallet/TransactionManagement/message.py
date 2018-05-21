@@ -775,7 +775,8 @@ class RsmcMessage(TransactionMessage):
         message = {}
         if role_index == 0 or role_index == 1:
             commitment = createCTX(founder["originalData"]["addressFunding"], sender_balance, receiver_balance,
-                               sender_pubkey, receiver_pubkey, founder["originalData"]["scriptFunding"], asset_id, founder.get('txId'))
+                                   sender_pubkey, receiver_pubkey, founder["originalData"]["scriptFunding"],
+                                   asset_id, founder["originalData"].get('txId'))
 
             revocabledelivery = createRDTX(commitment.get("addressRSMC"), pubkey_to_address(sender_pubkey), sender_balance,
                                        commitment.get("txId"),
