@@ -26,7 +26,7 @@ import time
 from model.channel_model import APIChannel
 from model.base_enum import EnumChannelState
 from wallet.TransactionManagement import message as mg
-from wallet.utils import pubkey_to_address
+from wallet.utils import pubkey_to_address, convert_number_auto
 from wallet.Interface.gate_way import sync_channel
 from log import LOG
 import json
@@ -108,6 +108,11 @@ class Channel(object):
         result = APIChannel.add_channel(self.channel_name,self.founder, self.partner,
                      EnumChannelState.INIT.name, 0, self.deposit)
         if cli:
+            deposit = convert_number_auto(asset_type.upper(), deposit)
+            if 0 >= deposit:
+                LOG.error('Could not trigger register channel because of illegal deposit<{}>.'.format(deposit))
+                return False
+            
             message={"MessageType":"RegisterChannel",
                  "Sender": self.founder,
                  "Receiver": self.partner,

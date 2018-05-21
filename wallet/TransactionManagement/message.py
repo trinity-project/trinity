@@ -35,7 +35,8 @@ from wallet.utils import sign,\
     check_max_deposit,\
     check_min_deposit,\
     check_deposit, \
-    is_valid_deposit
+    is_valid_deposit, \
+    convert_number_auto
 from TX.utils import blockheight_to_script
 from wallet.BlockChain.monior import register_block, \
     register_monitor,\
@@ -757,10 +758,10 @@ class RsmcMessage(TransactionMessage):
 
         if role_index in [0,2]:
             check_balance_ok, sender_balance, receiver_balance, value = \
-                RsmcMessage._calculate_and_check_balance(balance_value, receiver_balance_value, value)
+                RsmcMessage._calculate_and_check_balance(asset_type.upper(), balance_value, receiver_balance_value, value)
         elif role_index in [1,3]:
             check_balance_ok, receiver_balance, sender_balance, value = \
-                RsmcMessage._calculate_and_check_balance(receiver_balance_value, balance_value, value)
+                RsmcMessage._calculate_and_check_balance(asset_type.upper(), receiver_balance_value, balance_value, value)
         else:
             check_balance_ok = False
 
@@ -846,8 +847,9 @@ class RsmcMessage(TransactionMessage):
         pass
 
     @staticmethod
-    def _calculate_and_check_balance(sender_balance, receiver_balance, amount):
+    def _calculate_and_check_balance(asset_type, sender_balance, receiver_balance, amount):
         try:
+            amount = convert_number_auto(asset_type, amount)
             if not (0 < amount <= sender_balance):
                 return False, sender_balance, receiver_balance, amount
 
@@ -881,7 +883,7 @@ class RsmcMessage(TransactionMessage):
 
             return True, sender_balance_after_payment, receiver_balance_after_payment, payment_mount
         except Exception as exp_info:
-            LOG.exception('Exception occured. Exception Info: {}'.format(exp_info))
+            LOG.exception('Exception occurred. Exception Info: {}'.format(exp_info))
 
         return False, sender_balance, receiver_balance, amount
 

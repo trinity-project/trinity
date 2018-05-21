@@ -140,7 +140,7 @@ def get_asset_type_name(asset_type):
     asset= Configure.get("AssetType")
     for key, value in asset.items():
         if value.replace("0x","") == asset_type.replace("0x",""):
-            return key
+            return key.upper()
         else:
             continue
     return None
@@ -226,6 +226,26 @@ def convert_to_float(deposit):
         return 0
 
 
+def convert_number_auto(asset_type, number: int or float or str):
+    if asset_type in ['NEO']:
+        LOG.warning('Convert number<{}> to integer for asset<{}> just support integer type transaction.'.format(number, asset_type))
+        if isinstance(number, str):
+            number = float(number)
+        return int(number)
+
+    return number
+
+
+def is_supported_value_type(asset_type, value: float or int):
+    if isinstance(value, int):
+        return True
+    else:
+        decimal_part = str(value).split('.')[1].strip()
+        if asset_type in ['NEO'] and 0 != int(decimal_part):
+            return False
+
+        return True
+
 
 def is_valid_deposit(asset_type, deposit, spv_wallet=False):
     """
@@ -239,6 +259,14 @@ def is_valid_deposit(asset_type, deposit, spv_wallet=False):
         asset_type = get_asset_type_name(asset_type)
     else:
         asset_type = asset_type.upper()
+
+    if not asset_type:
+        LOG.error('Must specified the asset type. Current value is None')
+        return False
+
+    if not is_supported_value_type(asset_type, deposit):
+        LOG.error('Invalid Type. Unsupported value<{}> for asset<{}>.'.format(deposit, asset_type))
+        return False
 
     if spv_wallet:
         try:
