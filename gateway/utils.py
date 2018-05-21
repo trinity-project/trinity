@@ -10,7 +10,6 @@ import os
 import sys
 path = os.getcwd().replace("/gateway", "")
 sys.path.append(path)
-print(path)
 from model.channel_model import APIChannel
 from model.node_model import APINode
 import struct
@@ -78,7 +77,6 @@ def get_wallet_addr(url, clients):
         wallet_addr = (ip, int(port))
     else:
         wallet_addr = ("0.0.0.0", 0)
-    # print(wallet)
     return wallet_addr
 
 def get_wallet_attribute(attr_name, current_url, asset_type, net_tops):

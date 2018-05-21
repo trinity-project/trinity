@@ -43,18 +43,17 @@ class WsocketService:
                 message = await con.recv()
                 wst_logger.debug("receive: %s", message)
             except websockets.exceptions.ConnectionClosed as ex:
-                # print(ex.code, ex.reason)
                 wst_logger.info('client {} disconnected'.format(con.remote_address))
                 gateway_singleton.handle_spv_lost_connection(con)
                 # task done or cancelled
                 break
             # except Exception:
             #     pass
-            else: gateway_singleton.handle_spv_request(con, message)
-                # try:
-                #     gateway_singleton.handle_spv_request(con, message)
-                # except Exception:
-                #     pass
+            else: 
+                try:
+                    gateway_singleton.handle_spv_request(con, message)
+                except Exception:
+                    pass
 
     @staticmethod
     async def send_msg(con, msg):

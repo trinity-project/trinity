@@ -240,8 +240,8 @@ if __name__ == "__main__":
     # jsonrpcclient.request("http://localhost:8077", 'SyncChannel', json.dumps(message1))
     # time.sleep(5)
     jsonrpcclient.request("http://localhost:8077", 'SyncWalletData', json.dumps(message_2))
-    jsonrpcclient.request("http://localhost:8077", 'SyncWalletData', json.dumps(message_3))
-    time.sleep(5)
+    # jsonrpcclient.request("http://localhost:8077", 'SyncWalletData', json.dumps(message_3))
+    # time.sleep(5)
     # jsonrpcclient.request("http://localhost:8077", 'SyncChannel', json.dumps(message1))
 
     # jsonrpcclient.request("http://localhost:8077", 'SyncChannel', json.dumps(message1))
