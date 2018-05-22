@@ -1454,6 +1454,8 @@ class HtlcResponsesMessage(TransactionMessage):
             if self.role_index ==1:
                 if self.check_if_the_last_router():
                     r = Payment(self.wallet).fetch_r(self.hr)
+                    if not r:
+                        LOG.error("Not get the r with hr {}".format(self.hr))
                     RResponse.create(self.wallet.url, self.sender, self.tx_nonce,
                                      self.channel_name, self.hr, r[0], self.count, self.asset_type, self.comments)
                     self.transaction.update_transaction(str(self.tx_nonce), State="confirm")
