@@ -7,17 +7,25 @@ from config import cg_debug
 if __name__ == "__main__":
     import logging
     from glog import tcp_logger,wst_logger,rpc_logger
-    # logging.basicConfig(level=logging.DEBUG)
-    # get_event_loop().set_debug(cg_debug)
-    rpc_logger.setLevel(logging.DEBUG)
-    tcp_logger.setLevel(logging.DEBUG)
-    wst_logger.setLevel(logging.DEBUG)
+    logging.getLogger().disabled = True
+    logging.getLogger(name="jsonrpcclient.client.request").disabled = True
+    logging.getLogger(name="jsonrpcclient.client.response").disabled = True
+    logging.getLogger(name="jsonrpcserver.dispatcher.request").disabled = True
+    logging.getLogger(name="jsonrpcserver.dispatcher.response").disabled = True
+    if not cg_debug:
+        rpc_logger.setLevel(logging.INFO)
+        tcp_logger.setLevel(logging.INFO)
+        wst_logger.setLevel(logging.INFO)
+    else:
+        rpc_logger.setLevel(logging.DEBUG)
+        tcp_logger.setLevel(logging.DEBUG)
+        wst_logger.setLevel(logging.DEBUG)
     try:
         gateway_singleton.start()
     except KeyboardInterrupt:
         gateway_singleton.clearn()
-    # except Exception as exc:
-    #     pass
-    finally:
+    except OSError as ex:
+        print(ex.args[1])
+    else:
         gateway_singleton.close()
         # pass

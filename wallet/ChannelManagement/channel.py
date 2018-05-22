@@ -26,20 +26,10 @@ import time
 from model.channel_model import APIChannel
 from model.base_enum import EnumChannelState
 from wallet.TransactionManagement import message as mg
-from wallet.utils import pubkey_to_address
+from wallet.utils import pubkey_to_address, convert_number_auto
 from wallet.Interface.gate_way import sync_channel
 from log import LOG
 import json
-
-
-def get_gateway_ip():
-    return "127.0.0.1:20554"
-
-def query_ip(address):
-    return "127.0.0.1:20554"
-
-
-GateWayUrl = get_gateway_ip()
 
 
 class Channel(object):
@@ -92,6 +82,7 @@ class Channel(object):
             return None
         ch =cls(channel_info.src_addr, channel_info.dest_addr)
         ch.channel_name = channelname
+        ch.channel_info = channel_info
         return ch
 
 
@@ -101,7 +92,7 @@ class Channel(object):
         md5s.update(str(time.time()).encode())
         return md5s.hexdigest().upper()
 
-    def create(self, asset_type, deposit, cli=True, comments= None):
+    def create(self, asset_type, deposit, cli=True, comments= None, channel_name = None):
         #if Channel.get_channel(self.founder_pubkey, self.partner_pubkey):
             #raise ChannelExist
         self.start_time = time.time()
@@ -111,12 +102,17 @@ class Channel(object):
         subitem.setdefault(asset_type, deposit)
         self.deposit[self.founder_pubkey] = subitem
         self.deposit[self.partner_pubkey] = subitem
-        self.channel_name = self._init_channle_name()
+        self.channel_name = self._init_channle_name() if not channel_name else channel_name
         print(self.channel_name)
 
         result = APIChannel.add_channel(self.channel_name,self.founder, self.partner,
                      EnumChannelState.INIT.name, 0, self.deposit)
         if cli:
+            deposit = convert_number_auto(asset_type.upper(), deposit)
+            if 0 >= deposit:
+                LOG.error('Could not trigger register channel because of illegal deposit<{}>.'.format(deposit))
+                return False
+
             message={"MessageType":"RegisterChannel",
                  "Sender": self.founder,
                  "Receiver": self.partner,
@@ -209,8 +205,8 @@ class Channel(object):
 
 
 
-def create_channel(founder, partner, asset_type, depoist:int, cli=True, comments = None):
-    return Channel(founder, partner).create(asset_type, depoist, cli, comments)
+def create_channel(founder, partner, asset_type, depoist:float, cli=True, comments = None, channel_name = None):
+    return Channel(founder, partner).create(asset_type, depoist, cli, comments, channel_name)
 
 
 def filter_channel_via_address(address1, address2, state=None):
@@ -223,6 +219,20 @@ def get_channel_via_address(address):
     return
 
 
+def get_channel_via_name(params):
+    print ('enter get_channel_via_name', params)
+    if params:
+        print('params is ', params)
+        channel_set = APIChannel.batch_query_channel(filters=params[0]).get('content')
+        print('channel_set is ', channel_set)
+        result=[]
+        for channel in channel_set:
+            result.append({k:v for k, v in channel.__dict__.items() if k in APIChannel.table.required_item})
+        print('result is ', result)
+        return result
+    return None
+
+
 def chose_channel(channels, publick_key, tx_count, asset_type):
     for ch in channels:
         balance = ch.balance
@@ -230,6 +240,9 @@ def chose_channel(channels, publick_key, tx_count, asset_type):
         if balance:
             try:
                 balance_value = balance.get(publick_key).get(asset_type.upper())
+                # Currently, each channel just is mapping to one asset type, so check the balance_value is needed
+                if not balance_value:
+                    continue
             except:
                 continue
             if float(balance_value) >= float(tx_count):
@@ -240,10 +253,24 @@ def chose_channel(channels, publick_key, tx_count, asset_type):
 
 def close_channel(channel_name, wallet):
     ch = Channel.channel(channel_name)
+    if ch:
+        balance = ch.get_balance()
+    else:
+        LOG.error('Channel <{}> not found!'.format(channel_name))
+        return
+
+    public_key = wallet.url.split('@')[0]
+    if balance and balance.get(public_key):
+        asset_type = list(list(balance.values())[0].keys())[0].upper()
+    else:
+        LOG.error('Illegal balance<{}> of channel<{}>'.format(balance, channel_name))
+        return
+
     peer = ch.get_peer(wallet.url)
+
     #tx = trans.TrinityTransaction(channel_name, wallet)
-    #tx.realse_transaction()
-    mg.SettleMessage.create(channel_name,wallet,wallet.url, peer, "TNC") #ToDo
+    #tx.release_transaction()
+    mg.SettleMessage.create(channel_name,wallet,wallet.url, peer, asset_type) #ToDo
 
 
 def sync_channel_info_to_gateway(channel_name, type):
@@ -261,18 +288,32 @@ def sync_channel_info_to_gateway(channel_name, type):
 
 
 def udpate_channel_when_setup(address):
-    channels = APIChannel.batch_query_channel(filters={"src_addr":address})
+    """
+
+    :param address: wallet url
+    :return:
+    """
+
+    channels = APIChannel.batch_query_channel(filters={"src_addr":address, "state":EnumChannelState.OPENED.name})
+    channel_list =[]
     if channels.get("content"):
         for ch in channels["content"]:
-            if ch.state == EnumChannelState.OPENED.name:
-                sync_channel_info_to_gateway(ch.channel, "UpdateChannel")
-
-    channeld = APIChannel.batch_query_channel(filters={"dest_addr":address})
+            c = Channel.channel(ch.channel)
+            channel_info = {"ChannelName": ch.channel,
+                            "Founder": ch.src_addr,
+                             "Receiver": ch.dest_addr,
+                             "Balance": c.get_balance()}
+            channel_list.append(channel_info)
+    channeld = APIChannel.batch_query_channel(filters={"dest_addr":address,"state":EnumChannelState.OPENED.name})
     if channeld.get("content"):
         for ch in channeld["content"]:
-            if ch.state == EnumChannelState.OPENED.name:
-                sync_channel_info_to_gateway(ch.channel, "UpdateChannel")
-
+            c = Channel.channel(ch.channel)
+            channel_info = {"ChannelName": ch.channel,
+                            "Founder": ch.src_addr,
+                            "Receiver": ch.dest_addr,
+                            "Balance": c.get_balance()}
+            channel_list.append(channel_info)
+    return channel_list
 
 if __name__ == "__main__":
     result = APIChannel.query_channel(channel="1BE0FCD56A27AD46C22B8EEDC4E835EA")

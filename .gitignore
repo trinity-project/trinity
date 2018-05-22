@@ -7,5 +7,6 @@ __pycache__/
 xuvenv/
 *log/
 venv/
+gateway/*.json
 wallet/*.json
 wallet/*.db

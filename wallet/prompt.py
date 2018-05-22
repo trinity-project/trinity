@@ -11,7 +11,7 @@ import traceback
 from prompt_toolkit import prompt
 from prompt_toolkit.shortcuts import print_tokens
 from prompt_toolkit.token import Token
-from twisted.internet import reactor, endpoints
+from twisted.internet import reactor, endpoints, protocol
 from log import LOG
 from lightwallet.Settings import settings
 from wallet.utils import get_arg, \
@@ -19,7 +19,7 @@ from wallet.utils import get_arg, \
     check_support_asset_type,\
     check_onchain_balance,\
     check_partner
-from wallet.Interface.rpc_interface import RpcInteraceApi
+from wallet.Interface.rpc_interface import RpcInteraceApi,CurrentLiveWallet
 from twisted.web.server import Site
 from lightwallet.prompt import PromptInterface
 from wallet.ChannelManagement.channel import create_channel, \
@@ -41,12 +41,12 @@ from wallet.BlockChain.monior import monitorblock,Monitor
 from wallet.TransactionManagement.payment import Payment
 import requests
 import qrcode_terminal
+from wallet.BlockChain.interface import get_balance
+from configure import Configure
 
 
 GateWayIP = Configure.get("GatewayIP")
 Version = Configure.get("Version")
-
-
 
 
 class UserPromptInterface(PromptInterface):
@@ -62,7 +62,8 @@ class UserPromptInterface(PromptInterface):
                               "channel payment {asset}, {count}, [{comments}]",
                               "channel qrcode {on/off}",
                               "channel trans",
-                              "channel show uri"
+                              "channel show uri",
+                              "channel depoist_limit"
                               ]
         self.commands.extend(self.user_commands)
         self.qrcode = False
@@ -74,7 +75,7 @@ class UserPromptInterface(PromptInterface):
         """
         wallet = self.Wallet.ToJson()
         try:
-            account =  wallet.get("accounts")[0]
+            account = wallet.get("accounts")[0]
             return account["address"], account["pubkey"]
         except AttributeError:
             return None,None
@@ -172,7 +173,7 @@ class UserPromptInterface(PromptInterface):
                 "params": ["AGgZna4kbTXPm16yYZyG6RyrQz2Sqotno6",self.Wallet.address],
                 "id": 1
                 }
-        result = requests.post(url="http://47.88.35.235:21332",json=request)
+        result = requests.post(url=Configure['BlockChain']['NeoUrlEnhance'], json=request)
         txid = result.json().get("result")
         if txid:
             print(txid)
@@ -193,15 +194,19 @@ class UserPromptInterface(PromptInterface):
     def do_open(self, arguments):
         super().do_open(arguments)
         if self.Wallet:
+            self.Wallet.address, self.Wallet.pubkey = self.get_address()
+            CurrentLiveWallet.update_current_wallet(self.Wallet)
             self.Wallet.BlockHeight = self.Wallet.LoadStoredData("BlockHeight")
             Monitor.start_monitor(self.Wallet)
             result = self.retry_channel_enable()
-            if result:
-                udpate_channel_when_setup(self.Wallet.url)
+            # if result:
+            #     udpate_channel_when_setup(self.Wallet.url)
 
     def do_create(self, arguments):
         super().do_create(arguments)
         if self.Wallet:
+            self.Wallet.address, self.Wallet.pubkey = self.get_address()
+            CurrentLiveWallet.update_current_wallet(self.Wallet)
             blockheight = get_block_count()
             self.Wallet.BlockHeight = blockheight
             self.Wallet.SaveStoredData("BlockHeight", blockheight)
@@ -218,14 +223,22 @@ class UserPromptInterface(PromptInterface):
         self.go_on = False
         Monitor.stop_monitor()
         self.do_close_wallet()
+        CurrentLiveWallet.update_current_wallet(None)
         reactor.stop()
 
     def enable_channel(self):
-        self.Wallet.address, self.Wallet.pubkey = self.get_address()
+
         try:
             result = gate_way.join_gateway(self.Wallet.pubkey).get("result")
             if result:
                 self.Wallet.url = json.loads(result).get("MessageBody").get("Url")
+
+                try:
+                    spv = json.loads(result).get("MessageBody").get("Spv")
+                    spv_port = spv.strip().split(":")[1]
+                except:
+                    spv_port = "8766"
+                gate_way.GatewayInfo.update_spv_port(spv_port)
                 self.Channel = True
                 print("Channel Function Enabled")
                 return True
@@ -253,6 +266,8 @@ class UserPromptInterface(PromptInterface):
                 raise Exception("Please Open The Wallet First")
             partner = get_arg(arguments, 1)
             asset_type = get_arg(arguments, 2)
+            if asset_type:
+                asset_type = asset_type.upper()
             deposit = float(get_arg(arguments, 3).strip())
             if not check_support_asset_type(asset_type):
                 print("Now we just support TNC, mulit-asset will coming soon")
@@ -300,6 +315,9 @@ class UserPromptInterface(PromptInterface):
                 count = get_arg(arguments, 3)
                 hr = None
 
+            if asset_type:
+                asset_type = asset_type.upper()
+
             receiverpubkey, receiverip= receiver.split("@")
             channels = filter_channel_via_address(self.Wallet.url,receiver, EnumChannelState.OPENED.name)
             LOG.debug("Channels {}".format(str(channels)))
@@ -313,8 +331,8 @@ class UserPromptInterface(PromptInterface):
             if channel_name:
                 tx_nonce = trinitytx.TrinityTransaction(channel_name, self.Wallet).get_latest_nonceid()
                 mg.RsmcMessage.create(channel_name,self.Wallet,self.Wallet.pubkey,
-                                      receiverpubkey, int(count), receiverip, gate_way_ip, str(tx_nonce+1),
-                                      asset_type="TNC", comments=hr)
+                                      receiverpubkey, float(count), receiverip, gate_way_ip, str(tx_nonce+1),
+                                      asset_type=asset_type, comments=hr)
             else:
                 message = {"MessageType":"GetRouterInfo",
                            "Sender":self.Wallet.url,
@@ -336,7 +354,10 @@ class UserPromptInterface(PromptInterface):
                     n = router.get("Next")
                     LOG.info("Get Next {}".format(str(n)))
                     fee_router = [i for i in r if i[0] not in (self.Wallet.url, receiver)]
-                    fee = reduce(lambda x, y:x+y,[float(i[1]) for i in fee_router])
+                    if fee_router:
+                        fee = reduce(lambda x, y:x+y,[float(i[1]) for i in fee_router])
+                    else:
+                        fee = 0
                     LOG.info("Get Fee {}".format(str(fee)))
                     answer = prompt("will use fee %s , Do you still want tx? [Yes/No]> " %(str(fee)))
                     if answer.upper() in["YES","Y"]:
@@ -395,7 +416,7 @@ class UserPromptInterface(PromptInterface):
                 qrcode_terminal.draw(paycode, version=4)
             print(paycode)
             return None
-        elif command ==  "trans":
+        elif command == "trans":
             channel_name = get_arg(arguments, 1)
             tx= trinitytx.TrinityTransaction(channel_name,self.Wallet)
             result = tx.read_transaction()
@@ -408,6 +429,10 @@ class UserPromptInterface(PromptInterface):
             else:
                 self.help()
             return None
+        elif command == "depoist_limit":
+            from wallet.utils import DepositAuth
+            return DepositAuth.deposit_limit()
+
 
     def _channel_noopen(self):
         print("Channel Function Can Not be Opened at Present, You can try again via channel enable")
@@ -486,9 +511,23 @@ def main():
 
 
     UserPrompt = UserPromptInterface()
-    api_server_rpc = RpcInteraceApi("20556")
-    endpoint_rpc = "tcp:port={0}:interface={1}".format("20556", "0.0.0.0")
-    endpoints.serverFromString(reactor, endpoint_rpc).listen(Site(api_server_rpc.app.resource()))
+    port = Configure.get("NetPort")
+    address = Configure.get("RpcListenAddress")
+    port = port if port else "20556"
+    address = address if address else "0.0.0.0"
+    try:
+        api_server_rpc = RpcInteraceApi(port)
+        endpoint_rpc = "tcp:port={0}:interface={1}".format(port, address)
+        endpoints.serverFromString(reactor, endpoint_rpc).listen(Site(api_server_rpc.app.resource()))
+    except Exception as e:
+        LOG.error(str(e))
+        print("Setup jsonRpc server error, please check if the port {} already opend".format(port))
+
+    from wallet.Interface.tcp import GatwayClientFactory
+    gateway_ip, gateway_port = Configure.get("GatewayTCP").split(":")
+    print(gateway_ip, gateway_port)
+    f = GatwayClientFactory()
+    reactor.connectTCP(gateway_ip.strip(), int(gateway_port.strip()), f)
 
 
     reactor.suggestThreadPoolSize(15)

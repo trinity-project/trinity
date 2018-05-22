@@ -24,11 +24,20 @@ SOFTWARE."""
 
 import requests
 from wallet.configure import Configure
-from wallet.BlockChain.interface import get_balance
 from log import LOG
 import json
+from wallet.utils import get_wallet_info
 
+class GatewayInfo(object):
+    Spv_port = None
 
+    @classmethod
+    def update_spv_port(cls, port):
+        cls.Spv_port = port
+
+    @classmethod
+    def get_spv_port(cls):
+        return cls.Spv_port
 
 def sync_channel(message_type, channel_name,founder, receiver, balance):
     message = {"MessageType": message_type,
@@ -53,23 +62,26 @@ def sync_channel(message_type, channel_name,founder, receiver, balance):
     return result.json()
 
 
+def sync_channel_list(channel_list):
+    message = {"MessageType":"SyncChannelList",
+               "MessageBody":{
+                   channel_list
+               }}
+    request = {
+        "jsonrpc": "2.0",
+        "method": "SyncChannel",
+        "params": [message],
+        "id": 1
+    }
+    result = requests.post(Configure["GatewayURL"], json=request)
+    return result.json()
+
 
 def join_gateway(publickey):
-    balance = {}
-    for i in Configure["AssetType"].keys():
-        b = get_balance(publickey, i.upper())
-        balance[i] = b
-    message = {"MessageType":"SyncWallet",
-               "MessageBody":{
-                   "Publickey":publickey,
-                   "CommitMinDeposit":Configure["CommitMinDeposit"],
-                   "Fee":Configure["Fee"],
-                   "alias":Configure["alias"],
-                   "AutoCreate":Configure["AutoCreate"],
-                   "MaxChannel":Configure["MaxChannel"],
-                   "Balance":balance
-                   }
-               }
+    LOG.info("JoinGateway {}".format(publickey))
+    messagebody = get_wallet_info(publickey)
+    message = {"MessageType": "SyncWallet",
+    "MessageBody": messagebody}
     request = {
         "jsonrpc": "2.0",
         "method": "SyncWalletData",
@@ -91,15 +103,17 @@ def get_router_info(message):
     return result.json()
 
 
-def send_message(message):
+def send_message(message, method="TransactionMessage" ):
     LOG.info("GateWay Send Message: {}".format(json.dumps(message)))
     request= {
             "jsonrpc": "2.0",
-            "method": "TransactionMessage",
+            "method": method,
             "params": [message],
             "id": 1
     }
     result = requests.post(Configure["GatewayURL"], json=request)
     return result.json()
+
+
 
 

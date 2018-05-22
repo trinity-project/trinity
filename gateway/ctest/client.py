@@ -22,7 +22,8 @@ class Client:
             if not self.sock.connect_ex(addr):
                 self.connected = True
             else:
-                pass
+                raise Exception("connection error")
+                # pass
                 # todo 连接出错处理、统计
     
     def _close(self):
@@ -58,3 +59,36 @@ class Client:
             elif utils.check_end_mark(temp):
                 break
         return utils.decode_bytes(bdata)
+
+if __name__ == "__main__":
+    import struct
+    client = Client()
+    addr = ("127.0.0.1", 8089)
+    version = 0x000001
+    cmd = 0x000065
+    # bdata = data.encode("utf-8")
+    # header = [version, len(b"helloddddddddddddfffffffpk1"), cmd]
+    # header_pack = struct.pack("!3I", *header)
+    # client.send(addr, header_pack + b"helloddddddddddddfffffffpk1")
+    # bdata = b"worldgggggggggggggggggggggpk2"
+    message = {
+        "MessageType":"RegisterChannel",
+        "Sender": "pk2@xxxx",
+        "Receiver": "pk3@xxxx",
+        "MessageBody": {}
+    }
+    import json
+    bdata = json.dumps(message).encode("utf-8")
+    header = [version, len(bdata), cmd]
+    header_pack = struct.pack("!3I", *header)
+    
+    
+    client.send(addr, header_pack + bdata)
+    # client._connect(addr)
+    # time.sleep(0.4)
+    # client.send(addr, bdata[10:])
+
+    # client.send(addr, b"p1geeeeeeeerrrrrrrrrrr")
+    # client.send(addr, b"p2ffffffrrrrrrrrr")
+    # client.send(addr, b"p3eeeeeee55555555555555")
+    # client.send(addr, b"p43333333332222222222222222222/")

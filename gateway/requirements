@@ -7,3 +7,4 @@ requests==2.18.4
 networkx==2.1
 psutil==5.4.5
 matplotlib==2.2.2
+uvloop==0.9.1

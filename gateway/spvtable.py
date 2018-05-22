@@ -149,10 +149,22 @@ class SPVHashTable(object):
     def maps(self):
         return self.__maps
 
+    def find_keys(self, spv_key):
+        """
+
+        :param spv_key: The public key string of the spv\n
+        :return: list type. [wallet-1-public-key , wallet-2-public-key, ...]
+        """
+        keys = []
+        for key in self.maps:
+            if spv_key in self.find(key):
+                keys.append(key)
+        return keys
+
     def find(self, key):
         """
 
-        :param key: The public key string of the wallet
+        :param key: The public key string of the wallet\n
         :return: list type. [spv-1-public-key , spv-2-public-key, ...]
         """
         return self.maps.get(key)
@@ -166,8 +178,22 @@ class SPVHashTable(object):
         """
         if key not in self.maps.keys():
             self.maps.update({key:[value]})
-        elif value not in self.maps.get(key):
+        else:
             self.maps[key].append(value)
+        # elif value not in self.maps.get(key):
+        #     self.maps[key].append(value)
+
+    def remove(self, key, value):
+        """
+
+        :param key:     The public key string of the wallet
+        :param value:   the public key of the spv
+        :return:
+        """
+        if key in self.maps.keys():
+            spv_list = self.maps[key]
+            if value in spv_list:
+                spv_list.remove(value)
 
     def sync_table(self, hash_table):
         """

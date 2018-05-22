@@ -1,4 +1,4 @@
-"""Author: Trinity Core Team 
+"""Author: Trinity Core Team
 
 MIT License
 
@@ -24,16 +24,35 @@ SOFTWARE."""
 Configure = {
     "alias":"TrinityNode",# you can rename your node
     "GatewayURL":"http://localhost:8077",
-    "Fee": 0.01,
-     "AutoCreate": True, # if the wallet accept the create channel request automatically
-    "CommitMinDeposit": 0,  # the min commit deposit
-     "MaxChannel":100,# the max number to create channel, if 0 , no limited
+    "AutoCreate": True, # if the wallet accept the create channel request automatically
+    "Channel":{
+        "TNC":{
+            "CommitMinDeposit": 1,   # the min commit deposit
+            "CommitMaxDeposit": 5000,# the max commit deposit
+            "Fee": 0.01 # gateway fee
+        },
+        "NEO": {
+            "Fee": 0.001
+        },
+        "GAS": {
+            "Fee": 0.001
+        }
+    },#
+    "MaxChannel":100, # the max number to create channel, if 0 , no limited
+    "NetAddress":"localhost",
+    "RpcListenAddress":"0.0.0.0",
+    "NetPort":"20556",
+    "GatewayTCP":"localhost:8089",
     "AssetType":{
-        "TNC": "0x849d095d07950b9e56d0c895ec48ec5100cfdff1"
+        "TNC": "0x849d095d07950b9e56d0c895ec48ec5100cfdff1",
+        "NEO": "0xc56f33fc6ecfcd0c225c4ab356fee59390af8560be0e930faebe74a6daff7c9b",
+        "GAS": "0x602c79718b16e442de58778e148d0b1084e3b2dffd5de6b7b16cee7969282de7",
     },
     "BlockChain":{
         "RPCClient":"http://localhost:20332", # neocli client json-rpc
         "NeoProtocol":"/home/will/neocli/protocol.json",
+        "NeoUrlEnhance": "http://47.254.64.251:21332",
+        "NeoNetUrl" : "http://47.254.64.251:20332"
     },
     "DataBase":{"url": "http://localhost:20554"
     },

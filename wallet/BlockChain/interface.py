@@ -22,11 +22,24 @@ LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE."""
 import requests
-from TX.utils import pubkeyToAddressHash
+from TX.utils import pubkeyToAddressHash,pubkeyToAddress
 from wallet.configure import Configure
+from log import LOG
+import json
+
+
 AssetType=Configure["AssetType"]
 
-TestNetUrl = "http://47.88.35.235:20332"
+
+NetUrl = Configure['BlockChain']['NeoNetUrl']
+
+class InterfaceRpc(object):
+    RequetsID = 0
+
+    @classmethod
+    def ID(cls):
+        cls.RequetsID +=1
+        return cls.RequetsID
 
 
 def get_block_count():
@@ -34,10 +47,10 @@ def get_block_count():
   "jsonrpc": "2.0",
   "method": "getblockcount",
   "params": [],
-  "id": 1
+  "id": InterfaceRpc.ID()
 }
 
-    result = requests.post(url = TestNetUrl, json = request)
+    result = requests.post(url = NetUrl, json = request)
     return result.json()["result"]
 
 
@@ -45,9 +58,9 @@ def send_raw(raw):
     request =  { "jsonrpc": "2.0",
   "method": "sendrawtransaction",
   "params": [raw],
-  "id": 1}
+  "id": InterfaceRpc.ID()}
 
-    result = requests.post(url=TestNetUrl, json=request)
+    result = requests.post(url=NetUrl, json=request)
     if result.json().get("result") is not None:
         return result.json()["result"]
     else:
@@ -59,15 +72,25 @@ def get_bolck(index):
   "jsonrpc": "2.0",
   "method": "getblock",
   "params": [int(index), 1],
-  "id": 1
+  "id": InterfaceRpc.ID()
 }
-    result = requests.post(url=TestNetUrl, json=request)
+    result = requests.post(url=NetUrl, json=request)
     return result.json()["result"]
 
 
 def get_balance(pubkey, asset_type):
-    asset_script = AssetType.get(asset_type.upper()).replace("0x","")
+    if len(asset_type) >10:
+        asset_script = asset_type
+    else:
+        asset_script = AssetType.get(asset_type.upper())
+    asset_script = asset_script.replace("0x","")
+    if asset_script == "c56f33fc6ecfcd0c225c4ab356fee59390af8560be0e930faebe74a6daff7c9b":
+        return get_balance_extend(pubkeyToAddress(pubkey),"NEO")
+    elif asset_script == "602c79718b16e442de58778e148d0b1084e3b2dffd5de6b7b16cee7969282de7":
+        return get_balance_extend(pubkeyToAddress(pubkey),"GAS")
+
     address_hash = pubkeyToAddressHash(pubkey)
+
     def convert_hash(hash):
         t = hash[-2::-2]
         t1 = hash[::-2]
@@ -87,15 +110,59 @@ def get_balance(pubkey, asset_type):
                 }
             ]
         ],
-        "id": 3
+        "id": InterfaceRpc.ID()
     }
-    result = requests.post(url=TestNetUrl, json=request)
+    result = requests.post(url=NetUrl, json=request)
     if result.json().get("result"):
         value = result.json().get("result").get("stack")[0].get("value")
         if value:
             return hex2interger(value)
     return 0
 
+
+def get_balance_extend(address, asset_name="NEO"):
+    asset_type = {"NEO":"neoBalance",
+                  "GAS":"gasBalance"}
+    headers = {
+        "Content-Type": "application/json"
+    }
+    data = {
+        "jsonrpc": "2.0",
+        "method": "getBalance",
+        "params": [address],
+        "id": 1
+    }
+    result = requests.post(Configure["BlockChain"]["NeoUrlEnhance"], headers=headers, json=data).json()
+    if result.get("result"):
+        try:
+            return result.get("result").get(asset_type.get(asset_name))
+        except Exception as e:
+            LOG.error(str(e))
+            return 0
+    LOG.error(json.dumps(result))
+    return 0
+
+
+def get_application_log(tx_id):
+    request = {
+        "jsonrpc": "2.0",
+        "method": "getapplicationlog",
+        "params": [tx_id],
+        "id": InterfaceRpc.ID()
+    }
+
+    result = requests.post(url=NetUrl, json=request)
+    LOG.debug(result)
+    return result.json()["result"]
+
+
+def check_vmstate(tx_id):
+    try:
+        result = get_application_log(tx_id)
+        return "FAULT" not in result["vmstate"]
+    except KeyError as e:
+        LOG.error(str(e))
+        return False
 
 
 def hex2interger(input):

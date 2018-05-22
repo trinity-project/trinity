@@ -1,11 +1,17 @@
 import binascii
 
 import time
+
+import requests
 from base58 import b58decode
+from neocore.KeyPair import KeyPair
 from neocore.UInt160 import UInt160
 from neocore.UInt256 import UInt256
 from neocore.BigInteger import BigInteger
 from neocore.Cryptography.Crypto import Crypto
+
+from TX.config import headers, NODEURL
+
 
 def hex_reverse(input):
     tmp=binascii.unhexlify(input[2:])
@@ -187,12 +193,51 @@ def R_to_script(input):
     output="".join([len_all,hex_R_len, hex_R])
     return output
 
+def privtkey_sign(txData,privteKey):
+    return binascii.hexlify(Crypto.Sign(message=txData, private_key=privteKey)).decode()
+
+def privtKey_to_publicKey(privtKey):
+
+    pk=binascii.unhexlify(privtKey)
+    keypair = KeyPair(pk)
+    vk=keypair.PublicKey.encode_point(True).decode()
+    return vk
+
+
+def sign(txData,privtKey):
+    signature = privtkey_sign(txData,privtKey)
+    publicKey=privtKey_to_publicKey(privtKey)
+    rawData=txData+"01"+"41"+"40"+signature+"23"+"21"+publicKey+"ac"
+    return rawData
+
+def get_neovout_by_address(address,amount):
+    data = {
+        "jsonrpc": "2.0",
+        "method": "getNeoVout",
+        "params": [address,amount],
+        "id": 1
+    }
+
+    res = requests.post(NODEURL, headers=headers, json=data).json()
+    return res["result"]
+
+def get_gasvout_by_address(address,amount):
+    data = {
+        "jsonrpc": "2.0",
+        "method": "getGasVout",
+        "params": [address,amount],
+        "id": 1
+    }
+
+    res = requests.post(NODEURL, headers=headers, json=data).json()
+    return res["result"]
+
 
 if __name__=="__main__":
     # print(b58decode("b58decode"))
-    # print (blockheight_to_script(1319028))
+    print (blockheight_to_script(543367))
     print (R_to_script("eefc152a46960a4d3092146ae8b27890c3a3d12db14f6f7309d3f5c41b4e456d"))
-    # print (createTxid("d101a00400ca9a3b140069ec6703aa90a51280ab74eb92cb09cca0549514dfee2d95daf8b67b960aaf997900ab94abc3fd1b53c1087472616e7366657267f1dfcf0051ec48ec95c8d0569e0b95075d099d84f10400ca9a3b140069ec6703aa90a51280ab74eb92cb09cca05495142099925aaeee225009fc51b599c71fee77bd30ca53c1087472616e7366657267f1dfcf0051ec48ec95c8d0569e0b95075d099d84f100000000000000000320dfee2d95daf8b67b960aaf997900ab94abc3fd1b202099925aaeee225009fc51b599c71fee77bd30caf0045ac46e4b0000"))
+    print (createTxid("80000220d904f61978b83b706445d2c418e336de4d6261d4f0045b02bf190150410fa91bb27e69ed1c32ab5a34232283957aac0f54481a92e34c9107f234c00000029b7cffdaa674beae0f930ebe6085af9093e5fe56b34a5c220ccdcf6efc336fc500e1f505000000009f4ae7295ca9cf93a5bbad7fb715116c3adc55f79b7cffdaa674beae0f930ebe6085af9093e5fe56b34a5c220ccdcf6efc336fc500e9a43500000000d904f61978b83b706445d2c418e336de4d6261d4"))
     # print (blockheight_to_script(1380761))
     # print (createTxid("d101a00400ca9a3b140069ec6703aa90a51280ab74eb92cb09cca0549514dfee2d95daf8b67b960aaf997900ab94abc3fd1b53c1087472616e7366657267f1dfcf0051ec48ec95c8d0569e0b95075d099d84f10400ca9a3b140069ec6703aa90a51280ab74eb92cb09cca05495142099925aaeee225009fc51b599c71fee77bd30ca53c1087472616e7366657267f1dfcf0051ec48ec95c8d0569e0b95075d099d84f100000000000000000320dfee2d95daf8b67b960aaf997900ab94abc3fd1b202099925aaeee225009fc51b599c71fee77bd30caf0045ac46e4b0000"))
     # sadf=createRSMCContract(hashSelf="3503e814a07c87a94870295c53be41bb289cde87",hashOther="f196e324402cc78ba506a8b28d79a3ee6951f50f",pubkeyOther="034e9d2751e1fec65a6a42bc097bdf55c7a79762df7d6e970277f46405c376683a",pubkeySelf="03eb0881d1d64754d50255bf16079ed6cbc3982463a8904cb919422b39178bef3f",magicTimestamp=time.time())

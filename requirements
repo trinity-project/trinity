@@ -83,4 +83,5 @@ wcwidth==0.1.7
 websockets==4.0.1
 Werkzeug==0.14.1
 yarl==1.1.1
+uvloop==0.9.1
 zope.interface==4.4.3

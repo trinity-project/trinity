@@ -1,0 +1,37 @@
+{
+    "MessageType": "GetChannelList", 
+    "MessageBody": {
+        "Channel": [
+            {
+                "ChannelName": "2223190CD7DA0A054118471E58A8C512",
+                "Founder": "pk1@47.254.39.10:8089",
+                "Receiver": "pk2@47.98.228.81:8089",
+                "Balance": {
+                    "pk1": {
+                        "TNC": 10.0
+                    }, 
+                    "pk2": {
+                        "TNC": 10.0
+                    }
+                }
+            }
+        ],
+        "Wallet": {
+            "Publickey": "pk1", 
+            "alias": "TrinityNode", 
+            "AutoCreate": true, 
+            "Ip": "localhost:20556",
+            "MaxChannel": 100,
+            "Channel": {
+                "TNC": {
+                    "CommitMinDeposit": 1,
+                    "CommitMaxDeposit": 5000,
+                    "Fee": 0.01
+                }
+            }, 
+            "Balance": {
+                "TNC": 50016.0
+            }
+        }
+    }
+}

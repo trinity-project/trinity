@@ -15,6 +15,7 @@ jsonrpcclient = {extras = ["aiohttp"]}
 requests = "*"
 networkx = "*"
 pymongo = "*"
+uvloop = "*"
 
 
 [dev-packages]

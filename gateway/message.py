@@ -31,6 +31,17 @@ class Message:
         ]
         return tx_types
     
+    @staticmethod
+    def get_payment_msg_types():
+        """
+        :return: all payment msg type
+        """
+        payment_types = [
+            "PaymentLinkAck", 
+            "PaymentAck"
+        ]
+        return payment_types
+
     # classmethods
     @classmethod
     def get_valid_msg_types(cls):
@@ -39,6 +50,7 @@ class Message:
         """
         valid_types = [
             "RegisterChannel",
+            "RegisterKeepAlive",
             "SyncChannelState",
             "ResumeChannel"
         ]
@@ -57,7 +69,7 @@ class Message:
             is_valid = False
         elif not msg_type:
             is_valid = False
-        if origin == "node":
+        if origin == "node" and msg_type != "RegisterKeepAlive":
             if msg_type not in cls.get_valid_msg_types():
                 is_valid = False
             elif not data.get("Sender"):
@@ -103,6 +115,31 @@ class MessageMake:
         return message
 
     @staticmethod
+    def make_search_target_wallet(spv_pk, asset_type):
+        message= {
+            "MessageType": "SearchWallet",
+            "AssetType": asset_type,
+            "Publickey": spv_pk
+        }
+        return message
+
+    @staticmethod
+    def make_ack_search_target_wallet(wallet_pks):
+        message= {
+            "MessageType": "AckSearchWallet",
+            "Wallets": wallet_pks
+        }
+        return message
+
+    @staticmethod
+    def make_ack_search_spv(data):
+        message= {
+            "MessageType": "AckSearchSpv",
+            "Wallets": data
+        }
+        return message
+
+    @staticmethod
     def make_join_net_msg(sender):
         message = {
             "MessageType": "JoinNet",
@@ -119,11 +156,12 @@ class MessageMake:
         return message
     
     @staticmethod
-    def make_ack_sync_wallet_msg(url):
+    def make_ack_sync_wallet_msg(url, spv_ip_port):
         message = {
             "MessageType": "AckSyncWallet",
             "MessageBody": {
-                "Url": url
+                "Url": url,
+                "Spv": spv_ip_port
             }
         }
         return message
@@ -142,10 +180,12 @@ class MessageMake:
 
     ###### message for node begin ########
     @staticmethod
-    def make_resume_channel_msg(sender):
+    def make_recover_channel_msg(sender, receiver, asset_type):
         message = {
             "MessageType": "ResumeChannel",
-            "Sender": sender
+            "AssetType": asset_type,
+            "Sender": sender,
+            "Receiver": receiver
         }
         return message
 
@@ -169,6 +209,7 @@ class MessageMake:
             "MessageType": msg_type,
             "SyncType": sync_type,
             "Sender": sender,
+            "AssetType": kwargs.get("asset_type"),
             "Broadcast": kwargs.get("broadcast"),
             "Source": kwargs.get("source"),
             "Target": kwargs.get("target"),

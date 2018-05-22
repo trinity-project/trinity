@@ -3,6 +3,7 @@ import asyncio
 from aiohttp import web, ClientSession
 from jsonrpcserver.aio import methods
 from jsonrpcclient.aiohttp_client import aiohttpClient
+from jsonrpcclient.http_client import HTTPClient
 from glog import rpc_logger
 
 @methods.add
@@ -14,6 +15,11 @@ async def ShowNodeList(params):
 async def JoinNet(params):
     from gateway import gateway_singleton
     return gateway_singleton.handle_wallet_request('JoinNet', params)
+
+@methods.add
+async def Search(params):
+    from gateway import gateway_singleton
+    return gateway_singleton.handle_wallet_request('Search', params)
 
 @methods.add
 async def SyncWalletData(params):
@@ -44,7 +50,6 @@ class AsyncJsonRpc():
     @staticmethod
     async def handle(request):
         request = await request.text()
-        # print(request)
         response = await methods.dispatch(request)
         if response.is_notification:
             return web.Response()
@@ -70,18 +75,32 @@ class AsyncJsonRpc():
         async with ClientSession() as session:
             endpoint = 'http://' + addr[0] + ":" + str(addr[1])
             client = aiohttpClient(session, endpoint)
-            # start_time = time.time()
+            rpc_logger.info("--> send msg to wallet_cli{}".format(addr))
             response = await client.request(method, params)
-            # ttl = time.time() - start_time
-            # print("++++++++gateway<----->wallet spend time{}+++++++++".format(ttl))
             from gateway import gateway_singleton
-            gateway_singleton.handle_jsonrpc_response(method, response)
+            gateway_singleton.handle_wallet_response(method, response)
+
+    @staticmethod
+    def jsonrpc_request_sync(method, params, addr):
+        try:
+            endpoint = 'http://' + addr[0] + ":" + str(addr[1])
+            client = HTTPClient(endpoint)
+            rpc_logger.info("--> sender to {}\n : {}".format(addr,params))
+            res = client.request(method, params)
+            rpc_logger.info("<-- receiver from {}\n : {}".format(addr,res))
+        except Exception:
+            res = None
+        finally:
+            return res
 
 if __name__ == "__main__":
-    message = {
-        "MessageType": "FounderSign"
-    }
-    asyncio.get_event_loop().run_until_complete(
-        AsyncJsonRpc.jsonrpc_request(asyncio.get_event_loop(), "TransactionMessage", message)
-    )
+    addr = ("0.0.0.0", 8077)
+    import json
+    AsyncJsonRpc.jsonrpc_request_sync("Search", json.dumps({}), addr)
+    # message = {
+    #     "MessageType": "FounderSign"
+    # }
+    # asyncio.get_event_loop().run_until_complete(
+    #     AsyncJsonRpc.jsonrpc_request(asyncio.get_event_loop(), "TransactionMessage", message)
+    # )
     # AsyncJsonRpc.start_jsonrpc_serv()

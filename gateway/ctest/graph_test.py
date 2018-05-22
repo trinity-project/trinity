@@ -102,7 +102,7 @@ def show_graph(g):
     nx.draw(g, with_labels=True, font_weight='bold')
     # nx.draw_shell(G, nlist=[range(5, 10), range(5)], with_labels=True, font_weight='bold')
     # plt.show()
-    plt.savefig("test/graph.png")
+    plt.savefig("ctest/graph.png")
 
 def show_edges(g):
     print(g["A"])
@@ -265,8 +265,12 @@ if __name__ == "__main__":
     # print(list(G.adjacency()))
     # show_graph(rg)
     from networkx.readwrite import json_graph
-    G1.add_edge(1,2, weight=2)
-    G1.add_edge(1,3, weight=2)
-    G1.add_edge(3,2, weight=2)
-    print(json_graph.node_link_data(G1))
-    show_graph(G3)
+    # G1.add_edge(1,2, weight=2)
+    # G1.add_edge(1,3, weight=2)
+    # G1.add_edge(3,2, weight=2)
+    G1.add_node("a")
+    G1.add_node("b")
+    G1.add_node("b")
+    print(list(G1.nodes()))
+    # print(json_graph.node_link_data(G1))
+    show_graph(G1)
