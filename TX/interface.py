@@ -40,17 +40,7 @@ def createCTX(
         fundingScript,
         asset_id,
         fundingTxId):
-    if asset_id not in [NEO, GAS]:
-        return tnc_factory.createCTX(
-            addressFunding,
-            balanceSelf,
-            balanceOther,
-            pubkeySelf,
-            pubkeyOther,
-            fundingScript,
-            asset_id)
-
-    elif asset_id == NEO:
+    if asset_id == NEO:
         return neo_factory.createCTX(
             balanceSelf,
             balanceOther,
@@ -69,6 +59,16 @@ def createCTX(
             fundingScript,
             asset_id,
             fundingTxId)
+    else:
+        # default operations tokens like TNC
+        return tnc_factory.createCTX(
+            addressFunding,
+            balanceSelf,
+            balanceOther,
+            pubkeySelf,
+            pubkeyOther,
+            fundingScript,
+            asset_id)
 
 
 def createRDTX(
@@ -79,7 +79,14 @@ def createRDTX(
         RSMCScript,
         asset_id):
 
-    if asset_id not in [NEO, GAS]:
+    if asset_id == NEO:
+        return neo_factory.createRDTX(
+            addressSelf, balanceSelf, CTxId, RSMCScript, asset_id)
+
+    elif asset_id == GAS:
+        return gas_factory.createRDTX(
+            addressSelf, balanceSelf, CTxId, RSMCScript, asset_id)
+    else:
         return tnc_factory.createRDTX(
             addressRSMC,
             addressSelf,
@@ -88,32 +95,23 @@ def createRDTX(
             RSMCScript,
             asset_id)
 
-    elif asset_id == NEO:
-        return neo_factory.createRDTX(
-            addressSelf, balanceSelf, CTxId, RSMCScript, asset_id)
-
-    elif asset_id == GAS:
-        return gas_factory.createRDTX(
-            addressSelf, balanceSelf, CTxId, RSMCScript, asset_id)
-
 
 def createBRTX(addressRSMC, addressOther, balanceSelf, RSMCScript, CTxId, asset_id):
 
-    if asset_id not in [NEO, GAS]:
-        return tnc_factory.createBRTX(
-            addressRSMC,
-            addressOther,
-            balanceSelf,
-            RSMCScript,
-            asset_id)
-
-    elif asset_id == NEO:
+    if asset_id == NEO:
         return neo_factory.createBRTX(
             addressOther, balanceSelf, RSMCScript, CTxId, asset_id)
 
     elif asset_id == GAS:
         return gas_factory.createBRTX(
             addressOther, balanceSelf, RSMCScript, CTxId, asset_id)
+    else:
+        return tnc_factory.createBRTX(
+            addressRSMC,
+            addressOther,
+            balanceSelf,
+            RSMCScript,
+            asset_id)
 
 
 def createRefundTX(
@@ -125,17 +123,7 @@ def createRefundTX(
         fundingScript,
         asset_id):
 
-    if asset_id not in [NEO,GAS]:
-        return tnc_factory.createRefundTX(
-            addressFunding,
-            balanceSelf,
-            balanceOther,
-            pubkeySelf,
-            pubkeyOther,
-            fundingScript,
-            asset_id)
-
-    elif asset_id == NEO:
+    if asset_id == NEO:
         return neo_factory.createRefundTX(
             addressFunding,
             balanceSelf,
@@ -147,6 +135,15 @@ def createRefundTX(
 
     elif asset_id == GAS:
         return gas_factory.createRefundTX(
+            addressFunding,
+            balanceSelf,
+            balanceOther,
+            pubkeySelf,
+            pubkeyOther,
+            fundingScript,
+            asset_id)
+    else:
+        return tnc_factory.createRefundTX(
             addressFunding,
             balanceSelf,
             balanceOther,
@@ -168,19 +165,7 @@ def create_sender_HCTX(
         addressFunding,
         fundingScript,
         asset_id):
-    if asset_id not in [NEO,GAS]:
-        return tnc_factory.create_sender_HCTX(
-            pubkeySender,
-            pubkeyReceiver,
-            HTLCValue,
-            balanceSender,
-            balanceReceiver,
-            hashR,
-            addressFunding,
-            fundingScript,
-            asset_id)
-
-    elif asset_id == NEO:
+    if asset_id == NEO:
         return neo_factory.create_sender_HCTX(
             pubkeySender,
             pubkeyReceiver,
@@ -203,6 +188,17 @@ def create_sender_HCTX(
             addressFunding,
             fundingScript,
             asset_id)
+    else:
+        return tnc_factory.create_sender_HCTX(
+            pubkeySender,
+            pubkeyReceiver,
+            HTLCValue,
+            balanceSender,
+            balanceReceiver,
+            hashR,
+            addressFunding,
+            fundingScript,
+            asset_id)
 
 
 def create_sender_RDTX(
@@ -212,7 +208,15 @@ def create_sender_RDTX(
         senderHCTxId,
         RSMCScript,
         asset_id):
-    if asset_id not in [NEO, GAS]:
+    if asset_id == NEO:
+        return neo_factory.create_sender_RDTX(
+            addressSender, balanceSender, senderHCTxId, RSMCScript, asset_id)
+
+    elif asset_id == GAS:
+        return gas_factory.create_sender_RDTX(
+            addressSender, balanceSender, senderHCTxId, RSMCScript, asset_id)
+
+    else:
         return tnc_factory.create_sender_RDTX(
             addressRSMC,
             addressSender,
@@ -220,14 +224,6 @@ def create_sender_RDTX(
             senderHCTxId,
             RSMCScript,
             asset_id)
-
-    elif asset_id == NEO:
-        return neo_factory.create_sender_RDTX(
-            addressSender, balanceSender, senderHCTxId, RSMCScript, asset_id)
-
-    elif asset_id == GAS:
-        return gas_factory.create_sender_RDTX(
-            addressSender, balanceSender, senderHCTxId, RSMCScript, asset_id)
 
 
 def createHEDTX(
@@ -237,15 +233,7 @@ def createHEDTX(
         HTLCScript,
         senderHCTxId,
         asset_id):
-    if asset_id not in [NEO, GAS]:
-        return tnc_factory.createHEDTX(
-            addressHTLC,
-            addressReceiver,
-            HTLCValue,
-            HTLCScript,
-            asset_id)
-
-    elif asset_id == NEO:
+    if asset_id == NEO:
         return neo_factory.createHEDTX(
             addressReceiver,
             HTLCValue,
@@ -260,6 +248,13 @@ def createHEDTX(
             HTLCScript,
             senderHCTxId,
             asset_id)
+    else:
+        return tnc_factory.createHEDTX(
+            addressHTLC,
+            addressReceiver,
+            HTLCValue,
+            HTLCScript,
+            asset_id)
 
 
 def createHTTX(
@@ -270,16 +265,7 @@ def createHTTX(
         HTLCScript,
         senderHCTxId,
         asset_id):
-    if asset_id not in [NEO, GAS]:
-        return tnc_factory.createHTTX(
-            addressHTLC,
-            pubkeySender,
-            pubkeyReceiver,
-            HTLCValue,
-            HTLCScript,
-            asset_id)
-
-    elif asset_id == NEO:
+    if asset_id == NEO:
         return neo_factory.createHTTX(
             pubkeySender,
             pubkeyReceiver,
@@ -296,6 +282,14 @@ def createHTTX(
             HTLCScript,
             senderHCTxId,
             asset_id)
+    else:
+        return tnc_factory.createHTTX(
+            addressHTLC,
+            pubkeySender,
+            pubkeyReceiver,
+            HTLCValue,
+            HTLCScript,
+            asset_id)
 
 
 def createHTRDTX(
@@ -305,7 +299,14 @@ def createHTRDTX(
         HTTxId,
         RSMCScript,
         asset_id):
-    if asset_id not in [NEO, GAS]:
+    if asset_id == NEO:
+        return neo_factory.createHTRDTX(
+            addressSender, HTLCValue, HTTxId, RSMCScript, asset_id)
+
+    elif asset_id == GAS:
+        return gas_factory.createHTRDTX(
+            addressSender, HTLCValue, HTTxId, RSMCScript, asset_id)
+    else:
         return tnc_factory.createHTRDTX(
             addressRSMC,
             addressSender,
@@ -313,14 +314,6 @@ def createHTRDTX(
             HTTxId,
             RSMCScript,
             asset_id)
-
-    elif asset_id == NEO:
-        return neo_factory.createHTRDTX(
-            addressSender, HTLCValue, HTTxId, RSMCScript, asset_id)
-
-    elif asset_id == GAS:
-        return gas_factory.createHTRDTX(
-            addressSender, HTLCValue, HTTxId, RSMCScript, asset_id)
 
 
 # receiver HTLC
@@ -334,19 +327,7 @@ def create_receiver_HCTX(
         addressFunding,
         fundingScript,
         asset_id):
-    if asset_id not in [NEO, GAS]:
-        return tnc_factory.create_receiver_HCTX(
-            pubkeySender,
-            pubkeyReceiver,
-            HTLCValue,
-            balanceSender,
-            balanceReceiver,
-            hashR,
-            addressFunding,
-            fundingScript,
-            asset_id)
-
-    elif asset_id == NEO:
+    if asset_id == NEO:
         return neo_factory.create_receiver_HCTX(
             pubkeySender,
             pubkeyReceiver,
@@ -369,6 +350,17 @@ def create_receiver_HCTX(
             addressFunding,
             fundingScript,
             asset_id)
+    else:
+        return tnc_factory.create_receiver_HCTX(
+            pubkeySender,
+            pubkeyReceiver,
+            HTLCValue,
+            balanceSender,
+            balanceReceiver,
+            hashR,
+            addressFunding,
+            fundingScript,
+            asset_id)
 
 
 def create_receiver_RDTX(
@@ -378,16 +370,7 @@ def create_receiver_RDTX(
         receiver_HCTxId,
         RSMCScript,
         asset_id):
-    if asset_id not in [NEO, GAS]:
-        return tnc_factory.create_receiver_RDTX(
-            addressRSMC,
-            addressReceiver,
-            balanceReceiver,
-            receiver_HCTxId,
-            RSMCScript,
-            asset_id)
-
-    elif asset_id == NEO:
+    if asset_id == NEO:
         return neo_factory.create_receiver_RDTX(
             addressReceiver,
             balanceReceiver,
@@ -397,6 +380,14 @@ def create_receiver_RDTX(
 
     elif asset_id == GAS:
         return gas_factory.create_receiver_RDTX(
+            addressReceiver,
+            balanceReceiver,
+            receiver_HCTxId,
+            RSMCScript,
+            asset_id)
+    else:
+        return tnc_factory.create_receiver_RDTX(
+            addressRSMC,
             addressReceiver,
             balanceReceiver,
             receiver_HCTxId,
@@ -412,15 +403,7 @@ def createHTDTX(
         receiver_HCTxId,
         asset_id):
 
-    if asset_id not in [NEO, GAS]:
-        return tnc_factory.createHTDTX(
-            addressHTLC,
-            pubkeySender,
-            HTLCValue,
-            HTLCScript,
-            asset_id)
-
-    elif asset_id == NEO:
+    if asset_id == NEO:
         return neo_factory.createHTDTX(
             pubkeySender,
             HTLCValue,
@@ -435,6 +418,13 @@ def createHTDTX(
             HTLCScript,
             receiver_HCTxId,
             asset_id)
+    else:
+        return tnc_factory.createHTDTX(
+            addressHTLC,
+            pubkeySender,
+            HTLCValue,
+            HTLCScript,
+            asset_id)
 
 
 def createHETX(
@@ -445,16 +435,7 @@ def createHETX(
         HTLCScript,
         receiver_HCTxId,
         asset_id):
-    if asset_id not in [NEO, GAS]:
-        return tnc_factory.createHETX(
-            addressHTLC,
-            pubkeySender,
-            pubkeyReceiver,
-            HTLCValue,
-            HTLCScript,
-            asset_id)
-
-    elif asset_id == NEO:
+    if asset_id == NEO:
         return neo_factory.createHETX(
             pubkeySender,
             pubkeyReceiver,
@@ -471,6 +452,14 @@ def createHETX(
             HTLCScript,
             receiver_HCTxId,
             asset_id)
+    else:
+        return tnc_factory.createHETX(
+            addressHTLC,
+            pubkeySender,
+            pubkeyReceiver,
+            HTLCValue,
+            HTLCScript,
+            asset_id)
 
 
 def createHERDTX(
@@ -480,7 +469,15 @@ def createHERDTX(
         HETxId,
         RSMCScript,
         asset_id):
-    if asset_id not in [NEO, GAS]:
+    if asset_id == NEO:
+        return neo_factory.createHERDTX(
+            addressReceiver, HTLCValue, HETxId, RSMCScript, asset_id)
+
+    elif asset_id == GAS:
+        return gas_factory.createHERDTX(
+            addressReceiver, HTLCValue, HETxId, RSMCScript, asset_id)
+
+    else:
         return tnc_factory.createHERDTX(
             addressRSMC,
             addressReceiver,
@@ -488,14 +485,6 @@ def createHERDTX(
             HETxId,
             RSMCScript,
             asset_id)
-
-    elif asset_id == NEO:
-        return neo_factory.createHERDTX(
-            addressReceiver, HTLCValue, HETxId, RSMCScript, asset_id)
-
-    elif asset_id == GAS:
-        return gas_factory.createHERDTX(
-            addressReceiver, HTLCValue, HETxId, RSMCScript, asset_id)
 
 
 def create_sender_HTLC_TXS(
@@ -508,19 +497,7 @@ def create_sender_HTLC_TXS(
         addressFunding,
         fundingScript,
         asset_id):
-    if asset_id not in [NEO, GAS]:
-        return tnc_factory.create_sender_HTLC_TXS(
-            pubkeySender,
-            pubkeyReceiver,
-            HTLCValue,
-            balanceSender,
-            balanceReceiver,
-            hashR,
-            addressFunding,
-            fundingScript,
-            asset_id)
-
-    elif asset_id == NEO:
+    if asset_id == NEO:
         return neo_factory.create_sender_HTLC_TXS(
             pubkeySender,
             pubkeyReceiver,
@@ -543,6 +520,17 @@ def create_sender_HTLC_TXS(
             addressFunding,
             fundingScript,
             asset_id)
+    else:
+        return tnc_factory.create_sender_HTLC_TXS(
+            pubkeySender,
+            pubkeyReceiver,
+            HTLCValue,
+            balanceSender,
+            balanceReceiver,
+            hashR,
+            addressFunding,
+            fundingScript,
+            asset_id)
 
 
 def create_receiver_HTLC_TXS(
@@ -555,19 +543,7 @@ def create_receiver_HTLC_TXS(
         addressFunding,
         fundingScript,
         asset_id):
-    if asset_id not in [NEO, GAS]:
-        return tnc_factory.create_receiver_HTLC_TXS(
-            pubkeySender,
-            pubkeyReceiver,
-            HTLCValue,
-            balanceSender,
-            balanceReceiver,
-            hashR,
-            addressFunding,
-            fundingScript,
-            asset_id)
-
-    elif asset_id == NEO:
+    if asset_id == NEO:
         return neo_factory.create_receiver_HTLC_TXS(
             pubkeySender,
             pubkeyReceiver,
@@ -581,6 +557,17 @@ def create_receiver_HTLC_TXS(
 
     elif asset_id == GAS:
         return gas_factory.create_receiver_HTLC_TXS(
+            pubkeySender,
+            pubkeyReceiver,
+            HTLCValue,
+            balanceSender,
+            balanceReceiver,
+            hashR,
+            addressFunding,
+            fundingScript,
+            asset_id)
+    else:
+        return tnc_factory.create_receiver_HTLC_TXS(
             pubkeySender,
             pubkeyReceiver,
             HTLCValue,

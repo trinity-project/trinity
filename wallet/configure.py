@@ -44,7 +44,9 @@ Configure = {
     "NetPort":"20556",
     "GatewayTCP":"localhost:8089",
     "AssetType":{
-        "TNC": "0x849d095d07950b9e56d0c895ec48ec5100cfdff1"
+        "TNC": "0x849d095d07950b9e56d0c895ec48ec5100cfdff1",
+        "NEO": "0xc56f33fc6ecfcd0c225c4ab356fee59390af8560be0e930faebe74a6daff7c9b",
+        "GAS": "0x602c79718b16e442de58778e148d0b1084e3b2dffd5de6b7b16cee7969282de7",
     },
     "BlockChain":{
         "RPCClient":"http://localhost:20332", # neocli client json-rpc
