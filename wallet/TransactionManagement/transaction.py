@@ -229,11 +229,12 @@ def funder_trans(params):
     addressFunding = params[2]
     scriptFunding = params[3]
     deposit = params[4]
-    asset_type = params[5]
+    asset_type = params[6]
+    founding_txid = params[5]
     asset_id = get_asset_type_id(asset_type)
     C_tx = createCTX(addressFunding=addressFunding, balanceSelf=deposit,
                           balanceOther=deposit, pubkeySelf=selfpubkey,
-                          pubkeyOther=otherpubkey, fundingScript=scriptFunding, asset_id=asset_id)
+                          pubkeyOther=otherpubkey, fundingScript=scriptFunding, asset_id=asset_id,fundingTxId=founding_txid)
 
     RD_tx = createRDTX(addressRSMC=C_tx["addressRSMC"], addressSelf=pubkeyToAddress(selfpubkey),
                             balanceSelf=deposit, CTxId=C_tx["txId"],
@@ -279,11 +280,13 @@ def rsmc_trans(params):
     balanceother = params[2]
     pubkeyself = params[3]
     pubkeyother = params[4]
-    asset_id = get_asset_type_id(params[5])
+    founding_txid = params[5]
+    asset_id = get_asset_type_id(params[6])
 
     C_tx = createCTX(addressFunding=scriptToAddress(script_funding), balanceSelf=balanceself,
                           balanceOther=balanceother, pubkeySelf=pubkeyself,
-                          pubkeyOther=pubkeyother, fundingScript=script_funding, asset_id=asset_id)
+                          pubkeyOther=pubkeyother, fundingScript=script_funding, asset_id=asset_id,
+                     founding_txid=founding_txid)
 
     RD_tx = createRDTX(addressRSMC=C_tx["addressRSMC"], addressSelf=pubkeyToAddress(pubkeyself),
                             balanceSelf=balanceself, CTxId=C_tx["txId"],

@@ -339,7 +339,8 @@ class FounderMessage(TransactionMessage):
 
     def _handle_0_message(self):
         self.send_responses(role_index=self.role_index)
-        self.transaction.update_transaction(str(self.tx_nonce), Founder = self.founder ,MonitorTxId=self.rdtxid)
+        self.transaction.update_transaction(str(self.tx_nonce), Founder = self.founder ,MonitorTxId=self.rdtxid,
+                                            RoleIndex = 0)
         role_index = int(self.role_index) + 1
         FounderMessage.create(self.channel_name, self.receiver_pubkey,
                               self.sender_pubkey, self.asset_type.upper(), self.deposit, self.sender_ip,
@@ -356,7 +357,7 @@ class FounderMessage(TransactionMessage):
         balance = {}
         balance.setdefault(self.sender_pubkey, subitem)
         balance.setdefault(self.receiver_pubkey, subitem)
-        self.transaction.update_transaction(str(self.tx_nonce), Balance=balance, State="confirm")
+        self.transaction.update_transaction(str(self.tx_nonce), Balance=balance, State="confirm", RoleIndex=1)
 
     def handle_message(self):
         LOG.info("Handle FounderMessage: {}".format(str(self.message)))
@@ -802,7 +803,7 @@ class RsmcMessage(TransactionMessage):
             subitem = {}
             subitem.setdefault(asset_type.upper(), receiver_balance)
             balance.setdefault(receiver_pubkey, subitem)
-            transaction.update_transaction(str(tx_nonce), Balance=balance, State="pending")
+            transaction.update_transaction(str(tx_nonce), Balance=balance, State="pending", RoleIndex=role_index)
             if router and next_router:
                 message.setdefault("Router", router)
                 message.setdefault("NextRouter", next_router)
@@ -945,7 +946,7 @@ class RsmcMessage(TransactionMessage):
         witness = ctx.get("RD").get("originalData").get("witness")
         register_monitor(monitor_ctxid, monitor_height, txData + witness, txDataother, txDataself)
         balance = self.transaction.get_balance(str(self.tx_nonce))
-        self.transaction.update_transaction(str(self.tx_nonce), State="confirm")
+        self.transaction.update_transaction(str(self.tx_nonce), State="confirm", RoleIndex=self.role_index)
         ch.Channel.channel(self.channel_name).update_channel(balance=balance)
         ch.sync_channel_info_to_gateway(self.channel_name, "UpdateChannel")
         last_tx = self.transaction.get_tx_nonce(str(int(self.tx_nonce) - 1))
