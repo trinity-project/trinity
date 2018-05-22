@@ -342,9 +342,8 @@ class Gateway:
                         self.sync_channel_route_to_peer(message)
 
     def handle_wallet_response(self, method, response):
-        print(method)
         if method == "GetChannelList":
-            rpc_logger.info("Get the wallet channel list message:\n{}".format(data))
+            rpc_logger.info("Get the wallet channel list message:\n{}".format(response))
             if type(response) == str:
                 response = json.loads(response)
             self.handle_channel_list_message(response)
