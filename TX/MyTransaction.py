@@ -282,9 +282,14 @@ class ContractTransaction(Transaction):
         return TransactionInput(prevHash=pre_hash, prevIndex=preIndex)
 
 
-    def createOutput(self,assetId, amount, address):
+    def createOutput(self,assetId, amount, address, refunding=False):
         assetId = UInt256(data=binascii.unhexlify(hex_reverse(assetId)))
-        f8amount = Fixed8.TryParse(amount, require_positive=True)
+        if 0 == amount and refunding:
+            return None
+        elif 0 == amount:
+            f8amount = Fixed8.Zero()
+        else:
+            f8amount = Fixed8.TryParse(amount, require_positive=True)
         address_hash = ToAddresstHash(address)
         return TransactionOutput(AssetId=assetId, Value=f8amount, script_hash=address_hash)
 
