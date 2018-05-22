@@ -196,7 +196,7 @@ class Gateway:
             route = utils.search_route_for_wallet(sender, receiver, net_topo, asset_type)
             return json.dumps(MessageMake.make_ack_router_info_msg(route))
         elif method == "TransactionMessage":
-            rpc_logger.info("Get the wallet tx message:\n{}".format(data))
+            rpc_logger.info("Get the wallet tx message: {}".format(msg_type))
             rev = data.get("Receiver")
             rev_pk, rev_ip_port = utils.parse_url(rev)
             if msg_type == "RegisterChannel":
