@@ -10,8 +10,8 @@ import os
 import sys
 path = os.getcwd().replace("/gateway", "")
 sys.path.append(path)
-from model.channel_model import APIChannel
-from model.node_model import APINode
+# from model.channel_model import APIChannel
+# from model.node_model import APINode
 import struct
 
 request_handle_result = {
