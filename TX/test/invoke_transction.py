@@ -23,22 +23,22 @@ walletOther= {
 
 }
 
-asset_id=GAS
+asset_id=NEO
 
-funding_tx = createFundingTx(walletSelf=walletSelf, walletOther=walletOther,asset_id=asset_id)
+# funding_tx = createFundingTx(walletSelf=walletSelf, walletOther=walletOther,asset_id=asset_id)
 
-xxx=create_sender_HTLC_TXS(pubkeySender=walletSelf["pubkey"], pubkeyReceiver=walletOther["pubkey"], HTLCValue=0.5, balanceSender=1.5,
-                           balanceReceiver=2, hashR="1b378c1b8f86f4c3da4b9a3c9df7efb902725054",
-                           addressFunding="AQhpHNWJV5qujGrC6nxzmZzmi9NwibcGY7",
-                           fundingScript="53c56b6c766b00527ac46c766b51527ac4616c766b00c361210382ea335fa9aae67f77fca7831dcdc3a1b97dde3611c24ed62fe66a24814976a5ac642f006c766b51c361210299dc85df93fee8ff2230af0418cf8c5000296f0aed514fcc0ab0dd969ce0bdb0ac635f006c766b00c361210299dc85df93fee8ff2230af0418cf8c5000296f0aed514fcc0ab0dd969ce0bdb0ac642f006c766b51c361210382ea335fa9aae67f77fca7831dcdc3a1b97dde3611c24ed62fe66a24814976a5ac62040000620400516c766b52527ac46203006c766b52c3616c7566",
-                           asset_id=asset_id)
+# xxx=create_sender_HTLC_TXS(pubkeySender=walletSelf["pubkey"], pubkeyReceiver=walletOther["pubkey"], HTLCValue=0.5, balanceSender=1.5,
+#                            balanceReceiver=2, hashR="1b378c1b8f86f4c3da4b9a3c9df7efb902725054",
+#                            addressFunding="AQhpHNWJV5qujGrC6nxzmZzmi9NwibcGY7",
+#                            fundingScript="53c56b6c766b00527ac46c766b51527ac4616c766b00c361210382ea335fa9aae67f77fca7831dcdc3a1b97dde3611c24ed62fe66a24814976a5ac642f006c766b51c361210299dc85df93fee8ff2230af0418cf8c5000296f0aed514fcc0ab0dd969ce0bdb0ac635f006c766b00c361210299dc85df93fee8ff2230af0418cf8c5000296f0aed514fcc0ab0dd969ce0bdb0ac642f006c766b51c361210382ea335fa9aae67f77fca7831dcdc3a1b97dde3611c24ed62fe66a24814976a5ac62040000620400516c766b52527ac46203006c766b52c3616c7566",
+#                            asset_id=asset_id)
 
-
-
-
+# createCTX()
+# print(funding_tx)
+#
 # self_C_tx = createCTX(addressFunding=funding_tx["addressFunding"], balanceSelf=walletSelf["deposit"],
 #                       balanceOther=walletOther["deposit"], pubkeySelf=walletSelf["pubkey"],
-#                       pubkeyOther=walletOther["pubkey"], fundingScript=funding_tx["scriptFunding"])
+#                       pubkeyOther=walletOther["pubkey"], fundingScript=funding_tx["scriptFunding"],fundingTxId=funding_tx["txId"],asset_id=asset_id)
 #
 # self_RD_tx = createRDTX(addressRSMC="AZuXQpSDRaK4L7Cc45W1Fo4R5mTKwJkmNC", addressSelf=pubkeyToAddress(walletSelf["pubkey"]),
 #                         balanceSelf=walletSelf["deposit"], CTxId="0x846125543d43c2402e2da9be72ebcd42c77381f38979af0a8164c7c080649dfb",

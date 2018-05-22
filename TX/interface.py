@@ -42,13 +42,13 @@ def createCTX(
         fundingTxId):
     if asset_id not in [NEO, GAS]:
         return tnc_factory.createCTX(
+            addressFunding,
             balanceSelf,
             balanceOther,
             pubkeySelf,
             pubkeyOther,
             fundingScript,
-            asset_id,
-            fundingTxId)
+            asset_id)
 
     elif asset_id == NEO:
         return neo_factory.createCTX(

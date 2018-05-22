@@ -73,7 +73,7 @@ def createFundingTx(walletSelf,walletOther,asset_id): #self sign is behind
         # "witness":"024140{sign1}2321{pubkey1}ac4140{sign2}2321{pubkey2}ac"
     }
 
-def createCTX(balanceSelf,balanceOther,pubkeySelf,pubkeyOther,fundingScript,asset_id,fundingTxId):
+def createCTX(balanceSelf,balanceOther,pubkeySelf,pubkeyOther,fundingScript,asset_id,fundingTxId,needRSMC=True):
     RSMCContract=createRSMCContract(hashSelf=pubkeyToAddressHash(pubkeySelf.strip()),pubkeySelf=pubkeySelf.strip(),
                        hashOther=pubkeyToAddressHash(pubkeyOther.strip()),pubkeyOther=pubkeyOther.strip(),magicTimestamp=time.time())
     time_stamp = TransactionAttribute(usage=TransactionAttributeUsage.Remark,
@@ -84,12 +84,19 @@ def createCTX(balanceSelf,balanceOther,pubkeySelf,pubkeyOther,fundingScript,asse
 
     funding_inputs=[tx.createInput(preHash=fundingTxId, preIndex=0)]
 
-
-    output_to_RSMC= tx.createOutput(assetId=asset_id, amount=balanceSelf,address=RSMCContract["address"])
-    output_to_other= tx.createOutput(assetId=asset_id, amount=balanceOther,address=pubkeyToAddress(pubkeyOther))
+    if balanceSelf==0:
+        output_to_RSMC=None
+        needRSMC=False
+    else:
+        output_to_RSMC= tx.createOutput(assetId=asset_id, amount=balanceSelf,address=RSMCContract["address"])
+    if balanceOther==0:
+        output_to_other=None
+        needRSMC=False
+    else:
+        output_to_other= tx.createOutput(assetId=asset_id, amount=balanceOther,address=pubkeyToAddress(pubkeyOther))
     tx.inputs = funding_inputs
 
-    tx.outputs = [output_to_RSMC,output_to_other]
+    tx.outputs = [item for item in (output_to_RSMC,output_to_other) if item]
     tx.Attributes = txAttributes
 
 
@@ -99,7 +106,8 @@ def createCTX(balanceSelf,balanceOther,pubkeySelf,pubkeyOther,fundingScript,asse
         "addressRSMC":RSMCContract["address"],
         "scriptRSMC":RSMCContract["script"],
         "txId":createTxid(tx.get_tx_data()),
-        "witness":"018240{signSelf}40{signOther}da"+fundingScript
+        "witness":"018240{signSelf}40{signOther}da"+fundingScript,
+        "needRSMC":needRSMC
     }
 
 def createRDTX(addressSelf,balanceSelf,CTxId,RSMCScript,asset_id):
@@ -176,13 +184,17 @@ def createRefundTX(addressFunding,balanceSelf,balanceOther,pubkeySelf,pubkeyOthe
 
 
     funding_inputs=[tx.createInput(preHash=item[0], preIndex=item[2]) for item in funding_vouts ]
-
-
-    output_to_self= tx.createOutput(assetId=asset_id, amount=balanceSelf,address=pubkeyToAddress(pubkeySelf))
-    output_to_other= tx.createOutput(assetId=asset_id, amount=balanceOther,address=pubkeyToAddress(pubkeyOther))
+    if balanceSelf==0:
+        output_to_self=None
+    else:
+        output_to_self = tx.createOutput(assetId=asset_id, amount=balanceSelf, address=pubkeyToAddress(pubkeySelf))
+    if balanceOther==0:
+        output_to_other=None
+    else:
+        output_to_other = tx.createOutput(assetId=asset_id, amount=balanceOther, address=pubkeyToAddress(pubkeyOther))
     tx.inputs = funding_inputs
 
-    tx.outputs = [output_to_self,output_to_other]
+    tx.outputs = [item for item in (output_to_self,output_to_other) if item]
     tx.Attributes = txAttributes
 
 
@@ -194,7 +206,7 @@ def createRefundTX(addressFunding,balanceSelf,balanceOther,pubkeySelf,pubkeyOthe
 
 #sender HTLC
 def create_sender_HCTX(pubkeySender, pubkeyReceiver, HTLCValue, balanceSender, balanceReceiver, hashR,
-                   addressFunding, fundingScript,asset_id):
+                   addressFunding, fundingScript,asset_id,needRSMC=True):
     RSMCContract = createRSMCContract(hashSelf=pubkeyToAddressHash(pubkeySender), pubkeySelf=pubkeySender,
                                       hashOther=pubkeyToAddressHash(pubkeyReceiver), pubkeyOther=pubkeyReceiver,
                                       magicTimestamp=time.time())
@@ -214,8 +226,11 @@ def create_sender_HCTX(pubkeySender, pubkeyReceiver, HTLCValue, balanceSender, b
         return {"message":"{0} no enough balance".format(addressFunding)}
 
     funding_inputs=[tx.createInput(preHash=item[0], preIndex=item[2]) for item in funding_vouts ]
-
-    output_to_RSMC= tx.createOutput(assetId=asset_id, amount=balanceSender,address=RSMCContract["address"])
+    if balanceSender==0:
+        output_to_RSMC=None
+        needRSMC=False
+    else:
+        output_to_RSMC= tx.createOutput(assetId=asset_id, amount=balanceSender,address=RSMCContract["address"])
     output_to_HTLC= tx.createOutput(assetId=asset_id, amount=HTLCValue,address=HTLCContract["address"])
     output_to_receiver= tx.createOutput(assetId=asset_id, amount=balanceReceiver,
                                         address=pubkeyToAddress(pubkeyReceiver))
@@ -233,7 +248,8 @@ def create_sender_HCTX(pubkeySender, pubkeyReceiver, HTLCValue, balanceSender, b
         "RSMCscript": RSMCContract["script"],
         "HTLCscript": HTLCContract["script"],
         "txId": createTxid(tx.get_tx_data()),
-        "witness": "018240{signSelf}40{signOther}da" + fundingScript
+        "witness": "018240{signSelf}40{signOther}da" + fundingScript,
+        "needRSMC":needRSMC
     }
 
 def create_sender_RDTX(addressSender, balanceSender, senderHCTxId, RSMCScript,asset_id):
@@ -362,7 +378,10 @@ def create_receiver_HCTX(pubkeySender, pubkeyReceiver, HTLCValue, balanceSender,
 
     output_to_RSMC = tx.createOutput(assetId=asset_id, amount=balanceReceiver, address=RSMCContract["address"])
     output_to_HTLC = tx.createOutput(assetId=asset_id, amount=HTLCValue, address=HTLCContract["address"])
-    output_to_sender = tx.createOutput(assetId=asset_id, amount=balanceSender, address=pubkeyToAddress(pubkeySender))
+    if balanceSender==0:
+        output_to_sender=None
+    else:
+        output_to_sender = tx.createOutput(assetId=asset_id, amount=balanceSender, address=pubkeyToAddress(pubkeySender))
 
     tx.inputs = funding_inputs
     tx.outputs = [output_to_RSMC, output_to_sender, output_to_HTLC]

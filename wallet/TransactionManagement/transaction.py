@@ -138,8 +138,8 @@ class TrinityTransaction(object):
         else:
             return None
 
-    def realse_transaction(self):
-        LOG.debug("realse_transaction {}".format(self.channel))
+    def release_transaction(self):
+        LOG.debug("release_transaction {}".format(self.channel))
         tx = self.read_transaction()
         tx_state = tx.get("State")
         if tx_state !="confirm":
