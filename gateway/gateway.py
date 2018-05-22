@@ -47,7 +47,6 @@ class Gateway:
         if msg_type == "RegisterChannel":
             if not utils.check_is_owned_wallet(receiver, self.wallet_clients): return
             wallet_addr = utils.get_wallet_addr(receiver, self.wallet_clients)
-            rpc_logger.debug("send msg to wallet_cli: {}".format(wallet_addr))
             Network.send_msg_with_jsonrpc("TransactionMessage", wallet_addr, data)
         # first check the receiver is self or not
         if msg_type == "PaymentLink":
@@ -55,7 +54,6 @@ class Gateway:
                 asset_type = data.get("MessageBody").get("Parameter").get("Assets")
             if not utils.check_is_owned_wallet(receiver, self.wallet_clients): return
             wallet_addr = utils.get_wallet_addr(receiver, self.wallet_clients)
-            rpc_logger.debug("send msg to wallet_cli: {}".format(wallet_addr))
             Network.send_msg_with_jsonrpc("TransactionMessage", wallet_addr, data)
         elif msg_type in Message.get_tx_msg_types():
             self.handle_transaction_message(data)
@@ -93,7 +91,6 @@ class Gateway:
                 if msg_type == "RegisterChannel":
                     receiver = data.get("Receiver")
                     wallet_addr = utils.get_wallet_addr(receiver, self.wallet_clients)
-                    rpc_logger.debug("send msg to wallet_cli: {}".format(wallet_addr))
                     Network.send_msg_with_jsonrpc("TransactionMessage", wallet_addr, data)
                 elif msg_type in Message.get_tx_msg_types():
                     self.handle_transaction_message(data)
@@ -409,7 +406,6 @@ class Gateway:
         elif utils.check_is_owned_wallet(receiver, self.wallet_clients):
             # pk = utils.get_public_key(receiver)
             wallet_addr = utils.get_wallet_addr(receiver, self.wallet_clients)
-            rpc_logger.debug("send msg to wallet_cli: {}".format(wallet_addr))
             Network.send_msg_with_jsonrpc("TransactionMessage", wallet_addr, data)
         # to peer
         else:

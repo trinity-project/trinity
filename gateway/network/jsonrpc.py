@@ -75,9 +75,8 @@ class AsyncJsonRpc():
         async with ClientSession() as session:
             endpoint = 'http://' + addr[0] + ":" + str(addr[1])
             client = aiohttpClient(session, endpoint)
-            rpc_logger.info("--> sender to {}\n : {}".format(addr,params))
+            rpc_logger.info("--> send msg to wallet_cli{}\n{}".format(addr,params))
             response = await client.request(method, params)
-            # rpc_logger.info("<-- receiver from {}\n : {}".format(addr,response))
             from gateway import gateway_singleton
             gateway_singleton.handle_wallet_response(method, response)
 
