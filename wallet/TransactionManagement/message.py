@@ -930,7 +930,7 @@ class RsmcMessage(TransactionMessage):
     def check_role_index(self, role_index):
         roleindex = self.transaction.get_role_index(self.tx_nonce)
         if roleindex != role_index:
-            error_msg = "Not finde role index {}".format(role_index)
+            error_msg = "Not find role index {}".format(role_index)
             LOG.error(error_msg)
             self.send_responses(error_msg)
             return False
@@ -1325,7 +1325,7 @@ class HtlcMessage(TransactionMessage):
         print(balance)
         senderpubkey = sender.strip().split("@")[0]
         receiverpubkey = receiver.strip().split("@")[0]
-        sender_balance = balance.get(senderpubkey).get(asset_type)
+        sender_balance = balance.get(senderpubkey).get(asset_type) - HTLCvalue
         receiver_balance = balance.get(receiverpubkey).get(asset_type)
         founder = transaction.get_founder()
         asset_id = get_asset_type_id(asset_type.upper())

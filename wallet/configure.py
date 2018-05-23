@@ -32,7 +32,7 @@ Configure = {
             "Fee": 0.01 # gateway fee
         },
         "NEO": {
-            "Fee": 0.001
+            "Fee": 0    # must be integer
         },
         "GAS": {
             "Fee": 0.001
