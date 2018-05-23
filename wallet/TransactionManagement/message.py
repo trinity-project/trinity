@@ -437,6 +437,14 @@ class FounderMessage(TransactionMessage):
             return False, "Not Support Sender is Receiver"
         if self.receiver != self.wallet.url:
             return False, "The Endpoint is Not Me"
+        verify_tx = self.create_verify_tx(get_asset_type_id(self.asset_type))
+        if self.founder != verify_tx["Founder"] or self.commitment != verify_tx["CTx"] or self.revocable_delivery != verify_tx["RTx"]:
+            LOG.error("verify trans error : Founder {}/{} Ctx {}/{} Rtx {}/{}".format(self.founder, verify_tx["Founder"],
+                                                                                      self.commitment,
+                                                                                      verify_tx["CTx"],
+                                                                                      self.revocable_delivery,verify_tx["RTx"]))
+            return False, "Verify trans error"
+
         return True, None
 
     def create_verify_tx(self, asset_id):
@@ -898,10 +906,10 @@ class RsmcMessage(TransactionMessage):
 
     def verify(self):
         channel = ch.Channel.channel(self.channel_name)
-        if channel and channel.channel_info.state == EnumChannelState.OPENED.name:
-            return True, None
+        if not channel or channel.channel_info.state != EnumChannelState.OPENED.name:
+            return False ,"No channel with name {} or channel not in OPENED state".format(self.channel_name)
 
-        return False, None
+        return True, None
 
     def store_monitor_commitement(self):
         ctxid = self.commitment.get("txID")
@@ -1237,11 +1245,21 @@ class HtlcMessage(TransactionMessage):
     def check_if_the_last_router(self):
         return self.wallet.url == self.router[-1][0]
 
+    def check_role_index(self, role_index):
+        roleindex = self.transaction.get_role_index(self.tx_nonce)
+        if roleindex != role_index:
+            error_msg = "Not finde role index {}".format(role_index)
+            LOG.error(error_msg)
+            self.send_responses(error_msg)
+            return False
+        return True
+
     def _handle_0_message(self):
+
         Payment.update_hash_history(self.hr, self.channel_name, self.count, "pending")
         self.send_responses(self.role_index)
         self.transaction.update_transaction(str(self.tx_nonce), TxType = "HTLC", HEDTX=self.hedtx,
-                                            HR=self.hr,Count=self.count,State ="pending")
+                                            HR=self.hr,Count=self.count,State ="pending",RoleIndex=self.role_index)
         HtlcMessage.create(self.channel_name, self.wallet, self.wallet.url, self.sender, self.count, self.hr,
                            self.tx_nonce, 1, self.asset_type, self.router,
                            self.next, comments=self.comments)
@@ -1261,8 +1279,11 @@ class HtlcMessage(TransactionMessage):
                                    next, comments=self.comments)
 
     def _handle_1_message(self):
+        if not self.check_role_index(role_index=0):
+            return None
         self.send_responses(self.role_index)
-        self.transaction.update_transaction(str(self.tx_nonce), TxType="HTLC", HEDTX=self.hedtx, State="pending")
+        self.transaction.update_transaction(str(self.tx_nonce), TxType="HTLC", HEDTX=self.hedtx, State="pending",
+                                            RoleIndex=self.role_index)
 
     def get_fee(self, url):
         router_url = [i[0] for i in self.router]
@@ -1415,7 +1436,7 @@ class HtlcMessage(TransactionMessage):
                             }
         Message.send(message_response)
 
-    def send_responses(self, role_index, error = None):
+    def send_responses(self, role_index=0, error = None):
         if not error:
             if role_index == 0:
                 self._send_0_response()
