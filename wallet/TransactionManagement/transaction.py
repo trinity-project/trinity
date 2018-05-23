@@ -77,6 +77,14 @@ class TrinityTransaction(object):
             except:
                 return None
 
+    def get_role_index(self, tx_nonce):
+        tx = self.get_tx_nonce(tx_nonce)
+        if tx:
+            role_index = tx.get("RoleIndex")
+            if role_index:
+                return role_index
+        return None
+
     def update_transaction(self, tx_nonce, **kwargs):
         tx_infos = self.read_transaction()
         if tx_infos:
