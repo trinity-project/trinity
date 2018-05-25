@@ -339,7 +339,8 @@ class FounderMessage(TransactionMessage):
 
     def _handle_0_message(self):
         self.send_responses(role_index=self.role_index)
-        self.transaction.update_transaction(str(self.tx_nonce), Founder = self.founder ,MonitorTxId=self.rdtxid)
+        self.transaction.update_transaction(str(self.tx_nonce), Founder = self.founder ,MonitorTxId=self.rdtxid,
+                                            RoleIndex = 0)
         role_index = int(self.role_index) + 1
         FounderMessage.create(self.channel_name, self.receiver_pubkey,
                               self.sender_pubkey, self.asset_type.upper(), self.deposit, self.sender_ip,
@@ -356,7 +357,7 @@ class FounderMessage(TransactionMessage):
         balance = {}
         balance.setdefault(self.sender_pubkey, subitem)
         balance.setdefault(self.receiver_pubkey, subitem)
-        self.transaction.update_transaction(str(self.tx_nonce), Balance=balance, State="confirm")
+        self.transaction.update_transaction(str(self.tx_nonce), Balance=balance, State="confirm", RoleIndex=1)
 
     def handle_message(self):
         LOG.info("Handle FounderMessage: {}".format(str(self.message)))
@@ -436,6 +437,14 @@ class FounderMessage(TransactionMessage):
             return False, "Not Support Sender is Receiver"
         if self.receiver != self.wallet.url:
             return False, "The Endpoint is Not Me"
+        verify_tx = self.create_verify_tx(get_asset_type_id(self.asset_type))
+        if self.founder != verify_tx["Founder"] or self.commitment != verify_tx["CTx"] or self.revocable_delivery != verify_tx["RTx"]:
+            LOG.error("verify trans error : Founder {}/{} Ctx {}/{} Rtx {}/{}".format(self.founder, verify_tx["Founder"],
+                                                                                      self.commitment,
+                                                                                      verify_tx["CTx"],
+                                                                                      self.revocable_delivery,verify_tx["RTx"]))
+            return False, "Verify trans error"
+
         return True, None
 
     def create_verify_tx(self, asset_id):
@@ -708,7 +717,8 @@ class RsmcMessage(TransactionMessage):
         :return:
         """
         message = RsmcMessage.generateRSMC(channel_name, wallet, sender_pubkey, receiver_pubkey, value, partner_ip,
-                                           gateway_ip, tx_nonce, asset_type, cli, router, next_router, role_index, comments)
+                                           gateway_ip, tx_nonce, asset_type, cli, router, next_router, role_index,
+                                           comments)
         LOG.info("Send RsmcMessage role index 1 message  ")
         RsmcMessage.send(message)
 
@@ -802,7 +812,7 @@ class RsmcMessage(TransactionMessage):
             subitem = {}
             subitem.setdefault(asset_type.upper(), receiver_balance)
             balance.setdefault(receiver_pubkey, subitem)
-            transaction.update_transaction(str(tx_nonce), Balance=balance, State="pending")
+            transaction.update_transaction(str(tx_nonce), Balance=balance, State="pending", RoleIndex=role_index)
             if router and next_router:
                 message.setdefault("Router", router)
                 message.setdefault("NextRouter", next_router)
@@ -821,7 +831,8 @@ class RsmcMessage(TransactionMessage):
                 LOG.error('Unsupported tx type currently! tx_nounce: {}'.format(tx_nonce))
                 return
 
-            breachremedy = createBRTX(founder["originalData"]["addressFunding"], pubkey_to_address(receiver_pubkey), sender_balance,
+            breachremedy = createBRTX(founder["originalData"]["addressFunding"], pubkey_to_address(receiver_pubkey),
+                                      sender_balance,
                                       rscmcscript, tx_id, asset_id) #TODO: None should be replaced by tx id
             breachremedy_sign = sign(wallet, breachremedy.get("txData"))
             breachremedy_info = {"txDataSign": breachremedy_sign,
@@ -863,10 +874,13 @@ class RsmcMessage(TransactionMessage):
             sender_balance_list = []
             if pay_or_get.decimal_part > total_sender_balance.decimal_part:
                 sender_balance_list.append(str(total_sender_balance.integer_part-pay_or_get.integer_part - 1))
-                sender_balance_list.append(TrinityNumber.wraper_decimal_part(total_sender_balance.precision_coef + total_sender_balance.decimal_part - pay_or_get.decimal_part))
+                sender_balance_list.append(TrinityNumber.wraper_decimal_part(total_sender_balance.precision_coef +
+                                                                             total_sender_balance.decimal_part -
+                                                                             pay_or_get.decimal_part))
             else:
                 sender_balance_list.append(str(total_sender_balance.integer_part-pay_or_get.integer_part))
-                sender_balance_list.append(TrinityNumber.wraper_decimal_part(total_sender_balance.decimal_part - pay_or_get.decimal_part))
+                sender_balance_list.append(TrinityNumber.wraper_decimal_part(total_sender_balance.decimal_part -
+                                                                             pay_or_get.decimal_part))
 
             sender_balance_after_payment = float('.'.join(sender_balance_list))
 
@@ -874,13 +888,15 @@ class RsmcMessage(TransactionMessage):
             judgement_balance = total_receiver_balance.decimal_part + pay_or_get.decimal_part
             if judgement_balance >= total_receiver_balance.precision_coef:
                 receiver_balance_list.append(str(total_receiver_balance.integer_part + pay_or_get.integer_part + 1))
-                receiver_balance_list.append(TrinityNumber.wraper_decimal_part(judgement_balance - total_receiver_balance.precision_coef))
+                receiver_balance_list.append(TrinityNumber.wraper_decimal_part(judgement_balance -
+                                                                               total_receiver_balance.precision_coef))
             else:
                 receiver_balance_list.append(str(total_receiver_balance.integer_part + pay_or_get.integer_part))
                 receiver_balance_list.append(TrinityNumber.wraper_decimal_part(judgement_balance))
 
             receiver_balance_after_payment = float('.'.join(receiver_balance_list))
-            payment_mount = float('.'.join([str(pay_or_get.integer_part), TrinityNumber.wraper_decimal_part(pay_or_get.decimal_part)]))
+            payment_mount = float('.'.join([str(pay_or_get.integer_part),
+                                            TrinityNumber.wraper_decimal_part(pay_or_get.decimal_part)]))
 
             return True, sender_balance_after_payment, receiver_balance_after_payment, payment_mount
         except Exception as exp_info:
@@ -890,10 +906,10 @@ class RsmcMessage(TransactionMessage):
 
     def verify(self):
         channel = ch.Channel.channel(self.channel_name)
-        if channel and channel.channel_info.state == EnumChannelState.OPENED.name:
-            return True, None
+        if not channel or channel.channel_info.state != EnumChannelState.OPENED.name:
+            return False ,"No channel with name {} or channel not in OPENED state".format(self.channel_name)
 
-        return False, None
+        return True, None
 
     def store_monitor_commitement(self):
         ctxid = self.commitment.get("txID")
@@ -911,9 +927,20 @@ class RsmcMessage(TransactionMessage):
                                self.value,self.sender_ip,self.receiver_ip,self.tx_nonce,
                            asset_type=self.asset_type.upper(), role_index= 1, comments=self.comments)
 
+    def check_role_index(self, role_index):
+        roleindex = self.transaction.get_role_index(self.tx_nonce)
+        if roleindex != role_index:
+            error_msg = "Not find role index {}".format(role_index)
+            LOG.error(error_msg)
+            self.send_responses(error_msg)
+            return False
+        return True
 
     def _handle_1_message(self):
+
         LOG.info("RSMC handle 1 message  {}".format(json.dumps(self.message)))
+        if not self.check_role_index(0):
+            return None
         self.store_monitor_commitement()
         self.send_responses()
 
@@ -925,6 +952,9 @@ class RsmcMessage(TransactionMessage):
 
     def _handle_2_message(self):
         # send 3 message
+        LOG.info("RSMC handle 2 message  {}".format(json.dumps(self.message)))
+        if not self.check_role_index(1):
+            return None
         self.transaction.update_transaction(str(self.tx_nonce), BR=self.breach_remedy)
         RsmcMessage.create(self.channel_name, self.wallet,
                            self.receiver_pubkey, self.sender_pubkey,
@@ -933,6 +963,9 @@ class RsmcMessage(TransactionMessage):
         self.confirm_transaction()
 
     def _handle_3_message(self):
+        LOG.info("RSMC handle 3 message  {}".format(json.dumps(self.message)))
+        if not self.check_role_index(1):
+            return None
         self.transaction.update_transaction(str(self.tx_nonce), BR=self.breach_remedy)
         self.confirm_transaction()
 
@@ -945,7 +978,7 @@ class RsmcMessage(TransactionMessage):
         witness = ctx.get("RD").get("originalData").get("witness")
         register_monitor(monitor_ctxid, monitor_height, txData + witness, txDataother, txDataself)
         balance = self.transaction.get_balance(str(self.tx_nonce))
-        self.transaction.update_transaction(str(self.tx_nonce), State="confirm")
+        self.transaction.update_transaction(str(self.tx_nonce), State="confirm", RoleIndex=self.role_index)
         ch.Channel.channel(self.channel_name).update_channel(balance=balance)
         ch.sync_channel_info_to_gateway(self.channel_name, "UpdateChannel")
         last_tx = self.transaction.get_tx_nonce(str(int(self.tx_nonce) - 1))
@@ -1212,11 +1245,21 @@ class HtlcMessage(TransactionMessage):
     def check_if_the_last_router(self):
         return self.wallet.url == self.router[-1][0]
 
+    def check_role_index(self, role_index):
+        roleindex = self.transaction.get_role_index(self.tx_nonce)
+        if roleindex != role_index:
+            error_msg = "Not finde role index {}".format(role_index)
+            LOG.error(error_msg)
+            self.send_responses(error_msg)
+            return False
+        return True
+
     def _handle_0_message(self):
+
         Payment.update_hash_history(self.hr, self.channel_name, self.count, "pending")
         self.send_responses(self.role_index)
         self.transaction.update_transaction(str(self.tx_nonce), TxType = "HTLC", HEDTX=self.hedtx,
-                                            HR=self.hr,Count=self.count,State ="pending")
+                                            HR=self.hr,Count=self.count,State ="pending",RoleIndex=self.role_index)
         HtlcMessage.create(self.channel_name, self.wallet, self.wallet.url, self.sender, self.count, self.hr,
                            self.tx_nonce, 1, self.asset_type, self.router,
                            self.next, comments=self.comments)
@@ -1236,8 +1279,11 @@ class HtlcMessage(TransactionMessage):
                                    next, comments=self.comments)
 
     def _handle_1_message(self):
+        if not self.check_role_index(role_index=0):
+            return None
         self.send_responses(self.role_index)
-        self.transaction.update_transaction(str(self.tx_nonce), TxType="HTLC", HEDTX=self.hedtx, State="pending")
+        self.transaction.update_transaction(str(self.tx_nonce), TxType="HTLC", HEDTX=self.hedtx, State="pending",
+                                            RoleIndex=self.role_index)
 
     def get_fee(self, url):
         router_url = [i[0] for i in self.router]
@@ -1279,7 +1325,7 @@ class HtlcMessage(TransactionMessage):
         print(balance)
         senderpubkey = sender.strip().split("@")[0]
         receiverpubkey = receiver.strip().split("@")[0]
-        sender_balance = balance.get(senderpubkey).get(asset_type)
+        sender_balance = balance.get(senderpubkey).get(asset_type) - HTLCvalue
         receiver_balance = balance.get(receiverpubkey).get(asset_type)
         founder = transaction.get_founder()
         asset_id = get_asset_type_id(asset_type.upper())
@@ -1390,7 +1436,7 @@ class HtlcMessage(TransactionMessage):
                             }
         Message.send(message_response)
 
-    def send_responses(self, role_index, error = None):
+    def send_responses(self, role_index=0, error = None):
         if not error:
             if role_index == 0:
                 self._send_0_response()
@@ -1454,6 +1500,8 @@ class HtlcResponsesMessage(TransactionMessage):
             if self.role_index ==1:
                 if self.check_if_the_last_router():
                     r = Payment(self.wallet).fetch_r(self.hr)
+                    if not r:
+                        LOG.error("Not get the r with hr {}".format(self.hr))
                     RResponse.create(self.wallet.url, self.sender, self.tx_nonce,
                                      self.channel_name, self.hr, r[0], self.count, self.asset_type, self.comments)
                     self.transaction.update_transaction(str(self.tx_nonce), State="confirm")
@@ -1470,7 +1518,8 @@ class SettleMessage(TransactionMessage):
       "TxNonce": 10,
       "ChannelName":"090A8E08E0358305035709403",
       "MessageBody": {
-                   "Commitment":{}
+                   "Settlement":{},
+                   "Balance":{}
 
     }
     }
@@ -1506,7 +1555,13 @@ class SettleMessage(TransactionMessage):
             register_monitor(tx_id, monitor_founding, self.channel_name, EnumChannelState.CLOSED.name)
 
         else:
-            message = {"MessageType": "SettleSign",
+            if error == "INITSTATE":
+                ch.Channel.channel(self.channel_name).delete_channel()
+            else:
+                self.send_error_response(error)
+
+    def send_error_response(self, error):
+        message = {"MessageType": "SettleSign",
                        "Sender": self.receiver,
                        "Receiver": self.sender,
                        "TxNonce": self.tx_nonce,
@@ -1518,7 +1573,7 @@ class SettleMessage(TransactionMessage):
                        "Error":error
                        }
 
-            Message.send(message)
+        Message.send(message)
 
     @staticmethod
     def create(channel_name, wallet, sender, receiver, asset_type):
@@ -1546,7 +1601,7 @@ class SettleMessage(TransactionMessage):
         sender_balance = balance.get(sender_pubkey).get(asset_type.upper())
         receiver_balance = balance.get(receiver_pubkey).get(asset_type.upper())
         asset_id = get_asset_type_id(asset_type)
-        settlement_tx = createRefundTX(address_founder,float(sender_balance),receiver_balance,sender_pubkey,receiver_pubkey,
+        settlement_tx = createRefundTX(address_founder,float(sender_balance),float(receiver_balance),sender_pubkey,receiver_pubkey,
                                     founder_script, asset_id)
 
         message = { "MessageType":"Settle",
@@ -1562,6 +1617,15 @@ class SettleMessage(TransactionMessage):
         ch.Channel.channel(channel_name).update_channel(state=EnumChannelState.SETTLING.name)
 
     def verify(self):
+        v_ch = ch.Channel.channel(self.channel_name)
+        if v_ch.state == EnumChannelState.INIT.name:
+            return False, "INITSTATE"
+        elif v_ch.state != EnumChannelState.OPENED.name:
+            return False, "No Correct state"
+
+        balance = v_ch.get_balance()
+        if balance != self.balance:
+            return False, "No correct balance"
         return True, None
 
 

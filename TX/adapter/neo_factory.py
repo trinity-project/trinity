@@ -205,7 +205,7 @@ def create_sender_HCTX(pubkeySender, pubkeyReceiver, HTLCValue, balanceSender, b
     txAttributes = [time_stamp]
     tx = ContractTransaction()
 
-    funding_vouts=get_neovout_by_address(addressFunding,balanceSender+balanceReceiver+HTLCValue)
+    funding_vouts=get_neovout_by_address(addressFunding, balanceSender+balanceReceiver+HTLCValue)
     if not funding_vouts:
         return {"message":"{0} no enough balance".format(addressFunding)}
 
@@ -516,21 +516,21 @@ def create_receiver_HTLC_TXS(pubkeySender, pubkeyReceiver, HTLCValue, balanceSen
     receiver_HCTX = create_receiver_HCTX(pubkeySender=pubkeySender, pubkeyReceiver=pubkeyReceiver,
                                      HTLCValue=HTLCValue, balanceSender=balanceSender,
                                      balanceReceiver=balanceReceiver, hashR=hashR,
-                                     addressFunding=addressFunding, fundingScript=fundingScript)
+                                     addressFunding=addressFunding, fundingScript=fundingScript, asset_id=asset_id)
 
     receiver_RDTX = create_receiver_RDTX(addressReceiver=pubkeyToAddress(pubkeyReceiver),
                                          balanceReceiver=balanceReceiver, receiver_HCTxId=receiver_HCTX["txId"],
-                                         RSMCScript=receiver_HCTX["RSMCscript"])
+                                         RSMCScript=receiver_HCTX["RSMCscript"], asset_id=asset_id)
 
     HTDTX = createHTDTX(pubkeySender=pubkeySender,HTLCValue=HTLCValue, HTLCScript=receiver_HCTX["HTLCscript"],
-                        receiver_HCTxId=receiver_HCTX["txId"])
+                        receiver_HCTxId=receiver_HCTX["txId"], asset_id=asset_id)
 
     HETX = createHETX(pubkeySender=pubkeySender,
                       pubkeyReceiver=pubkeyReceiver, HTLCValue=HTLCValue,
-                      HTLCScript=receiver_HCTX["HTLCscript"],receiver_HCTxId=receiver_HCTX["txId"])
+                      HTLCScript=receiver_HCTX["HTLCscript"],receiver_HCTxId=receiver_HCTX["txId"], asset_id=asset_id)
 
     HERDTX = createHERDTX(addressReceiver=pubkeyToAddress(pubkeyReceiver),
-                          HTLCValue=HTLCValue, HETxId=HETX["txId"], RSMCScript=HETX["RSMCscript"])
+                          HTLCValue=HTLCValue, HETxId=HETX["txId"], RSMCScript=HETX["RSMCscript"], asset_id=asset_id)
 
     return {
         "HCTX": receiver_HCTX,

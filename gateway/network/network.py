@@ -10,6 +10,7 @@ from .jsonrpc import AsyncJsonRpc
 from .wsocket import WsocketService
 from config import cg_tcp_addr, cg_wsocket_addr, cg_public_ip_port, cg_local_jsonrpc_addr,\
 cg_remote_jsonrpc_addr, cg_reused_tcp_connection
+from asyncio import ensure_future
 from utils import encode_bytes
 from glog import tcp_logger, wst_logger
 import time
