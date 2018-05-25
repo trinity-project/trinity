@@ -427,8 +427,13 @@ class Gateway:
         the cli call the `open wallet xxx` command\n
         as it may `switch in diffrent wallets` so need check and handle that case\n 
         """
-        # wallet cli on-line
         cli_ip = wallet.cli_ip
+        if not len(self.net_topos.keys()):
+            ip, port = cli_ip.split(":")
+            addr = (ip, int(port))
+            Network.send_msg_with_jsonrpc("GetChannelList", addr, {})
+        # wallet cli on-line
+        
         pk = wallet.public_key
         self.wallet_clients[cli_ip].on_line()
         self._handle_switch_wallets(last_opened_wallet_pk)

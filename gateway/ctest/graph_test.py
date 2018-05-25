@@ -270,7 +270,13 @@ if __name__ == "__main__":
     # G1.add_edge(3,2, weight=2)
     G1.add_node("a")
     G1.add_node("b")
-    G1.add_node("b")
+    G1.add_node("d")
+    G1.add_edge("a", "b")
+    G1.add_edge("a", "c")
     print(list(G1.nodes()))
+    try:
+        print(nx.shortest_path(G1, 'c', 'd', weight='weight'))
+    except nx.exception.NetworkXNoPath:
+        print([])
     # print(json_graph.node_link_data(G1))
     show_graph(G1)

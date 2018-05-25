@@ -168,7 +168,11 @@ class Nettopo:
         """
         sid = utils.get_public_key(source)
         tid = utils.get_public_key(target)
-        return nx.shortest_path(self._graph, sid, tid, weight='weight')
+        try:
+            path = nx.shortest_path(self._graph, sid, tid, weight='weight')
+        except nx.exception.NetworkXNoPath:
+            path = []
+        return path
 
     def to_json(self, target=None):
         """
