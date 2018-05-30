@@ -676,7 +676,6 @@ class RsmcMessage(TransactionMessage):
         self.receiver_address = pubkey_to_address(self.receiver_pubkey)
         self.value = self.message_body.get("Value")
         self.asset_type = self.message_body.get("AssetType")
-        self.transaction = TrinityTransaction(self.channel_name, self.wallet)
         self.role_index = self.message_body.get("RoleIndex")
         self.comments = self.message_body.get("Comments")
 
@@ -927,18 +926,18 @@ class RsmcMessage(TransactionMessage):
         self.send_responses()
 
         # send 1 message
-        RsmcMessage.create(self.channel_name,self.wallet,
-                               self.receiver_pubkey,self.sender_pubkey,
-                               self.value,self.sender_ip,self.receiver_ip,self.tx_nonce,
+        RsmcMessage.create(self.channel_name, self.wallet,
+                           self.receiver_pubkey, self.sender_pubkey,
+                           self.value,self.sender_ip, self.receiver_ip, self.tx_nonce,
                            asset_type=self.asset_type.upper(), role_index= 1, comments=self.comments)
 
     def check_role_index(self, role_index):
         roleindex = self.transaction.get_role_index(self.tx_nonce)
-        if roleindex != role_index:
-            error_msg = "Not find role index {}".format(role_index)
-            LOG.error(error_msg)
-            self.send_responses(error_msg)
-            return False
+        # if roleindex != role_index:
+        #     error_msg = "Not find role index {}".format(role_index)
+        #     LOG.error(error_msg)
+        #     self.send_responses(error_msg)
+        #     return False
         return True
 
     def _handle_1_message(self):
@@ -1252,11 +1251,11 @@ class HtlcMessage(TransactionMessage):
 
     def check_role_index(self, role_index):
         roleindex = self.transaction.get_role_index(self.tx_nonce)
-        if roleindex != role_index:
-            error_msg = "Not finde role index {}".format(role_index)
-            LOG.error(error_msg)
-            self.send_responses(error_msg)
-            return False
+        # if roleindex != role_index:
+        #     error_msg = "Not finde role index {}".format(role_index)
+        #     LOG.error(error_msg)
+        #     self.send_responses(error_msg)
+        #     return False
         return True
 
     def _handle_0_message(self):
