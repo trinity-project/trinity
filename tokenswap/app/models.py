@@ -23,62 +23,6 @@ class SignalModel(db.Model):
         super(SignalModel, self).save(*args, **kwargs)
         after_save.send(self, created=created)
 
-
-class Users(db.Model, UserMixin):
-    email = TextField(unique=True, verbose_name=u"邮箱")
-    password = TextField(verbose_name=u"密码")
-    active = BooleanField(default=True)
-    wallet_address = TextField(verbose_name=u"钱包地址")
-
-    def __unicode__(self):
-        return self.email
-
-    def get_display_data(self):
-        return {
-            "email": self.email,
-            "active": self.active,
-            "wallet_address": self.wallet_address,
-            "id": self.id
-        }
-
-    @classmethod
-    def get_user_by_email(cls, email):
-        user = cls.get_or_none(cls.email == email)
-        return user
-
-    @classmethod
-    def create_user(cls, **kwargs):
-        user = cls.create(
-            email = kwargs.get("email"),
-            wallet_address = kwargs.get("wallet_address"),
-            password = kwargs.get("password")
-        )
-        return user
-
-    def check_password(self,password):
-        return check_password_hash(self.password,password)
-
-class Role(db.Model, RoleMixin):
-    name = CharField(choices=(
-        ('admin', u"管理员角色"),
-        ('editor', u"编辑角色"))
-        , verbose_name = u"角色名")
-    description = TextField(null=True)
-
-    def __unicode__(self):
-        return self.name
-
-class UserRoles(db.Model):
-    """
-    记录用户与角色的映射关系
-    """
-    customer = ForeignKeyField(Users, related_name="roles")
-    role = ForeignKeyField(Role, related_name="users")
-    name = property(lambda self: self.role.name)
-
-    def __unicode__(self):
-        return '%s-%s' % (self.customer.username,self.role.name)
-
 class Order(db.Model):
     tx_no = CharField(verbose_name=u"交易编号", null=True, index=True)
     sender = CharField(verbose_name=u"付款方")
