@@ -99,10 +99,9 @@ class SendTransactions(db.Model):
     complete_time = DateTimeField(verbose_name=u"完成时间", null=True)
     remark = CharField(
         verbose_name=u"发送交易备注",
-        help_text=u"""remark 有三个类型,分别是:\n
+        help_text=u"""remark 有两个类型,分别是:\n
         order_matching": "订单匹配, token转换成功", \n
         order_mismatching": "订单存在, 但信息不匹配, token退回",\n
-        "order_not_found": "订单不存在",token退回
         """
     )
     status = IntegerField(
