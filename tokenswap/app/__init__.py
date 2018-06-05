@@ -48,7 +48,6 @@ mail = Mail(app)
 import models
 import utils
 utils.create_tables()
-utils.init_admin_user()
 import views
 
 # from api import ApiReset, ApiRegister, ApiLogin
