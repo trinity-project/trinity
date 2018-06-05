@@ -9,7 +9,7 @@ from functools import wraps
 from math import ceil
 from flask import jsonify, g, abort,request, url_for,redirect
 # from flask_security import current_user, login_user
-from models import Users, Role, UserRoles, Order, SendTransactions, MonitorTransactions
+from models import Order, SendTransactions, MonitorTransactions
 from . import auth,db,app
 import types
 
@@ -22,14 +22,6 @@ def create_tables():
     SendTransactions.create_table(fail_silently=True)
     MonitorTransactions.create_table(fail_silently=True)
     
-def init_admin_user():
-    if auth.User.select().count() == 0:
-        # print 'create admin user'
-        admin = auth.User(username='lalala', email='lala@al.com',
-                          admin=True, active=True)
-        admin.set_password('comeon')
-        admin.save()
-
 def make_data(code=0, data=None, error=None):
     data = {
         "Code": code,
