@@ -98,6 +98,14 @@ class Payment(object):
         return None
 
     @staticmethod
+    def update_hr_state(hr, isPaid = True):
+        Payment.HashHistory[hr] = {"Payment": isPaid}
+
+    @staticmethod
+    def get_hr_state(hr):
+        return Payment.HashHistory.get(hr, {}).get('Payment')
+
+    @staticmethod
     def get_hash_history(hr, state="pending"):
         channel = Payment.HashHistory.get(hr)
         if not channel:

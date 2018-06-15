@@ -348,6 +348,7 @@ class FounderMessage(TransactionMessage):
 
     def _handle_1_message(self):
         txid = self.founder.get("txId")
+        addressFunding = self.founder.get('addressFunding')
         self.send_responses(role_index=self.role_index)
         ch.Channel.channel(self.channel_name).update_channel(state=EnumChannelState.OPENING.name)
         print("Channel Now is Opening")
@@ -913,6 +914,9 @@ class RsmcMessage(TransactionMessage):
         if not channel or channel.channel_info.state != EnumChannelState.OPENED.name:
             return False ,"No channel with name {} or channel not in OPENED state".format(self.channel_name)
 
+        if self.comments and Payment.get_hr_state(self.comments) is True:
+            return False, "Payment has been already finished."
+
         return True, None
 
     def store_monitor_commitement(self):
@@ -999,10 +1003,18 @@ class RsmcMessage(TransactionMessage):
         register_monitor(monitor_ctxid, monitor_height, btxDataself + bwitness, btxsignother, btxsignself)
 
     def confirm_payment(self):
-        for key, value in Payment.HashR.items():
-            if key == self.comments:
-                PaymentAck.create(value[1], key)
-                Payment(self.wallet,value[1]).delete_hr(key)
+        if self.comments and self.comments in Payment.HashR.keys():
+            PaymentAck.create(Payment.HashR[self.comments][1], self.comments)
+            Payment.update_hr_state(self.comments)
+        else:
+            if self.comments:
+                LOG.debug('Payment {} not found'.format(self.comments))
+        # for key, value in Payment.HashR.items():
+        #     if key == self.comments:
+        #         PaymentAck.create(value[1], key)
+        #         Payment.update_hr_state(key)
+        #         # Payment.HashR.pop(key)
+        #         # Payment(self.wallet,value[1]).delete_hr(key)
 
     def send_responses(self, error = None):
         if not error:
