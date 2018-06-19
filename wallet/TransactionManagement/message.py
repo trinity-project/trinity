@@ -176,6 +176,10 @@ class RegisterMessage(Message):
         if not state:
             return state, error
 
+        channel_l = ch.Channel.get_channel(self.sender, self.receiver)
+        if channel_l:
+            return False,"Channel already exist %s" % (channel_l[0].channel)
+
         return True, None
 
     def check_deposit(self):

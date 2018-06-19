@@ -46,15 +46,27 @@ class Channel(object):
 
 
     @staticmethod
-    def get_channel(address1, address2, state):
+    def get_channel(address1, address2, state=None):
         channels = []
-        channel = APIChannel.batch_query_channel(filters={"src_addr": address1, "dest_addr": address2,"state":state })
-        if channel.get("content"):
-            channels.extend(channel["content"])
+        if state:
+            channel = APIChannel.batch_query_channel(filters={"src_addr": address1, "dest_addr": address2,"state":state})
+            if channel.get("content"):
+                channels.extend(channel["content"])
 
-        channel= APIChannel.batch_query_channel(filters={"src_addr":address2, "dest_addr":address1, "state":state})
-        if channel.get("content"):
-            channels.extend(channel["content"])
+            channel= APIChannel.batch_query_channel(filters={"src_addr":address2, "dest_addr":address1, "state":state})
+            if channel.get("content"):
+                channels.extend(channel["content"])
+        else:
+            channel = APIChannel.batch_query_channel(
+                filters={"src_addr": address1, "dest_addr": address2})
+            if channel.get("content"):
+                channels.extend(channel["content"])
+
+            channel = APIChannel.batch_query_channel(
+                filters={"src_addr": address2, "dest_addr": address1})
+            if channel.get("content"):
+                channels.extend(channel["content"])
+
 
         return channels
 
@@ -93,7 +105,10 @@ class Channel(object):
         return md5s.hexdigest().upper()
 
     def create(self, asset_type, deposit, cli=True, comments= None, channel_name = None):
-        #if Channel.get_channel(self.founder_pubkey, self.partner_pubkey):
+        ch = Channel.get_channel(self.founder_pubkey, self.partner_pubkey)
+        if ch:
+            print("Channel already exist %s" %(ch[0].channel))
+            return False
             #raise ChannelExist
         self.start_time = time.time()
         self.asset_type = asset_type
@@ -103,7 +118,7 @@ class Channel(object):
         self.deposit[self.founder_pubkey] = subitem
         self.deposit[self.partner_pubkey] = subitem
         self.channel_name = self._init_channle_name() if not channel_name else channel_name
-        print(self.channel_name)
+        print("create channel %s" %self.channel_name)
 
         result = APIChannel.add_channel(self.channel_name,self.founder, self.partner,
                      EnumChannelState.INIT.name, 0, self.deposit)
