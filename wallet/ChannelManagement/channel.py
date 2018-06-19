@@ -49,13 +49,15 @@ class Channel(object):
     def get_channel(address1, address2, state=None):
         channels = []
         if state:
-            channel = APIChannel.batch_query_channel(filters={"src_addr": address1, "dest_addr": address2,"state":state})
-            if channel.get("content"):
-                channels.extend(channel["content"])
+            states = state.split(",")
+            for st in states:
+                channel = APIChannel.batch_query_channel(filters={"src_addr": address1, "dest_addr": address2,"state":st})
+                if channel.get("content"):
+                    channels.extend(channel["content"])
 
-            channel= APIChannel.batch_query_channel(filters={"src_addr":address2, "dest_addr":address1, "state":state})
-            if channel.get("content"):
-                channels.extend(channel["content"])
+                channel= APIChannel.batch_query_channel(filters={"src_addr":address2, "dest_addr":address1, "state":st})
+                if channel.get("content"):
+                    channels.extend(channel["content"])
         else:
             channel = APIChannel.batch_query_channel(
                 filters={"src_addr": address1, "dest_addr": address2})
@@ -105,7 +107,7 @@ class Channel(object):
         return md5s.hexdigest().upper()
 
     def create(self, asset_type, deposit, cli=True, comments= None, channel_name = None):
-        ch = Channel.get_channel(self.founder_pubkey, self.partner_pubkey)
+        ch = Channel.get_channel(self.founder_pubkey, self.partner_pubkey,"OPENING,OPENED")
         if ch:
             print("Channel already exist %s" %(ch[0].channel))
             return False
