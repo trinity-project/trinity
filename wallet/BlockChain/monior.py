@@ -123,7 +123,7 @@ def send_message_to_gateway(message):
 def handle_message(height,jsn):
     match_list=[]
     block_txids = [i.get("txid") for i in jsn.get("tx")]
-    blockheight = copy.deepcopy(BlockHeightRecord)
+    blockheight = copy.deepcopy(BlockHightRegister)
     ms.SyncBlockMessage.send_block_sync(Monitor.Wallet,blockheight,block_txids)
     for index,value in enumerate(blockheight):
         if value[0] == height:
