@@ -73,14 +73,22 @@ class Channel(object):
         return channels
 
     @staticmethod
-    def query_channel(address):
-        print("Get Channels with Address %s" %address)
-        channels = APIChannel.batch_query_channel(filters={"src_addr":address})
+    def query_channel(address, state=None):
+        if state:
+            print("Get Channels with Address %s" %address)
+            filter_src = {"src_addr":address, "state": state}
+            filter_dest = {"dest_addr":address, "state": state}
+        else:
+            print("Get Channels with Address %s State %s" %(address, state))
+            filter_src = {"src_addr": address}
+            filter_dest = {"dest_addr": address}
+
+        channels = APIChannel.batch_query_channel(filters=filter_src)
         if channels.get("content"):
             for ch in channels["content"]:
                 print("=="*10,"\nChannelName:", ch.channel, "\nState:", ch.state, "\nPeer:", ch.dest_addr,
                       "\nBalance:", json.dumps(ch.balance, indent=1))
-        channeld = APIChannel.batch_query_channel(filters={"dest_addr":address})
+        channeld = APIChannel.batch_query_channel(filters=filter_dest)
         if channeld.get("content"):
             for ch in channeld["content"]:
                 print("=="*10,"\nChannelName:", ch.channel, "\nState:", ch.state, "\nPeer:", ch.src_addr,
@@ -231,8 +239,8 @@ def filter_channel_via_address(address1, address2, state=None):
     return channel
 
 
-def get_channel_via_address(address):
-    Channel.query_channel(address)
+def get_channel_via_address(address, state=None):
+    Channel.query_channel(address, state)
     return
 
 

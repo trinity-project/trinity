@@ -400,7 +400,8 @@ class UserPromptInterface(PromptInterface):
         elif command == "peer":
             if not self.Channel:
                 self._channel_noopen()
-            get_channel_via_address(self.Wallet.url)
+            state = get_arg(arguments,1)
+            get_channel_via_address(self.Wallet.url, state)
             return
         elif command == "payment":
             asset_type = get_arg(arguments, 1)
