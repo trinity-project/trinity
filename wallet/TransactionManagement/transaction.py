@@ -355,15 +355,31 @@ def refound_trans(params):
     :param params:
     :return:
     """
-    addressFunding = params[0].strip()
+    # xiaohuta: TODO: DONT DELETE the CODE below.
+    # addressFunding = params[0].strip()
+    # balanceSelf = float(params[1])
+    # balanceOther = float(params[2])
+    # pubkeySelf = params[3].strip()
+    # pubkeyOther = params[4].strip()
+    # fundingScript = params[5].strip()
+    # asset_id = get_asset_type_id(params[6].strip())
+    # return createRefundTX(addressFunding, balanceSelf, balanceOther,
+    #                                        pubkeySelf, pubkeyOther, fundingScript, asset_id)
+
+    channel_name = params[0].strip()
     balanceSelf = float(params[1])
     balanceOther = float(params[2])
     pubkeySelf = params[3].strip()
     pubkeyOther = params[4].strip()
-    fundingScript = params[5].strip()
-    asset_id = get_asset_type_id(params[6].strip())
-    return createRefundTX(addressFunding, balanceSelf, balanceOther,
-                                           pubkeySelf, pubkeyOther, fundingScript, asset_id)
+    asset_id = get_asset_type_id(params[5].strip())
+
+    trans = TrinityTransaction(channel_name, None)
+    founder = trans.get_founder()
+    address_founder = founder["originalData"]["addressFunding"]
+    founder_script = founder["originalData"]["scriptFunding"]
+
+    return createRefundTX(address_founder, balanceSelf, balanceOther,
+                          pubkeySelf, pubkeyOther, founder_script, asset_id)
 
 
 
