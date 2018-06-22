@@ -27,7 +27,8 @@ class Message:
             "HtlcSign",
             "HtlcFail",
             "RResponseAck",
-            "RResponse"
+            "RResponse",
+            "RegisterChannelFail"
         ]
         return tx_types
     
