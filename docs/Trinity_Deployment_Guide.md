@@ -31,9 +31,14 @@
     安装mongodb
 
         sudo apt-key adv --keyserver hkp://keyserver.ubuntu.com:80 --recv 2930ADAE8CAF5059EE73BB4B58712A2291FA4AD5
+
         echo "deb [ arch=amd64,arm64 ] http://repo.mongodb.org/apt/ubuntu xenial/mongodb-org/3.6 multiverse" | sudo tee /etc/apt/sources.list.d/mongodb-org-3.6.list
 
+        sudo apt-get update
+
         sudo apt-get install mongodb-org
+
+        * 参考： https://docs.mongodb.com/manual/tutorial/install-mongodb-on-ubuntu/
 
 #### Python3.6 运行环境
 
@@ -42,6 +47,7 @@
         添加python3.6安装包
 
             sudo apt-get install software-properties-common
+
             sudo add-apt-repository ppa:jonathonf/python-3.6
 
             sudo apt-get update
@@ -158,9 +164,7 @@
 
         python3.6 prompt.py
 
-
 可根据个人喜好，选择使用python虚拟环境。参考：Trinity 网关节点部署中关于虚拟环境的章节内容。
-
 
 等待trinity CLI钱包进行区块同步，区块同步完成之后再继续进行后续操作。
 
