@@ -433,7 +433,7 @@ class UserPromptInterface(PromptInterface):
         elif command == "depoist_limit":
             from wallet.utils import DepositAuth
             deposit =  DepositAuth.deposit_limit()
-            print("Current Deposit limit is %s" %deposit)
+            print("Current Deposit limit is %s TNC" %deposit)
             return None
 
 
