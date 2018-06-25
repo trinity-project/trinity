@@ -626,6 +626,7 @@ class FounderResponsesMessage(TransactionMessage):
         LOG.info("Handle FounderResponsesMessage: {}".format(str(self.message)))
         if self.error:
             LOG.error("FounderResponsesMessage Error: {}" .format(str(self.message)))
+            print("FounderResponsesMessage Error: {}" .format(self.error))
             return self._handle_error_message()
         verify, error = self.verify()
         if verify:
@@ -686,6 +687,10 @@ class RsmcMessage(TransactionMessage):
 
     def handle_message(self):
         LOG.info("Handle RsmcMessage : {}".format(str(self.message)))
+        if self.error:
+            LOG.error("RsmcMessage Error: {}" .format(str(self.message)))
+            print("RsmcMessage Error: {}" .format(self.error))
+            return None
         verify, error = self.verify()
         if verify:
             if self.role_index == 0:
@@ -973,6 +978,7 @@ class RsmcMessage(TransactionMessage):
                            self.value, self.sender_ip, self.receiver_ip, self.tx_nonce,
                            asset_type=self.asset_type.upper(), role_index=3, comments=self.comments)
         self.confirm_transaction()
+        print("receive %s %s success" % (str(self.value), str(self.asset_type)))
 
     def _handle_3_message(self):
         LOG.info("RSMC handle 3 message  {}".format(json.dumps(self.message)))
@@ -980,6 +986,7 @@ class RsmcMessage(TransactionMessage):
             return None
         self.transaction.update_transaction(str(self.tx_nonce), BR=self.breach_remedy)
         self.confirm_transaction()
+        print("send %s %s success"%(str(self.value),str(self.asset_type)))
 
     def confirm_transaction(self):
         ctx = self.transaction.get_tx_nonce(str(self.tx_nonce))
@@ -1005,6 +1012,8 @@ class RsmcMessage(TransactionMessage):
             LOG.info("Confirm payment error {}".format(str(e)))
 
         register_monitor(monitor_ctxid, monitor_height, btxDataself + bwitness, btxsignother, btxsignself)
+
+
 
     def confirm_payment(self):
         if self.comments and self.comments in Payment.HashR.keys():
@@ -1082,7 +1091,7 @@ class RsmcResponsesMessage(TransactionMessage):
     def handle_message(self):
         LOG.info("Handle RsmcResponsesMessage: {}".format(json.dumps(self.message)))
         if self.error:
-            return "{} message error"
+            print("RsmcResponsesMessage error %s" %self.error)
         verify, error = self.verify()
         if verify:
             # Todo Breach Remedy  Transaction
@@ -1148,6 +1157,10 @@ class RResponse(TransactionMessage):
 
     def handle_message(self):
         verify, error = self.verify()
+        if self.error:
+            LOG.error(str(self.message))
+            print("RResponse error %s" %self.error)
+            return None
         if verify:
             self.transaction.update_transaction(str(self.tx_nonce), State="confirm")
             sender_pubkey, gateway_ip = self.wallet.url.split("@")
@@ -1201,7 +1214,7 @@ class RResponseAck(TransactionMessage):
         super().__init__(message,wallet)
 
     def handle_message(self):
-        print(json.dumps(self.message, indent=4))
+        print(self.error)
 
 
 class HtlcMessage(TransactionMessage):
@@ -1513,7 +1526,7 @@ class HtlcResponsesMessage(TransactionMessage):
 
     def handle_message(self):
         if self.error:
-            return "{} message error"
+             LOG.error("")
         verify, error = self.verify()
         if verify:
             self.transaction.update_transaction(str(self.tx_nonce), HCTX = self.hctx, HEDTX=self.hedtx, HTTX= self.httx)
@@ -1680,7 +1693,7 @@ class SettleResponseMessage(TransactionMessage):
             tx_id = self.settlement.get("originalData").get("txId")
             witness = self.settlement.get("originalData").get("witness")
             role = ch.Channel.channel(self.channel_name).get_role_in_channel(self.wallet.url)
-            if role =="Founder":
+            if role == "Founder":
                 sign_self = tx_data_sign_self
                 sign_other = tx_data_sign_other
             elif role == "Partner":

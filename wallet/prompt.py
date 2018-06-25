@@ -18,7 +18,7 @@ from wallet.utils import get_arg, \
     get_asset_type_name,\
     check_support_asset_type,\
     check_onchain_balance,\
-    check_partner
+    check_partner, is_valid_deposit
 from wallet.Interface.rpc_interface import RpcInteraceApi,CurrentLiveWallet
 from twisted.web.server import Site
 from lightwallet.prompt import PromptInterface
@@ -279,6 +279,10 @@ class UserPromptInterface(PromptInterface):
             # if not check_support_asset_type(asset_type):
             #     print("Now we just support TNC, mulit-asset will coming soon")
             #     return None
+            state, error = is_valid_deposit(asset_type, deposit)
+            if not state:
+                print(error)
+                return None
 
             if not check_onchain_balance(self.Wallet.pubkey, asset_type, deposit):
                 print("Now the balance on chain is less then the deposit")

@@ -112,7 +112,9 @@ def get_balance(pubkey, asset_type):
         ],
         "id": InterfaceRpc.ID()
     }
+
     result = requests.post(url=NetUrl, json=request)
+    LOG.debug(result.json())
     if result.json().get("result"):
         value = result.json().get("result").get("stack")[0].get("value")
         if value:
