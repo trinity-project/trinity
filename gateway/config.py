@@ -4,6 +4,8 @@ node gateway config module \n
 every variable in this config module start as 'cg'
 """
 
+version = 'v0.2.6'
+
 ###### Common ######
 # tcp end of file don't modify
 cg_end_mark = "/eof/"
