@@ -432,7 +432,9 @@ class UserPromptInterface(PromptInterface):
             return None
         elif command == "depoist_limit":
             from wallet.utils import DepositAuth
-            return DepositAuth.deposit_limit()
+            deposit =  DepositAuth.deposit_limit()
+            print("Current Deposit limit is %s" %deposit)
+            return None
 
 
     def _channel_noopen(self):
