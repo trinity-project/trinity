@@ -419,6 +419,9 @@ class UserPromptInterface(PromptInterface):
             return None
         elif command == "trans":
             channel_name = get_arg(arguments, 1)
+            if channel_name is None:
+                print("Please provide channel")
+                return None
             tx= trinitytx.TrinityTransaction(channel_name,self.Wallet)
             result = tx.read_transaction()
             print(json.dumps(result,indent=4))
