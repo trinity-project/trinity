@@ -29,7 +29,7 @@
 
         sudo apt-get install mongodb-org
 
-        * `参考：` 相关细节请访问 https://docs.mongodb.com/manual/tutorial/install-mongodb-on-ubuntu/
+        * 参考：相关细节请访问 https://docs.mongodb.com/manual/tutorial/install-mongodb-on-ubuntu/
 
     启动mongodb数据库服务
 
@@ -70,7 +70,7 @@
 #### 克隆Trinity源码
 
     git clone https://github.com/trinity-project/trinity.git [User-Path]
-      * `User-Path：` 用户指定的目录。若是用户没有指定目录，克隆目录默认目录为当前目录下的trinity文件夹。
+      * User-Path：用户指定的目录。若是用户没有指定目录，克隆目录默认目录为当前目录下的trinity文件夹。
 
 ##### 安装Trinity网络的Python依赖库文件
 
@@ -112,7 +112,7 @@
 
         screen -S TrinityGateway
 
-        * `TrinityGateway:` 用户可替换该名称。
+        * TrinityGateway: 用户可替换该名称。
 
     激活python3.6 virtualenv(进入到venv所在的文件夹目录)
 
@@ -128,14 +128,6 @@
 
         若需要重连已创建的screen进程，可使用`screen -r User-specified-name`
 
-
-* `注意`：
-
-在某些特定系统中，需要设置PYTHONPATH。进入trinity源码目录，执行以下命令
-
-```
-sudo export PYTHONPATH=$PWD
-```
 
 ## Trinity 钱包节点部署
 
@@ -170,7 +162,7 @@ sudo export PYTHONPATH=$PWD
 
         screen -S TrinityWallet
 
-        * `TrinityWallet:` 用户可替换该名称。
+        * TrinityWallet: 用户可替换该名称。
 
     激活python3.6 virtualenv(进入到venv所在的文件夹目录)
 
@@ -194,8 +186,11 @@ sudo export PYTHONPATH=$PWD
 等待trinity CLI钱包进行区块同步，区块同步完成之后再继续进行后续操作。
 
 * `注意：`
+
+```
 1、钱包需要持续保持打开状态。
 2、钱包区块同步完成之后再进行channel相关操作。
+```
 
 
 ## TestNet TNC水龙头
