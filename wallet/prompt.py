@@ -56,13 +56,13 @@ class UserPromptInterface(PromptInterface):
         super().__init__()
         self.user_commands = ["channel enable",
                               "channel create {partner} {asset_type} {deposit}",
-                              "channel tx {receiver} {asset_type} {count}",
+                              "channel tx {payment_link}/{receiver} {asset_type} {count}",
                               "channel close {channel}",
                               "channel peer",
                               "channel payment {asset}, {count}, [{comments}]",
                               "channel qrcode {on/off}",
-                              "channel trans",
                               "channel show uri",
+                              "channel show trans_history {channel}",
                               "channel depoist_limit"
                               ]
         self.commands.extend(self.user_commands)
@@ -256,22 +256,29 @@ class UserPromptInterface(PromptInterface):
         if command not in channel_command:
             print("no support command, please check the help")
             self.help()
-            return
+            return None
 
         if command == 'create':
             if not self.Channel:
                 self._channel_noopen()
-            assert len(arguments) == 4
+            if not len(arguments) == 4:
+                self.help()
+                return None
             if not self.Wallet:
-                raise Exception("Please Open The Wallet First")
+                print("Please Open The Wallet First")
+                return None
             partner = get_arg(arguments, 1)
             asset_type = get_arg(arguments, 2)
             if asset_type:
                 asset_type = asset_type.upper()
-            deposit = float(get_arg(arguments, 3).strip())
-            if not check_support_asset_type(asset_type):
-                print("Now we just support TNC, mulit-asset will coming soon")
+            try:
+                deposit = float(get_arg(arguments, 3).strip())
+            except Exception as e:
+                LOG.error(e)
                 return None
+            # if not check_support_asset_type(asset_type):
+            #     print("Now we just support TNC, mulit-asset will coming soon")
+            #     return None
 
             if not check_onchain_balance(self.Wallet.pubkey, asset_type, deposit):
                 print("Now the balance on chain is less then the deposit")
@@ -295,6 +302,9 @@ class UserPromptInterface(PromptInterface):
             if not self.Channel:
                 self._channel_noopen()
             argument1 = get_arg(arguments,1)
+            if argument1 is None:
+                self.help()
+                return None
             if len(argument1) > 88:
                 # payment code
                 result, info = Payment.decode_payment_code(argument1)
@@ -314,6 +324,9 @@ class UserPromptInterface(PromptInterface):
                 asset_type = get_arg(arguments, 2)
                 count = get_arg(arguments, 3)
                 hr = None
+                if not receiver or not asset_type or not count:
+                    self.help()
+                    return None
 
             if asset_type:
                 asset_type = asset_type.upper()
@@ -383,6 +396,9 @@ class UserPromptInterface(PromptInterface):
 
         elif command == "qrcode":
             enable = get_arg(arguments,1)
+            if enable is None:
+                self.help()
+                return None
             if enable.upper() not in ["ON","OFF"]:
                 print("should be on or off")
             self.qrcode = True if enable.upper() == "ON" else False
@@ -391,6 +407,9 @@ class UserPromptInterface(PromptInterface):
             if not self.Channel:
                 self._channel_noopen()
             channel_name = get_arg(arguments, 1)
+            if channel_name is None:
+                self.help()
+                return None
             print("Closing channel {}".format(channel_name))
             if channel_name:
                 close_channel(channel_name, self.Wallet)
@@ -407,29 +426,39 @@ class UserPromptInterface(PromptInterface):
             asset_type = get_arg(arguments, 1)
             if not asset_type:
                 print("command not give the asset type")
+                return None
             value = get_arg(arguments, 2)
             if not value:
                 print("command not give the count")
+                return None
             comments = " ".join(arguments[3:])
             comments = comments if comments else "None"
-            paycode = Payment(self.Wallet).generate_payment_code(asset_type, value, comments)
+            try:
+                paycode = Payment(self.Wallet).generate_payment_code(asset_type, value, comments)
+            except Exception as e:
+                LOG.error(e)
+                print("Get payment link error, please check the log")
+                return None
             if self.qrcode:
                 qrcode_terminal.draw(paycode, version=4)
             print(paycode)
             return None
-        elif command == "trans":
-            channel_name = get_arg(arguments, 1)
-            if channel_name is None:
-                print("Please provide channel")
-                return None
-            tx= trinitytx.TrinityTransaction(channel_name,self.Wallet)
-            result = tx.read_transaction()
-            print(json.dumps(result,indent=4))
-            return None
         elif command == "show":
             subcommand  = get_arg(arguments,1)
+            if not subcommand:
+                self.help()
+                return None
             if subcommand.upper() == "URI":
                 print(self.Wallet.url)
+            elif subcommand.upper() == "TRANS_HISTORY":
+                channel_name = get_arg(arguments, 2)
+                if channel_name is None:
+                    print("Please provide channel")
+                    return None
+                tx = trinitytx.TrinityTransaction(channel_name, self.Wallet)
+                result = tx.read_transaction()
+                print(json.dumps(result, indent=4))
+                return None
             else:
                 self.help()
             return None

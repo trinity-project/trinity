@@ -180,6 +180,7 @@ def check_onchain_balance(pubkey,asset_type,depoist):
     :return:
     """
     balance = get_balance(pubkey, asset_type)
+    LOG.debug(str(balance))
     if 0 < float(depoist) <= float(balance):
         return True
     else:
