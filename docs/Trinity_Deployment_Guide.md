@@ -1,8 +1,8 @@
 # Trinity Network部署帮助文档
 
 ## 试用指引索引
-0. Trinity 源码包获取
-1. Trinity 运行环境准备工作
+0. Trinity 运行环境准备工作
+1. Trinity 源码包获取
 2. Trinity 网关节点部署
 3. Trinity 钱包节点部署
 4. TestNet TNC水龙头
@@ -10,23 +10,14 @@
 6. Channel交互
 
 
-## Trinity 源码包获取
-
-#### 克隆Trinity源码:
-
-```
-    git clone https://github.com/trinity-project/trinity.git [User-Path]
-      * User-Path： 用户指定的目录。若是用户没有指定目录，克隆目录默认目录为当前目录下的trinity文件夹。
-```
-
-
 ## Trinity 运行环境准备工作
 
 #### Ubuntu 1604桌面版或服务器版
 
-    安装系统库
+    安装系统库及系统工具
 
-        sudo apt-get install screen libleveldb-dev libssl-dev g++
+        sudo apt-get install screen git libleveldb-dev libssl-dev g++
+
 
     安装mongodb
 
@@ -38,7 +29,11 @@
 
         sudo apt-get install mongodb-org
 
-        * 参考： https://docs.mongodb.com/manual/tutorial/install-mongodb-on-ubuntu/
+        * `参考：` 相关细节请访问 https://docs.mongodb.com/manual/tutorial/install-mongodb-on-ubuntu/
+
+    启动mongodb数据库服务
+
+            sudo service mongod start
 
 #### Python3.6 运行环境
 
@@ -58,34 +53,42 @@
 
     安装pip3.6
 
-        wget https://bootstrap.pypa.io/get-pip.py
-        python3.6 get-pip.py
+        sudo wget https://bootstrap.pypa.io/get-pip.py
+        sudo python3.6 get-pip.py
 
     安装virtualenv
 
-        pip3.6 install virtualenv
+        sudo pip3.6 install virtualenv
 
-    安装Trinity运行所依赖的python库：
+    创建python3.6虚拟环境
 
-        进入trinity源码所在的目录，通过pip3.6安装lib库
+        virtualenv -p /usr/bin/python3.6 venv
 
-            pip3.6 install -r requirements
 
-#### 启动系统服务
+## Trinity 源码包获取
 
-    启动mongodb数据库服务
+#### 克隆Trinity源码
 
-        sudo service mongod start
+    git clone https://github.com/trinity-project/trinity.git [User-Path]
+      * `User-Path：` 用户指定的目录。若是用户没有指定目录，克隆目录默认目录为当前目录下的trinity文件夹。
 
-    系统环境变量设置
+##### 安装Trinity网络的Python依赖库文件
 
-    在某些特定系统中，需要设置PYTHONPATH。（若运行Trinity服务过程中，出现找不到文件的问题，可以尝试本节内容）
-    进入Trinity源码所在目录，执行以下命令，或者将下述命令添加到.bashrc 文件中
+    激活python虚拟环境
 
-    export PYTHONPATH=$PWD
+        source venv/bin/activate
+
+    安装依赖库
+
+        进入到trinity源码所在的目录，执行以下命令：
+
+        pip install -r requirements
 
 
 ## Trinity 网关节点部署
+
+
+本文中将采用python3.6 virtualenv环境和screen运行网关和钱包节点，具体步骤请参考本章各小节内容。
 
 #### 修改配置文件
 
@@ -103,29 +106,36 @@
 
 #### 运行
 
-    在主链和测试网上，网管运行的命令相同，使用下列命令集合即可：
+    在主链和测试网上，网关运行的命令相同。命令集合如下
 
-        screen -S <User-specified-name>
-        python3.6 start.py &
+    创建新窗口会话
 
-        * User-specified-name: 用户指定名称。
+        screen -S TrinityGateway
+
+        * `TrinityGateway:` 用户可替换该名称。
+
+    激活python3.6 virtualenv(进入到venv所在的文件夹目录)
+
+        source venv/bin/activate
+
+    运行网关服务（进入trinity/gateway源码目录）
+
+        python start.py &
+
+    退出或重连网关会话
 
         若需要退出当前screen，可使用`ctrl+a+d`退出。
 
         若需要重连已创建的screen进程，可使用`screen -r User-specified-name`
 
-#### 使用python虚拟环境
 
-    用户可根据个人喜好，使用virtualenv建立干净的python3.6环境，专用于trinity节点(网关和钱包节点)的运行，具体步骤如下
+* `注意`：
 
-        创建python3.6虚拟环境
+在某些特定系统中，需要设置PYTHONPATH。进入trinity源码目录，执行以下命令
 
-            virtualenv -p /usr/bin/python3.6 venv
-            source venv/bin/activate
-            pip install -r requirements
-
-        参考`运行`章节中的内容，启动网关节点。
-
+```
+sudo export PYTHONPATH=$PWD
+```
 
 ## Trinity 钱包节点部署
 
@@ -156,19 +166,34 @@
 
 #### 运行
 
-    主链钱包
+    创建新窗口会话
 
-        python3.6 prompt.py -m
+        screen -S TrinityWallet
 
-    测试网钱包
+        * `TrinityWallet:` 用户可替换该名称。
 
-        python3.6 prompt.py
+    激活python3.6 virtualenv(进入到venv所在的文件夹目录)
 
-可根据个人喜好，选择使用python虚拟环境。参考：Trinity 网关节点部署中关于虚拟环境的章节内容。
+        source venv/bin/activate
+
+    运行网关服务（进入trinity/wallet源码目录）
+
+        主链钱包
+
+            python3.6 prompt.py -m
+
+        测试网钱包
+
+            python3.6 prompt.py
+
+    退出或重连网关会话
+
+        参考网关运行章节中内容
+
 
 等待trinity CLI钱包进行区块同步，区块同步完成之后再继续进行后续操作。
 
-注意：
+* `注意：`
 1、钱包需要持续保持打开状态。
 2、钱包区块同步完成之后再进行channel相关操作。
 
@@ -207,6 +232,6 @@ trinity CLI钱包区块同步完成之后，即可在钱包控制台进行钱包
 
 5. 使用channel close命令进行状态通道的结算删除工作。
 
-注意：
+* `注意：`
 
 当前软件版本在创建通道时，TNC押金数量是以$800美金的价格计算。假设当前TNC价值$1美金，那最低需要800个TNC才能保障通道建立成功。
