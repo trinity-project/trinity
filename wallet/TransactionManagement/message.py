@@ -1547,7 +1547,7 @@ class HtlcResponsesMessage(TransactionMessage):
                     if not r:
                         LOG.error("Not get the r with hr {}".format(self.hr))
                     RResponse.create(self.wallet.url, self.sender, self.tx_nonce,
-                                     self.channel_name, self.hr, r[0], self.count, self.asset_type, self.ƒ)
+                                     self.channel_name, self.hr, r[0], self.count, self.asset_type, self.comments)
                     self.transaction.update_transaction(str(self.tx_nonce), State="confirm")
 
     def verify(self):
