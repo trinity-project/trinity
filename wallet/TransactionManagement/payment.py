@@ -92,9 +92,14 @@ class Payment(object):
     @staticmethod
     def update_hash_history(hr, channel, count, state):
         LOG.debug("update hash history {}".format(channel))
-        Payment.HashHistory[hr] = {"Channel":channel,
+        if hr in Payment.HashHistory.keys():
+            Payment.HashHistory[hr].update({"Channel":channel,
                                    "Count":count,
-                                "State":state}
+                                "State":state})
+        else:
+            Payment.HashHistory[hr] = {"Channel":channel,
+                                       "Count":count,
+                                       "State":state}
         return None
 
     @staticmethod
@@ -103,7 +108,10 @@ class Payment(object):
 
     @staticmethod
     def update_hr_state(hr, isPaid = True):
-        Payment.HashHistory[hr] = {"Payment": isPaid}
+        if hr in Payment.HashHistory.keys():
+            Payment.HashHistory[hr].update({"Payment": isPaid})
+        else:
+            Payment.HashHistory[hr] = {"Payment": isPaid}
 
     @staticmethod
     def get_hr_state(hr):
