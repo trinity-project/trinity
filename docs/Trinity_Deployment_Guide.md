@@ -170,24 +170,6 @@ vi wallet/configure.py
         参考网关运行章节中内容
 
 
-
-## TestNet TNC水龙头
-
-> TNC水龙头是基于NEO TestNet的，以便大家在NEO TestNet上进行Trinity试用，每个地址每次可获得10个TNC。
-
-水龙头地址：
-
-http://106.15.91.150
-
-
-## Trinity 网络浏览器
-> Trinity网络浏览器可以实时查看trinity网络节点的详细信息及状态。
-
-浏览器地址：
-
-http://106.15.91.150:8033
-
-
 ## Channel节点交互
 
 trinity CLI钱包区块同步完成之后，即可在钱包控制台进行钱包及通道的相关操作了。
