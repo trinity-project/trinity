@@ -135,7 +135,7 @@ screen -r TrinityGateway
 ``` shell
 vi wallet/configure.py 
 ```
-默认configure文件为测试网配置文件，同时在wallet目录下有configure_testnet.py 和 configure_mainnet.py两个配置文件，如果部署主网可简单将configure_mainnet.py的内容复制到configure.py中。
+默认configure文件为测试网配置文件，同时在wallet目录下有configure_testnet.py和configure_mainnet.py两个配置文件，如果部署主网可简单将configure_mainnet.py的内容复制到configure.py中。
 具体配置信息请参考配置文件注释说明。
 
 
