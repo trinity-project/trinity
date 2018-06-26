@@ -1270,8 +1270,8 @@ class HtlcMessage(TransactionMessage):
 
     def verify(self):
         channel = ch.Channel.channel(self.channel_name)
-        if channel or channel.channel_info.state != EnumChannelState.OPENED.name:
-            return False, "No channel or Channel not in OPENED state"
+        if not channel or channel.channel_info.state != EnumChannelState.OPENED.name:
+            return False, "Channel<{}> in State<{}> Not Found".format(self.channel_name, channel.channel_info.state)
         if Payment.hr_in_hash_history(self.hr):
             return False, "Payment link already been used"
 
