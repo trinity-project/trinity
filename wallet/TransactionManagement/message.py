@@ -1272,9 +1272,6 @@ class HtlcMessage(TransactionMessage):
         channel = ch.Channel.channel(self.channel_name)
         if not channel or channel.channel_info.state != EnumChannelState.OPENED.name:
             return False, "Channel<{}> in State<{}> Not Found".format(self.channel_name, channel.channel_info.state)
-        if Payment.hr_in_hash_history(self.hr):
-            return False, "Payment link already been used"
-
         return True, None
 
     def check_if_the_last_router(self):
@@ -1290,6 +1287,17 @@ class HtlcMessage(TransactionMessage):
         return True
 
     def _handle_0_message(self):
+        if Payment.hr_in_hash_history(self.hr):
+            message_response = {"MessageType": "HtlcFail",
+                                "Sender": self.receiver,
+                                "Receiver": self.sender,
+                                "TxNonce": self.tx_nonce,
+                                "ChannelName": self.channel_name,
+                                "MessageBody": self.message_body,
+                                "Error": "Payment link already been used"
+                                }
+            Message.send(message_response)
+            return
 
         Payment.update_hash_history(self.hr, self.channel_name, self.count, "pending")
         self.send_responses(self.role_index)
