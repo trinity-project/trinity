@@ -554,17 +554,18 @@ def main():
     address = Configure.get("RpcListenAddress")
     port = port if port else "20556"
     address = address if address else "0.0.0.0"
-    try:
-        api_server_rpc = RpcInteraceApi(port)
-        endpoint_rpc = "tcp:port={0}:interface={1}".format(port, address)
-        endpoints.serverFromString(reactor, endpoint_rpc).listen(Site(api_server_rpc.app.resource()))
-    except Exception as e:
-        LOG.error(str(e))
+    api_server_rpc = RpcInteraceApi(port)
+    endpoint_rpc = "tcp:port={0}:interface={1}".format(port, address)
+    d = endpoints.serverFromString(reactor, endpoint_rpc).listen(Site(api_server_rpc.app.resource()))
+
+    @d.addErrback
+    def sys_exit(f):
+        import signal
         print("Setup jsonRpc server error, please check if the port {} already opend".format(port))
+        os.kill(os.getpgid(),signal.SIGKILL)
 
     from wallet.Interface.tcp import GatwayClientFactory
     gateway_ip, gateway_port = Configure.get("GatewayTCP").split(":")
-    print(gateway_ip, gateway_port)
     f = GatwayClientFactory()
     reactor.connectTCP(gateway_ip.strip(), int(gateway_port.strip()), f)
 
