@@ -60,10 +60,6 @@
 
         sudo pip3.6 install virtualenv
 
-    创建python3.6虚拟环境
-
-        virtualenv -p /usr/bin/python3.6 venv
-
 
 ## Trinity 源码包获取
 
@@ -74,7 +70,11 @@
 
 ##### 安装Trinity网络的Python依赖库文件
 
-    激活python虚拟环境
+    创建及激活python3.6虚拟环境
+
+        如未有特殊说明， 本文所涉及的虚拟环境目录均位于trinity源码目录下。
+
+        virtualenv -p /usr/bin/python3.6 venv
 
         source venv/bin/activate
 
