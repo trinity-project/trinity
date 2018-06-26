@@ -56,7 +56,7 @@ Configure = {
     },
     "DataBase":{"url": "http://localhost:20554" # mongodb url
     },
-    "Version":"v0.2.7", # version information
+    "Version":"v0.2.8", # version information
     "Magic":{
         "Block":1953787457,
         "Trinity":19990331

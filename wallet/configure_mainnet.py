@@ -29,7 +29,7 @@ Configure = {
         "TNC":{
             "CommitMinDeposit": 1,   # the min commit deposit
             "CommitMaxDeposit": 5000,# the max commit deposit
-            "Fee": 1 # gateway fee
+            "Fee": 0.01 # gateway fee
         },
         "NEO": {
             "Fee": 0    # must be integer
@@ -56,7 +56,7 @@ Configure = {
     },
     "DataBase":{"url": "http://localhost:20554"
     },
-    "Version":"v0.2.7",
+    "Version":"v0.2.8",
     "Magic":{
         "Block":1953787457,
         "Trinity":19990331
