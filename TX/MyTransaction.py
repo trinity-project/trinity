@@ -1,5 +1,4 @@
 # -*- coding:utf-8 -*-
-import binascii
 from neocore.IO.BinaryWriter import BinaryWriter
 
 from neocore.Fixed8 import Fixed8

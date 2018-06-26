@@ -1587,7 +1587,7 @@ class SettleMessage(TransactionMessage):
                        }
                    }
             Message.send(message)
-            ch.Channel.channel(self.channel_name).update_channel(state = EnumChannelState.SETTLING.name)
+            ch.Channel.channel(self.channel_name).update_channel(state = EnumChannelState.CLOSED.name)
             register_monitor(tx_id, monitor_founding, self.channel_name, EnumChannelState.CLOSED.name)
 
         else:
@@ -1650,7 +1650,7 @@ class SettleMessage(TransactionMessage):
                            }
          }
         Message.send(message)
-        ch.Channel.channel(channel_name).update_channel(state=EnumChannelState.SETTLING.name)
+        ch.Channel.channel(channel_name).update_channel(state=EnumChannelState.CLOSED.name)
 
     def verify(self):
         v_ch = ch.Channel.channel(self.channel_name)
