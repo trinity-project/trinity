@@ -98,7 +98,7 @@ vi gateway/config.py
 新建会话窗口
 
 ``` shell
-screen -S TrinityGateway
+screen -S TrinityGateway #TrinityGateway: 用户可替换该名称
 ```
 
 进入虚拟环境
@@ -151,7 +151,7 @@ vi wallet/configure.py
    source venv/bin/activate
 ```
 
-运行网关服务（进入trinity/wallet源码目录）
+运行钱包服务（进入trinity/wallet源码目录）
 
  - 主链钱包
 
@@ -165,14 +165,12 @@ vi wallet/configure.py
    python3.6 prompt.py #测试网钱包
 ```
 
-退出或重连网关会话
-
-        参考网关运行章节中内容
+退出或重连网关会话请参考网关运行章节中的内容。
 
 
 ## Channel节点交互
 
-trinity CLI钱包区块同步完成之后，即可在钱包控制台进行钱包及通道的相关操作了。
+trinity CLI钱包运行之后，即可在钱包控制台进行钱包及通道的相关操作了。
 
 钱包控制台输入help查看所有trinity CLI钱包命令。
 
@@ -181,7 +179,7 @@ trinity CLI钱包区块同步完成之后，即可在钱包控制台进行钱包
 1.使用状态通道前，需要先使用create wallet 命令创建一个地址。
 
 ```shell
-trinity> create wallet /root/test/test.json # /root/test/test.json 为钱包文件路径
+trinity> create wallet /root/test/test.json # /root/test/test.json 为钱包文件路径
 ```
 
 2.open wallet 打开已有钱包，注意：这里应该打开带有通道功能的钱包，否则通能功能将被限制。
@@ -189,20 +187,20 @@ trinity> create wallet /root/test/test.json # /root/test/test.json 为钱包文
 ```shell
 trinity> open wallet /root/test/test.json
 ```
-*注：
-新建钱吧或打开钱包以后，wallet会主动连接gateway并打开channel功能，如果30s内没有自动打开channel功能，请使用下一命令手动打开channel功能.*
+注：
+新建钱包或打开钱包以后，wallet会主动连接gateway并打开channel功能，如果30s内没有自动打开channel功能，请使用以下命令手动打开channel功能.
    
 3.channel enable命令进行channel功能的使能，只有使能channel功能之后才能进行状态通道相关的其他操作。
 
 ```shell
-trinity> channel enable # /root/test/test.json 为钱包文件路径
+trinity> channel enable 
 ```
 
 4.channel create创建通道。
 
 ```shell
-trinity> channel create xxxxxxxxxxxxx@xx.xx.xx.xx:xxxx TNC 10000 
-# create 后的参数为，peer节点uri( ip_address@port）, asset_type, depoist
+trinity> channel create xxxxxxxxxxxxx@xx.xx.xx.xx:xxxx TNC 80000 
+# create 后的参数：peer节点uri(PublicKey@ip_address:port）, asset_type, depoist
 ```
 
 *注：
@@ -225,7 +223,7 @@ trinity> channel tx xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx # payment link 码
 trinity> channel tx xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx@xx.xx.xx.xx:xxxx TNC 10
 ```
 
-7.channel payment 生成付款码。
+7.channel payment生成付款码。
 
 ```shell
 trinity> channel payment TNC 10 "mytest" # payment 后面的参数是 asset type， value，comments， comments可以为空
@@ -237,7 +235,7 @@ trinity> channel payment TNC 10 "mytest" # payment 后面的参数是 asset type
 trinity> channel close xxxxxxxxxxxxxxx #close后的参数为 channel name
 ```
 
-9.channel peer 查看当前channel的peer 节点
+9.channel peer查看当前channel的peer节点
 
 ```shell
 trinity> channel peer
