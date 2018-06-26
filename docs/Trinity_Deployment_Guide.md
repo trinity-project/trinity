@@ -1,323 +1,194 @@
-Trinity Network部署帮助文档
-==================================
+# Trinity Network部署帮助文档
 
-### [Trinity 运行环境准备工作](#prepare_trinity_environment)
+[TOC]
 
-### [Trinity 源码包获取](#get_trinity_sources)
+> *注意：
+Trinity 路由节点部署对python3.6有环境依赖，要求部署环境的python版本不低于python3.6。
+随着Trinity项目的不断演进，本文档有可能不适用未来发布的Trinity版本；本文档使用Ubuntu16.04桌面版进行测试验证。*
 
-### [Trinity 网关节点部署](#deploy_trinity_gateway)
+## Trinity 运行环境准备工作
 
-### [Trinity 钱包节点部署](#deploy_trinity_wallet)
+安装系统库及系统工具
 
-### [TestNet TNC水龙头](#trinity_faucet)
+``` shell
+sudo apt-get install screen git libleveldb-dev libssl-dev g++
+```
+安装mongodb并启动服务
 
-### [Trinity 网络浏览器](#trinity_explorer)
 
-### [Channel交互](#trinity_channel)
+``` shell
+sudo apt-key adv --keyserver hkp://keyserver.ubuntu.com:80 --recv 2930ADAE8CAF5059EE73BB4B58712A2291FA4AD5
 
-----
+echo "deb [ arch=amd64,arm64 ] http://repo.mongodb.org/apt/ubuntu xenial/mongodb-org/3.6 multiverse" | sudo tee /etc/apt/sources.list.d/mongodb-org-3.6.list
 
+sudo apt-get update
 
-<h3 id="prepare_trinity_environment">Trinity 运行环境准备工作</h3>
+sudo apt-get install mongodb-org
 
-* #### Ubuntu 1604桌面版或服务器版
-
-    * **安装系统库及系统工具**
-
-    ```
-    sudo apt-get install screen git libleveldb-dev libssl-dev g++
-    ```
-
-    * **安装mongodb**
-
-    *参考：更多细节请访问 https://docs.mongodb.com/manual/tutorial/install-mongodb-on-ubuntu/ *
-
-    ```
-    sudo apt-key adv --keyserver hkp://keyserver.ubuntu.com:80 --recv 2930ADAE8CAF5059EE73BB4B58712A2291FA4AD5
-
-    echo "deb [ arch=amd64,arm64 ] http://repo.mongodb.org/apt/ubuntu xenial/mongodb-org/3.6 multiverse" | sudo tee /etc/apt/sources.list.d/mongodb-org-3.6.list
-
-    sudo apt-get update
-
-    sudo apt-get install mongodb-org
-
-    ```
-
-    * **启动mongodb数据库服务**
-
-    ```
-    sudo service mongod start
-    ```
-
-* #### Python3.6 运行环境
-
-    * **安装python3.6**
-
-    **添加python3.6安装包**
-
-    ```
-    sudo apt-get install software-properties-common
-
-    sudo add-apt-repository ppa:jonathonf/python-3.6
-
-    sudo apt-get update
-    ```
-
-    **安装python3.6**
-
-    ```
-    sudo apt-get install python3.6 python3.6-dev
-    ```
-
-    * **安装pip3.6**
-
-    ```
-    sudo wget https://bootstrap.pypa.io/get-pip.py
-    sudo python3.6 get-pip.py
-    ```
-
-    * **安装virtualenv**
-
-    ```
-    sudo pip3.6 install virtualenv
-    ```
-
-
-<h3 id="get_trinity_sources">Trinity 源码包获取</h3>
-
-* #### 克隆Trinity源码
-
-    ```
-    git clone https://github.com/trinity-project/trinity.git [User-Path]
-    ```
-
-    *User-Path ：用户指定的目录。若用户没有指定目录，克隆目录默认目录为当前目录下的trinity文件夹。*
-
-* ##### 安装Trinity网络的Python依赖库文件
-
-    * **进入trinity源码目录**
-
-    ```
-    cd trinity
-    ```
-
-    * **创建及激活python3.6虚拟环境**
-
-    ```
-    virtualenv -p /usr/bin/python3.6 venv
-
-    source venv/bin/activate
-    ```
-
-    * **安装依赖库**
-
-    ```
-    pip install -r requirements
-
-    deactivate  // 退出python3.6虚拟环境
-    ```
-
-
-<h3 id="deploy_trinity_gateway">Trinity 网关节点部署</h3>
-
-* #### 修改配置文件
-
-    * **主链网关配置**
-
-        **编辑网关配置文件**
-
-        ```
-        cd gateway
-
-        vi config.py
-
-        将`cg_public_ip_port`中localhost替换为用户自己的公网。
-        ```
-
-        **返回trinity目录**
-
-        ```
-        cd ..
-        ```
-
-    * **测试链网关配置**
-
-        同 "主链网关配置"
-
-* #### 运行
-
-    * **主链网关运行**
-
-    **创建新窗口会话**
-
-    ```
-    screen -S TrinityGateway
-    ```
-
-    *TrinityGateway: 用户可替换该名称。*
-
-
-    * **激活python3.6 virtualenv**
-
-    ```
-    source venv/bin/activate
-    ```
-
-    * **运行网关服务**
-
-    ```
-    cd gateway
-
-    python start.py &
-    ```
-
-    * **退出或重连网关会话**
-
-    ```
-    若需要退出当前screen，可使用`ctrl+a+d`退出。
-
-    若需要重连已创建的screen进程，可使用`screen -r TrinityGateway`
-    ```
-
-<h3 id="deploy_trinity_wallet">Trinity 钱包节点部署</h3>
-
-* #### 修改配置文件
-
-    * **主链钱包节点配置**
-
-    **编辑钱包配置文件**
-
-    ```
-    cd wallet
-
-    vi configure.py
-
-    修改Configure属性的Fee字段设置该钱包节点的路由手续费。默认手续费：0.01 TNC。
-
-    修改Configure属性的AssetType中TNC对应的值为：0x08e8c4400f1af2c20c28e0018f29535eb85d15b6。
-
-    将Configure属性的BlockChain的值替换为下列数据：
-        "RPCClient":"http://localhost:10332", # neocli client json-rpc
-        "NeoUrlEnhance": "http://47.93.214.2:21332",
-        "NeoNetUrl" : "http://47.93.214.2:10332"
-
-    配置完成后，执行`cd ..`返回到上一级目录。
-    ```
-
-    **配置钱包全节点信息**
-
-    ```
-    cd lightwallet
-
-    vi Settings.py
-
-    将setup_mainnet函数中的self.NODEURL = "http://main:" 替换为self.NODEURL = "http://47.93.214.2:21332":
-    ```
-
-
-    * **测试网钱包节点配置**
-
-    ```
-    cd wallet
-
-    vi configure.py
-
-    修改Configure属性的Fee字段设置该钱包节点的路由手续费。默认手续费：0.01 TNC。
-
-    配置完成后，执行`cd ..`返回到上一级目录。
-    ```
-
-* #### 运行
-
-    * **主链钱包运行
-
-    **创建新窗口会话**
-
-    ```
-    screen -S TrinityWallet
-    ```
-
-    *TrinityWallet: 用户可替换该名称。*
-
-    * **激活python3.6 virtualenv**
-
-    ```
-    source venv/bin/activate
-    ```
-
-    * **运行钱包服务**
-
-    ```
-    cd wallet
-
-    python prompt.py -m
-    ```
-
-    * **退出或重连网关会话**
-
-    ```
-    若需要退出当前screen，可使用`ctrl+a+d`退出。
-
-    若需要重连已创建的screen进程，可使用`screen -r TrinityWallet`
-    ```
-
-    * **测试网钱包运行
-
-    **创建新窗口会话**
-
-    ```
-    screen -S TrinityWalletTestnet
-    ```
-
-    *TrinityWallet: 用户可替换该名称。*
-
-    * **激活python3.6 virtualenv**
-
-    ```
-    同 主链钱包运行部分。
-    ```
-
-    * **运行钱包服务**
-
-    ```
-    cd wallet
-
-    python prompt.py
-    ```
-
-    * **退出或重连网关会话**
-
-    ```
-    同 主链钱包运行部分。
-    ```
-
-* **`注意：`**
+sudo service mongod start
 
 ```
-1· 钱包需要持续保持打开状态。
+
+*参考：mongodb部署相关细节请访问 https://docs.mongodb.com/manual/tutorial/install-mongodb-on-ubuntu/*
+
+安装python3.6
+
+``` shell
+sudo apt-get install software-properties-common
+
+sudo add-apt-repository ppa:jonathonf/python-3.6
+
+sudo apt-get update
+
+sudo apt-get install python3.6 python3.6-dev
 ```
 
+安装pip3.6
 
-<h3 id="trinity_faucet">TestNet TNC水龙头</h3>
+``` shell
+sudo wget https://bootstrap.pypa.io/get-pip.py
 
-TNC水龙头是基于NEO TestNet的，以便大家在NEO TestNet上进行Trinity试用，每个地址每次可获得10个TNC。
+sudo python3.6 get-pip.py
+```
+
+安装virtualenv
+
+``` shell
+sudo pip3.6 install virtualenv
+```
+
+## Trinity 源码包获取
+
+``` shell
+git clone https://github.com/trinity-project/trinity.git /home
+```
+
+进入trinity源码目录
+
+``` shell
+cd /home/trinity
+```
+
+创建及激活虚拟环境
+
+``` shell
+virtualenv -p /usr/bin/python3.6 venv
+
+source venv/bin/activate
+```
+
+安装trinity节点依赖包
+
+``` shell
+pip install -r requirements
+```
+
+## Trinity 路由节点网关部署
+
+打开gateway配置文件
+
+``` shell
+vi gateway/config.py
+```
+
+将`cg_public_ip_port = "localhost:8089"`中的localhost配置为用户自己的公网ip地址。
+
+如：cg_public_ip_port = "8.8.8.8:8089"
+
+新建会话窗口
+
+``` shell
+screen -S TrinityGateway
+```
+
+进入虚拟环境
+
+``` shell
+source venv/bin/activate
+```
+
+运行网关服务
+
+``` shell
+python start.py
+```
+
+控制台输出如下消息启动成功
+
+```shell
+###### Trinity Gateway Start Successfully! ######
+
+```
+
+使用`ctrl+a+d`键盘按键退出当前TrinityGateway会话窗口
+
+注：若需要重连已创建的名为TrinityGateway的会话窗口，可使用如下命令
+
+```shell
+screen -r TrinityGateway
+```
+
+## Trinity 路由节点钱包部署
+
+修改配置文件
+
+``` shell
+vi wallet/configure.py 
+```
+默认configure文件为测试网配置文件，同时在wallet目录下有configure_testnet.py 和 configure_mainnet.py两个配置文件，如果部署主网可简单将configure_mainnet.py的内容复制到configure.py中。
+具体配置信息请参考配置文件注释说明。
+
+
+创建新窗口会话
+
+``` shell
+    screen -S TrinityWallet #TrinityWallet: 用户可替换该名称
+```
+
+激活python3.6 virtualenv(进入到venv所在的文件夹目录)
+
+``` shell
+   source venv/bin/activate
+```
+
+运行网关服务（进入trinity/wallet源码目录）
+
+ - 主链钱包
+
+``` shell
+    python3.6 prompt.py -m #主链钱包
+```
+
+- 测试网钱包
+
+```shell
+   python3.6 prompt.py #测试网钱包
+```
+
+退出或重连网关会话
+
+        参考网关运行章节中内容
+
+
+
+## TestNet TNC水龙头
+
+> TNC水龙头是基于NEO TestNet的，以便大家在NEO TestNet上进行Trinity试用，每个地址每次可获得10个TNC。
 
 水龙头地址：
 
 http://106.15.91.150
 
 
-<h3 id="trinity_explorer">Trinity 网络浏览器</h3>
-
-Trinity网络浏览器可以实时查看trinity网络节点的详细信息及状态。
+## Trinity 网络浏览器
+> Trinity网络浏览器可以实时查看trinity网络节点的详细信息及状态。
 
 浏览器地址：
 
 http://106.15.91.150:8033
 
 
-<h3 id="trinity_channel">Channel节点交互</h3>
-
+## Channel节点交互
 
 trinity CLI钱包区块同步完成之后，即可在钱包控制台进行钱包及通道的相关操作了。
 
@@ -327,15 +198,65 @@ trinity CLI钱包区块同步完成之后，即可在钱包控制台进行钱包
 
 1. 使用状态通道前，需要先使用create wallet 命令创建一个地址。
 
-2. 使用channel open命令进行channel功能的使能，只有使能channel功能之后才能进行状态通道相关的其他操作。
+```shell
+trinity> create wallet /root/test/test.json # /root/test/test.json 为钱包文件路径
+```
 
-3. 使用channel create命令进行状态通道的创建操作。
+2. open wallet 打开已有钱包，注意：这里应该打开带有通道功能的钱包，否则通能功能将被限制。
 
-4. 使用channel tx命令进行状态通道的链下交易操作。
+```shell
+trinity> open wallet /root/test/test.json
+```
+*注：
+新建钱包或打开钱包以后，wallet会主动连接gateway并打开channel功能，如果30s内没有自动打开channel功能，请使用下一命令手动打开channel功能.*
+   
+3. channel enable命令进行channel功能的使能，只有使能channel功能之后才能进行状态通道相关的其他操作。
 
-5. 使用channel close命令进行状态通道的结算删除工作。
+```shell
+trinity> channel enable # /root/test/test.json 为钱包文件路径
+```
 
+4. channel create创建通道。
 
-* **`注意：`**
+```shell
+trinity> channel create xxxxxxxxxxxxx@xx.xx.xx.xx:xxxx TNC 10000 
+# create 后的参数为，peer节点 uri( ip_address@port ）, asset_type, depoist 
+```
 
-当前软件版本在创建通道时，TNC押金数量是以$800美金的价格计算。假设当前TNC价值$1美金，那最低需要800个TNC才能保障通道建立成功。
+*注：
+TNC押金数量是以800美金的价格计算。假设当前TNC价值1美金，那最低需要800个TNC才能保障通道建立成功，可以通过如下命令获取当前时间所需要的TNC押金，目前这条规则仅对TNC通道有效*
+
+5. channel depoist_limit 查看当前TNC押金最小值。
+
+```shell
+trinity> channel depoist_limit
+```
+
+6. channel tx命令进行状态通道的链下交易操作，tx后的参数可以支持pymentlink码，也可以是uri + asset + value。
+
+```shell
+trinity> channel tx xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx # payment link 码
+```
+或
+
+``` shell
+trinity> channel tx xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx@xx.xx.xx.xx:xxxx TNC 10
+```
+
+7. channel payment 生成付款码。
+
+```shell
+trinity> channel payment TNC 10 "mytest" # payment 后面的参数是 asset type， value，comments， comments可以为空
+```
+
+8. channel close命令进行状态通道的结算并关闭通道。
+
+```shell
+trinity> channel close xxxxxxxxxxxxxxx #close后的参数为 channel name
+```
+
+9. channel peer 查看当前channel的peer 节点
+
+```shell
+trinity> channel peer
+```
