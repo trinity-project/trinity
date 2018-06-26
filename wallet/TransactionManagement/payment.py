@@ -98,6 +98,10 @@ class Payment(object):
         return None
 
     @staticmethod
+    def hr_in_hash_history(hr):
+        return Payment.HashHistory.get(hr)
+
+    @staticmethod
     def update_hr_state(hr, isPaid = True):
         Payment.HashHistory[hr] = {"Payment": isPaid}
 

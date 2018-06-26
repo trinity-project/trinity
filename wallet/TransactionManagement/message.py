@@ -1270,10 +1270,12 @@ class HtlcMessage(TransactionMessage):
 
     def verify(self):
         channel = ch.Channel.channel(self.channel_name)
-        if channel and channel.channel_info.state == EnumChannelState.OPENED.name:
-            return True, None
+        if channel or channel.channel_info.state != EnumChannelState.OPENED.name:
+            return False, "No channel or Channel not in OPENED state"
+        if Payment.hr_in_hash_history(self.hr):
+            return False, "Payment link already been used"
 
-        return False, None
+        return True, None
 
     def check_if_the_last_router(self):
         return self.wallet.url == self.router[-1][0]
@@ -1526,7 +1528,8 @@ class HtlcResponsesMessage(TransactionMessage):
 
     def handle_message(self):
         if self.error:
-             LOG.error("")
+             LOG.error(self.error)
+             print(self.error)
         verify, error = self.verify()
         if verify:
             self.transaction.update_transaction(str(self.tx_nonce), HCTX = self.hctx, HEDTX=self.hedtx, HTTX= self.httx)
@@ -1536,7 +1539,7 @@ class HtlcResponsesMessage(TransactionMessage):
                     if not r:
                         LOG.error("Not get the r with hr {}".format(self.hr))
                     RResponse.create(self.wallet.url, self.sender, self.tx_nonce,
-                                     self.channel_name, self.hr, r[0], self.count, self.asset_type, self.comments)
+                                     self.channel_name, self.hr, r[0], self.count, self.asset_type, self.ƒ)
                     self.transaction.update_transaction(str(self.tx_nonce), State="confirm")
 
     def verify(self):
