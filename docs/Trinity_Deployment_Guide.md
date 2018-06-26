@@ -135,7 +135,7 @@ screen -r TrinityGateway
 ``` shell
 vi wallet/configure.py 
 ```
-默认configure文件为测试网配置文件，同时在wallet目录下有configure_testnet.py和configure_mainnet.py两个配置文件，如果部署主网可简单将configure_mainnet.py的内容复制到configure.py中。
+默认configure文件为测试网配置文件，同时在wallet目录下有configure_testnet.py和configure_mainnet.py两个配置文件，如果部署主网可简单将configure_mainnet.py的内容复制到configure.py中。
 具体配置信息请参考配置文件注释说明。
 
 
@@ -202,29 +202,29 @@ trinity CLI钱包区块同步完成之后，即可在钱包控制台进行钱包
 trinity> create wallet /root/test/test.json # /root/test/test.json 为钱包文件路径
 ```
 
-2.open wallet 打开已有钱包，注意：这里应该打开带有通道功能的钱包，否则通能功能将被限制。
+2.open wallet 打开已有钱包，注意：这里应该打开带有通道功能的钱包，否则通能功能将被限制。
 
 ```shell
 trinity> open wallet /root/test/test.json
 ```
 *注：
-新建钱包或打开钱包以后，wallet会主动连接gateway并打开channel功能，如果30s内没有自动打开channel功能，请使用下一命令手动打开channel功能.*
+新建钱吧或打开钱包以后，wallet会主动连接gateway并打开channel功能，如果30s内没有自动打开channel功能，请使用下一命令手动打开channel功能.*
    
 3.channel enable命令进行channel功能的使能，只有使能channel功能之后才能进行状态通道相关的其他操作。
 
 ```shell
-trinity> channel enable # /root/test/test.json 为钱包文件路径
+trinity> channel enable # /root/test/test.json 为钱包文件路径
 ```
 
 4.channel create创建通道。
 
 ```shell
 trinity> channel create xxxxxxxxxxxxx@xx.xx.xx.xx:xxxx TNC 10000 
-# create 后的参数为，peer节点 uri( ip_address@port ）, asset_type, depoist 
+# create 后的参数为，peer节点uri( ip_address@port）, asset_type, depoist
 ```
 
 *注：
-TNC押金数量是以800美金的价格计算。假设当前TNC价值1美金，那最低需要800个TNC才能保障通道建立成功，可以通过如下命令获取当前时间所需要的TNC押金，目前这条规则仅对TNC通道有效*
+TNC押金数量是以800美金的价格计算。假设当前TNC价值1美金，那最低需要800个TNC才能保障通道建立成功，可以通过如下命令获取当前时间所需要的TNC押金，目前这条规则仅对TNC通道有效*
 
 5.channel depoist_limit查看当前TNC押金最小值。
 
@@ -232,12 +232,12 @@ TNC押金数量是以800美金的价格计算。假设当前TNC价值1美金，�
 trinity> channel depoist_limit
 ```
 
-6.channel tx命令进行状态通道的链下交易操作，tx后的参数可以支持pymentlink码，也可以是uri + asset + value。
+6.channel tx命令进行状态通道的链下交易操作，tx后的参数可以支持paymentlink码，也可以是uri + asset + value。
 
 ```shell
 trinity> channel tx xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx # payment link 码
 ```
-或
+或
 
 ``` shell
 trinity> channel tx xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx@xx.xx.xx.xx:xxxx TNC 10
