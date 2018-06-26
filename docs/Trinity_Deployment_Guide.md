@@ -196,13 +196,13 @@ trinity CLI钱包区块同步完成之后，即可在钱包控制台进行钱包
 
 这里仅介绍几个和通道相关的命令：
 
-1. 使用状态通道前，需要先使用create wallet 命令创建一个地址。
+1.使用状态通道前，需要先使用create wallet 命令创建一个地址。
 
 ```shell
 trinity> create wallet /root/test/test.json # /root/test/test.json 为钱包文件路径
 ```
 
-2. open wallet 打开已有钱包，注意：这里应该打开带有通道功能的钱包，否则通能功能将被限制。
+2.open wallet 打开已有钱包，注意：这里应该打开带有通道功能的钱包，否则通能功能将被限制。
 
 ```shell
 trinity> open wallet /root/test/test.json
@@ -210,13 +210,13 @@ trinity> open wallet /root/test/test.json
 *注：
 新建钱包或打开钱包以后，wallet会主动连接gateway并打开channel功能，如果30s内没有自动打开channel功能，请使用下一命令手动打开channel功能.*
    
-3. channel enable命令进行channel功能的使能，只有使能channel功能之后才能进行状态通道相关的其他操作。
+3.channel enable命令进行channel功能的使能，只有使能channel功能之后才能进行状态通道相关的其他操作。
 
 ```shell
 trinity> channel enable # /root/test/test.json 为钱包文件路径
 ```
 
-4. channel create创建通道。
+4.channel create创建通道。
 
 ```shell
 trinity> channel create xxxxxxxxxxxxx@xx.xx.xx.xx:xxxx TNC 10000 
@@ -226,13 +226,13 @@ trinity> channel create xxxxxxxxxxxxx@xx.xx.xx.xx:xxxx TNC 10000
 *注：
 TNC押金数量是以800美金的价格计算。假设当前TNC价值1美金，那最低需要800个TNC才能保障通道建立成功，可以通过如下命令获取当前时间所需要的TNC押金，目前这条规则仅对TNC通道有效*
 
-5. channel depoist_limit 查看当前TNC押金最小值。
+5.channel depoist_limit查看当前TNC押金最小值。
 
 ```shell
 trinity> channel depoist_limit
 ```
 
-6. channel tx命令进行状态通道的链下交易操作，tx后的参数可以支持pymentlink码，也可以是uri + asset + value。
+6.channel tx命令进行状态通道的链下交易操作，tx后的参数可以支持pymentlink码，也可以是uri + asset + value。
 
 ```shell
 trinity> channel tx xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx # payment link 码
@@ -243,19 +243,19 @@ trinity> channel tx xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx # payment link 码
 trinity> channel tx xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx@xx.xx.xx.xx:xxxx TNC 10
 ```
 
-7. channel payment 生成付款码。
+7.channel payment 生成付款码。
 
 ```shell
 trinity> channel payment TNC 10 "mytest" # payment 后面的参数是 asset type， value，comments， comments可以为空
 ```
 
-8. channel close命令进行状态通道的结算并关闭通道。
+8.channel close命令进行状态通道的结算并关闭通道。
 
 ```shell
 trinity> channel close xxxxxxxxxxxxxxx #close后的参数为 channel name
 ```
 
-9. channel peer 查看当前channel的peer 节点
+9.channel peer 查看当前channel的peer 节点
 
 ```shell
 trinity> channel peer
