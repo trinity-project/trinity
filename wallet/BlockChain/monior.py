@@ -83,7 +83,12 @@ class Monitor(object):
 
 def monitorblock():
     while Monitor.GoOn:
-        blockheight_onchain = get_block_count()
+        try:
+            blockheight_onchain = get_block_count()
+        except Exception as e:
+            LOG.error(e)
+            time.sleep(1)
+            continue
         Monitor.update_block_height(blockheight_onchain)
 
         blockheight = Monitor.get_wallet_block_height()

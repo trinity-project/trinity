@@ -48,7 +48,7 @@ class Payment(object):
         elif len(asset_type) == 42:
             asset_type = asset_type.replace("0x","")
         else:
-            asset_type = Configure.get("AssetType").get(asset_type.upper())
+            asset_type = Configure.get("AssetType").get(asset_type.upper()).replace("0x","")
         hr = self.create_hr()
 
         code = "{uri}&{hr}&{asset_type}&{value}&{comments}".format(uri=self.wallet.url,

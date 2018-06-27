@@ -1365,7 +1365,6 @@ class HtlcMessage(TransactionMessage):
         """
         transaction = TrinityTransaction(channel_name, wallet)
         balance = ch.Channel.channel(channel_name).get_balance()
-        print(balance)
         senderpubkey = sender.strip().split("@")[0]
         receiverpubkey = receiver.strip().split("@")[0]
         sender_balance = balance.get(senderpubkey).get(asset_type) - HTLCvalue
