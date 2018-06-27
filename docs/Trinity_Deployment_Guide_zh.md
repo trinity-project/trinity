@@ -195,8 +195,11 @@ trinity> open wallet /root/test/test.json
 ```shell
 trinity> channel enable 
 ```
-
-4.channel create创建通道。
+4.channel show uri 查看钱包uri
+```shell
+trinity> channel show uri
+```
+5.channel create创建通道。
 
 ```shell
 trinity> channel create xxxxxxxxxxxxx@xx.xx.xx.xx:xxxx TNC 80000 
@@ -206,13 +209,13 @@ trinity> channel create xxxxxxxxxxxxx@xx.xx.xx.xx:xxxx TNC 80000
 *注：
 TNC押金数量是以800美金的价格计算。假设当前TNC价值1美金，那最低需要800个TNC才能保障通道建立成功，可以通过如下命令获取当前时间所需要的TNC押金，目前这条规则仅对TNC通道有效*
 
-5.channel depoist_limit查看当前TNC押金最小值。
+6.channel depoist_limit查看当前TNC押金最小值。
 
 ```shell
 trinity> channel depoist_limit
 ```
 
-6.channel tx命令进行状态通道的链下交易操作，tx后的参数可以支持paymentlink码，也可以是uri + asset + value。
+7.channel tx命令进行状态通道的链下交易操作，tx后的参数可以支持paymentlink码，也可以是uri + asset + value。
 
 ```shell
 trinity> channel tx xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx # payment link 码
@@ -223,19 +226,19 @@ trinity> channel tx xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx # payment link 码
 trinity> channel tx xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx@xx.xx.xx.xx:xxxx TNC 10
 ```
 
-7.channel payment生成付款码。
+8.channel payment生成付款码。
 
 ```shell
 trinity> channel payment TNC 10 "mytest" # payment 后面的参数是 asset type， value，comments， comments可以为空
 ```
 
-8.channel close命令进行状态通道的结算并关闭通道。
+9.channel close命令进行状态通道的结算并关闭通道。
 
 ```shell
 trinity> channel close xxxxxxxxxxxxxxx #close后的参数为 channel name
 ```
 
-9.channel peer查看当前channel的peer节点
+10.channel peer查看当前channel的peer节点
 
 ```shell
 trinity> channel peer
