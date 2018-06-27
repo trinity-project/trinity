@@ -4,7 +4,7 @@ node gateway config module \n
 every variable in this config module start as 'cg'
 """
 
-version = 'v0.2.7'
+version = 'v0.2.8'
 
 ###### Common ######
 # tcp end of file don't modify
