@@ -1,19 +1,18 @@
-# Trinity Network部署帮助文档
+# Trinity Network Configuration Guide
 
 [TOC]
 
-> *注意：
-Trinity 路由节点部署对python3.6有环境依赖，要求部署环境的python版本不低于python3.6。
-随着Trinity项目的不断演进，本文档有可能不适用未来发布的Trinity版本；本文档使用Ubuntu16.04桌面版进行测试验证。*
+note：Trinity routing nodes require the configuration environment be no less than python3.6.    
+As Trinity develops, this file may not apply to the new version. This file was tested on Ubuntu16.04 desktop.
 
-## Trinity 运行环境准备工作
+## Trinity Runtime Environment Preparation
 
-安装系统库及系统工具
+Install system library and system tools
 
 ``` shell
 sudo apt-get install screen git libleveldb-dev libssl-dev g++
 ```
-安装mongodb并启动服务
+Install mongodb and launch the service
 
 
 ``` shell
@@ -29,9 +28,9 @@ sudo service mongod start
 
 ```
 
-*参考：mongodb部署相关细节请访问 https://docs.mongodb.com/manual/tutorial/install-mongodb-on-ubuntu/*
+*Ref：mongodb configuration details, please visit:  https://docs.mongodb.com/manual/tutorial/install-mongodb-on-ubuntu/*
 
-安装python3.6
+Configure python3.6
 
 ``` shell
 sudo apt-get install software-properties-common
@@ -43,7 +42,7 @@ sudo apt-get update
 sudo apt-get install python3.6 python3.6-dev
 ```
 
-安装pip3.6
+Install pip3.6
 
 ``` shell
 sudo wget https://bootstrap.pypa.io/get-pip.py
@@ -51,25 +50,25 @@ sudo wget https://bootstrap.pypa.io/get-pip.py
 sudo python3.6 get-pip.py
 ```
 
-安装virtualenv
+Install virtualenv
 
 ``` shell
 sudo pip3.6 install virtualenv
 ```
 
-## Trinity 源码包获取
+## Get Trinity Source Code
 
 ``` shell
 git clone https://github.com/trinity-project/trinity.git /home
 ```
 
-进入trinity源码目录
+Open trinity source code catalo
 
 ``` shell
 cd /home/trinity
 ```
 
-创建及激活虚拟环境
+Create and activate virtual environment
 
 ``` shell
 virtualenv -p /usr/bin/python3.6 venv
@@ -77,165 +76,167 @@ virtualenv -p /usr/bin/python3.6 venv
 source venv/bin/activate
 ```
 
-安装trinity节点依赖包
+Install trinity node requirement package
 
 ``` shell
 pip install -r requirements
 ```
 
-## Trinity 路由节点网关部署
+## Install Trinity Routing Node Gateway
 
-打开gateway配置文件
+Open gateway configuration file
 
 ``` shell
 vi gateway/config.py
 ```
 
-将`cg_public_ip_port = "localhost:8089"`中的localhost配置为用户自己的公网ip地址。
+Find'cg_public_ip_port = "localhost:8089"'
+and Put user’s public ip address at the localhost
 
-如：cg_public_ip_port = "8.8.8.8:8089"
+eg：cg_public_ip_port = "8.8.8.8:8089"
 
-新建会话窗口
+Create a new session window
 
 ``` shell
 screen -S TrinityGateway #TrinityGateway: 用户可替换该名称
 ```
 
-进入虚拟环境
+Enter virtual environment
 
 ``` shell
 source venv/bin/activate
 ```
 
-运行网关服务
+Run the Gateway service
 
 ``` shell
 python start.py
 ```
 
-控制台输出如下消息启动成功
+The code below indicates the Gateway successfully started
 
 ```shell
 ###### Trinity Gateway Start Successfully! ######
 
 ```
 
-使用`ctrl+a+d`键盘按键退出当前TrinityGateway会话窗口
+Use ctrl+a+d to close current TrinityGateway session window
 
-注：若需要重连已创建的名为TrinityGateway的会话窗口，可使用如下命令
+Note: call the function below to re-open the existing TrinityGateway session window
 
 ```shell
 screen -r TrinityGateway
 ```
 
-## Trinity 路由节点钱包部署
+## Install Trinity Routing Node Wallet 
 
-修改配置文件
+Revise configuration file
 
 ``` shell
 vi wallet/configure.py 
 ```
-默认configure文件为测试网配置文件，同时在wallet目录下有configure_testnet.py和configure_mainnet.py两个配置文件，如果部署主网可简单将configure_mainnet.py的内容复制到configure.py中。
-具体配置信息请参考配置文件注释说明。
+The default configure file applies to the testnet, for which configure_testnet.py and configure_mainnet.py co-exist in the wallet catalog. For the mainnet, simply copy configure_mainnet.py and paste it to configure.py. 
 
+Please refer to notes for configuration details.
 
-创建新窗口会话
+Create a new session window
 
 ``` shell
-    screen -S TrinityWallet #TrinityWallet: 用户可替换该名称
+    screen -S TrinityWallet
 ```
 
-激活python3.6 virtualenv(进入到venv所在的文件夹目录)
+Activate python3.6 virtualenv
 
 ``` shell
    source venv/bin/activate
 ```
 
-运行钱包服务（进入trinity/wallet源码目录）
+Run the Gateway service（Enter trinity/ wallet source code catelog)
 
- - 主链钱包
+ - Mainnet Wallet
 
 ``` shell
-    python3.6 prompt.py -m #主链钱包
+    python3.6 prompt.py -m
 ```
 
-- 测试网钱包
+- Testnet Wallet
 
 ```shell
-   python3.6 prompt.py #测试网钱包
+   python3.6 prompt.py
 ```
 
-退出或重连网关会话请参考网关运行章节中的内容。
+close or reopen the gateway session please refer to the details of 'run the gateway service'
 
 
-## Channel节点交互
+## Channel Nodes Interworking
 
-trinity CLI钱包运行之后，即可在钱包控制台进行钱包及通道的相关操作了。
+After trinity CLI wallet running, the subsequent channel and wallet operations can be performed on the wallet console.
 
-钱包控制台输入help查看所有trinity CLI钱包命令。
+Input help to the wallet console to view all trinity CLI wallet commands.
 
-这里仅介绍几个和通道相关的命令：
+Here are a few channel-related commands:
 
-1.使用状态通道前，需要先使用create wallet 命令创建一个地址。
+1.Use create wallet command to create an address before using state channels.
 
 ```shell
-trinity> create wallet /root/test/test.json # /root/test/test.json 为钱包文件路径
+trinity> create wallet /root/test/test.json # /root/test/test.json is the path of wallet
 ```
 
-2.open wallet 打开已有钱包，注意：这里应该打开带有通道功能的钱包，否则通能功能将被限制。
+2.Use open wallet command to open existing wallet. Note: open a wallet with channel function, or the function will be restricted.
 
 ```shell
 trinity> open wallet /root/test/test.json
 ```
-注：
-新建钱包或打开钱包以后，wallet会主动连接gateway并打开channel功能，如果30s内没有自动打开channel功能，请使用以下命令手动打开channel功能.
+Note:After creating or re-opening a wallet, the wallet will automatically connect to the gateway and enable channel function. If channel function was not enabled within 30s, please call channel function to open it manually
    
-3.channel enable命令进行channel功能的使能，只有使能channel功能之后才能进行状态通道相关的其他操作。
+3.Use channel enable command to activate channel function before operating on state channels.
 
 ```shell
 trinity> channel enable 
 ```
 
-4.channel create创建通道。
+4.channel show uri
+
+trinity> channel show uri
+
+5.Use channel create
 
 ```shell
-trinity> channel create xxxxxxxxxxxxx@xx.xx.xx.xx:xxxx TNC 80000 
-# create 后的参数：peer节点uri(PublicKey@ip_address:port）, asset_type, depoist
+trinity> channel create xxxxxxxxxxxxx@xx.xx.xx.xx:xxxx TNC 80000
 ```
 
-*注：
-TNC押金数量是以800美金的价格计算。假设当前TNC价值1美金，那最低需要800个TNC才能保障通道建立成功，可以通过如下命令获取当前时间所需要的TNC押金，目前这条规则仅对TNC通道有效*
+Note:TNC deposit is calculated on $800 USD, which means 800 TNC is required if TNC current price is $1 USD. The command below will tell how much TNC is needed currently for deposit. This is only valid for TNC channel.  
 
-5.channel depoist_limit查看当前TNC押金最小值。
+6.Call channel depoist_limit to check the minimum TNC deposit
 
 ```shell
 trinity> channel depoist_limit
 ```
 
-6.channel tx命令进行状态通道的链下交易操作，tx后的参数可以支持paymentlink码，也可以是uri + asset + value。
+7.Call channel tx to execute off-chain transactions. tx parameters supports pymentlink code, or use uri + asset + value
 
 ```shell
-trinity> channel tx xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx # payment link 码
+trinity> channel tx xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx # payment link code
 ```
-或
+or
 
 ``` shell
 trinity> channel tx xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx@xx.xx.xx.xx:xxxx TNC 10
 ```
 
-7.channel payment生成付款码。
+8.Call channel payment to generate payment code
 
 ```shell
-trinity> channel payment TNC 10 "mytest" # payment 后面的参数是 asset type， value，comments， comments可以为空
+trinity> channel payment TNC 10 "mytest"
 ```
 
-8.channel close命令进行状态通道的结算并关闭通道。
+9.Call channel close to complete settlement and close the channel
 
 ```shell
-trinity> channel close xxxxxxxxxxxxxxx #close后的参数为 channel name
+trinity> channel close xxxxxxxxxxxxxxx
 ```
 
-9.channel peer查看当前channel的peer节点
+10.channel peer is for peer node review
 
 ```shell
 trinity> channel peer
