@@ -28,6 +28,7 @@ from model.base_enum import EnumChannelState
 from wallet.TransactionManagement import message as mg
 from wallet.utils import pubkey_to_address, convert_number_auto
 from wallet.Interface.gate_way import sync_channel
+from wallet.configure import Configure
 from log import LOG
 import json
 
@@ -36,6 +37,8 @@ class Channel(object):
     """
 
     """
+    magic_number = str(Configure.get('Magic', {}).get('Block')).strip() + str(Configure.get('Magic', {}).get('Trinity')).strip()
+
     def __init__(self,founder, partner):
         self.founder = founder
         self.partner = partner
@@ -43,7 +46,6 @@ class Channel(object):
         self.founder_address = pubkey_to_address(self.founder_pubkey)
         self.partner_pubkey = self.partner.split("@")[0]
         self.partner_address = pubkey_to_address(self.partner_pubkey)
-
 
     @staticmethod
     def get_channel(address1, address2, state=None):
@@ -131,7 +133,7 @@ class Channel(object):
         print("create channel %s" %self.channel_name)
 
         result = APIChannel.add_channel(self.channel_name,self.founder, self.partner,
-                     EnumChannelState.INIT.name, 0, self.deposit)
+                     EnumChannelState.INIT.name, 0, self.deposit, Channel.magic_number)
         if cli:
             deposit = convert_number_auto(asset_type.upper(), deposit)
             if 0 >= deposit:
@@ -142,6 +144,7 @@ class Channel(object):
                  "Sender": self.founder,
                  "Receiver": self.partner,
                  "ChannelName": self.channel_name,
+                 "Magic": Channel.magic_number,
                  "MessageBody":{
                                 "AssetType":asset_type,
                                 "Deposit":deposit,
@@ -164,6 +167,10 @@ class Channel(object):
     @property
     def state(self):
         return None
+
+    @staticmethod
+    def is_valid_magic(magic):
+        return (magic is not None) and (magic == Channel.magic_number)
 
     @property
     def src_addr(self):
@@ -309,7 +316,7 @@ def sync_channel_info_to_gateway(channel_name, type):
         else:
             nb[ch.partner] = value
 
-    return sync_channel(type, ch.channel_name,ch.founder,ch.partner,nb)
+    return sync_channel(type, ch.channel_name,ch.founder,ch.partner,nb, ch.magic_number)
 
 
 def udpate_channel_when_setup(address):

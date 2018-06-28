@@ -31,7 +31,7 @@ class SettingsHolder:
 
     def setup_mainnet(self):
         self.NET_NAME = "MainNet"
-        self.NODEURL = "http://47.93.214.2:21332"
+        self.NODEURL = "http://47.96.175.193:21332"
         self.TNC = "0x08e8c4400f1af2c20c28e0018f29535eb85d15b6"
     def setup_testnet(self):
         self.NET_NAME = "TestNet"

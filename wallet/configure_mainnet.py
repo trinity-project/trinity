@@ -58,7 +58,7 @@ Configure = {
     },
     "Version":"v0.2.8",
     "Magic":{
-        "Block":1953787457,
-        "Trinity":19990331
+        "Block":7630401,
+        "Trinity":20030515
     }
 }
