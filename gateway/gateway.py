@@ -92,7 +92,10 @@ class Gateway:
                 if msg_type == "RegisterKeepAlive":
                     protocol.is_wallet_cli = True
                     protocol.wallet_ip = data.get("Ip")
-                    # self.handle_wallet_cli_on_line(protocol)
+                    if not len(self.net_topos.keys()):
+                        ip, port = protocol.wallet_ip.split(":")
+                        addr = (ip, int(port))
+                        Network.send_msg_with_jsonrpc("GetChannelList", addr, {})
                     return
                 peername = protocol.transport.get_extra_info('peername')
                 peer_ip = "{}".format(peername[0])
@@ -145,6 +148,14 @@ class Gateway:
                                 net_topo = self.net_topos.get(utils.asset_type_magic_patch(asset_type, magic))
                         elif not net_topo: return
                         net_topo.sync_channel_graph(data)
+                        if sync_type == "add_whole_graph":
+                            for nid in net_topo.get_nodes():
+                                node = net_topo.get_node_dict(nid)
+                                wallet_cli = self.wallet_clients.get(node["WalletIp"])
+                                opened_wallet = wallet_cli.opened_wallet if wallet_cli else None
+                                if node["Ip"] == cg_public_ip_port and not node["Status"] and opened_wallet:
+                                    node["Status"] = 1
+                                    sync_node_data_to_peer(node, net_topo)
                         tcp_logger.info("sync graph from peer successful")
                         tcp_logger.info("**********number of edges is: {}**********".format(net_topo.get_number_of_edges()))
                         if data.get("Broadcast"):
@@ -154,7 +165,17 @@ class Gateway:
                     else:
                         tcp_logger.error("!!!!!! the receiver or asset_type or magic not provied in the sync channel msg !!!!!!")
                         return
-                
+
+    def handle_node_off(self, peername):
+        ip = str(peername[0])
+        for key in self.net_topos:
+            net_topo = self.net_topos[key]
+            for nid in net_topo.get_nodes():
+                node = net_topo.get_node_dict(nid)
+                if node["Ip"].split(":")[0] == ip:
+                    node["Status"] = 0
+                    sync_node_data_to_peer(node, net_topo)
+
     def handle_wallet_request(self, method, params):
         data = params
         if type(data) == str:
@@ -181,12 +202,13 @@ class Gateway:
         if method == "SyncWalletData":
             rpc_logger.info("Get the wallet sync data:\n{}".format(data))
             body = data.get("MessageBody")
+            magic = data.get("Magic") if data.get("Magic") else ""
             wallet, last_opened_wallet_pk, add = WalletClient.add_or_update(
                 self.wallet_clients,
                 **utils.make_kwargs_for_wallet(body)
             )
             if add: utils.save_wallet_cli(self.wallet_clients)
-            self.handle_wallet_cli_on_line(wallet, last_opened_wallet_pk)
+            self.handle_wallet_cli_on_line(wallet, last_opened_wallet_pk, magic)
             spv_ip_port = "{}:{}".format(cg_wsocket_addr[0], cg_wsocket_addr[1])
             response = MessageMake.make_ack_sync_wallet_msg(wallet.url, spv_ip_port)
             # self.detect_wallet_client_status()
@@ -362,6 +384,10 @@ class Gateway:
                             excepts = [tid] + list(net_topo.nids)
                         )
                         self.sync_channel_route_to_peer(message)
+        elif method == "CloseWallet":
+            cli_ip = data.get("Ip")
+            magic = data.get("Magic") if data.get("Magic") else ""
+            self.handle_wallet_cli_off_line(cli_ip, magic=magic)
 
     def handle_wallet_response(self, method, response):
         if method == "GetChannelList":
@@ -397,6 +423,7 @@ class Gateway:
         union_excepts = set_excepts.union(set_neighbors)
         if message.get("Receiver"):
             union_excepts.add(utils.get_public_key(message["Receiver"]))
+
         for ner in set_neighbors:
             if ner not in set_excepts:
                 receiver = ner + "@" + net_topo.get_node_dict(ner)["Ip"]
@@ -435,17 +462,17 @@ class Gateway:
         else:
             Network.send_msg_with_tcp(receiver, data)
 
-    def _handle_switch_wallets(self, last_pk):
+    def _handle_switch_wallets(self, last_pk, magic):
         if not last_pk: return
         for key in self.net_topos:
             net_topo = self.net_topos[key]
-            if last_pk in net_topo.nids:
+            if magic in key and last_pk in net_topo.nids:
                 node = net_topo.get_node_dict(last_pk)
                 if not node["Status"]: return
                 node["Status"] = 0
                 sync_node_data_to_peer(node, net_topo)
 
-    def handle_wallet_cli_on_line(self, wallet, last_opened_wallet_pk):
+    def handle_wallet_cli_on_line(self, wallet, last_opened_wallet_pk, magic):
         """
         cli on_line just mean:\n
         the cli call the `open wallet xxx` command\n
@@ -460,10 +487,10 @@ class Gateway:
         
         pk = wallet.public_key
         self.wallet_clients[cli_ip].on_line()
-        self._handle_switch_wallets(last_opened_wallet_pk)
+        self._handle_switch_wallets(last_opened_wallet_pk, magic)
         for key in self.net_topos:
             net_topo = self.net_topos[key]
-            if net_topo.has_node(pk):
+            if magic in key and net_topo.has_node(pk):
                 node = net_topo.get_node_dict(pk)
                 if node["Status"]: return
                 net_topo.nids.add(pk)
@@ -471,7 +498,7 @@ class Gateway:
                 node["Ip"] = cg_public_ip_port
                 sync_node_data_to_peer(node, net_topo)
 
-    def handle_wallet_cli_off_line(self, protocol):
+    def handle_wallet_cli_off_line(self, protocol, magic=""):
         """
         cli off_line include these cases:\n
         no.1: the cli program close\n
@@ -481,7 +508,7 @@ class Gateway:
         so traversal the net_topos and check the wallet is in there or not\n
         """
         # if the cli_ip is none do nothing
-        cli_ip = protocol.wallet_ip
+        cli_ip = protocol if isinstance(protocol, str) else protocol.wallet_ip
         if not self.wallet_clients.get(cli_ip): return
         pk = self.wallet_clients[cli_ip].off_line()
         del self.wallet_clients[cli_ip]
@@ -490,13 +517,13 @@ class Gateway:
         for key in self.net_topos:
             net_topo = self.net_topos[key]
             # first check the wallet in the net_topo
-            if pk in net_topo.nids:
-                net_topo.nids.remove(pk)
+            if magic in key and pk in net_topo.nids:
                 node = net_topo.get_node_dict(pk)
                 # check the wallet status is active
                 if not node["Status"]: return
                 node["Status"] = 0
                 sync_node_data_to_peer(node, net_topo)
+                net_topo.nids.remove(pk)
 
     def handle_channel_list_message(self, data):
         if data.get("MessageType") != "GetChannelList": return

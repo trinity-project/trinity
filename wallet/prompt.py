@@ -217,6 +217,10 @@ class UserPromptInterface(PromptInterface):
     def do_close_wallet(self):
         if self.Wallet:
             self.Wallet.SaveStoredData("BlockHeight", self.Wallet.BlockHeight)
+            try:
+                gate_way.close_wallet()
+            except Exception as e:
+                LOG.error(e)
         super().do_close_wallet()
 
     def quit(self):
@@ -532,6 +536,7 @@ class UserPromptInterface(PromptInterface):
 
 
 def main():
+    import signal
     parser = argparse.ArgumentParser()
     # Show the  version
     parser.add_argument("--version", action="version",
@@ -544,10 +549,21 @@ def main():
     args = parser.parse_args()
 
     if args.mainnet:
+        if Channel.magic_number != "763040120030515":
+            print("YOU ARE NOT USING THE MAIN NET MAGIC SYSTEM WILL BE EXIT")
+            os.kill(os.getgid(), signal.SIGKILL)
         settings.setup_mainnet()
     elif args.privnet:
+        if Channel.magic_number == "763040120030515" or Channel.magic_number == "195378745719990331":
+            print("DO NOT USE THE MAIN NET OR TEST NET MAGIC TO START PRIVATE NET")
+            print("SYSTEM WILL BE EXIT")
+            os.kill(os.getpid(), signal.SIGKILL)
         settings.setup_privnet()
     else:
+        if Channel.magic_number != "195378745719990331":
+            print("YOU ARE NOT USING THE TEST NET MAGIC SYSTEM WILL BE EXIT")
+            print("IF YOUR INTENTION IS TO USE MAIN NET TRY python prompt.py -m")
+            os.kill(os.getpid(), signal.SIGKILL)
         settings.setup_testnet()
 
 
@@ -562,7 +578,7 @@ def main():
 
     @d.addErrback
     def sys_exit(f):
-        import signal
+
         print("Setup jsonRpc server error, please check if the port {} already opend".format(port))
         os.kill(os.getpgid(),signal.SIGKILL)
 
