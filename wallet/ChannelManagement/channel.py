@@ -53,11 +53,14 @@ class Channel(object):
         if state:
             states = state.split(",")
             for st in states:
-                channel = APIChannel.batch_query_channel(filters={"src_addr": address1, "dest_addr": address2,"state":st})
+                channel = APIChannel.batch_query_channel(filters={"src_addr": address1, "dest_addr": address2,
+                                                                  "state":st, "magic":Channel.magic_number})
+
                 if channel.get("content"):
                     channels.extend(channel["content"])
 
-                channel= APIChannel.batch_query_channel(filters={"src_addr":address2, "dest_addr":address1, "state":st})
+                channel= APIChannel.batch_query_channel(filters={"src_addr":address2, "dest_addr":address1,
+                                                                 "state":st,"magic":Channel.magic_number})
                 if channel.get("content"):
                     channels.extend(channel["content"])
         else:
@@ -77,11 +80,12 @@ class Channel(object):
     @staticmethod
     def query_channel(address, state=None):
         if state:
-            print("Get Channels with Address %s" %address)
-            filter_src = {"src_addr":address, "state": state}
-            filter_dest = {"dest_addr":address, "state": state}
+            print("Get Channels with Address %s State %s" % (address, state))
+
+            filter_src = {"src_addr":address, "state": state, "magic": Channel.magic_number}
+            filter_dest = {"dest_addr":address, "state": state, "magic":Channel.magic_number}
         else:
-            print("Get Channels with Address %s State %s" %(address, state))
+            print("Get Channels with Address %s" % address)
             filter_src = {"src_addr": address}
             filter_dest = {"dest_addr": address}
 
