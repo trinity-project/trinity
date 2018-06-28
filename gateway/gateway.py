@@ -199,12 +199,13 @@ class Gateway:
         if method == "SyncWalletData":
             rpc_logger.info("Get the wallet sync data:\n{}".format(data))
             body = data.get("MessageBody")
+            magic = data.get("Magic") if data.get("Magic") else ""
             wallet, last_opened_wallet_pk, add = WalletClient.add_or_update(
                 self.wallet_clients,
                 **utils.make_kwargs_for_wallet(body)
             )
             if add: utils.save_wallet_cli(self.wallet_clients)
-            self.handle_wallet_cli_on_line(wallet, last_opened_wallet_pk)
+            self.handle_wallet_cli_on_line(wallet, last_opened_wallet_pk, magic)
             spv_ip_port = "{}:{}".format(cg_wsocket_addr[0], cg_wsocket_addr[1])
             response = MessageMake.make_ack_sync_wallet_msg(wallet.url, spv_ip_port)
             # self.detect_wallet_client_status()
@@ -382,8 +383,9 @@ class Gateway:
                         self.sync_channel_route_to_peer(message)
         elif method == "CloseWallet":
             cli_ip = data.get("Ip")
-            self.handle_wallet_cli_off_line(cli_ip)
-            
+            magic = data.get("Magic") if data.get("Magic") else ""
+            self.handle_wallet_cli_off_line(cli_ip, magic=magic)
+
     def handle_wallet_response(self, method, response):
         if method == "GetChannelList":
             rpc_logger.info("Get the wallet channel list message:\n{}".format(response))
@@ -457,17 +459,17 @@ class Gateway:
         else:
             Network.send_msg_with_tcp(receiver, data)
 
-    def _handle_switch_wallets(self, last_pk):
+    def _handle_switch_wallets(self, last_pk, magic):
         if not last_pk: return
         for key in self.net_topos:
             net_topo = self.net_topos[key]
-            if last_pk in net_topo.nids:
+            if magic in key and last_pk in net_topo.nids:
                 node = net_topo.get_node_dict(last_pk)
                 if not node["Status"]: return
                 node["Status"] = 0
                 sync_node_data_to_peer(node, net_topo)
 
-    def handle_wallet_cli_on_line(self, wallet, last_opened_wallet_pk):
+    def handle_wallet_cli_on_line(self, wallet, last_opened_wallet_pk, magic):
         """
         cli on_line just mean:\n
         the cli call the `open wallet xxx` command\n
@@ -482,10 +484,10 @@ class Gateway:
         
         pk = wallet.public_key
         self.wallet_clients[cli_ip].on_line()
-        self._handle_switch_wallets(last_opened_wallet_pk)
+        self._handle_switch_wallets(last_opened_wallet_pk, magic)
         for key in self.net_topos:
             net_topo = self.net_topos[key]
-            if net_topo.has_node(pk):
+            if magic in key and net_topo.has_node(pk):
                 node = net_topo.get_node_dict(pk)
                 if node["Status"]: return
                 net_topo.nids.add(pk)
@@ -493,7 +495,7 @@ class Gateway:
                 node["Ip"] = cg_public_ip_port
                 sync_node_data_to_peer(node, net_topo)
 
-    def handle_wallet_cli_off_line(self, protocol):
+    def handle_wallet_cli_off_line(self, protocol, magic=""):
         """
         cli off_line include these cases:\n
         no.1: the cli program close\n
@@ -512,7 +514,7 @@ class Gateway:
         for key in self.net_topos:
             net_topo = self.net_topos[key]
             # first check the wallet in the net_topo
-            if pk in net_topo.nids:
+            if magic in key and pk in net_topo.nids:
                 node = net_topo.get_node_dict(pk)
                 # check the wallet status is active
                 if not node["Status"]: return
