@@ -46,6 +46,11 @@ async def GetRouterInfo(params):
     from gateway import gateway_singleton
     return gateway_singleton.handle_wallet_request('GetRouterInfo', params)
 
+@methods.add
+async def CloseWallet(params):
+    from gateway import gateway_singleton
+    return gateway_singleton.handle_wallet_request("CloseWallet", params)
+    
 class AsyncJsonRpc():
     @staticmethod
     async def handle(request):

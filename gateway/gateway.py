@@ -380,7 +380,10 @@ class Gateway:
                             excepts = [tid] + list(net_topo.nids)
                         )
                         self.sync_channel_route_to_peer(message)
-
+        elif method == "CloseWallet":
+            cli_ip = data.get("Ip")
+            self.handle_wallet_cli_off_line(cli_ip)
+            
     def handle_wallet_response(self, method, response):
         if method == "GetChannelList":
             rpc_logger.info("Get the wallet channel list message:\n{}".format(response))
@@ -500,7 +503,7 @@ class Gateway:
         so traversal the net_topos and check the wallet is in there or not\n
         """
         # if the cli_ip is none do nothing
-        cli_ip = protocol.wallet_ip
+        cli_ip = protocol if isinstance(protocol, str) else protocol.wallet_ip
         if not self.wallet_clients.get(cli_ip): return
         pk = self.wallet_clients[cli_ip].off_line()
         del self.wallet_clients[cli_ip]
