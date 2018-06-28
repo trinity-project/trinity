@@ -334,7 +334,8 @@ def udpate_channel_when_setup(address):
             channel_info = {"ChannelName": ch.channel,
                             "Founder": ch.src_addr,
                              "Receiver": ch.dest_addr,
-                             "Balance": c.get_balance()}
+                             "Balance": c.get_balance(),
+                             "Magic": ch.__dict__.get('magic')}
             channel_list.append(channel_info)
     channeld = APIChannel.batch_query_channel(filters={"dest_addr":address,"state":EnumChannelState.OPENED.name})
     if channeld.get("content"):
@@ -343,7 +344,8 @@ def udpate_channel_when_setup(address):
             channel_info = {"ChannelName": ch.channel,
                             "Founder": ch.src_addr,
                             "Receiver": ch.dest_addr,
-                            "Balance": c.get_balance()}
+                            "Balance": c.get_balance(),
+                            "Magic": ch.__dict__.get('magic')}
             channel_list.append(channel_info)
     return channel_list
 
