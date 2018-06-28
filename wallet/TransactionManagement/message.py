@@ -95,6 +95,7 @@ class Message(object):
         self.sender = message.get("Sender")
         self.message_body = message.get("MessageBody")
         self.error = message.get("Error")
+        self.magic = message.get("Magic")
 
     @staticmethod
     def send(message):
@@ -120,6 +121,7 @@ class RegisterMessage(Message):
             ""
             "AssetType": "",
             "Deposit":"",
+            "Magic": "195378745719990331",
         }
     }
     """
@@ -160,15 +162,20 @@ class RegisterMessage(Message):
         deposit[founder_pubkey] = subitem
         deposit[partner_pubkey] = subitem
         APIChannel.add_channel(self.channel_name, self.sender.strip(), self.receiver.strip(),
-                               EnumChannelState.INIT.name, 0, deposit)
+                               EnumChannelState.INIT.name, 0, deposit, self.magic)
         FounderMessage.create(self.channel_name,partner_pubkey,founder_pubkey,
                               self.asset_type.upper(),self.deposit,founder_ip,partner_ip)
 
     def verify(self):
+        if not ch.Channel.is_valid_magic(self.magic):
+            return False, "Invalid Magic number: {}".format(self.magic)
+
         if self.sender == self.receiver:
             return False, "Not Support Sender is Receiver"
+
         if self.receiver != self.wallet.url:
             return False, "The Endpoint is Not Me, I am {}".format(self.wallet.url)
+
         state, error = self.check_balance()
         if not state:
             return state, error

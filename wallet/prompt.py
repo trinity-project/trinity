@@ -27,6 +27,7 @@ from wallet.ChannelManagement.channel import create_channel, \
     get_channel_via_address,\
     chose_channel,\
     close_channel,\
+    Channel,\
     udpate_channel_when_setup
 from wallet.TransactionManagement import message as mg
 from wallet.TransactionManagement import transaction as trinitytx
@@ -353,7 +354,8 @@ class UserPromptInterface(PromptInterface):
             else:
                 message = {"MessageType":"GetRouterInfo",
                            "Sender":self.Wallet.url,
-                            "Receiver": receiver,
+                           "Receiver": receiver,
+                           "Magic": Channel.magic_number,
                            "MessageBody":{
                                "AssetType":asset_type,
                                "Value":count
