@@ -217,6 +217,10 @@ class UserPromptInterface(PromptInterface):
     def do_close_wallet(self):
         if self.Wallet:
             self.Wallet.SaveStoredData("BlockHeight", self.Wallet.BlockHeight)
+            try:
+                gate_way.close_wallet()
+            except Exception as e:
+                LOG.error(e)
         super().do_close_wallet()
 
     def quit(self):

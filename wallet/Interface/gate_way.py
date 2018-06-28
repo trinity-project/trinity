@@ -115,6 +115,21 @@ def send_message(message, method="TransactionMessage" ):
     result = requests.post(Configure["GatewayURL"], json=request)
     return result.json()
 
+def close_wallet():
+    message = {
+            "MessageType": "CloseWallet",
+            "Ip": "{}:{}".format(Configure.get("NetAddress"), Configure.get("NetPort"))
+    }
+    request= {
+            "jsonrpc": "2.0",
+            "method": "CloseWallet",
+            "params": [message],
+            "id": 1
+    }
+    result = requests.post(Configure["GatewayURL"], json=request)
+    return result.json()
+
+
 
 
 
