@@ -165,9 +165,9 @@ class Gateway:
             for nid in net_topo.get_nodes():
                 node = net_topo.get_node_dict(nid)
                 if node["Ip"].split(":")[1] == ip:
-                    node["Status"] = 1
+                    node["Status"] = 0
                     sync_node_data_to_peer(node, net_topo)
-                    
+
     def handle_wallet_request(self, method, params):
         data = params
         if type(data) == str:
