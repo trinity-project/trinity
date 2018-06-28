@@ -92,7 +92,10 @@ class Gateway:
                 if msg_type == "RegisterKeepAlive":
                     protocol.is_wallet_cli = True
                     protocol.wallet_ip = data.get("Ip")
-                    # self.handle_wallet_cli_on_line(protocol)
+                    if not len(self.net_topos.keys())
+                        ip, port = protocol.wallet_ip.split(":")
+                        addr = (ip, int(port))
+                        Network.send_msg_with_jsonrpc("GetChannelList", addr, {})
                     return
                 peername = protocol.transport.get_extra_info('peername')
                 peer_ip = "{}".format(peername[0])
@@ -154,7 +157,17 @@ class Gateway:
                     else:
                         tcp_logger.error("!!!!!! the receiver or asset_type or magic not provied in the sync channel msg !!!!!!")
                         return
-                
+
+    def handle_node_off(self, peername):
+        ip = str(peername[0])
+        for key in self.net_topos:
+            net_topo = self.net_topos[key]
+            for nid in net_topo.get_nodes():
+                node = net_topo.get_node_dict(nid)
+                if node["Ip"].split(":")[1] == ip:
+                    node["Status"] = 1
+                    sync_node_data_to_peer(node, net_topo)
+                    
     def handle_wallet_request(self, method, params):
         data = params
         if type(data) == str:
