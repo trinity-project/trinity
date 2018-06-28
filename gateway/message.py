@@ -116,10 +116,11 @@ class MessageMake:
         return message
 
     @staticmethod
-    def make_search_target_wallet(spv_pk, asset_type):
+    def make_search_target_wallet(spv_pk, asset_type, magic):
         message= {
             "MessageType": "SearchWallet",
             "AssetType": asset_type,
+            "Magic": magic,
             "Publickey": spv_pk
         }
         return message
@@ -181,10 +182,11 @@ class MessageMake:
 
     ###### message for node begin ########
     @staticmethod
-    def make_recover_channel_msg(sender, receiver, asset_type):
+    def make_recover_channel_msg(sender, receiver, asset_type, magic):
         message = {
             "MessageType": "ResumeChannel",
             "AssetType": asset_type,
+            "Magic": magic,
             "Sender": sender,
             "Receiver": receiver
         }
@@ -211,6 +213,7 @@ class MessageMake:
             "SyncType": sync_type,
             "Sender": sender,
             "AssetType": kwargs.get("asset_type"),
+            "Magic": kwargs.get("magic"),
             "Broadcast": kwargs.get("broadcast"),
             "Source": kwargs.get("source"),
             "Target": kwargs.get("target"),

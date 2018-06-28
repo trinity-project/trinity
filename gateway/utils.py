@@ -270,11 +270,11 @@ def _make_router(path, full_path, net_topo):
         }
     return router
 
-def _search_target_wallets(receiver, asset_type):
+def _search_target_wallets(receiver, asset_type, magic):
     from network import Network
     from message import MessageMake
     addr = (get_addr(receiver)[0], cg_local_jsonrpc_addr[1])
-    message = MessageMake.make_search_target_wallet(get_public_key(receiver), asset_type)
+    message = MessageMake.make_search_target_wallet(get_public_key(receiver), asset_type, magic)
     response = Network.send_msg_with_jsonrpc_sync("Search", addr, message)
     if response:
         target = response.get("Wallets")
@@ -282,7 +282,7 @@ def _search_target_wallets(receiver, asset_type):
         target = []
     return target
 
-def search_route_for_spv(sender, source_list, receiver, net_topo, asset_type):
+def search_route_for_spv(sender, source_list, receiver, net_topo, asset_type, magic):
 
     """
     :param sender: spv self url
@@ -315,7 +315,7 @@ def search_route_for_spv(sender, source_list, receiver, net_topo, asset_type):
         # spv-wallet-..-wallet-spv not attached in same gateway
         # search target wallet from remote gateway
         if not len(path) and sed_ip != rev_ip:
-            target_wallet_pks = _search_target_wallets(receiver, asset_type)
+            target_wallet_pks = _search_target_wallets(receiver, asset_type, magic)
             if len(target_wallet_pks):
                 for s_pk in source_wallet_pks:
                     if len(path): break
@@ -329,7 +329,7 @@ def search_route_for_spv(sender, source_list, receiver, net_topo, asset_type):
             if len(path): break
     return _make_router(path, full_path, net_topo)
 
-def search_route_for_wallet(sender, receiver, net_topo, asset_type):
+def search_route_for_wallet(sender, receiver, net_topo, asset_type, magic):
     
     """
     :param sender: spv self url
@@ -352,7 +352,7 @@ def search_route_for_wallet(sender, receiver, net_topo, asset_type):
                     target_wallet_pks.append(key)
         # search target wallet from remote spv table
         else:
-            target_wallet_pks = _search_target_wallets(receiver, asset_type)
+            target_wallet_pks = _search_target_wallets(receiver, asset_type, magic)
         for t_pk in target_wallet_pks:
             path = net_topo.find_shortest_path_decide_by_fee(sed_pk, t_pk)
             if len(path): break
@@ -370,6 +370,13 @@ def make_edge_data(u_node, v_node):
         "weight": u_node["Fee"] + v_node["Fee"],
         "name": names[len(names) -1] if len(names) else "None"
     }
+
+def asset_type_magic_patch(asset_type, data):
+    magic = data.get("Magic") if isinstance(data, dict) else data
+    if magic: 
+        asset_type = asset_type + magic
+    return asset_type
+
 if __name__ == "__main__":
     d = {"a":1,"b":2}
     def get_keys_iterator(clients):

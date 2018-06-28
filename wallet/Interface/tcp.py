@@ -39,7 +39,7 @@ class GatwayClientProtocol(protocol.Protocol):
     def connectionMade(self):
         message = {
                    "MessageType": "RegisterKeepAlive",
-                   "IP":          "{}:{}".format(Configure.get("NetAddress"),Configure.get("NetPort"))
+                   "Ip":          "{}:{}".format(Configure.get("NetAddress"),Configure.get("NetPort"))
                   }
         self.transport.write(encode_bytes(message))
         Message.Connection = True
