@@ -164,7 +164,7 @@ class Gateway:
             net_topo = self.net_topos[key]
             for nid in net_topo.get_nodes():
                 node = net_topo.get_node_dict(nid)
-                if node["Ip"].split(":")[1] == ip:
+                if node["Ip"].split(":")[0] == ip:
                     node["Status"] = 0
                     sync_node_data_to_peer(node, net_topo)
 
