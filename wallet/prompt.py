@@ -551,7 +551,7 @@ def main():
     if args.mainnet:
         if Channel.magic_number != "763040120030515":
             print("YOU ARE NOT USING THE MAIN NET MAGIC SYSTEM WILL BE EXIT")
-            os.kill(os.getpgid(), signal.SIGKILL)
+            os.kill(os.getgid(), signal.SIGKILL)
         settings.setup_mainnet()
     elif args.privnet:
         if Channel.magic_number == "763040120030515" or Channel.magic_number == "195378745719990331":
