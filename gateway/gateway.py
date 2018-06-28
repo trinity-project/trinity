@@ -92,7 +92,7 @@ class Gateway:
                 if msg_type == "RegisterKeepAlive":
                     protocol.is_wallet_cli = True
                     protocol.wallet_ip = data.get("Ip")
-                    if not len(self.net_topos.keys())
+                    if not len(self.net_topos.keys()):
                         ip, port = protocol.wallet_ip.split(":")
                         addr = (ip, int(port))
                         Network.send_msg_with_jsonrpc("GetChannelList", addr, {})
