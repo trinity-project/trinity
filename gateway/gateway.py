@@ -148,6 +148,11 @@ class Gateway:
                                 net_topo = self.net_topos.get(utils.asset_type_magic_patch(asset_type, magic))
                         elif not net_topo: return
                         net_topo.sync_channel_graph(data)
+                        for nid in net_topo.get_nodes():
+                            node = net_topo.get_node_dict(nid)
+                            if node["Ip"] == cg_public_ip_port and not node["Status"]:
+                                node["Status"] = 1
+                                sync_node_data_to_peer(node, net_topo)
                         tcp_logger.info("sync graph from peer successful")
                         tcp_logger.info("**********number of edges is: {}**********".format(net_topo.get_number_of_edges()))
                         if data.get("Broadcast"):
