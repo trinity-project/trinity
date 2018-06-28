@@ -86,8 +86,8 @@ class Channel(object):
             filter_dest = {"dest_addr":address, "state": state, "magic":Channel.magic_number}
         else:
             print("Get Channels with Address %s" % address)
-            filter_src = {"src_addr": address}
-            filter_dest = {"dest_addr": address}
+            filter_src = {"src_addr": address, "magic":Channel.magic_number}
+            filter_dest = {"dest_addr": address,"magic":Channel.magic_number}
 
         channels = APIChannel.batch_query_channel(filters=filter_src)
         if channels.get("content"):
