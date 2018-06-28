@@ -343,6 +343,9 @@ def get_wallet_info(pubkey):
                }
     return message
 
+def get_magic():
+    return str(Configure.get('Magic', {}).get('Block')).strip() + str(Configure.get('Magic', {}).get('Trinity')).strip()
+
 
 if __name__ == "__main__":
     import time

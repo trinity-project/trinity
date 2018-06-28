@@ -26,7 +26,7 @@ import requests
 from wallet.configure import Configure
 from log import LOG
 import json
-from wallet.utils import get_wallet_info
+from wallet.utils import get_wallet_info, get_magic
 
 class GatewayInfo(object):
     Spv_port = None
@@ -65,6 +65,7 @@ def sync_channel(message_type, channel_name,founder, receiver, balance, magic):
 
 def sync_channel_list(channel_list):
     message = {"MessageType":"SyncChannelList",
+               "Magic":get_magic(),
                "MessageBody":{
                    channel_list
                }}
@@ -82,6 +83,7 @@ def join_gateway(publickey):
     LOG.info("JoinGateway {}".format(publickey))
     messagebody = get_wallet_info(publickey)
     message = {"MessageType": "SyncWallet",
+               "Magic": get_magic(),
     "MessageBody": messagebody}
     request = {
         "jsonrpc": "2.0",
@@ -118,6 +120,7 @@ def send_message(message, method="TransactionMessage" ):
 def close_wallet():
     message = {
             "MessageType": "CloseWallet",
+            "Magic":get_magic(),
             "Ip": "{}:{}".format(Configure.get("NetAddress"), Configure.get("NetPort"))
     }
     request= {
