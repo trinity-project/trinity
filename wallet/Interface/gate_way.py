@@ -39,8 +39,9 @@ class GatewayInfo(object):
     def get_spv_port(cls):
         return cls.Spv_port
 
-def sync_channel(message_type, channel_name,founder, receiver, balance):
+def sync_channel(message_type, channel_name,founder, receiver, balance, magic):
     message = {"MessageType": message_type,
+               "Magic": magic,
                "MessageBody": {
                    "ChannelName": channel_name,
                    "Founder": founder,

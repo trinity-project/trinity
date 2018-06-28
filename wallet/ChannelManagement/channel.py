@@ -316,7 +316,7 @@ def sync_channel_info_to_gateway(channel_name, type):
         else:
             nb[ch.partner] = value
 
-    return sync_channel(type, ch.channel_name,ch.founder,ch.partner,nb)
+    return sync_channel(type, ch.channel_name,ch.founder,ch.partner,nb, ch.magic_number)
 
 
 def udpate_channel_when_setup(address):
