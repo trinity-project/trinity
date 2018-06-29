@@ -487,7 +487,7 @@ class Gateway:
         
         pk = wallet.public_key
         self.wallet_clients[cli_ip].on_line()
-        self._handle_switch_wallets(last_opened_wallet_pk, magic)
+        # self._handle_switch_wallets(last_opened_wallet_pk, magic)
         for key in self.net_topos:
             net_topo = self.net_topos[key]
             if magic in key and net_topo.has_node(pk):
