@@ -101,6 +101,7 @@ def monitorblock():
                     block = get_bolck(int(blockheight))
                     handle_message(int(blockheight),block)
                     if Monitor.BlockPause:
+                        time.sleep(1)
                         pass
                     else:
                         blockheight += 1
@@ -109,13 +110,15 @@ def monitorblock():
                     pass
                 Monitor.update_wallet_block_height(blockheight)
             except Exception as e:
+                time.sleep(1)
                 pass
         else:
             #LOG.debug("Not get the blockheight")
+            time.sleep(1)
             pass
 
         if blockheight < blockheight_onchain:
-            #time.sleep(0.1)
+            time.sleep(1)
             pass
         else:
             time.sleep(15)
