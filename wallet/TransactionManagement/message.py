@@ -1601,7 +1601,7 @@ class SettleMessage(TransactionMessage):
                        }
                    }
             Message.send(message)
-            ch.Channel.channel(self.channel_name).update_channel(state = EnumChannelState.CLOSED.name)
+            ch.Channel.channel(self.channel_name).update_channel(state = EnumChannelState.SETTLING.name)
             register_monitor(tx_id, monitor_founding, self.channel_name, EnumChannelState.CLOSED.name)
 
         else:
@@ -1664,7 +1664,7 @@ class SettleMessage(TransactionMessage):
                            }
          }
         Message.send(message)
-        ch.Channel.channel(channel_name).update_channel(state=EnumChannelState.CLOSED.name)
+        #ch.Channel.channel(channel_name).update_channel(state=EnumChannelState.CLOSED.name)
 
     def verify(self):
         v_ch = ch.Channel.channel(self.channel_name)
@@ -1720,6 +1720,7 @@ class SettleResponseMessage(TransactionMessage):
                 raise Exception("Not Find the url")
             raw_data = witness.format(signSelf=tx_data_sign_self, signOther=tx_data_sign_other)
             TrinityTransaction.sendrawtransaction(TrinityTransaction.genarate_raw_data(tx_data, raw_data))
+            ch.Channel.channel(self.channel_name).update_channel(state = EnumChannelState.SETTLING.name)
             register_monitor(tx_id,monitor_founding,self.channel_name, EnumChannelState.CLOSED.name)
 
     def verify(self):
