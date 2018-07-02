@@ -122,14 +122,20 @@ def check_is_owned_wallet(url, clients):
     """
     check the sender or receiver is the wallet \n
     which attached this gateway
+
+    @ return: owned: Wallet registered at this gateway if True, otherwise, False.
+              state: Wallet has opened if true, otherwise, False.
     """
-    result = True
     pk, ip_port = parse_url(url)
+
     if ip_port != cg_public_ip_port:
-        result = False
+        return False, False
+
     if pk not in get_all_active_wallet_keys_iterator(clients):
-        result = False
-    return result
+        # probably the wallet has been closed.
+        return True, False
+
+    return True, True
 
 def check_is_same_gateway(founder, receiver):
     """
