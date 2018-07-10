@@ -102,9 +102,9 @@ class TProtocol(Protocol):
             tcp_logger.info("the connection %s was closed", peername)
         from gateway import gateway_singleton
         from utils import del_dict_item_by_value
-        if self.is_wallet_cli:
+        if self.is_wallet_cli and not exc:
             gateway_singleton.handle_wallet_cli_off_line(self)
-        if self in list(gateway_singleton.tcp_pk_dict.values()):
+        if self in list(gateway_singleton.tcp_pk_dict.values()) and not exc:
             gateway_singleton.handle_node_off(peername)
         tcp_manager.unregister(self)
         self.transport.close()
