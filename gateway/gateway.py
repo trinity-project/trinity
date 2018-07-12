@@ -195,11 +195,12 @@ class Gateway:
                 wallet_pks = []
                 # first check the spv is on-line
                 print("***********", net_topo.spv_table.find_keys(public_key))
-                if self.ws_pk_dict.get(public_key):
-                    for key in net_topo.spv_table.find_keys(public_key):
-                        # check the wallet is on-line
-                        if net_topo.get_node_dict(key)["Status"]:
-                            wallet_pks.append(key)
+                print("***********", self.ws_pk_dict.get(public_key))
+                # if self.ws_pk_dict.get(public_key):
+                for key in net_topo.spv_table.find_keys(public_key):
+                    # check the wallet is on-line
+                    if net_topo.get_node_dict(key)["Status"]:
+                        wallet_pks.append(key)
                 message = MessageMake.make_ack_search_target_wallet(wallet_pks)
             elif msg_type == "SearchSpv":
                 data = net_topo.spv_table.to_json()

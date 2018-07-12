@@ -122,5 +122,5 @@ class Network:
     @staticmethod
     def send_msg_with_jsonrpc_sync(method, addr, data):
         data = json.dumps(data)
-        return AsyncJsonRpc.jsonrpc_request_sync(method, addr, data)
+        return AsyncJsonRpc.jsonrpc_request_sync(method, data, addr)
   
