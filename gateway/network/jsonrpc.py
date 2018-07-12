@@ -93,8 +93,9 @@ class AsyncJsonRpc():
             rpc_logger.info("--> sender to {}\n : {}".format(addr,params))
             res = client.request(method, params)
             rpc_logger.info("<-- receiver from {}\n : {}".format(addr,res))
-        except Exception:
+        except Exception as e:
             res = None
+            raise e
         finally:
             return res
 

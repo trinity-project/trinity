@@ -183,12 +183,14 @@ class Gateway:
         data = params
         if type(data) == str:
             data = json.loads(data)
+        rpc_logger.info("<-- receiver data : {}".format(data))
         msg_type = data.get("MessageType")
         if method == "Search":
             public_key = data.get("Publickey")
             asset_type = data.get("AssetType")
             net_topo = self.net_topos.get(utils.asset_type_magic_patch(asset_type, data))
-            if not net_topo or public_key: return
+            print("********", net_topo)
+            if not net_topo or not public_key: return
             if msg_type == "SearchWallet":
                 wallet_pks = []
                 # first check the spv is on-line
