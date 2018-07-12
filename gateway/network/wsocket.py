@@ -53,7 +53,8 @@ class WsocketService:
                 try:
                     gateway_singleton.handle_spv_request(con, message)
                 except Exception as e:
-                    raise e
+                    pass
+                    # raise e
 
     @staticmethod
     async def send_msg(con, msg):
