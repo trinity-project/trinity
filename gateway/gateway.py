@@ -194,6 +194,7 @@ class Gateway:
             if msg_type == "SearchWallet":
                 wallet_pks = []
                 # first check the spv is on-line
+                print("***********", net_topo.spv_table.find_keys(public_key))
                 if self.ws_pk_dict.get(public_key):
                     for key in net_topo.spv_table.find_keys(public_key):
                         # check the wallet is on-line
