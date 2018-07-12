@@ -178,6 +178,12 @@ class MessageMake:
         }
         return message
     
+    @staticmethod
+    def make_ack_channel_info(peers):
+        message = {
+            "MessageType": "ChannelInfo",
+            "Peers": peers
+        }
     ###### message for spv end ########
 
     ###### message for node begin ########

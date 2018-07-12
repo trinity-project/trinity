@@ -81,7 +81,13 @@ class Gateway:
                     "Nodes": None
                 }
                 Network.send_msg_with_wsocket(websocket, message)
-                    
+        elif msg_type == "GetChannelInfo":
+            magic = data.get("Magic")
+            net_topo = self.net_topos.get(utils.asset_type_magic_patch(asset_type, magic))
+            spv_peers = net_topo.spv_table.find_keys(public_key)
+            message = MessageMake.make_ack_channel_info(spv_peers)
+            Network.send_msg_with_wsocket(websocket, message)
+            
     def handle_node_request(self, protocol, bdata):
         try:
             data = utils.decode_bytes(bdata)
