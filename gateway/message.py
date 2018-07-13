@@ -184,6 +184,7 @@ class MessageMake:
             "MessageType": "ChannelInfo",
             "Peers": peers
         }
+        return message
     ###### message for spv end ########
 
     ###### message for node begin ########
