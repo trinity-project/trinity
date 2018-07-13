@@ -84,10 +84,10 @@ class Gateway:
         elif msg_type == "GetChannelInfo":
             magic = data.get("Magic")
             net_topo = self.net_topos.get(utils.asset_type_magic_patch(asset_type, magic))
-            spv_peers = net_topo.spv_table.find_keys(public_key)
+            spv_peers = net_topo.spv_table.find_keys(public_key) if net_topo else []
             message = MessageMake.make_ack_channel_info(spv_peers)
             Network.send_msg_with_wsocket(websocket, message)
-            
+
     def handle_node_request(self, protocol, bdata):
         try:
             data = utils.decode_bytes(bdata)
