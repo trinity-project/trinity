@@ -87,6 +87,9 @@ class Gateway:
             spv_peers = net_topo.spv_table.find_keys(spv_pk) if net_topo else []
             message = MessageMake.make_ack_channel_info(spv_peers)
             Network.send_msg_with_wsocket(websocket, message)
+        elif msg_type == "UpdateChannel":
+            wallet_addr = utils.get_wallet_addr(receiver, self.wallet_clients)
+            Network.send_msg_with_jsonrpc("TransactionMessage", wallet_addr, data)
 
     def handle_node_request(self, protocol, bdata):
         try:
