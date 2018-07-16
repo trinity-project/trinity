@@ -691,6 +691,7 @@ class RsmcMessage(TransactionMessage):
         self.asset_type = self.message_body.get("AssetType")
         self.role_index = self.message_body.get("RoleIndex")
         self.comments = self.message_body.get("Comments")
+        self.tx_nonce = self.transaction.get_latest_nonceid()
 
     def handle_message(self):
         LOG.info("Handle RsmcMessage : {}".format(str(self.message)))
@@ -1129,13 +1130,14 @@ class RResponse(TransactionMessage):
     def __init__(self,message, wallet):
         super().__init__(message,wallet)
         self.channel_name = message.get("ChannelName")
-        self.tx_nonce = message.get("TxNonce")
+        #self.tx_nonce = message.get("TxNonce")
         self.hr = self.message_body.get("HR")
         self.r = self.message_body.get("R")
         self.count = self.message_body.get("Count")
         self.asset_type = self.message_body.get("AssetType")
         self.comments = self.message_body.get("Comments")
         self.transaction = TrinityTransaction(self.channel_name, self.wallet)
+        self.tx_nonce = self.transaction.get_latest_nonceid()
 
     @staticmethod
     def create(sender, receiver, tx_nonce, channel_name, hr, r, value, asset_type, comments):
@@ -1264,6 +1266,7 @@ class HtlcMessage(TransactionMessage):
         self.asset_type = self.message_body.get("AssetType")
         self.hr = self.message_body.get("HashR")
         self.transaction = TrinityTransaction(self.channel_name, self.wallet)
+        self.tx_nonce = self.transaction.get_latest_nonceid()
 
     def handle_message(self):
         verify, error = self.verify()
