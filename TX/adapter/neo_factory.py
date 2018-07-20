@@ -64,13 +64,19 @@ def createFundingTx(walletSelf,walletOther,asset_id): #self sign is behind
     tx.outputs = [item for item in (output_to_fundingaddress,output_to_self,output_to_other) if item]
     tx.Attributes = txAttributes
 
+    hash_self=ToAddresstHash(pubkeyToAddress(walletSelf["pubkey"]))
+    hash_other=ToAddresstHash(pubkeyToAddress(walletOther["pubkey"]))
+    if hash_self > hash_other:
+        witness = "024140{signOther}2321"+walletOther["pubkey"]+"ac"+"4140{signSelf}2321"+walletSelf["pubkey"]+"ac"
+    else:
+        witness = "024140{signSelf}2321"+walletSelf["pubkey"]+"ac"+"4140{signOther}2321"+walletOther["pubkey"]+"ac"
+
     return {
         "txData":tx.get_tx_data(),
         "addressFunding":contractAddress,
         "txId": createTxid(tx.get_tx_data()),
         "scriptFunding":multi_contract["script"],
-        "witness":"024140{signOther}2321"+walletOther["pubkey"]+"ac"+"4140{signSelf}2321"+walletSelf["pubkey"]+"ac"
-        # "witness":"024140{sign1}2321{pubkey1}ac4140{sign2}2321{pubkey2}ac"
+        "witness":witness
     }
 
 def createCTX(balanceSelf,balanceOther,pubkeySelf,pubkeyOther,fundingScript,asset_id,fundingTxId):
