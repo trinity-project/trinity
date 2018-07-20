@@ -816,7 +816,7 @@ class RsmcMessage(TransactionMessage):
             message = { "MessageType":"Rsmc",
                     "Sender": "{}@{}".format(sender_pubkey, gateway_ip),
                     "Receiver":"{}@{}".format(receiver_pubkey, partner_ip),
-                    "TxNonce": tx_nonce,
+                    "TxNonce": tx_nonce+1,
                     "ChannelName":channel_name,
                     "MessageBody": {
                                       "Commitment":commitment,
@@ -840,7 +840,7 @@ class RsmcMessage(TransactionMessage):
                 message.setdefault("NextRouter", next_router)
 
         elif role_index == 2 or role_index == 3:
-            tx = transaction.get_tx_nonce(tx_nonce=str(int(tx_nonce)-1))
+            tx = transaction.get_tx_nonce(tx_nonce=str(int(tx_nonce)))
             if tx.get("Commitment"):
                 commitment = tx.get("Commitment").get("originalData")
                 rscmcscript = commitment["scriptRSMC"]
@@ -1038,6 +1038,10 @@ class RsmcMessage(TransactionMessage):
         #         # Payment(self.wallet,value[1]).delete_hr(key)
 
     def send_responses(self, error = None):
+        tx_nonce = self.tx_nonce
+        if 0 == self.role_index:
+            tx_nonce += 1
+
         if not error:
             commitment_sig = {"txDataSign": self.sign_message(self.commitment.get("txData")),
                               "originalData": self.commitment}
@@ -1046,7 +1050,7 @@ class RsmcMessage(TransactionMessage):
             message_response = {"MessageType": "RsmcSign",
                                 "Sender": self.receiver,
                                 "Receiver": self.sender,
-                                "TxNonce": self.tx_nonce,
+                                "TxNonce": tx_nonce,
                                 "ChannelName": self.channel_name,
                                 "MessageBody": {"Commitment": commitment_sig,
                                                 "RevocableDelivery": rd_sig,
@@ -1060,7 +1064,7 @@ class RsmcMessage(TransactionMessage):
             message_response = {"MessageType": "RsmcFail",
                                 "Sender": self.receiver,
                                 "Receiver": self.sender,
-                                "TxNonce": self.tx_nonce,
+                                "TxNonce": tx_nonce,
                                 "ChannelName": self.channel_name,
                                 "MessageBody": {"Commitment": self.commitment,
                                                 "RevocableDelivery": self.revocable_delivery,
