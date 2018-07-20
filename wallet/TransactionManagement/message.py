@@ -834,7 +834,7 @@ class RsmcMessage(TransactionMessage):
             subitem = {}
             subitem.setdefault(asset_type.upper(), receiver_balance)
             balance.setdefault(receiver_pubkey, subitem)
-            transaction.update_transaction(str(tx_nonce), Balance=balance, State="pending", RoleIndex=role_index)
+            transaction.update_transaction(str(tx_nonce + 1), Balance=balance, State="pending", RoleIndex=role_index)
             if router and next_router:
                 message.setdefault("Router", router)
                 message.setdefault("NextRouter", next_router)
@@ -938,7 +938,7 @@ class RsmcMessage(TransactionMessage):
 
     def store_monitor_commitement(self):
         ctxid = self.commitment.get("txID")
-        self.transaction.update_transaction(str(self.tx_nonce), MonitorTxId=ctxid)
+        self.transaction.update_transaction(str(self.tx_nonce+1), MonitorTxId=ctxid)
 
     def _handle_0_message(self):
         LOG.info("RSMC handle 0 message {}".format(json.dumps(self.message)))
@@ -1311,7 +1311,7 @@ class HtlcMessage(TransactionMessage):
 
         Payment.update_hash_history(self.hr, self.channel_name, self.count, "pending")
         self.send_responses(self.role_index)
-        self.transaction.update_transaction(str(self.tx_nonce), TxType = "HTLC", HEDTX=self.hedtx,
+        self.transaction.update_transaction(str(self.tx_nonce+1), TxType = "HTLC", HEDTX=self.hedtx,
                                             HR=self.hr,Count=self.count,State ="pending",RoleIndex=self.role_index)
         HtlcMessage.create(self.channel_name, self.wallet, self.wallet.url, self.sender, self.count, self.hr,
                            self.tx_nonce, 1, self.asset_type, self.router,
@@ -1335,7 +1335,7 @@ class HtlcMessage(TransactionMessage):
         if not self.check_role_index(role_index=0):
             return None
         self.send_responses(self.role_index)
-        self.transaction.update_transaction(str(self.tx_nonce), TxType="HTLC", HEDTX=self.hedtx, State="pending",
+        self.transaction.update_transaction(str(self.tx_nonce+1), TxType="HTLC", HEDTX=self.hedtx, State="pending",
                                             RoleIndex=self.role_index)
 
     def get_fee(self, url):
@@ -1386,7 +1386,7 @@ class HtlcMessage(TransactionMessage):
             hctx = create_sender_HTLC_TXS(senderpubkey, receiverpubkey, HTLCvalue, sender_balance,
                                       receiver_balance, hashR, founder["originalData"]["addressFunding"],
                                       founder["originalData"]["scriptFunding"], asset_id)
-            transaction.update_transaction(str(tx_nonce), HR=hashR, TxType="HTLC",
+            transaction.update_transaction(str(tx_nonce+1), HR=hashR, TxType="HTLC",
                                            Count=HTLCvalue, State="pending")
 
             hedtx_sign = wallet.SignContent(hctx["HEDTX"]["txData"])
@@ -1447,7 +1447,7 @@ class HtlcMessage(TransactionMessage):
         message_response = {"MessageType": "HtlcSign",
                             "Sender": self.receiver,
                             "Receiver": self.sender,
-                            "TxNonce": self.tx_nonce,
+                            "TxNonce": self.tx_nonce+1,
                             "ChannelName": self.channel_name,
                             "Router": self.router,
                             "MessageBody": {
@@ -1473,7 +1473,7 @@ class HtlcMessage(TransactionMessage):
         message_response = {"MessageType": "HtlcSign",
                             "Sender": self.receiver,
                             "Receiver": self.sender,
-                            "TxNonce": self.tx_nonce,
+                            "TxNonce": self.tx_nonce+1,
                             "ChannelName": self.channel_name,
                             "Router": self.router,
                             "MessageBody": {
