@@ -353,7 +353,7 @@ class UserPromptInterface(PromptInterface):
             if channel_name:
                 tx_nonce = trinitytx.TrinityTransaction(channel_name, self.Wallet).get_latest_nonceid()
                 mg.RsmcMessage.create(channel_name,self.Wallet,self.Wallet.pubkey,
-                                      receiverpubkey, float(count), receiverip, gate_way_ip, str(tx_nonce+1),
+                                      receiverpubkey, float(count), receiverip, gate_way_ip, str(tx_nonce),
                                       asset_type=asset_type, comments=hr)
             else:
                 message = {"MessageType":"GetRouterInfo",
