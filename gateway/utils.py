@@ -256,12 +256,15 @@ def add_or_update_wallet_to_db(wallet, last_opened_pk):
     if last_opened_pk:
         APINode.update_node(last_opened_pk, status=0)
 
-def _make_router(path, full_path, net_topo):
+def _make_router(path, full_path, net_topo, fee_type=None):
     total_fee = 0
     for nid in path:
         node = net_topo.get_node_dict(nid)
         url = nid + "@" + node.get("Ip")
-        fee = node.get("Fee")
+        if fee_type:
+            fee = str(node.get("Fee"))
+        else:
+            fee = node.get("Fee")
         full_path.append((url, fee))
         index = path.index(nid)
         if index > 0 and index < len(path) - 1:
@@ -288,7 +291,7 @@ def _search_target_wallets(receiver, asset_type, magic):
         target = []
     return target
 
-def search_route_for_spv(sender, source_list, receiver, net_topo, asset_type, magic):
+def search_route_for_spv(sender, source_list, receiver, net_topo, asset_type, magic, fee_type):
 
     """
     :param sender: spv self url
@@ -333,7 +336,7 @@ def search_route_for_spv(sender, source_list, receiver, net_topo, asset_type, ma
         for s_pk in source_wallet_pks:
             path = net_topo.find_shortest_path_decide_by_fee(s_pk, receiver_pk)
             if len(path): break
-    return _make_router(path, full_path, net_topo)
+    return _make_router(path, full_path, net_topo, fee_type=fee_type)
 
 def search_route_for_wallet(sender, receiver, net_topo, asset_type, magic):
     
