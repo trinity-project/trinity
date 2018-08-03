@@ -580,7 +580,7 @@ def main():
     def sys_exit(f):
 
         print("Setup jsonRpc server error, please check if the port {} already opend".format(port))
-        os.kill(os.getpgid(),signal.SIGKILL)
+        os.kill(os.getpgid(os.getpid()),signal.SIGKILL)
 
     from wallet.Interface.tcp import GatwayClientFactory
     gateway_ip, gateway_port = Configure.get("GatewayTCP").split(":")
