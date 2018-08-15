@@ -323,8 +323,8 @@ class PromptInterface(object):
                 print(item.to_json())
 
     def parse_result(self, result):
-        if len(result):
-            commandParts = [s for s in result.split()]
+        if len(result.strip()):
+            commandParts = [s for s in result.strip().split()]
             return commandParts[0], commandParts[1:]
         return None, None
 
