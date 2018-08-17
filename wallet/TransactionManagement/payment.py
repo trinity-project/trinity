@@ -63,9 +63,12 @@ class Payment(object):
             LOG.error("payment code is not trinity payment")
             return False, None
         base58_code = payment_code[2:]
-        code = base58.b58decode(base58_code).decode()
+        try:
+            code = base58.b58decode(base58_code).decode()
+        except Exception as e:
+            LOG.error(e)
+            return False, None
         info = code.split("&",5)
-        print(info)
         if len(info) !=5:
             return False, None
         keys=["uri","hr","asset_type","count","comments"]
