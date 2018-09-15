@@ -72,6 +72,7 @@ class Gateway:
             Network.send_msg_with_wsocket(websocket, message)
         elif msg_type == "GetNodeList":
             magic = data.get("Magic")
+            print(magic, self.net_topos)
             net_topo = self.net_topos.get(utils.asset_type_magic_patch(asset_type, magic))
             if net_topo:
                 message =  MessageMake.make_node_list_msg(net_topo)
@@ -272,7 +273,7 @@ class Gateway:
             channel_receiver = data["MessageBody"]["Receiver"]
             asset_type = list(data["MessageBody"]["Balance"][channel_founder].items())[0][0]
             channel_name = data["MessageBody"]["ChannelName"]
-            magic = data.get("Magic")
+            magic = data.get("NetMagic")
             net_topo = self.net_topos.get(utils.asset_type_magic_patch(asset_type, magic))
             # founder and receiver are attached the same gateway
             if utils.check_is_same_gateway(channel_founder, channel_receiver):
