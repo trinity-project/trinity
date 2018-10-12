@@ -1,16 +1,16 @@
-Trinity
+# Trinity
 Trinity is a universal off-chain scaling solution, which aims to achieve real-time payments with low transaction fees, scalability and privacy protection for mainchain assets. Using state channel technology, Trinity will significantly increase the transaction throughput of underlying chains as well as the assets on smart contracts. TNC cross-chain converter facilitates the data and value flow between multiple chains. Trinity will be a fully autonomous and decentralized performance-enhancing network for the entire ecosystem and provides all-round support to Dapps on bottom layer chains in the future. https://trinity.tech
 
 Trinity-neo
 trinity-neo is the implementation of trinity protocol based on NEO.
 
-# Trinity-neo Network Configuration Guide
+# Trinity-NEO Network Configuration Guide
 
 
 note：Trinity routing nodes require the configuration environment be no less than python3.6.    
 As Trinity develops, this file may not apply to the new version. This file was tested on Ubuntu16.04 desktop.
 
-## Trinity-neo Runtime Environment Preparation
+## Trinity-NEO Runtime Environment Preparation
 
 Install system library and system tools
 
