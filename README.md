@@ -4,13 +4,13 @@ Trinity is a universal off-chain scaling solution, which aims to achieve real-ti
 # Trinity-neo
 trinity-neo is the implementation of trinity protocol based on NEO.
 
-# Trinity-NEO Network Configuration Guide
+# Trinity-neo Network Configuration Guide
 
 
 note：Trinity routing nodes require the configuration environment be no less than python3.6.    
 As Trinity develops, this file may not apply to the new version. This file was tested on Ubuntu16.04 desktop.
 
-## Trinity-NEO Runtime Environment Preparation
+## Trinity-neo Runtime Environment Preparation
 
 Install system library and system tools
 
