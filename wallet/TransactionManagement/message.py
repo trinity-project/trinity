@@ -775,6 +775,7 @@ class RsmcMessage(TransactionMessage):
         tx_state = transaction.get_transaction_state()
         channel = ch.Channel.channel(channel_name)
         balance = channel.get_balance()
+        tx_nonce = int(tx_nonce)
         #balance = transaction.get_balance(str(int(tx_nonce)-1))
         LOG.debug("Rsmc Create get balance {}".format(str(balance)))
 
