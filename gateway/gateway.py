@@ -66,8 +66,7 @@ class Gateway:
             magic = data.get("Magic")
             net_topo = self.net_topos.get(utils.asset_type_magic_patch(asset_type, magic))
             source = data.get("MessageBody").get("NodeList")
-            fee_type = data.get("MessageBody").get("type")
-            route = utils.search_route_for_spv(sender, source, receiver, net_topo, asset_type, magic, fee_type)
+            route = utils.search_route_for_spv(sender, source, receiver, net_topo, asset_type, magic)
             message = MessageMake.make_ack_router_info_msg(route)
             Network.send_msg_with_wsocket(websocket, message)
         elif msg_type == "GetNodeList":
