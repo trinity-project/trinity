@@ -81,7 +81,7 @@ class Network:
         bdata = encode_bytes(data)
         connection = TcpService.find_connection(receiver)
         if connection and cg_reused_tcp_connection:
-            tcp_logger.info("find the exist connection")
+            tcp_logger.info("find the exist connection for receiver<{}>".format(receiver))
             connection.write(bdata)
         else:
             future = asyncio.ensure_future(TcpService.send_tcp_msg_coro(receiver, bdata))

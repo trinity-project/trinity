@@ -154,6 +154,7 @@ class TcpService:
         addr = get_addr(url)
         pk = get_public_key(url)
         result = await get_event_loop().create_connection(TProtocol, addr[0], addr[1])
+        tcp_logger.info('Result of creating connection<{}> is {}'.format(addr, result))
         gateway_singleton.tcp_pk_dict[pk] = result[1]
         result[0].write(bdata)
         result[1].send_totals += len(bdata)

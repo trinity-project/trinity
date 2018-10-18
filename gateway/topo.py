@@ -7,6 +7,7 @@ from spvtable import SPVHashTable
 from networkx.readwrite import json_graph
 from config import cg_public_ip_port
 import utils
+from glog import gw_logger
 
 """
 message = {
@@ -65,9 +66,129 @@ def timethis(func):
         r = func(*args, **kwargs)
         end = time.process_time()
         # end = time.time()
-        print('{}.{} spend : {}ms'.format(func.__module__, func.__name__, (end - start)*1000))
+        gw_logger.info('{}.{} spend : {}ms'.format(func.__module__, func.__name__, (end - start) * 1000))
         return r
     return wrapper
+
+
+class NetNeighborAttributes(object):
+    """
+
+    """
+    def __init__(self, key_attr, net_id):
+        self.key_attribute = key_attr
+        self.net_id = net_id
+        self.total_links = []
+
+    @property
+    def is_empty(self):
+        return 0 == len(self.total_links)
+
+    @property
+    def links(self):
+        return self.total_links
+
+    def increase_links(self, node):
+        if node and node not in self.total_links:
+            self.total_links.append(node)
+
+    def decrease_links(self, node):
+        if node in self.total_links:
+            self.total_links.remove(node)
+
+
+class NetNeighborHash(object):
+    """
+
+    """
+    def __init__(self):
+        self.neighbors_hash = dict()
+
+    def add_neighbor(self, net_id, neighbor=None):
+        """
+
+        :param data:
+        :param net_id:
+        :return:
+        """
+        if not net_id:
+            gw_logger.error('Invalid network ID: {}'.format(net_id))
+            return
+
+        if not neighbor:
+            gw_logger.info('No neighbor is needed to add.')
+            return
+
+        try:
+            node, neighbor_ip = neighbor.split('@')
+            node = node.strip()
+            neighbor_ip = neighbor_ip.strip()
+            if neighbor_ip == cg_public_ip_port:
+                return
+
+            if not neighbor_ip.__contains__('8189'):
+                return
+
+            # start to add the neighbor
+            neighbor_attr = self.neighbors_hash.get(net_id, {}).get(neighbor_ip)
+            if not neighbor_attr:
+                neighbor_attr = NetNeighborAttributes(neighbor_ip, net_id)
+
+            neighbor_attr.increase_links(node)
+            self.neighbors_hash.update({net_id: {neighbor_ip: neighbor_attr}})
+            gw_logger.debug('Success adding neighbor<{}>'.format(neighbor))
+        except Exception as error:
+            gw_logger.error('Failed to add neighbor<{}>. Exception: {}'.format(neighbor, error))
+
+        return
+
+    def delete_neighbor(self, net_id, neighbor=None):
+        """
+
+        :param data:
+        :param net_id:
+        :return:
+        """
+        if not net_id:
+            gw_logger.error('Invalid network ID: {}'.format(net_id))
+            return
+
+        if not neighbor:
+            gw_logger.info('No neighbor is needed to delete.')
+            return
+
+        try:
+            node, neighbor_ip = neighbor.split('@')
+            node = node.strip()
+            neighbor_ip = neighbor_ip.strip()
+            if neighbor_ip == cg_public_ip_port:
+                return
+
+            if not neighbor_ip.__contains__('8189'):
+                return
+
+            # start to add the neighbor
+            neighbors = self.neighbors_hash.get(net_id, {})
+            neighbor_attr = neighbors.get(neighbor_ip)
+            if not neighbor_attr:
+                return
+
+            neighbor_attr.decrease_links(node)
+            if neighbor_attr.is_empty:
+                neighbors.pop(neighbor_ip)
+                self.neighbors_hash.update({net_id: neighbors})
+        except Exception as error:
+            gw_logger.error('Failed to delete neighbor<{}>. Exception: {}'.format(neighbor, error))
+
+        return
+
+    def get_ext_neighbor(self, net_id):
+        if not net_id:
+            gw_logger.error('Invalid network ID: {}'.format(net_id))
+            return {}
+
+        return self.neighbors_hash.get(net_id, {})
+
 
 class Nettopo:
     def __init__(self):
@@ -75,6 +196,7 @@ class Nettopo:
         self.nids = set()
         self._graph = nx.Graph()
         self.spv_table = SPVHashTable()
+        self.neighbors_hash = NetNeighborHash()
 
     def __str__(self):
         return "Nettopo(nodes: {}, links: {})".format(
@@ -256,20 +378,31 @@ class Nettopo:
     def get_number_of_edges(self):
         return self._graph.number_of_edges()
 
+    def add_neighbor(self, net_id, neighbor):
+        self.neighbors_hash.add_neighbor(net_id, neighbor)
+
+    def remove_neighbor(self, net_id, neighbor):
+        self.neighbors_hash.add_neighbor(net_id, neighbor)
+
+    def get_neighbors(self, net_id):
+        self.neighbors_hash.get_ext_neighbor(net_id)
+
     @classmethod
-    def add_or_update(cls, topos, asset_type, magic, wallet):
+    def add_or_update(cls, topos, asset_type, magic, wallet, neighbor=None):
         """
         add wallet node to topo
         """
         pk = wallet.public_key
         data = utils.make_topo_node_data(wallet, asset_type)
-        if topos.get(utils.asset_type_magic_patch(asset_type, magic)):
+        network_trait = utils.asset_type_magic_patch(asset_type, magic)
+        if topos.get(network_trait):
             topo = topos[utils.asset_type_magic_patch(asset_type, magic)]
             if topo.has_node(pk):
                 topo.update_data(data)
                 # pass
             else:
                 topo.add_node(data, pk=pk)
+                topo.add_neighbor(network_trait, neighbor)
         else:
             topo = cls()
             topo.magic = magic

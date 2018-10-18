@@ -256,15 +256,12 @@ def add_or_update_wallet_to_db(wallet, last_opened_pk):
     if last_opened_pk:
         APINode.update_node(last_opened_pk, status=0)
 
-def _make_router(path, full_path, net_topo, fee_type=None):
+def _make_router(path, full_path, net_topo):
     total_fee = 0
     for nid in path:
         node = net_topo.get_node_dict(nid)
         url = nid + "@" + node.get("Ip")
-        if fee_type:
-            fee = str(node.get("Fee"))
-        else:
-            fee = node.get("Fee")
+        fee = node.get("Fee")
         full_path.append((url, fee))
         index = path.index(nid)
         if index > 0 and index < len(path) - 1:
@@ -291,7 +288,7 @@ def _search_target_wallets(receiver, asset_type, magic):
         target = []
     return target
 
-def search_route_for_spv(sender, source_list, receiver, net_topo, asset_type, magic, fee_type):
+def search_route_for_spv(sender, source_list, receiver, net_topo, asset_type, magic):
 
     """
     :param sender: spv self url
@@ -336,7 +333,7 @@ def search_route_for_spv(sender, source_list, receiver, net_topo, asset_type, ma
         for s_pk in source_wallet_pks:
             path = net_topo.find_shortest_path_decide_by_fee(s_pk, receiver_pk)
             if len(path): break
-    return _make_router(path, full_path, net_topo, fee_type=fee_type)
+    return _make_router(path, full_path, net_topo)
 
 def search_route_for_wallet(sender, receiver, net_topo, asset_type, magic):
     
@@ -355,7 +352,7 @@ def search_route_for_wallet(sender, receiver, net_topo, asset_type, magic):
         # sender and receiver is attached same gateway(same ip)
         # search target wallet from local spv table
         if get_addr(sender)[0] == get_addr(receiver)[0]:
-            for key in net_topo.spv_table.find_keys(receiver_pk):
+            for key in net_topo.spv_table.find_keys(rev_pk):
                 # check wallet is on-line
                 if net_topo.get_node_dict(key)["Status"]:
                     target_wallet_pks.append(key)
@@ -381,7 +378,7 @@ def make_edge_data(u_node, v_node):
     }
 
 def asset_type_magic_patch(asset_type, data):
-    magic = data.get("Magic") if isinstance(data, dict) else data
+    magic = data.get("NetMagic") if isinstance(data, dict) else data
     if magic: 
         asset_type = asset_type + magic
     return asset_type
