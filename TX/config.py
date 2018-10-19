@@ -5,7 +5,7 @@ headers = {
     "Content-Type": "application/json"
 }
 
-NODEURL="http://47.254.64.251:21332"
+NODEURL="http://47.96.175.193:21332"
 
 
 NEO="0xc56f33fc6ecfcd0c225c4ab356fee59390af8560be0e930faebe74a6daff7c9b"

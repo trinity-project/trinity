@@ -14,9 +14,9 @@ cg_bytes_encoding = "utf-8"
 
 
 ###### Gateway ######
-cg_tcp_addr = ("0.0.0.0", 8189)
-cg_wsocket_addr = ("0.0.0.0", 8866)
-cg_local_jsonrpc_addr = ("0.0.0.0", 8177)
+cg_tcp_addr = ("0.0.0.0", 8089)
+cg_wsocket_addr = ("0.0.0.0", 8766)
+cg_local_jsonrpc_addr = ("0.0.0.0", 8077)
 cg_remote_jsonrpc_addr = ("0.0.0.0", 20556)
 cg_public_ip_port = "127.0.0.1:8189"
 # cg_public_ip_port = "p1"

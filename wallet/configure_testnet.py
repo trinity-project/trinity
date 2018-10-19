@@ -51,8 +51,8 @@ Configure = {
     "BlockChain":{
         "RPCClient":"http://localhost:20332", # neocli client json-rpc
         "NeoProtocol":"/home/will/neocli/protocol.json",
-        "NeoUrlEnhance": "http://47.254.64.251:21332",
-        "NeoNetUrl" : "http://47.254.64.251:20332"
+        "NeoUrlEnhance": "http://47.96.175.193:21332",
+        "NeoNetUrl" : "http://47.96.175.193:20332"
     },
     "DataBase":{"url": "http://localhost:20554"
     },
