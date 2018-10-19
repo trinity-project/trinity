@@ -1004,14 +1004,14 @@ class RsmcMessage(TransactionMessage):
     def confirm_transaction(self):
         ctx = None
         try:
-            ctx = self.transaction.get_tx_nonce(str(self.tx_nonce))
+            ctx = self.transaction.get_tx_nonce(str(self.tx_nonce+1))
             monitor_ctxid = ctx.get("MonitorTxId")
             txData = ctx.get("RD").get("originalData").get("txData")
             txDataself = self.sign_message(txData)
             txDataother = self.sign_message(ctx.get("RD").get("txDataSign")),
             witness = ctx.get("RD").get("originalData").get("witness")
             register_monitor(monitor_ctxid, monitor_height, txData + witness, txDataother, txDataself)
-            balance = self.transaction.get_balance(str(self.tx_nonce))
+            balance = self.transaction.get_balance(str(self.tx_nonce+1))
             self.transaction.update_transaction(str(self.tx_nonce), State="confirm", RoleIndex=self.role_index)
             ch.Channel.channel(self.channel_name).update_channel(balance=balance)
             ch.sync_channel_info_to_gateway(self.channel_name, "UpdateChannel")
