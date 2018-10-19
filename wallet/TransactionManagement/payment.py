@@ -147,4 +147,13 @@ if __name__ == "__main__":
     print(key_string)
     print(len(key_string))
 
+    key = Random.get_random_bytes(32)
+    key_string = binascii.b2a_hex(key).decode()
+    hr = hash_r(key_string)
+    print(key_string, hr)
 
+
+
+    print(hash_r('0x58a0d5caf1489182eb776801581c2a6c5a31cb072a000154b02d53452a311db2'), 'b5132115c3cc2005ea622e0cc8f20b13c35e0478')
+    result = Payment.verify_hr('93cfbbb1699dde1e8508de42f8a0a02dc275721adedda19803017e0b543a4c4d', '02949252fe726497a3fa79adc4b60b2e7d86cc7036fa729e65c06029ac378779')
+    print(result)

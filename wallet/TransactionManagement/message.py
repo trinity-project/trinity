@@ -66,7 +66,6 @@ class TrinityNumber(object):
                 decimal_part = value_list[1]
                 if 8 < len(decimal_part):
                     decimal_part = decimal_part[0:self.precision]
-                self.integer_part
             else: # should never run here
                 decimal_part = 0
 
@@ -79,7 +78,7 @@ class TrinityNumber(object):
     @staticmethod
     def wraper_decimal_part(decimal_part:int):
         decimal = str(decimal_part)
-        return '0' * (8-len(decimal)) + decimal;
+        return '0' * (8-len(decimal)) + decimal
 
 
 class Message(object):
@@ -921,6 +920,9 @@ class RsmcMessage(TransactionMessage):
             payment_mount = float('.'.join([str(pay_or_get.integer_part),
                                             TrinityNumber.wraper_decimal_part(pay_or_get.decimal_part)]))
 
+            LOG.info('_calculate_and_check_balance: sender<{}>, receiver<{}>, payment<{}>'.format(sender_balance_after_payment,
+                                                                                                  receiver_balance_after_payment,
+                                                                                                  payment_mount))
             return True, sender_balance_after_payment, receiver_balance_after_payment, payment_mount
         except Exception as exp_info:
             LOG.exception('Exception occurred. Exception Info: {}'.format(exp_info))
@@ -998,29 +1000,30 @@ class RsmcMessage(TransactionMessage):
         print("send %s %s success"%(str(self.value),str(self.asset_type)))
 
     def confirm_transaction(self):
-        ctx = self.transaction.get_tx_nonce(str(self.tx_nonce))
-        monitor_ctxid = ctx.get("MonitorTxId")
-        txData = ctx.get("RD").get("originalData").get("txData")
-        txDataself = self.sign_message(txData)
-        txDataother = self.sign_message(ctx.get("RD").get("txDataSign")),
-        witness = ctx.get("RD").get("originalData").get("witness")
-        register_monitor(monitor_ctxid, monitor_height, txData + witness, txDataother, txDataself)
-        balance = self.transaction.get_balance(str(self.tx_nonce))
-        self.transaction.update_transaction(str(self.tx_nonce), State="confirm", RoleIndex=self.role_index)
-        ch.Channel.channel(self.channel_name).update_channel(balance=balance)
-        ch.sync_channel_info_to_gateway(self.channel_name, "UpdateChannel")
-        last_tx = self.transaction.get_tx_nonce(str(int(self.tx_nonce) - 1))
-        monitor_ctxid = last_tx.get("MonitorTxId")
-        btxDataself = ctx.get("BR").get("originalData").get("txData")
-        btxsignself = self.sign_message(btxDataself)
-        btxsignother =  ctx.get("BR").get("txDataSign")
-        bwitness = ctx.get("BR").get("originalData").get("witness")
+        ctx = None
         try:
+            ctx = self.transaction.get_tx_nonce(str(self.tx_nonce))
+            monitor_ctxid = ctx.get("MonitorTxId")
+            txData = ctx.get("RD").get("originalData").get("txData")
+            txDataself = self.sign_message(txData)
+            txDataother = self.sign_message(ctx.get("RD").get("txDataSign")),
+            witness = ctx.get("RD").get("originalData").get("witness")
+            register_monitor(monitor_ctxid, monitor_height, txData + witness, txDataother, txDataself)
+            balance = self.transaction.get_balance(str(self.tx_nonce))
+            self.transaction.update_transaction(str(self.tx_nonce), State="confirm", RoleIndex=self.role_index)
+            ch.Channel.channel(self.channel_name).update_channel(balance=balance)
+            ch.sync_channel_info_to_gateway(self.channel_name, "UpdateChannel")
+            last_tx = self.transaction.get_tx_nonce(str(int(self.tx_nonce) - 1))
+            monitor_ctxid = last_tx.get("MonitorTxId")
+            btxDataself = ctx.get("BR").get("originalData").get("txData")
+            btxsignself = self.sign_message(btxDataself)
+            btxsignother =  ctx.get("BR").get("txDataSign")
+            bwitness = ctx.get("BR").get("originalData").get("witness")
             self.confirm_payment()
         except Exception as e:
-            LOG.info("Confirm payment error {}".format(str(e)))
-
-        register_monitor(monitor_ctxid, monitor_height, btxDataself + bwitness, btxsignother, btxsignself)
+            LOG.info("Confirm payment error ctx {}. Exception: {}".format(ctx, str(e)))
+        else:
+            register_monitor(monitor_ctxid, monitor_height, btxDataself + bwitness, btxsignother, btxsignself)
 
 
 
