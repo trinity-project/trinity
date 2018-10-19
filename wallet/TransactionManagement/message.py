@@ -997,7 +997,7 @@ class RsmcMessage(TransactionMessage):
         LOG.info("RSMC handle 3 message  {}".format(json.dumps(self.message)))
         if not self.check_role_index(1):
             return None
-        self.transaction.update_transaction(str(self.tx_nonce), BR=self.breach_remedy)
+        self.transaction.update_transaction(str(self.tx_nonce+1), BR=self.breach_remedy)
         self.confirm_transaction()
         print("send %s %s success"%(str(self.value),str(self.asset_type)))
 
