@@ -983,12 +983,14 @@ class RsmcMessage(TransactionMessage):
         LOG.info("RSMC handle 2 message  {}".format(json.dumps(self.message)))
         if not self.check_role_index(1):
             return None
-        self.transaction.update_transaction(str(self.tx_nonce), BR=self.breach_remedy)
+        self.transaction.update_transaction(str(self.tx_nonce + 1), BR=self.breach_remedy)
+        self.confirm_transaction()
+
         RsmcMessage.create(self.channel_name, self.wallet,
                            self.receiver_pubkey, self.sender_pubkey,
                            self.value, self.sender_ip, self.receiver_ip, self.tx_nonce,
                            asset_type=self.asset_type.upper(), role_index=3, comments=self.comments)
-        self.confirm_transaction()
+
         print("receive %s %s success" % (str(self.value), str(self.asset_type)))
 
     def _handle_3_message(self):
