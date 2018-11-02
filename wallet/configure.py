@@ -51,8 +51,8 @@ Configure = {
     "BlockChain":{ # blockchain information
         "RPCClient":"http://localhost:20332", # neocli local client json-rpc
         "NeoProtocol":"/home/neocli/protocol.json", # neocli protocol file
-        "NeoUrlEnhance": "http://47.96.175.193:21332", # enhanced neo cli rpc service
-        "NeoNetUrl" : "http://47.96.175.193:20332" # neocli on-line rpc service
+        "NeoUrlEnhance": "http://neoapi-testnet.trinity.ink:21332", # enhanced neo cli rpc service
+        "NeoNetUrl" : "http://neoapi-testnet.trinity.ink:20332" # neocli on-line rpc service
     },
     "DataBase":{"url": "http://localhost:20554" # mongodb url
     },

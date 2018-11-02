@@ -51,8 +51,8 @@ Configure = {
     "BlockChain":{
         "RPCClient":"http://localhost:10332", # neocli client json-rpc
         "NeoProtocol":"/home/will/neocli/protocol.json",
-        "NeoUrlEnhance": "http://47.254.31.231:21332",
-        "NeoNetUrl" : "http://47.254.31.231:10332"
+        "NeoUrlEnhance": "https://neoapi.trinity.ink",
+        "NeoNetUrl" : "https://neoapi.trinity.ink:10332"
     },
     "DataBase":{"url": "http://localhost:20554"
     },
