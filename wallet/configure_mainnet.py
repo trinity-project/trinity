@@ -52,7 +52,7 @@ Configure = {
         "RPCClient":"http://localhost:10332", # neocli client json-rpc
         "NeoProtocol":"/home/will/neocli/protocol.json",
         "NeoUrlEnhance": "https://neoapi.trinity.ink",
-        "NeoNetUrl" : "https://neoapi.trinity.ink:10332"
+        "NeoNetUrl" : "http://neoapi.trinity.ink:10332"
     },
     "DataBase":{"url": "http://localhost:20554"
     },
