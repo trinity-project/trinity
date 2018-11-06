@@ -148,7 +148,7 @@ class Channel(object):
                  "Sender": self.founder,
                  "Receiver": self.partner,
                  "ChannelName": self.channel_name,
-                 "Magic": Channel.magic_number,
+                 "NetMagic": Channel.magic_number,
                  "MessageBody":{
                                 "AssetType":asset_type,
                                 "Deposit":deposit,

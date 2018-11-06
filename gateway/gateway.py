@@ -1,6 +1,6 @@
 # coding: utf-8
 import time
-import os
+import os, socket
 import json
 import utils
 from _wallet import WalletClient
@@ -41,7 +41,8 @@ class Gateway:
         if not utils.check_is_spv(sender): return
         receiver = data.get("Receiver")
         msg_type = data.get("MessageType")
-        asset_type = data.get("MessageBody").get("AssetType")
+        asset_type = data.get("AssetType")
+        magic = data.get("NetMagic")
         spv_pk = utils.get_public_key(sender)
         self.ws_pk_dict[spv_pk] = websocket
         if msg_type == "RegisterChannel":
@@ -51,9 +52,6 @@ class Gateway:
             Network.send_msg_with_jsonrpc("TransactionMessage", wallet_addr, data)
         # first check the receiver is self or not
         if msg_type == "PaymentLink":
-            if not asset_type:
-                asset_type = data.get("MessageBody").get("Parameter").get("Assets")
-
             owned, wallet_state = utils.check_is_owned_wallet(receiver, self.wallet_clients)
             if not (owned and wallet_state): return
             wallet_addr = utils.get_wallet_addr(receiver, self.wallet_clients)
@@ -63,15 +61,12 @@ class Gateway:
         elif msg_type == "CombinationTransaction":
             pass
         elif msg_type == "GetRouterInfo":
-            magic = data.get("Magic")
             net_topo = self.net_topos.get(utils.asset_type_magic_patch(asset_type, magic))
             source = data.get("MessageBody").get("NodeList")
             route = utils.search_route_for_spv(sender, source, receiver, net_topo, asset_type, magic)
             message = MessageMake.make_ack_router_info_msg(route)
             Network.send_msg_with_wsocket(websocket, message)
         elif msg_type == "GetNodeList":
-            magic = data.get("Magic")
-            print(magic, self.net_topos)
             net_topo = self.net_topos.get(utils.asset_type_magic_patch(asset_type, magic))
             if net_topo:
                 message =  MessageMake.make_node_list_msg(net_topo)
@@ -83,7 +78,6 @@ class Gateway:
                 }
                 Network.send_msg_with_wsocket(websocket, message)
         elif msg_type == "GetChannelInfo":
-            magic = data.get("Magic")
             net_topo = self.net_topos.get(utils.asset_type_magic_patch(asset_type, magic))
             spv_peers = net_topo.spv_table.find_keys(spv_pk) if net_topo else []
             message = MessageMake.make_ack_channel_info(spv_peers)
@@ -110,28 +104,47 @@ class Gateway:
                         addr = (ip, int(port))
                         Network.send_msg_with_jsonrpc("GetChannelList", addr, {})
                     return
+
+                # add debug here for investigate why the connection could not send the messages? connection broken??
+                try:
+                    connection_sock = protocol.transport.get_extra_info('socket')
+                    keep_alive = None
+                    if connection_sock:
+                        keep_alive = connection_sock.getsockopt(socket.SOL_SOCKET, socket.SO_KEEPALIVE)
+                    tcp_logger.debug("use the transport with socket {}, keep alive: {}".format(connection_sock, keep_alive))
+                except:
+                    tcp_logger.debug("handle_node_request: use the transport {}".format(protocol.transport))
+
+                sender = data.get("Sender")
+                receiver = data.get("Receiver")
+                asset_type = data.get("AssetType")
+                magic = data.get("NetMagic")
+
                 peername = protocol.transport.get_extra_info('peername')
                 peer_ip = "{}".format(peername[0])
                 # check sender is peer or not
                 # because 'tx message pass on siuatinon' sender may not peer
-                if peer_ip == utils.get_ip_port(data["Sender"]).split(":")[0]:
-                    sed_pk = utils.get_public_key(data["Sender"])
+                if isinstance(sender, list):
+                    pass
+                elif peer_ip == utils.get_ip_port(sender).split(":")[0]:
+                    sed_pk = utils.get_public_key(sender)
+                    # here, add keepalive for the connections
+                    connection_sock = protocol.transport.get_extra_info('socket')
+                    if connection_sock:
+                        connection_sock.setsockopt(socket.SOL_SOCKET, socket.SO_KEEPALIVE, 30)
+
                     self.tcp_pk_dict[sed_pk] = protocol
+
                 if msg_type == "RegisterChannel":
-                    receiver = data.get("Receiver")
                     wallet_addr = utils.get_wallet_addr(receiver, self.wallet_clients)
                     Network.send_msg_with_jsonrpc("TransactionMessage", wallet_addr, data)
                 elif msg_type in Message.get_tx_msg_types():
                     self.handle_transaction_message(data)
                     return utils.request_handle_result.get("correct")
                 elif msg_type == "ResumeChannel":
-                    asset_type = data.get("AssetType")
-                    magic = data.get("Magic")
                     if not asset_type: return
                     net_topo = self.net_topos.get(utils.asset_type_magic_patch(asset_type, magic))
                     if not net_topo: return
-                    sender = data.get("Sender")
-                    receiver = data.get("Receiver")
                     if not sender or not receiver: return
                     message = MessageMake.make_sync_graph_msg(
                         "add_whole_graph",
@@ -146,9 +159,6 @@ class Gateway:
                     message["Receiver"] = sender
                     Network.send_msg_with_tcp(sender, message)
                 elif msg_type == "SyncChannelState":
-                    receiver = data.get("Receiver")
-                    asset_type = data.get("AssetType")
-                    magic = data.get("Magic")
                     if receiver and asset_type and magic:
                         net_topo = self.net_topos.get(utils.asset_type_magic_patch(asset_type, magic))
                         sync_type = data.get("SyncType")
@@ -216,10 +226,12 @@ class Gateway:
                 data = net_topo.spv_table.to_json()
                 message = MessageMake.make_ack_search_spv(data)
             return json.dumps(message)
+
+        magic = data.get("NetMagic") if data.get("NetMagic") else ""
         if method == "SyncWalletData":
             rpc_logger.info("Get the wallet sync data:\n{}".format(data))
             body = data.get("MessageBody")
-            magic = data.get("Magic") if data.get("Magic") else ""
+            magic = data.get("NetMagic") if data.get("NetMagic") else ""
             wallet, last_opened_wallet_pk, add = WalletClient.add_or_update(
                 self.wallet_clients,
                 **utils.make_kwargs_for_wallet(body)
@@ -244,7 +256,7 @@ class Gateway:
             body = data.get("MessageBody")
             asset_type = body.get("AssetType")
             tx_amount = body.get("Value")
-            magic = data.get("Magic")
+            magic = data.get("NetMagic")
             # check the wallet is attached this gatway
             # if not do nothing
             owned, wallet_state = utils.check_is_owned_wallet(sender, self.wallet_clients)
@@ -274,7 +286,7 @@ class Gateway:
             channel_receiver = data["MessageBody"]["Receiver"]
             asset_type = list(data["MessageBody"]["Balance"][channel_founder].items())[0][0]
             channel_name = data["MessageBody"]["ChannelName"]
-            magic = data.get("Magic")
+            magic = data.get("NetMagic")
             network_trait = utils.asset_type_magic_patch(asset_type, magic)
             net_topo = self.net_topos.get(network_trait)
             is_same_gateway = utils.check_is_same_gateway(channel_founder, channel_receiver)
@@ -342,7 +354,7 @@ class Gateway:
                         )
                         self.sync_channel_route_to_peer(message, True)
             else:
-                magic = data.get("Magic") if data.get("Magic") else ""
+                magic = data.get("NetMagic") if data.get("NetMagic") else ""
                 channel_peer, channel_source = utils.select_channel_peer_source(channel_founder, channel_receiver)
                 sid = utils.get_public_key(channel_source)
                 tid = utils.get_public_key(channel_peer)
@@ -416,7 +428,7 @@ class Gateway:
 
         elif method == "CloseWallet":
             cli_ip = data.get("Ip")
-            magic = data.get("Magic") if data.get("Magic") else ""
+            magic = data.get("NetMagic") if data.get("NetMagic") else ""
             self.handle_wallet_cli_off_line(cli_ip, magic=magic)
 
     def handle_wallet_response(self, method, response):
@@ -437,7 +449,7 @@ class Gateway:
         :param except_peer: str type (except peer url)
         """
         asset_type = message.get("AssetType")
-        magic = message.get("Magic")
+        magic = message.get("NetMagic")
         network_trait = utils.asset_type_magic_patch(asset_type, magic)
         net_topo = self.net_topos.get(network_trait)
         sender = message.get("Sender")

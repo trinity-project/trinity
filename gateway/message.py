@@ -120,7 +120,7 @@ class MessageMake:
         message= {
             "MessageType": "SearchWallet",
             "AssetType": asset_type,
-            "Magic": magic,
+            "NetMagic": magic,
             "Publickey": spv_pk
         }
         return message
@@ -193,7 +193,7 @@ class MessageMake:
         message = {
             "MessageType": "ResumeChannel",
             "AssetType": asset_type,
-            "Magic": magic,
+            "NetMagic": magic,
             "Sender": sender,
             "Receiver": receiver
         }
@@ -220,7 +220,7 @@ class MessageMake:
             "SyncType": sync_type,
             "Sender": sender,
             "AssetType": kwargs.get("asset_type"),
-            "Magic": kwargs.get("magic"),
+            "NetMagic": kwargs.get("magic"),
             "Broadcast": kwargs.get("broadcast"),
             "Source": kwargs.get("source"),
             "Target": kwargs.get("target"),

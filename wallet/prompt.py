@@ -360,7 +360,7 @@ class UserPromptInterface(PromptInterface):
                 message = {"MessageType":"GetRouterInfo",
                            "Sender":self.Wallet.url,
                            "Receiver": receiver,
-                           "Magic": Channel.magic_number,
+                           "NetMagic": Channel.magic_number,
                            "MessageBody":{
                                "AssetType":asset_type,
                                "Value":count

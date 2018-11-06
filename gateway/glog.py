@@ -28,38 +28,29 @@ if cg_debug:
     tcp_logger.addHandler(console_handler)
     wst_logger.addHandler(console_handler)
     gw_logger.addHandler(console_handler)
-else:
-    if not os.path.exists('./temp/access'):
-        os.makedirs('./temp/access')
 
-    if not os.path.exists('./temp/error'):
-        os.makedirs('./temp/error/')
+# default: write the logs to the files
+if not os.path.exists('./temp'):
+    os.makedirs('./temp')
 
-    access_file_handler = logging.handlers.TimedRotatingFileHandler('./temp/access/gateway.log')
-    error_file_handler = logging.handlers.TimedRotatingFileHandler('./temp/error/gateway.log')
+access_file_handler = logging.handlers.TimedRotatingFileHandler('./temp/gateway.log', when='d')
 
-    # set log handler record level and filter
-    error_file_handler.setLevel(logging.ERROR)
-    access_file_handler.setLevel(logging.DEBUG)
-    # access_file_handler.addFilter(_NoErrorFilter())
+# set log handler record level and filter
+access_file_handler.setLevel(logging.DEBUG)
+# access_file_handler.addFilter(_NoErrorFilter())
 
-    # set log handler format
-    access_file_handler.setFormatter(_formatter)
-    error_file_handler.setFormatter(_formatter)
+# set log handler format
+access_file_handler.setFormatter(_formatter)
 
-    rpc_logger.setLevel(logging.DEBUG)
-    tcp_logger.setLevel(logging.DEBUG)
-    wst_logger.setLevel(logging.DEBUG)
-    gw_logger.setLevel(logging.DEBUG)
+rpc_logger.setLevel(logging.DEBUG)
+tcp_logger.setLevel(logging.DEBUG)
+wst_logger.setLevel(logging.DEBUG)
+gw_logger.setLevel(logging.DEBUG)
 
-    rpc_logger.addHandler(access_file_handler)
-    rpc_logger.addHandler(error_file_handler)
+rpc_logger.addHandler(access_file_handler)
 
-    tcp_logger.addHandler(access_file_handler)
-    tcp_logger.addHandler(error_file_handler)
+tcp_logger.addHandler(access_file_handler)
 
-    wst_logger.addHandler(access_file_handler)
-    wst_logger.addHandler(error_file_handler)
+wst_logger.addHandler(access_file_handler)
 
-    gw_logger.addHandler(access_file_handler)
-    gw_logger.addHandler(error_file_handler)
+gw_logger.addHandler(access_file_handler)

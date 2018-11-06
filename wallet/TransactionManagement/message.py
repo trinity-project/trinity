@@ -94,7 +94,7 @@ class Message(object):
         self.sender = message.get("Sender")
         self.message_body = message.get("MessageBody")
         self.error = message.get("Error")
-        self.magic = message.get("Magic")
+        self.magic = message.get("NetMagic")
 
     @staticmethod
     def send(message):

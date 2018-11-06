@@ -3,7 +3,7 @@ from asyncio import Protocol, get_event_loop
 from config import cg_end_mark, cg_bytes_encoding, cg_tcp_addr, cg_debug_multi_ports
 from utils import request_handle_result
 from glog import tcp_logger
-import struct
+import struct, socket
 # from datagram import Datagram
 
 class ProtocolManage():
@@ -59,6 +59,16 @@ class TProtocol(Protocol):
                 tcp_logger.info("connect the server %s", peername)
             else:
                 tcp_logger.info("client %s connected", peername)
+
+        try:
+            connection_sock = transport.get_extra_info('socket')
+            keep_alive = None
+            if connection_sock:
+                keep_alive = connection_sock.getsockopt(socket.SOL_SOCKET, socket.SO_KEEPALIVE)
+            tcp_logger.info("use the transport with socket {}, keep alive {}".format(connection_sock, keep_alive))
+        except:
+            tcp_logger.info("use the transport {}".format(transport))
+
         tcp_manager.register(self)
 
     def data_received(self, data):
