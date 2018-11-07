@@ -940,7 +940,7 @@ class RsmcMessage(TransactionMessage):
         return True, None
 
     def store_monitor_commitement(self):
-        ctxid = self.commitment.get("txID")
+        ctxid = self.commitment.get("txId")
         self.transaction.update_transaction(str(self.tx_nonce+1), MonitorTxId=ctxid)
 
     def _handle_0_message(self):
@@ -983,6 +983,7 @@ class RsmcMessage(TransactionMessage):
         LOG.info("RSMC handle 2 message  {}".format(json.dumps(self.message)))
         if not self.check_role_index(1):
             return None
+
         self.transaction.update_transaction(str(self.tx_nonce + 1), BR=self.breach_remedy)
         self.confirm_transaction()
 
@@ -1006,16 +1007,19 @@ class RsmcMessage(TransactionMessage):
         try:
             ctx = self.transaction.get_tx_nonce(str(self.tx_nonce+1))
             monitor_ctxid = ctx.get("MonitorTxId")
-            txData = ctx.get("RD").get("originalData").get("txData")
+            txData = ctx.get("BR").get("originalData").get("txData")
             txDataself = self.sign_message(txData)
-            txDataother = self.sign_message(ctx.get("RD").get("txDataSign")),
-            witness = ctx.get("RD").get("originalData").get("witness")
+            txDataother = ctx.get("BR").get("txDataSign"),
+            witness = ctx.get("BR").get("originalData").get("witness")
             register_monitor(monitor_ctxid, monitor_height, txData + witness, txDataother, txDataself)
             balance = self.transaction.get_balance(str(self.tx_nonce+1))
             self.transaction.update_transaction(str(self.tx_nonce), State="confirm", RoleIndex=self.role_index)
             ch.Channel.channel(self.channel_name).update_channel(balance=balance)
             ch.sync_channel_info_to_gateway(self.channel_name, "UpdateChannel")
-            last_tx = self.transaction.get_tx_nonce(str(int(self.tx_nonce) - 1))
+            if self.tx_nonce == 0:
+                last_tx = self.transaction.get_tx_nonce(str(self.tx_nonce))
+            else:
+                last_tx = self.transaction.get_tx_nonce(str(int(self.tx_nonce) - 1))
             monitor_ctxid = last_tx.get("MonitorTxId")
             btxDataself = ctx.get("BR").get("originalData").get("txData")
             btxsignself = self.sign_message(btxDataself)
