@@ -7,7 +7,6 @@ from spvtable import SPVHashTable
 from networkx.readwrite import json_graph
 from config import cg_public_ip_port
 import utils
-from glog import gw_logger
 
 """
 message = {
@@ -66,7 +65,7 @@ def timethis(func):
         r = func(*args, **kwargs)
         end = time.process_time()
         # end = time.time()
-        gw_logger.info('{}.{} spend : {}ms'.format(func.__module__, func.__name__, (end - start) * 1000))
+        print('{}.{} spend : {}ms'.format(func.__module__, func.__name__, (end - start)*1000))
         return r
     return wrapper
 
@@ -112,11 +111,9 @@ class NetNeighborHash(object):
         :return:
         """
         if not net_id:
-            gw_logger.error('Invalid network ID: {}'.format(net_id))
             return
 
         if not neighbor:
-            gw_logger.info('No neighbor is needed to add.')
             return
 
         try:
@@ -136,10 +133,8 @@ class NetNeighborHash(object):
 
             neighbor_attr.increase_links(node)
             self.neighbors_hash.update({net_id: {neighbor_ip: neighbor_attr}})
-            gw_logger.debug('Success adding neighbor<{}>'.format(neighbor))
         except Exception as error:
-            gw_logger.error('Failed to add neighbor<{}>. Exception: {}'.format(neighbor, error))
-
+            pass
         return
 
     def delete_neighbor(self, net_id, neighbor=None):
@@ -150,11 +145,9 @@ class NetNeighborHash(object):
         :return:
         """
         if not net_id:
-            gw_logger.error('Invalid network ID: {}'.format(net_id))
             return
 
         if not neighbor:
-            gw_logger.info('No neighbor is needed to delete.')
             return
 
         try:
@@ -178,13 +171,12 @@ class NetNeighborHash(object):
                 neighbors.pop(neighbor_ip)
                 self.neighbors_hash.update({net_id: neighbors})
         except Exception as error:
-            gw_logger.error('Failed to delete neighbor<{}>. Exception: {}'.format(neighbor, error))
+            pass
 
         return
 
     def get_ext_neighbor(self, net_id):
         if not net_id:
-            gw_logger.error('Invalid network ID: {}'.format(net_id))
             return {}
 
         return self.neighbors_hash.get(net_id, {})

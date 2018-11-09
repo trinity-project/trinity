@@ -112,9 +112,9 @@ class TProtocol(Protocol):
             tcp_logger.info("the connection %s was closed", peername)
         from gateway import gateway_singleton
         from utils import del_dict_item_by_value
-        if self.is_wallet_cli and not exc:
+        if self.is_wallet_cli:
             gateway_singleton.handle_wallet_cli_off_line(self)
-        if self in list(gateway_singleton.tcp_pk_dict.values()) and not exc:
+        if self in list(gateway_singleton.tcp_pk_dict.values()):
             gateway_singleton.handle_node_off(peername)
         tcp_manager.unregister(self)
         self.transport.close()
@@ -164,7 +164,6 @@ class TcpService:
         addr = get_addr(url)
         pk = get_public_key(url)
         result = await get_event_loop().create_connection(TProtocol, addr[0], addr[1])
-        tcp_logger.info('Result of creating connection<{}> is {}'.format(addr, result))
         gateway_singleton.tcp_pk_dict[pk] = result[1]
         result[0].write(bdata)
         result[1].send_totals += len(bdata)

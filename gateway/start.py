@@ -26,6 +26,6 @@ if __name__ == "__main__":
         gateway_singleton.clearn()
     except OSError as ex:
         print(ex.args[1])
-    finally:
+    else:
         gateway_singleton.close()
         # pass

@@ -122,20 +122,14 @@ def check_is_owned_wallet(url, clients):
     """
     check the sender or receiver is the wallet \n
     which attached this gateway
-
-    @ return: owned: Wallet registered at this gateway if True, otherwise, False.
-              state: Wallet has opened if true, otherwise, False.
     """
+    result = True
     pk, ip_port = parse_url(url)
-
     if ip_port != cg_public_ip_port:
-        return False, False
-
+        result = False
     if pk not in get_all_active_wallet_keys_iterator(clients):
-        # probably the wallet has been closed.
-        return True, False
-
-    return True, True
+        result = False
+    return result
 
 def check_is_same_gateway(founder, receiver):
     """
@@ -352,7 +346,7 @@ def search_route_for_wallet(sender, receiver, net_topo, asset_type, magic):
         # sender and receiver is attached same gateway(same ip)
         # search target wallet from local spv table
         if get_addr(sender)[0] == get_addr(receiver)[0]:
-            for key in net_topo.spv_table.find_keys(rev_pk):
+            for key in net_topo.spv_table.find_keys(receiver_pk):
                 # check wallet is on-line
                 if net_topo.get_node_dict(key)["Status"]:
                     target_wallet_pks.append(key)
@@ -378,7 +372,7 @@ def make_edge_data(u_node, v_node):
     }
 
 def asset_type_magic_patch(asset_type, data):
-    magic = data.get("NetMagic") if isinstance(data, dict) else data
+    magic = data.get("Magic") if isinstance(data, dict) else data
     if magic: 
         asset_type = asset_type + magic
     return asset_type

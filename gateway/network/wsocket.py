@@ -52,8 +52,8 @@ class WsocketService:
             else: 
                 try:
                     gateway_singleton.handle_spv_request(con, message)
-                except Exception as e:
-                    wst_logger.exception("handle spv msg exception")
+                except Exception:
+                    pass
 
     @staticmethod
     async def send_msg(con, msg):

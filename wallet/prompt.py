@@ -325,7 +325,6 @@ class UserPromptInterface(PromptInterface):
                     asset_type = get_asset_type_name(asset_type)
                     count = info.get("count")
                     comments = info.get("comments")
-                    print("will send {} {} to {} comments {}".format(str(count), asset_type, receiver, comments))
                 else:
                     print("The payment code is not correct")
                     return
@@ -354,7 +353,7 @@ class UserPromptInterface(PromptInterface):
             if channel_name:
                 tx_nonce = trinitytx.TrinityTransaction(channel_name, self.Wallet).get_latest_nonceid()
                 mg.RsmcMessage.create(channel_name,self.Wallet,self.Wallet.pubkey,
-                                      receiverpubkey, float(count), receiverip, gate_way_ip, str(tx_nonce),
+                                      receiverpubkey, float(count), receiverip, gate_way_ip, str(tx_nonce+1),
                                       asset_type=asset_type, comments=hr)
             else:
                 message = {"MessageType":"GetRouterInfo",
@@ -581,7 +580,7 @@ def main():
     def sys_exit(f):
 
         print("Setup jsonRpc server error, please check if the port {} already opend".format(port))
-        os.kill(os.getpgid(os.getpid()),signal.SIGKILL)
+        os.kill(os.getpgid(),signal.SIGKILL)
 
     from wallet.Interface.tcp import GatwayClientFactory
     gateway_ip, gateway_port = Configure.get("GatewayTCP").split(":")

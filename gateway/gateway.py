@@ -46,14 +46,13 @@ class Gateway:
         spv_pk = utils.get_public_key(sender)
         self.ws_pk_dict[spv_pk] = websocket
         if msg_type == "RegisterChannel":
-            owned, wallet_state = utils.check_is_owned_wallet(receiver, self.wallet_clients)
-            if not (owned and wallet_state): return
+            if not utils.check_is_owned_wallet(receiver, self.wallet_clients): return
             wallet_addr = utils.get_wallet_addr(receiver, self.wallet_clients)
             Network.send_msg_with_jsonrpc("TransactionMessage", wallet_addr, data)
         # first check the receiver is self or not
         if msg_type == "PaymentLink":
-            owned, wallet_state = utils.check_is_owned_wallet(receiver, self.wallet_clients)
-            if not (owned and wallet_state): return
+
+            if not utils.check_is_owned_wallet(receiver, self.wallet_clients): return
             wallet_addr = utils.get_wallet_addr(receiver, self.wallet_clients)
             Network.send_msg_with_jsonrpc("TransactionMessage", wallet_addr, data)
         elif msg_type in Message.get_tx_msg_types():
@@ -203,13 +202,11 @@ class Gateway:
         data = params
         if type(data) == str:
             data = json.loads(data)
-        # rpc_logger.info("<-- receiver data : {}".format(data))
         msg_type = data.get("MessageType")
         if method == "Search":
             public_key = data.get("Publickey")
             asset_type = data.get("AssetType")
             net_topo = self.net_topos.get(utils.asset_type_magic_patch(asset_type, data))
-            # print("********", net_topo)
             if not net_topo or not public_key: return
             if msg_type == "SearchWallet":
                 wallet_pks = []
@@ -244,8 +241,7 @@ class Gateway:
             return json.dumps(response)
         elif method == "SyncBlock":
             sender = data.get("Sender")
-            owned, wallet_state = utils.check_is_owned_wallet(sender, self.wallet_clients)
-            if owned and wallet_state:
+            if utils.check_is_owned_wallet(sender, self.wallet_clients):
                 Network.add_event_push_web_task(data)
                 # self.detect_wallet_client_status()
             return "OK"
@@ -259,12 +255,9 @@ class Gateway:
             magic = data.get("NetMagic")
             # check the wallet is attached this gatway
             # if not do nothing
-            owned, wallet_state = utils.check_is_owned_wallet(sender, self.wallet_clients)
-            if not (owned and wallet_state):
+            if not utils.check_is_owned_wallet(sender, self.wallet_clients):
                 return "wallet public key check failed"
             net_topo = self.net_topos.get(utils.asset_type_magic_patch(asset_type, magic))
-            print('======= Netopos: {}'.format(self.net_topos))
-            print('======= Netopos keys {}'.format(utils.asset_type_magic_patch(asset_type, magic)))
             route = utils.search_route_for_wallet(sender, receiver, net_topo, asset_type, magic)
             return json.dumps(MessageMake.make_ack_router_info_msg(route))
         elif method == "TransactionMessage":
@@ -511,19 +504,13 @@ class Gateway:
         if utils.check_is_spv(receiver):
             Network.send_msg_with_wsocket(self.ws_pk_dict.get(receiver_pk), data)
         # to self's wallet(wallets that attached this gateway)
+        elif utils.check_is_owned_wallet(receiver, self.wallet_clients):
+            # pk = utils.get_public_key(receiver)
+            wallet_addr = utils.get_wallet_addr(receiver, self.wallet_clients)
+            Network.send_msg_with_jsonrpc("TransactionMessage", wallet_addr, data)
+        # to peer
         else:
-            owned, wallet_state = utils.check_is_owned_wallet(receiver, self.wallet_clients)
-            if wallet_state:
-                # pk = utils.get_public_key(receiver)
-                wallet_addr = utils.get_wallet_addr(receiver, self.wallet_clients)
-                Network.send_msg_with_jsonrpc("TransactionMessage", wallet_addr, data)
-            elif owned:
-                # drop this message because the wallet is closed or exit.
-                tcp_logger.warn('Drop message because wallet is not on OPENED state.')
-                tcp_logger.debug('Drop Message: {}'.format(data))
-            # to peer
-            else:
-                Network.send_msg_with_tcp(receiver, data)
+            Network.send_msg_with_tcp(receiver, data)
 
     def _handle_switch_wallets(self, last_pk, magic):
         if not last_pk: return
@@ -620,9 +607,7 @@ class Gateway:
                 if utils.check_is_spv(channel_peer):
                     spv_list.append(utils.get_public_key(channel_peer))
                     continue
-
-                owned, wallet_state = utils.check_is_owned_wallet(channel_peer, self.wallet_clients)
-                if not owned:
+                elif not utils.check_is_owned_wallet(channel_peer, self.wallet_clients):
                     message = MessageMake.make_recover_channel_msg(wallet.url, channel_peer, asset_type, magic)
                     Network.send_msg_with_tcp(channel_peer, message)
             if len(wallet.channel_balance.keys()):

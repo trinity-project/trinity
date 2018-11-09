@@ -134,7 +134,7 @@ class WalletClient:
         and change the old opened wallet status
         """
         last_pk = None
-        if self.opened_wallet and self.opened_wallet.public_key != wallet.public_key:
+        if self.opened_wallet and self.opened_wallet != wallet:
             self.opened_wallet.status = 0
             last_pk = self.opened_wallet.public_key
             self.opened_wallet = wallet

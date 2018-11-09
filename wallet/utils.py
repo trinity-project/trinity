@@ -75,7 +75,7 @@ class DepositAuth(object):
         cls.DefaultDeposit = deposit
         cls.LastGetTime = datetime.date.today()
 
-        return 0 #cls.DefaultDeposit  delete deposit limit at Nov 7 2018
+        return 0
 
 
 def to_aes_key(password):

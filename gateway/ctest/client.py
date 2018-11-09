@@ -6,7 +6,7 @@ import sys
 r_path = os.getcwd()
 print(r_path)
 sys.path.append(r_path)
-# import utils
+import utils
 # import threading
 
 class Client:
@@ -63,7 +63,7 @@ class Client:
 if __name__ == "__main__":
     import struct
     client = Client()
-    addr = ("118.89.44.106", 8089)
+    addr = ("127.0.0.1", 8089)
     version = 0x000001
     cmd = 0x000065
     # bdata = data.encode("utf-8")
@@ -83,11 +83,8 @@ if __name__ == "__main__":
     header_pack = struct.pack("!3I", *header)
     
     
-    # client.send(addr, header_pack + bdata)
-
-    client._connect(addr)
-    while True:
-        pass
+    client.send(addr, header_pack + bdata)
+    # client._connect(addr)
     # time.sleep(0.4)
     # client.send(addr, bdata[10:])
 
