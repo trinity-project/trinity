@@ -36,6 +36,39 @@ from wallet.TransactionManagement import message as ms
 BlockHeightRecord = os.path.join(TxDataDir,"block.data")
 
 
+def ucoro(timeout=0.1, once=False):
+    def handler(callback):
+        def wrapper(*args, **kwargs):
+            received = None
+            # use such mode to modulate blocking-mode to received
+            while True:
+                try:
+                    received = yield
+                    if received in ['exit', None]:
+                        break
+                    callback(*args, **kwargs)
+                except Exception as error:
+                    LOG.exception('Co-routine received<{}>, error: {}'.format(received, error))
+                finally:
+                    # only run once time
+                    if once:
+                        break
+
+                    time.sleep(timeout)
+
+        return wrapper
+
+    return handler
+
+
+def ucoro_event(coro, iter_data):
+    try:
+        coro.send(iter_data)
+    except StopIteration as error:
+        LOG.debug('Co-routine has been killed.')
+    except Exception as error:
+        LOG.exception('Error occurred during using co-routine. error: {}'.format(error))
+
 class Monitor(object):
     GoOn = True
     Wallet = None
@@ -80,8 +113,65 @@ class Monitor(object):
     def get_block_height(cls):
         return cls.BlockHeight if cls.BlockHeight else 1
 
+class MonitorMachine(object):
+
+    #Monitor special block height, and trigger block event
+    @ucoro(0.1, True)
+    def __coroutine_handler_block_height(self, block_height:int, value):
+        if value[0] == block_height:
+            value[1](*value[1:])
+            BlockHightRegister.remove(value)
+
+    def coro_grouper_block_height(self, block_height, value):
+        while True:
+            yield from self.__coroutine_handler_block_height(block_height, value)
+
+    #Monitor every block to check whether special tx id been confirmed in onchain
+    @ucoro(0.1, True)
+    def __coroutine_handler__TxId(self, tx_id, block_txids, value):
+        #LOG.debug("coro txid:{}, block_txids:{}, args:{}".format(tx_id, block_txids, value))
+        if tx_id in block_txids:
+            value[1](value[0], *value[2:])
+            TxIDRegister.remove(value)
+
+    def coro_grouper_TxId(self, tx_id, block_txids, value):
+        while True:
+            yield from self.__coroutine_handler__TxId(tx_id, block_txids, value)
+
+    def handle_message(self, height, block):
+        block_txids = [i.get("txid") for i in block.get("tx")]
+        ms.SyncBlockMessage.send_block_sync(Monitor.Wallet, height, block_txids)
+
+        if self.is_blockHight_list_empty and self.is_TxId_list_empty:
+            return None
+
+        if not self.is_blockHight_list_empty:
+            blockheight = copy.deepcopy(BlockHightRegister)
+            for index, value in enumerate(blockheight):
+                coro = self.coro_grouper_block_height(height, value)
+                next(coro)
+                coro.send(height)
+
+        if not self.is_TxId_list_empty:
+            tx_ids = copy.deepcopy(TxIDRegister)
+            for value in tx_ids:
+                txid = value[0]
+                coro = self.coro_grouper_TxId(txid, block_txids, value)
+                next(coro)
+                coro.send(height)
+
+        pass
+
+    @property
+    def is_blockHight_list_empty(self):
+        return 0 == len(BlockHightRegister)
+
+    @property
+    def is_TxId_list_empty(self):
+        return 0 == len(TxIDRegister)
 
 def monitorblock():
+    monitor_machine = MonitorMachine()
     while Monitor.GoOn:
         try:
             blockheight_onchain = get_block_count()
@@ -94,21 +184,22 @@ def monitorblock():
         blockheight = Monitor.get_wallet_block_height()
 
         block_delta = int(blockheight_onchain) - int(blockheight)
-
+        LOG.info("monitor block height onchain:{}, wallet block height:{}".format(blockheight_onchain, blockheight))
         if blockheight:
             try:
-                if block_delta < 2000:
+                if 0 < block_delta < 2000:
                     block = get_bolck(int(blockheight))
-                    handle_message(int(blockheight),block)
+                    monitor_machine.handle_message(int(blockheight),block)
                     if Monitor.BlockPause:
                         pass
                     else:
                         blockheight += 1
-                else:
+                elif 2000 <= block_delta:
                     blockheight +=1000
                     pass
                 Monitor.update_wallet_block_height(blockheight)
             except Exception as e:
+                #LOG.debug("exception:{}".format(e))
                 pass
         else:
             #LOG.debug("Not get the blockheight")
@@ -118,6 +209,7 @@ def monitorblock():
             #time.sleep(0.1)
             pass
         else:
+            Monitor.update_wallet_block_height(blockheight_onchain)
             time.sleep(15)
 
 
