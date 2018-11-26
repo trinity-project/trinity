@@ -53,7 +53,6 @@ def ucoro(timeout=0.1, once=False):
                     # only run once time
                     if once:
                         break
-
                     time.sleep(timeout)
 
         return wrapper
@@ -129,7 +128,6 @@ class MonitorMachine(object):
     #Monitor every block to check whether special tx id been confirmed in onchain
     @ucoro(0.1, True)
     def __coroutine_handler__TxId(self, tx_id, block_txids, value):
-        #LOG.debug("coro txid:{}, block_txids:{}, args:{}".format(tx_id, block_txids, value))
         if tx_id in block_txids:
             value[1](value[0], *value[2:])
             TxIDRegister.remove(value)
@@ -150,7 +148,7 @@ class MonitorMachine(object):
             for index, value in enumerate(blockheight):
                 coro = self.coro_grouper_block_height(height, value)
                 next(coro)
-                coro.send(height)
+                ucoro_event(coro, height)
 
         if not self.is_TxId_list_empty:
             tx_ids = copy.deepcopy(TxIDRegister)
@@ -158,7 +156,7 @@ class MonitorMachine(object):
                 txid = value[0]
                 coro = self.coro_grouper_TxId(txid, block_txids, value)
                 next(coro)
-                coro.send(height)
+                ucoro_event(coro, height)
 
         pass
 
@@ -199,19 +197,18 @@ def monitorblock():
                     pass
                 Monitor.update_wallet_block_height(blockheight)
             except Exception as e:
-                #LOG.debug("exception:{}".format(e))
+                LOG.debug("exception:{}".format(e))
                 pass
         else:
-            #LOG.debug("Not get the blockheight")
+            LOG.debug("Not get the blockheight")
             pass
 
         if blockheight < blockheight_onchain:
-            #time.sleep(0.1)
+            time.sleep(0.1)
             pass
         else:
             Monitor.update_wallet_block_height(blockheight_onchain)
             time.sleep(15)
-
 
 def send_message_to_gateway(message):
     send_message(message)
