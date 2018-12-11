@@ -31,6 +31,7 @@ from wallet.TransactionManagement import transaction, message
 from log import LOG
 from wallet.configure import Configure
 from wallet.BlockChain.interface import get_balance
+from wallet.TransactionManagement.payment import Payment
 
 
 MessageList = []
@@ -227,5 +228,16 @@ class RpcInteraceApi(object):
         elif method == 'RefoundTrans':
             return transaction.refound_trans(params)
 
+        elif method == "GetPayment":
+            asset_type = params[0]
+            payment = params[1]
+            comment = "None"
+            try:
+                pycode = Payment(CurrentLiveWallet.Wallet).generate_payment_code(asset_type, payment, comment)
+            except Exception as e:
+                LOG.error(e)
+                pycode = None
 
+            return{"MessageType":"GetPaymentAck",
+                   "MessageBody": {"pycode":pycode}}
 
