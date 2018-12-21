@@ -163,6 +163,7 @@ vi wallet/configure.py
 - 测试网钱包
 
 ```shell
+   cd wallet/
    python3.6 prompt.py #测试网钱包
 ```
 
