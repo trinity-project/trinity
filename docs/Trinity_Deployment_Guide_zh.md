@@ -110,6 +110,7 @@ source venv/bin/activate
 运行网关服务
 
 ``` shell
+cd gateway/
 python start.py
 ```
 
