@@ -210,7 +210,7 @@ trinity> channel create xxxxxxxxxxxxx@xx.xx.xx.xx:xxxx TNC 80000
 ```
 
 *注：
-TNC押金数量是以800美金的价格计算。假设当前TNC价值1美金，那最低需要800个TNC才能保障通道建立成功，可以通过如下命令获取当前时间所需要的TNC押金，目前这条规则仅对TNC通道有效*
+TNC押金数量当前无限制。
 
 6.channel depoist_limit查看当前TNC押金最小值。
 
