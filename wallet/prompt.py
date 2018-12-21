@@ -64,7 +64,7 @@ class UserPromptInterface(PromptInterface):
                               "channel qrcode {on/off}",
                               "channel show uri",
                               "channel show trans_history {channel}",
-                              "channel depoist_limit"
+                              "channel deposit_limit"
                               ]
         self.commands.extend(self.user_commands)
         self.qrcode = False
@@ -472,7 +472,7 @@ class UserPromptInterface(PromptInterface):
             else:
                 self.help()
             return None
-        elif command == "depoist_limit":
+        elif command == "deposit_limit":
             from wallet.utils import DepositAuth
             deposit =  DepositAuth.deposit_limit()
             print("Current Deposit limit is %s TNC" %deposit)
