@@ -1831,7 +1831,7 @@ def monitor_founding(tx_id, channel_name, state, channel_action = "AddChannel"):
         channel.delete()
         return None
 
-    if asset_type not in ['NEO', 'GAS'] and (not check_vmstate(tx_id)):
+    if asset_type not in ['NEO', 'GAS', 'TNC'] and (not check_vmstate(tx_id)):
         LOG.error("{} vm state error".format(tx_id))
         channel.delete()
         return None
