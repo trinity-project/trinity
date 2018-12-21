@@ -157,6 +157,7 @@ vi wallet/configure.py
  - 主链钱包
 
 ``` shell
+    cd wallet/
     python3.6 prompt.py -m #主链钱包
 ```
 
