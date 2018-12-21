@@ -66,7 +66,7 @@ git clone https://github.com/trinity-project/trinity.git /home
 进入trinity源码目录
 
 ``` shell
-cd /home/trinity
+cd /home
 ```
 
 创建及激活虚拟环境
