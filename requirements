@@ -68,7 +68,7 @@ python-dateutil==2.6.1
 pytz==2018.3
 qrcode==6.0
 qrcode-terminal==0.8
-requests==2.18.4
+requests==2.21.0
 scrypt==0.8.6
 six==1.11.0
 SQLAlchemy==1.2.6
