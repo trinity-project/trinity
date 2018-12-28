@@ -130,8 +130,9 @@ class Gateway:
                     # here, add keepalive for the connections
                     connection_sock = protocol.transport.get_extra_info('socket')
                     if connection_sock:
-                        connection_sock.setsockopt(socket.SOL_SOCKET, socket.SO_KEEPALIVE, 30)
-
+                        connection_sock.setsockopt(socket.SOL_SOCKET, socket.SO_KEEPALIVE, 1)
+                        connection_sock.setsockopt(socket.SOL_TCP, socket.TCP_KEEPIDLE, 90)
+                        connection_sock.setsockopt(socket.SOL_TCP, socket.TCP_KEEPINTVL, 60)
                     self.tcp_pk_dict[sed_pk] = protocol
 
                 if msg_type == "RegisterChannel":
