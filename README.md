@@ -193,7 +193,7 @@ trinity> create wallet /root/test/test.json # /root/test/test.json is the path o
 trinity> open wallet /root/test/test.json
 ```
 Note:After creating or re-opening a wallet, the wallet will automatically connect to the gateway and enable channel function. If channel function was not enabled within 30s, please call channel function to open it manually
-   
+
 3.Use channel enable command to activate channel function before operating on state channels.
 
 ```shell
@@ -207,18 +207,10 @@ trinity> channel show uri
 5.Use channel create
 
 ```shell
-trinity> channel create xxxxxxxxxxxxx@xx.xx.xx.xx:xxxx TNC 80000
+trinity> channel create xxxxxxxxxxxxx@xx.xx.xx.xx:xxxx TNC <tnc_count>
 ```
 
-Note:TNC deposit is calculated on $800 USD, which means 800 TNC is required if TNC current price is $1 USD. The command below will tell how much TNC is needed currently for deposit. This is only valid for TNC channel.  
-
-6.Call channel depoist_limit to check the minimum TNC deposit
-
-```shell
-trinity> channel depoist_limit
-```
-
-7.Call channel tx to execute off-chain transactions. tx parameters supports pymentlink code, or use uri + asset + value
+6.Call channel tx to execute off-chain transactions. tx parameters supports pymentlink code, or use uri + asset + value
 
 ```shell
 trinity> channel tx xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx # payment link code
@@ -226,22 +218,22 @@ trinity> channel tx xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx # payment link code
 or
 
 ``` shell
-trinity> channel tx xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx@xx.xx.xx.xx:xxxx TNC 10
+trinity> channel tx xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx@xx.xx.xx.xx:xxxx TNC <count>
 ```
 
-8.Call channel payment to generate payment code
+7.Call channel payment to generate payment code
 
 ```shell
 trinity> channel payment TNC 10 "mytest"
 ```
 
-9.Call channel close to complete settlement and close the channel
+8.Call channel close to complete settlement and close the channel
 
 ```shell
 trinity> channel close xxxxxxxxxxxxxxx
 ```
 
-10.channel peer is for peer node review
+9.channel peer is for peer node review
 
 ```shell
 trinity> channel peer
