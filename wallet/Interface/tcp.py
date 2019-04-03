@@ -37,9 +37,11 @@ class GatwayClientProtocol(protocol.Protocol):
     printlog = True
 
     def connectionMade(self):
+        self.transport.setTcpNoDelay(True)
         message = {
                    "MessageType": "RegisterKeepAlive",
-                   "Ip":          "{}:{}".format(Configure.get("NetAddress"),Configure.get("NetPort"))
+                   "Ip":          "{}:{}".format(Configure.get("NetAddress"),Configure.get("NetPort")),
+                   "Protocol":"TCP",
                   }
         self.transport.write(encode_bytes(message))
         Message.Connection = True
@@ -52,13 +54,15 @@ class GatwayClientProtocol(protocol.Protocol):
         GatwayClientProtocol.printlog = True
 
     def senddata(self, message):
-        self.transport.write(message.encode())
+        print("send", message)
+        self.transport.write(encode_bytes(message))
 
 
 
 class GatwayClientFactory(protocol.ClientFactory):
-    protocol = GatwayClientProtocol
 
+    def __init__(self):
+        self.protocol = None
 
     def _handle_connection_lose(self, connector):
         Message.Connection = False
@@ -81,6 +85,9 @@ class GatwayClientFactory(protocol.ClientFactory):
             LOG.error(reason)
         self._handle_connection_lose(connector)
 
+    def buildProtocol(self, addr):
+        self.protocol = GatwayClientProtocol ()
+        return self.protocol
 
 
 def encode_bytes(data):
@@ -104,6 +111,45 @@ def encode_bytes(data):
 
 
 if __name__ == '__main__':
-    f = GatwayClientFactory()
-    reactor.connectTCP("localhost", 10000, f)
+    import json
+    factory =  GatwayClientFactory()
+    t = reactor.connectTCP("localhost", 8189,factory)
+    def handle_message(factory):
+        msg_dic= {"SyncWalletData":{"MessageType": "SyncWalletData",
+                "NetMagic": "1111111111",
+              "Sender":"xxxxxxx@ip:port",
+                "MessageBody": {
+                   "Publickey": "000000000000000000000000000000000000000000000",
+                    "alias": "bob",
+                    "AutoCreate": True,
+                    "Ip": "10.10.10.1:2000",
+                    "MaxChannel": 20,
+                   "Channel": {# channel configure ,
+        "TNC":{
+            "CommitMinDeposit": 1,   # the min commit deposit
+            "CommitMaxDeposit": 5000,# the max commit deposit
+            "Fee": 0.01 # gateway fee
+        },
+        "NEO": {
+            "Fee": 0    # must be integer
+        },
+        "GAS": {
+            "Fee": 0.001
+        },
+                   "Balance": {"tnc":20}},
+               }},
+                  }
+
+        print(json.dumps(msg_dic,indent=4))
+        while True:
+            if factory.protocol and factory.protocol.connected:
+
+                msg_index = input(":")
+                msg = msg_dic.get(msg_index)
+                if msg:
+                    factory.protocol.senddata(msg)
+                else:
+                    continue
+
+    reactor.callInThread(handle_message,factory)
     reactor.run()
