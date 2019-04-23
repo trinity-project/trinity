@@ -183,7 +183,7 @@ class UserPromptInterface(PromptInterface):
         return
 
     def retry_channel_enable(self):
-        for i in range(30):
+        for i in range(10):
             enable = self.enable_channel()
             if enable:
                 return True
@@ -247,8 +247,8 @@ class UserPromptInterface(PromptInterface):
                 self.Channel = True
                 print("Channel Function Enabled")
                 return True
-        except requests.exceptions.ConnectionError:
-            pass
+        except:
+            return False
         return False
 
     def do_channel(self,arguments):

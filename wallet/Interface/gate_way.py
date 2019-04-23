@@ -92,7 +92,11 @@ def join_gateway(publickey):
         "id": 1
     }
     result = requests.post(Configure["GatewayURL"], json=request)
-    return result.json()
+    if result.ok:
+        return result.json()
+    else:
+        print("Warning：Can Not Connect the GateWay!!! reason %s" %result.status_code)
+        return None
 
 
 def get_router_info(message):
