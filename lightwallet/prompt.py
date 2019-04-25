@@ -130,9 +130,10 @@ class PromptInterface(object):
                     self.Wallet = Nep6Wallet.Open(path, passwd)
 
 
-                    print("Opened wallet at %s" % path)
+                    print("Opening wallet at %s" % path)
                 except Exception as e:
                     print("could not open wallet: %s " % e)
+                print("Wallet %s " % json.dumps(self.Wallet.ToJson(), indent=4))
 
             else:
                 print("Please specify a path")
@@ -254,6 +255,8 @@ class PromptInterface(object):
                 if key.GetAddress() == address:
                     export = key.Export()
                     print("WIF key export: %s" % export)
+            else:
+                print("No find the address in the wallet!")
             return
 
         elif item == 'nep2':
