@@ -95,7 +95,7 @@ def join_gateway(publickey):
     if result.ok:
         return result.json()
     else:
-        print("Warning：Can Not Connect the GateWay!!! reason %s" %result.status_code)
+        LOG.error("can not connect gateway {}".format(result.status_code))
         return None
 
 

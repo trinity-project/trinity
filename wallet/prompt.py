@@ -64,10 +64,13 @@ class UserPromptInterface(PromptInterface):
                               "channel qrcode {on/off}",
                               "channel show uri",
                               "channel show trans_history {channel}",
-                              "channel deposit_limit"
+                              "channel deposit_limit",
+                              "channel auto-enable {on/off}"
                               ]
         self.commands.extend(self.user_commands)
         self.qrcode = False
+        self.auto_enable = True
+        self.channel_command = [i.split()[1] for i in self.user_commands]
 
     def get_address(self):
         """
@@ -190,6 +193,7 @@ class UserPromptInterface(PromptInterface):
             else:
                 sys.stdout.write("Wait connect to gateway...{}...\r".format(i))
                 time.sleep(0.2)
+        print("Warning: Can not connect the gateway be sure gateway ok!!!")
         return self._channel_noopen()
 
     def do_open(self, arguments):
@@ -199,9 +203,11 @@ class UserPromptInterface(PromptInterface):
             CurrentLiveWallet.update_current_wallet(self.Wallet)
             self.Wallet.BlockHeight = self.Wallet.LoadStoredData("BlockHeight")
             Monitor.start_monitor(self.Wallet)
-            result = self.retry_channel_enable()
+            if self.auto_enable:
+                self.retry_channel_enable()
             # if result:
             #     udpate_channel_when_setup(self.Wallet.url)
+            return None
 
     def do_create(self, arguments):
         super().do_create(arguments)
@@ -212,7 +218,9 @@ class UserPromptInterface(PromptInterface):
             self.Wallet.BlockHeight = blockheight
             self.Wallet.SaveStoredData("BlockHeight", blockheight)
             Monitor.start_monitor(self.Wallet)
-            self.retry_channel_enable()
+            if self.auto_enable:
+                self.retry_channel_enable()
+            return None
 
     def do_close_wallet(self):
         if self.Wallet:
@@ -252,13 +260,28 @@ class UserPromptInterface(PromptInterface):
         return False
 
     def do_channel(self,arguments):
+        command = get_arg(arguments)
+        if command == "auto-enable":
+            subcommand  = get_arg(arguments,1)
+            if not subcommand:
+                self.help()
+                return None
+            if subcommand.upper() == "ON":
+                self.auto_enable = True
+                print("Enable channel auto-enable, open/create wallet will auto enable channel")
+            elif subcommand.upper() == "OFF":
+                print("Disable channel auto-enable , you can open channel functions via command channel enable")
+                self.auto_enable = False
+            else:
+                self.help()
+            return None
+
+
         if not self.Wallet:
             print("Please open a wallet")
             return
 
-        command = get_arg(arguments)
-        channel_command = [i.split()[1] for i in self.user_commands]
-        if command not in channel_command:
+        if command not in self.channel_command:
             print("no support command, please check the help")
             self.help()
             return None
@@ -479,8 +502,9 @@ class UserPromptInterface(PromptInterface):
             return None
 
 
+
     def _channel_noopen(self):
-        print("Channel Function Can Not be Opened at Present, You can try again via channel enable")
+        print("Channel Function Not be Opened,You can try again via channel enable")
         return False
 
     def handlemaessage(self):
